@@ -1,0 +1,64 @@
+.TableMenu{
+    background-color: DarkSlateGrey;
+    min-height: 50px;
+    width: 100%;
+    padding-bottom: 10px;
+}
+
+@media (max-width: 800px){
+    .printBtn{
+        display: none;
+    }
+}
+.stat{
+    display: flex;
+    flex-wrap: wrap;
+}
+.cardStat{
+    
+    border-radius: 5px;
+    width: calc(100%/12*11/7);
+    height: 100px;
+    padding: 10px;
+    margin: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: lightgray;
+}
+
+.cardStat:hover,
+.cardWeek:hover{
+    background-color: darkgray;
+}
+
+
+.cardStat > div:nth-child(1),
+.cardWeek > div:nth-child(1){
+    color: rgb(12, 108, 63);
+    text-align: center;
+}
+
+.cardStat > div:nth-child(2),
+.cardWeek > div:nth-child(2){
+    color: black;
+    font-size: 9px;
+    text-align: center;
+}
+
+.cardWeek{
+    border-radius: 5px;
+    width: calc(100%);
+    height: 100px;
+    padding: 10px;
+    margin: 5px;
+    background-color: rgb(181, 181, 181);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+}
+
+.cardWeek > div{
+    text-align: center;
+}
