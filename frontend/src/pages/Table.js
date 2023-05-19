@@ -1,4 +1,4 @@
-import { TableFull } from "../componentsTable/TableFull"
+import { TableFull } from "../components/table/TableFull"
 import {useEffect, useState} from 'react'
 import {useDispatch, useSelector} from 'react-redux'
 import {refresh, login} from '../http/authApi'

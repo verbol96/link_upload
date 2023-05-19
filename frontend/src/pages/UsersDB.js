@@ -1,7 +1,7 @@
 import {useSelector, useDispatch} from 'react-redux'
 import {useEffect, useState} from 'react'
 import {Table, Button, FormControl, Row, Col} from 'react-bootstrap'
-import { NavBar } from '../componentsAdmin.js/NavBar'
+import { NavBar } from '../components/admin/NavBar'
 import {$host} from '../http/index'
 
 const UsersDB = () =>{

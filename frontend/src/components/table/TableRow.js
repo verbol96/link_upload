@@ -1,7 +1,7 @@
 import {useDispatch, useSelector} from 'react-redux'
 import {FormCheck, FormSelect} from 'react-bootstrap'
 //import React, { useState } from 'react';
-import {$host} from '../http/index'
+import {$host} from '../../http/index'
 
 export const TableRow = ({el, user, setIsFormAdd, photo, adressOrder, path, isFormAdd, loading}) =>{
 
@@ -14,7 +14,8 @@ export const TableRow = ({el, user, setIsFormAdd, photo, adressOrder, path, isFo
         }
     }
 
-    const date = el.createdAt.split(" ")[0].split("-")
+    const date = el.createdAt.split("T")[0].split("-")
+    //console.log(el.createdAt)
 
     const ColorBG = [
         'white',// принят

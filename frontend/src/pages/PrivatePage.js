@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { NavBar } from "../componentsAdmin.js/NavBar"
+import { NavBar } from "../components/admin/NavBar"
 import {FormControl, Card, Button, Toast} from 'react-bootstrap'
 import { passwordChange, dataChange } from "../http/authApi"
 import { whoAmI } from '../http/authApi';

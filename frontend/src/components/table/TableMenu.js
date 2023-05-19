@@ -2,8 +2,8 @@ import './table.css'
 import {Button, Col,Row, FormSelect, FormControl, Toast, FormCheck, FormLabel} from 'react-bootstrap'
 import {useState} from 'react'
 import {useNavigate} from 'react-router-dom'
-import { LeftMenu } from '../componentsAdmin.js/LeftMenu'
-import { logout } from '../http/authApi'
+import { LeftMenu } from '../admin/LeftMenu'
+import { logout } from '../../http/authApi'
 import {useDispatch} from 'react-redux'
 
 export const TableMenu = ({setIsFormAdd, setSelectPost, selectPost, inputSearch, setInputSearch, filterCheck, setFilterCheck, editRow}) =>{

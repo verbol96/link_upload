@@ -1,7 +1,7 @@
 import {Row, Card,  Button, Col, FormControl, FormLabel} from 'react-bootstrap'
 import {useEffect, useState} from 'react'
 import { FormatOne } from './FormatOne'
-import { getSettings } from "../http/dbApi"
+import { getSettings } from "../../http/dbApi"
 
 export const FormatAll = ({photo, setPhoto, thema, price, setPrice}) =>{
 

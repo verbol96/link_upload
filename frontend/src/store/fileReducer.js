@@ -7,7 +7,36 @@ const DELETE_FILE = 'DELETE_FILE'
 const defaultState = {
     files: [],
     currentDir: null,
-    stackDir: [ ]
+    stackDir: [ ],
+    TypePhoto: [
+        'фотографии',
+        'холсты',
+        'магниты'
+    ],
+    FormatPhoto: [
+        'стандарт(10x15)',
+        'квадрат(10x10)',
+        'полароид(10х12)',
+        'полароид(7х9)',
+        'А5(15х20)',
+        'А4(20х30)',
+        'другой до 7х10',
+        'другой до 10х15',
+        'другой до 15х20',
+        'другой до 20х30'
+    ],
+    FormatHolst: [
+        '30x40',
+        '40x40',
+        '40x55',
+        '55x55',
+        '50x70',
+        '55x80'
+    ],
+    FormatMagnit: [
+        '5x8',
+        '10x10'
+    ]
 }
 
 export default function fileReducer(state = defaultState, action) {

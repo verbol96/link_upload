@@ -2,7 +2,7 @@ import {Row, Col, Button, FormControl} from 'react-bootstrap'
 import { LeftMenu } from './LeftMenu'
 import {useDispatch, useSelector} from 'react-redux'
 import {useState, useEffect} from 'react'
-import { login, logout, refresh } from '../http/authApi'
+import { login, logout, refresh } from '../../http/authApi'
 
 export const NavBar = () =>{
     const dispach = useDispatch()

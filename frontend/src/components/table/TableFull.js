@@ -5,7 +5,7 @@ import { TableRow } from './TableRow'
 import { FormAdd } from './FormAdd'
 import { TableMenu } from './TableMenu'
 import _ from 'lodash'
-import {$host} from '../http/index'
+import {$host} from '../../http/index'
 
 
 export const TableFull = () =>{

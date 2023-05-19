@@ -3,7 +3,7 @@ import {Offcanvas, Row, Button} from 'react-bootstrap'
 import {useNavigate} from 'react-router-dom'
 import {useSelector, useDispatch} from 'react-redux'
 import { useEffect, useState } from 'react';
-import { whoAmI } from '../http/authApi';
+import { whoAmI } from '../../http/authApi';
 
 export const LeftMenu = ()=>{
   
