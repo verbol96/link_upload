@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { NavBar } from "../componentsAdmin.js/NavBar"
+import { NavBar } from "../components/admin/NavBar"
 import { getSettings, updateSettings } from "../http/dbApi"
 import {Row, Col, Button, FormControl} from 'react-bootstrap'
 

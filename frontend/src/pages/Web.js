@@ -1,108 +1,98 @@
 import { useState } from "react"
-import { NavBar } from "../componentsAdmin.js/NavBar"
-import {Row, Col, Card, FormControl, Button} from 'react-bootstrap'
+import { NavBar } from "../components/admin/NavBar"
+import {Row, Col, Button, FormCheck, Card} from 'react-bootstrap'
+//import { uploadFiles } from "../http/cloudApi"
+//import { addFile } from "../store/fileReducer"
+//import { useDispatch } from "react-redux"
+import { ContactForm } from "../components/web/ContactForm"
+import { OtherForm } from "../components/web/OtherForm"
+import { FilesForm } from "../components/web/FilesForm"
 import { v4 as uuidv4 } from 'uuid'
-import { ImgCard } from "../components/web/ImgCard"
-import { uploadFiles } from "../http/cloudApi"
-import { addFile } from "../store/fileReducer"
-import { useDispatch } from "react-redux"
 
 const Web = () =>{
 
-    const dispatch = useDispatch()
-    const [fileList, setFileList] = useState([])
-    const [files, setFiles] = useState([])
-  const file = (e) =>{
+    //const dispatch = useDispatch()
 
-    const arr = Array.from(e.target.files)
-    setFiles(arr)
-    arr.forEach(el=>{
+    const [name, setName] = useState('')
+    const [phone, setPhone] = useState('')
+    const [typePost, setTypePost] = useState('E')
+    const [city, setCity] = useState('')
+    const [adress, setAdress] = useState('')
+    const [postCode, setPostCode] = useState('')
+    const [other, setOther] =useState('')
 
-      const reader = new FileReader()
+    const [formats, setFormats] = useState([
+        {
+            id: uuidv4(),
+            type: 'фотографии',
+            format: '10x15',
+            paper: 'glossy',
+            files: []
+        }
+    ])
 
-      reader.onload = (ev) =>{
-        setFileList((prev)=>{
-          return [
-            ...prev,{
-              id: uuidv4(),
-              imageUrl: reader.result,
-              file
-            }
-            
-          ]
-        })
-      }
-      reader.readAsDataURL(el)
-    }) 
-  }
+    //console.log(formats)
 
-  const deleteImg = (value) =>{
-    setFileList((prev)=>{
-        return prev.filter(el=>el.id!==value)
-    })
-   }
+    const AddFormat = () =>{
+        setFormats([...formats, {
+            id: uuidv4(),
+            type: 'фотографии',
+            format: '10x15',
+            paper: 'glossy',
+            files: []
+        }])
+    }
+
+    const DeleteFormat = (el) =>{
+        setFormats([...formats.filter(one=>one!==el)])
+    }
 
     const upload = () =>{
         //console.log(files)
-        files.forEach(async file=>{
+        /*files.forEach(async file=>{
             let value = await uploadFiles(file)
             dispatch(addFile(value))
         }
-        )
+        )*/
     }
   
     return (
         <div>
             <NavBar />
-            
+
             <Row className="justify-content-center mt-3">
                 <Col md={2}><h2>Форма заказа</h2></Col>
             </Row>
 
             <Row className="justify-content-center mt-3">
                 <Col md={10}>
-                    <Card className="p-5">
-                        <Row className="mt-2">
-                            <Col md={3}>
-                                <h6>Телефон:</h6>
-                            </Col>
-                            <Col>
-                                <FormControl size="sm" />
-                            </Col>
-                        </Row>
-                        <Row className="mt-2">
-                            <Col md={3}>
-                                <h6>ФИО:</h6>
-                            </Col>
-                            <Col>
-                                <FormControl size="sm" />
-                            </Col>
-                        </Row>
-                        <Row className="mt-2">
-                            <Col md={3}>
-                                <h6>Адрес:</h6>
-                            </Col>
-                            <Col>
-                                <FormControl size="sm" />
-                            </Col>
-                        </Row>
-                        
-                    </Card>
+                    <ContactForm 
+                        name={name} setName={setName}
+                        phone={phone} setPhone={setPhone}
+                        typePost={typePost} setTypePost={setTypePost}
+                        city={city} setCity={setCity}
+                        adress={adress} setAdress={setAdress}
+                        postCode={postCode} setPostCode={setPostCode} />
 
-                    <Card className="p-5 mt-3">
+                    <Card className='p-3 mt-3'>
+                        {formats.map((el,index)=><FilesForm key={el.id} index={index} el={el} DeleteFormat={DeleteFormat}
+                                                    formats={formats} setFormats={setFormats} />)}
                         <Row>
-                            <FormControl type="file" multiple={true}  onChange={(e)=>file(e)} />
+                            <Col md={2} className='mt-4'>
+                                <Button variant='success' onClick={()=>AddFormat()}>+ другой формат</Button>
+                            </Col>
                         </Row>
-                        <Row>
-                            <div  style={{display: 'flex', flexWrap: "wrap"}}>
-                                {fileList.map((el)=> <ImgCard image={el} key={el.id} deleteImg={deleteImg} /> )}
-                            </div>
-                        </Row>
-                    </Card>
-                        
-                    <Row className="justify-content-center mt-5">
-                        <Col md={2}>
-                            <Button variant="secondary" onClick={()=>upload()}>Оформить заказ!</Button>
+                    </Card>   
+                     
+                    <OtherForm other={other} setOther={setOther} />
+
+                    <Row className="m-5">
+                        <Col md={1}> <FormCheck /></Col>
+                        <Col md={6}>
+                            <p style={{fontSize: 12}}>подтверждаю, что ознакомлен с правилами заказа и данные указаны верно</p>
+                        </Col>
+                        <Col md={{span: 2, offset: 3}}>
+                            <Button variant="success" onClick={()=>upload()}>Оформить заказ!</Button>
                         </Col>
                     </Row>
                     

@@ -5,9 +5,9 @@ export const ImgCard = ({image, deleteImg}) =>{
 
 
     return(
-        <Card className='cardFile' style={{width: '15%', overflow: 'hidden', margin: 10}}>
-            <Card.Img variant="top" style={{height: 200, objectFit:'cover'}}  src={image.imageUrl.toString()} />
-            <Button variant='light' onClick={()=>deleteImg(image.id)}>X</Button>
+        <Card className='cardFile' style={{width: '10%', overflow: 'hidden', margin: 10}}>
+            <Card.Img variant="top" style={{height: 100, objectFit:'cover'}}  src={image.imageUrl.toString()} />
+            <Button variant='light' size='sm' onClick={()=>deleteImg(image.id)}>X</Button>
            
         </Card>
     )

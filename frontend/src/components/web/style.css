@@ -1,3 +1,14 @@
 .cardFile:hover{
     scale: 1.1;
 }
+
+.upload_input{
+    display: none;
+}
+
+.upload_label{
+    border: 2px black dashed;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 13px;
+}

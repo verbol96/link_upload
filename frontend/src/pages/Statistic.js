@@ -1,9 +1,9 @@
-import { NavBar } from "../componentsAdmin.js/NavBar"
+import { NavBar } from "../components/admin/NavBar"
 import {Alert, FormSelect, Row, Col} from 'react-bootstrap'
 import {useEffect, useState} from 'react'
 import { getAll } from "../http/dbApi"
 import _ from 'lodash'
-import '../componentsTable/table.css'
+import '../components/table/table.css'
 
 const Statistic = () =>{
     

@@ -6,7 +6,7 @@ import {nanoid} from 'nanoid'
 import { FormatAll } from './FormatAll'
 import {CopyToClipboard} from 'react-copy-to-clipboard'
 import useKeypress from 'react-use-keypress'
-import {$host} from '../http/index'
+import {$host} from '../../http/index'
 
 
 export const FormAdd = ({isFormAdd, setIsFormAdd, user, adressOrder, loading, path, editRow, photoAll, nextShow, indexR}) =>{

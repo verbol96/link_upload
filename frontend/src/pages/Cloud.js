@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ListCloud } from "../components/cloud/ListCloud"
-import { NavBar } from "../componentsAdmin.js/NavBar"
+import { NavBar } from "../components/admin/NavBar"
 import {createFiles, getFiles, uploadFiles} from '../http/cloudApi'
 import {setFiles, addFile, setCurrentDir} from '../store/fileReducer'
 import { Row, Button, Col, Modal, FormControl, Form} from 'react-bootstrap'
