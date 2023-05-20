@@ -10,5 +10,9 @@
     border: 2px black dashed;
     padding: 5px 10px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 13px;;
+}
+
+.upload_label:hover{
+    background-color: rgb(216, 216, 216);
 }

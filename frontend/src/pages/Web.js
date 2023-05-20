@@ -8,6 +8,8 @@ import { ContactForm } from "../components/web/ContactForm"
 import { OtherForm } from "../components/web/OtherForm"
 import { FilesForm } from "../components/web/FilesForm"
 import { v4 as uuidv4 } from 'uuid'
+import {nanoid} from 'nanoid'
+import { SendToDB } from "../http/tableApi"
 
 const Web = () =>{
 
@@ -20,6 +22,8 @@ const Web = () =>{
     const [adress, setAdress] = useState('')
     const [postCode, setPostCode] = useState('')
     const [other, setOther] =useState('')
+    const [typeAnswer, setTypeAnswer] = useState('instargram')
+    const [nikname, setNikname] = useState('')
 
     const [formats, setFormats] = useState([
         {
@@ -30,8 +34,6 @@ const Web = () =>{
             files: []
         }
     ])
-
-    //console.log(formats)
 
     const AddFormat = () =>{
         setFormats([...formats, {
@@ -47,8 +49,30 @@ const Web = () =>{
         setFormats([...formats.filter(one=>one!==el)])
     }
 
-    const upload = () =>{
+    const upload = async() =>{
         //console.log(files)
+
+        const data = {
+            "name": name,
+            "phone": phone,
+            "typePost": typePost,
+            "city": city,
+            "adress": adress,
+            "postCode": postCode,
+            "other":other,
+
+            "photo": [], 
+            "nikname": typeAnswer+nikname,
+            "price": 0,
+            "codeInside": nanoid(6),
+            "codeOutside": '',
+            "oblast": '',
+            "raion": ''
+        }
+
+        const order = await SendToDB(data)
+
+        console.log(order)
         /*files.forEach(async file=>{
             let value = await uploadFiles(file)
             dispatch(addFile(value))
@@ -72,7 +96,8 @@ const Web = () =>{
                         typePost={typePost} setTypePost={setTypePost}
                         city={city} setCity={setCity}
                         adress={adress} setAdress={setAdress}
-                        postCode={postCode} setPostCode={setPostCode} />
+                        postCode={postCode} setPostCode={setPostCode}
+                        />
 
                     <Card className='p-3 mt-3'>
                         {formats.map((el,index)=><FilesForm key={el.id} index={index} el={el} DeleteFormat={DeleteFormat}
@@ -84,7 +109,9 @@ const Web = () =>{
                         </Row>
                     </Card>   
                      
-                    <OtherForm other={other} setOther={setOther} />
+                    <OtherForm other={other} setOther={setOther} 
+                        typeAnswer={typeAnswer} setTypeAnswer={setTypeAnswer}
+                        nikname={nikname} setNikname={setNikname} />
 
                     <Row className="m-5">
                         <Col md={1}> <FormCheck /></Col>
