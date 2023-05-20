@@ -68,11 +68,11 @@ export const LeftMenu = ()=>{
             </Row>
             <Row className='mt-3'>
             <Button variant="dark" onClick={()=>Close('/cloud')}>
-                Link Cloud
+                Link Cloud -{user}
             </Button>
             </Row>
-            <h6 style={{marginTop: '300px'}}>{user.name}</h6>
-            <h6>{user.phone}</h6>
+            {/*<h6 style={{marginTop: '300px'}}>{user.name}</h6>
+            <h6>{user.phone}</h6>*/}
            
         
         </Offcanvas.Body>

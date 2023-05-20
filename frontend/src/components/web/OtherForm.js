@@ -1,8 +1,8 @@
 import { Card, Row, Col, FormLabel, FormControl, FormSelect } from "react-bootstrap"
 //import {useState} from 'react'
 
-export const OtherForm = ({other, setOther})=>{
-
+export const OtherForm = ({other, setOther, typeAnswer, setTypeAnswer, nikname, setNikname})=>{
+    
     return(
         <Card className="p-3 mt-3">
             <Row>
@@ -10,7 +10,7 @@ export const OtherForm = ({other, setOther})=>{
                     <FormLabel size='sm'>Для обратной связи:</FormLabel>
                 </Col>
                 <Col md={2}>
-                        <FormSelect size="sm">
+                        <FormSelect value={typeAnswer} onChange={(e)=>setTypeAnswer(e.target.value)} size="sm">
                             <option>instargram</option>
                             <option>telegram</option>
                             <option>viber</option>
@@ -18,7 +18,7 @@ export const OtherForm = ({other, setOther})=>{
                         </FormSelect>
                     </Col>
                 <Col md={3}>
-                    <FormControl size="sm" />
+                    <FormControl value={nikname} onChange={(e)=>setNikname(e.target.value)}   size="sm" />
                 </Col> 
             </Row>
             <Row className="mt-2">

@@ -16,7 +16,7 @@ class orderController{
             Photo.create({type: el.type, format: el.format, amount: el.amount, paper: el. paper, orderId: order.id }))
 
         await Status.create({step: 1, orderId: order.id})
-        return res.json({order})
+        return res.json({order, user})
     }
 
     async getAll(req,res){
