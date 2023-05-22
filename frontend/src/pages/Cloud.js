@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ListCloud } from "../components/cloud/ListCloud"
 import { NavBar } from "../components/admin/NavBar"
-import {createFiles, getFiles, uploadFiles} from '../http/cloudApi'
+import {createDir, getFiles, uploadFiles} from '../http/cloudApi'
 import {setFiles, addFile, setCurrentDir} from '../store/fileReducer'
 import { Row, Button, Col, Modal, FormControl, Form} from 'react-bootstrap'
 
@@ -17,6 +17,7 @@ const Cloud = () =>{
     useEffect(()=>{
         async function getFile (){
             let value = await getFiles(currentDir)
+            //console.log(value)
             dispatch(setFiles(value))
         }
         getFile()
@@ -32,7 +33,7 @@ const Cloud = () =>{
     const NewFolder = async()=>{
         setShow(false)
         setNameFile('')
-        let value = await createFiles(currentDir, nameFile)
+        let value = await createDir(currentDir, nameFile)
         dispatch(addFile(value))
     } 
 
