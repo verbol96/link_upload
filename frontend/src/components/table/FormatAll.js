@@ -48,7 +48,7 @@ export const FormatAll = ({photo, setPhoto, thema, price, setPrice}) =>{
 
         return price
     }
-
+    //console.log(photo)
     const Sum = () =>{
         const pr = photo.reduce((sum, el)=>{
             return sum+PriceList(el.format)*el.amount

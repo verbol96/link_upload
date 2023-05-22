@@ -8,38 +8,33 @@ const JSZip = require('jszip')
 
 class fileController {
     async createDir(req, res){
-        try {
+        try { 
             const {name, type, parent} = req.body
-            const file = await File.create({name, type, parent, userId: req.user.id})
-            let parentFile
-            if(parent) parentFile = await File.findOne({where:{id: parent}})
-
-            let path
-            if(!parentFile){
-                 path = req.user.phone
-                await FileService.createdDir(file, path)
-            } else{
-                 path = `${parentFile.path}/${parentFile.name}`
-                 
-                await FileService.createdDir(file, path)
-            }
-            const a = await File.update({path: path}, {where: {id:file.id}})
+            let file
+            if(parent){
+                const parentFile = await File.findOne({where:{id: parent}})
+                const path = `${parentFile.name}`
+                await FileService.createdDir(name, path)
+                file = await File.create({name, type, parent, path})
+            }else{
+                await FileService.createdDir(name)
+                file = await File.create({name, type})
+            } 
             return res.json(file)
         } catch (error) {
             console.log(error)
             return res.status(400).json(error)
-        }
-        
+        }  
     }
 
     async getFiles(req,res){
         try {
             let files
             if(req.query.parent){
-                 files = await File.findAll({where:{userId: req.user.id, parent: req.query.parent}})
+                 files = await File.findAll({where:{parent: req.query.parent}})
             }else{
                     //console.log('here')
-                 files = await File.findAll({where: {userId: req.user.id, parent: '0'}})
+                 files = await File.findAll({where: {parent: 0}})
                  if(!files) return res.json('нету файлов')
             }
             
@@ -54,26 +49,11 @@ class fileController {
     async uploadFiles(req,res){
         try {
             const file = req.files.file
-            let parent = 0
-            
-            /*if(req.body.parent){
-                parent = await File.findOne({where:{id: req.body.parent}})
-            }
-
-            
-            if(parent===0){ 
-                path = `${process.env.FILEPATH}/${req.user.phone}/${file.name}`
-                
-            }else{
-                path = `${process.env.FILEPATH}/${parent.path}/${parent.name}/${file.name}`
-            }*/
-            let path = `${process.env.FILEPATH}/${file.name}`
-            
-
+            const parent = await File.findOne({where:{id: req.body.parent}})
+            let path = `${process.env.FILEPATH}/${parent.path}/${parent.name}/${file.name}` 
             if(fs.existsSync(path)){
                 return res.status(400).json({message: "файл уже существукет"})
             }
-            console.log(path)
             file.mv(path) //перемещение файла по пути
             const type = file.name.split('.').pop()
 
@@ -81,13 +61,11 @@ class fileController {
                 name: file.name,
                 type,
                 size: file.size,
-                path: (parent!==0) ? `${parent.path}/${parent.name}` : req.user.phone,
-                parent: parent.id,
-                userId: req.user.id
+                path:  `${parent.path}/${parent.name}`,
+                parent: parent.id
             }
 
             const fileFull = await File.create(dbFile)
-            //const user = await User.findOne({where:{id:req.user.id}})
             return res.json(fileFull)
             
         } catch (error) {

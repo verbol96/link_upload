@@ -41,7 +41,7 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
 
     const FilesInput = (e) =>{
         const arr = Array.from(e.target.files)
-        setFormats([...formats.slice(0,index), {...formats[index], files: arr}, ...formats.slice(index+1)])
+        setFormats([...formats.slice(0,index), {...formats[index], files: formats[index].files.concat(arr)}, ...formats.slice(index+1)])
 
         arr.forEach(el=>{  
             const reader = new FileReader()
@@ -51,6 +51,7 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
                     ...prev,{
                     id: uuidv4(),
                     imageUrl: reader.result,
+                    name: el.name,
                     FilesInput
                     }
                 ]
@@ -60,9 +61,10 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
         }) 
     }
 
-    const deleteImg = (value) =>{
+    const deleteImg = (image) =>{
+        setFormats([...formats.slice(0,index), {...formats[index], files: formats[index].files.filter(el=>el.name!==image.name)}, ...formats.slice(index+1)])
         setFilesPrev((prev)=>{
-            return prev.filter(el=>el.id!==value)
+            return prev.filter(el=>el.id!==image.id)
         })
     }
 

@@ -3,8 +3,10 @@ const {File} = require('../models/models')
 require('dotenv').config()
 
 class FileService {
-    createdDir(file, path){
-        const filePath = `${process.env.FILEPATH}/${path}/${file.name}`
+    createdDir(name, path){ 
+        let filePath
+        if(path===undefined) filePath = `${process.env.FILEPATH}/${name}`
+        else filePath = `${process.env.FILEPATH}/${path}/${name}`
         console.log(filePath)
         return new Promise((resolve, reject)=>{
             try {
