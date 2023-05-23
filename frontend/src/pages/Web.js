@@ -54,6 +54,8 @@ const Web = () =>{
         setFormats([...formats.filter(one=>one!==el)])
     }
 
+    const [amountPhoto, setAmountPhoto] = useState(0)
+    const [current, setCurrent] = useState(0)
     const upload = async() =>{
         setAfterSend(1)
         const photo = formats.reduce((acc,el)=> {
@@ -74,7 +76,12 @@ const Web = () =>{
             return [...acc, dd]
             
         },[])
-
+        
+        const amount = formats.reduce((acc,el)=>{
+            return acc+el.files.length
+        },0)
+        setAmountPhoto(amount)
+        
         const data = {
             "name": name,
             "phone": phone,
@@ -95,13 +102,16 @@ const Web = () =>{
         const user = await SendToDB(data)
 
         const MainDir = await createDir(typePost+(user.order.id%99+1))
+        
         formats.forEach(async formatOne=>{
             const parentFile = await createDir(formatOne.format, MainDir.id)
             formatOne.files.forEach(async file=>{
+                setCurrent(current+1)
                 await uploadFiles(file, parentFile.id, dispatch)
             })   
         }
         )
+        
         setAfterSend(2)
     }
 
@@ -118,13 +128,13 @@ const Web = () =>{
             {afterSend===1?
                 <Row>
                     <Col>Идет загрузка ...</Col>
-                    <ProgressBar now={progress} label={`${progress}%`} />
-                    
+                    {amountPhoto}
+                    <ProgressBar now={progress} label={`${current}%+'/'+${amountPhoto}%`} />
                 </Row>
             :
                 afterSend===2? 
                 <Row>
-                    <Col>Загрузка завершена!</Col>
+                    <Col>Загрузка завершена!({amountPhoto})</Col>
                 </Row>
                 :
 
