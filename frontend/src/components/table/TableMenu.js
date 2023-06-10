@@ -1,7 +1,7 @@
 import './table.css'
 import {Button, Col,Row, FormSelect, FormControl, Toast, FormCheck, FormLabel} from 'react-bootstrap'
 import {useState} from 'react'
-import {useNavigate} from 'react-router-dom'
+
 import { LeftMenu } from '../admin/LeftMenu'
 import { logout } from '../../http/authApi'
 import {useDispatch} from 'react-redux'
@@ -9,7 +9,7 @@ import {useDispatch} from 'react-redux'
 export const TableMenu = ({setIsFormAdd, setSelectPost, selectPost, inputSearch, setInputSearch, filterCheck, setFilterCheck, editRow}) =>{
 
     const [show, setShow] = useState(false);
-    const navigate = useNavigate()
+    //const navigate = useNavigate()
     const dispach = useDispatch()
 
     const Check = (e, id) =>{
@@ -58,13 +58,8 @@ export const TableMenu = ({setIsFormAdd, setSelectPost, selectPost, inputSearch,
                         <option value={"R"}>только Белпочта</option>
                     </FormSelect>
                 </Col>
-                
-                <Col md={{span: 1, offset:3}} xs={1}>
-                    <Button onClick={()=>navigate('/print')} size='sm' variant='dark' className='mt-2 printBtn' style={{width: "100%"}}>
-                        <i className="bi bi-printer"></i>
-                    </Button>
-                </Col>
-                <Col md={{span: 1}} xs={3}>
+
+                <Col md={{span: 1, offset: 4}} xs={3}>
                     <Button size='sm' variant='dark' className='mt-2' style={{width: "100%"}} onClick={()=>setShow(!show)} >
                         <i className="bi bi-filter-square"></i>
                     </Button>

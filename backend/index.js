@@ -15,8 +15,8 @@ app.use(cookieParser())
 app.use(cors(
     {
         credentials: true,
-        origin: 'http://85.193.91.221:8080'
-        //origin: 'http://localhost:3000'
+        //origin: 'http://85.193.91.221:8080'
+        origin: 'http://localhost:3000'
     }
 ))
 app.use('/api', router)

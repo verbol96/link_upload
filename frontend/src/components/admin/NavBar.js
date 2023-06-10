@@ -33,37 +33,31 @@ export const NavBar = () =>{
     return (
         <div style={{ backgroundColor: 'DarkSlateGrey', minHeight: 50, width: '103%'}}>
             <LeftMenu />
-            <Row>
-                <Col md={1}>
-                    <Button variant='dark' className='mt-2' style={{marginLeft: '5%', color: 'black', backgroundColor: 'DarkSlateGrey'}} size='sm' onClick={()=>dispach({type:'showLeftMenu'})}>
-                        <i className="bi bi-list"></i>
-                    </Button>
-                </Col>
-                {isAuth?
+            
+                
+                {isAuth?<Row>
+                    <Col md={1}>
+                        <Button variant='dark' className='mt-2' style={{marginLeft: '5%', color: 'black', backgroundColor: 'DarkSlateGrey'}} size='sm' onClick={()=>dispach({type:'showLeftMenu'})}>
+                            <i className="bi bi-list"></i>
+                        </Button>
+                    </Col>
                     <Col  md={{span: 1, offset: 9}}  >
                         <Button size='sm' variant='dark' className='mt-2' onClick={()=>Logout()}>выйти</Button>
                     </Col>
-                   
+                   </Row>
                 :
-                    <>
-                    <Col md={{span:2, offset:5}}className='mt-2'>
+                    <Row>
+                    <Col md={{span:2, offset:7}}className='mt-2'>
                     <FormControl size='sm' placeholder='phone' value={phone} onChange={(e)=>setPhone(e.target.value)} />
                     </Col>
                     <Col md={2}className='mt-2'>
                         <FormControl  size='sm' placeholder='password'  value={password} onChange={(e)=>setPassword(e.target.value)}/>
                     </Col>
-                    <Col md={2}className='mt-2'>
+                    <Col md={1}className='mt-2'>
                         <Button  size='sm' variant='secondary' onClick={()=>Send()}>войти</Button>
                     </Col>
-                    </>
+                    </Row>
                 }
-               
-            
-            
-            
-         
-        
-            </Row>  
         </div>
     )
 }

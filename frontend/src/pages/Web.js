@@ -1,8 +1,7 @@
 import { useState } from "react"
 import { NavBar } from "../components/admin/NavBar"
-import {Row, Col, Button, FormCheck, Card, ProgressBar} from 'react-bootstrap'
+import {Row, Col, Button, FormCheck, Card, ProgressBar, Modal} from 'react-bootstrap'
 import { uploadFiles } from "../http/cloudApi"
-import { useDispatch, useSelector } from "react-redux"
 import { ContactForm } from "../components/web/ContactForm"
 import { OtherForm } from "../components/web/OtherForm"
 import { FilesForm } from "../components/web/FilesForm"
@@ -14,9 +13,8 @@ import { createDir } from "../http/cloudApi"
 
 const Web = () =>{
 
-    const dispatch = useDispatch()
-    const progress = useSelector(state=>state.files.progress)
-    
+    const [progress, setProgress] = useState(0)  
+    const [showModal, setShowModal] = useState(false);  
 
     const [name, setName] = useState('')
     const [phone, setPhone] = useState('')
@@ -57,7 +55,7 @@ const Web = () =>{
     const [amountPhoto, setAmountPhoto] = useState(0)
     const [current, setCurrent] = useState(0)
     const upload = async() =>{
-        setAfterSend(1)
+        setShowModal(true);
         const photo = formats.reduce((acc,el)=> {
             const ff =() =>{
                 switch(el.type){
@@ -103,19 +101,15 @@ const Web = () =>{
 
         const MainDir = await createDir(typePost+(user.order.id%99+1))
         
-        formats.forEach(async formatOne=>{
-            const parentFile = await createDir(formatOne.format, MainDir.id)
-            formatOne.files.forEach(async file=>{
-                setCurrent(current+1)
-                await uploadFiles(file, parentFile.id, dispatch)
-            })   
-        }
-        )
-        
-        setAfterSend(2)
-    }
+        formats.forEach(async (formatOne) => {
+            const parentFile = await createDir(formatOne.format, MainDir.id);
 
-    const [afterSend, setAfterSend] = useState(0)
+            formatOne.files.forEach(async (file, index) => {
+              setCurrent(index);
+              await uploadFiles(file, parentFile.id, setProgress);
+            });
+          });
+    }
   
     return (
         <div>
@@ -124,20 +118,6 @@ const Web = () =>{
             <Row className="justify-content-center mt-3">
                 <Col md={2}><h2>Форма заказа</h2></Col>
             </Row>
-
-            {afterSend===1?
-                <Row>
-                    <Col>Идет загрузка ...</Col>
-                    {amountPhoto}
-                    <ProgressBar now={progress} label={`${current}%+'/'+${amountPhoto}%`} />
-                </Row>
-            :
-                afterSend===2? 
-                <Row>
-                    <Col>Загрузка завершена!({amountPhoto})</Col>
-                </Row>
-                :
-
                 <Row className="justify-content-center mt-3">
                     <Col md={10}>
                         <ContactForm 
@@ -158,6 +138,7 @@ const Web = () =>{
                                 </Col>
                             </Row>
                         </Card>   
+                        {/*<FileUpload />*/}
                         
                         <OtherForm other={other} setOther={setOther} 
                             typeAnswer={typeAnswer} setTypeAnswer={setTypeAnswer}
@@ -175,7 +156,31 @@ const Web = () =>{
                         
                     </Col>
                 </Row>
-            }
+
+                  <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+                    <Modal.Header closeButton>
+                    <Modal.Title>Оформление заказа...</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                    <h6>
+                        Загружено фото: {current + 1} из {amountPhoto}
+                    </h6>
+                    <ProgressBar now={progress} label={`${progress}%`} />
+
+                    {current+1===amountPhoto ? 
+                    <Row>
+                        <Col className="mt-3">
+                            <h5 style={{color: 'green'}}>Заказ отправлен!</h5>
+                        </Col>
+                        <Col className="d-flex justify-content-end mt-3">
+                        <Button variant="success" onClick={()=>setShowModal(false)}>закрыть</Button>
+                        </Col>
+                    </Row>
+                    
+                    : null}
+                    </Modal.Body>
+                </Modal>
+            
 
 
         </div>

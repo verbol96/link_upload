@@ -5,9 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import {refresh} from '../http/authApi'
 
 const AppRouter = () =>{
-
     const dispach = useDispatch()
-   
 
     useEffect(()=>{
         if(localStorage.getItem('token')){
@@ -31,7 +29,7 @@ const AppRouter = () =>{
             )
         }
 
-        <Route path='*' element={<Navigate to='/table'/>} />
+        <Route path='*' element={<Navigate to='/web'/>} />
     </Routes>
     )
 }

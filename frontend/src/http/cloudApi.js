@@ -1,4 +1,3 @@
-import { changeProgress } from '../store/fileReducer'
 import {$host} from './index'
 
 
@@ -14,19 +13,15 @@ export const createDir = async(nameDir, parentId)=>{
     return data
 }
 
-export const uploadFiles = async(file, parentFile, dispatch)=>{
+export const uploadFiles = async(file, parentFile, setProgress)=>{
     const formDate = new FormData()
     formDate.append('file', file)
     formDate.append('parent', parentFile)
-    const {data} = await $host.post('/api/file/upload', formDate, {
-        onUploadProgress: progressEvent => {
-            const totalLength = progressEvent.event.lengthComputable ? progressEvent.total : progressEvent.event.target.getResponseHeader('content-length') || progressEvent.event.target.getResponseHeader('x-decompressed-content-length');
-            //console.log('total', totalLength)
-            if (totalLength) {
-                let progress = Math.round((progressEvent.loaded * 100) / totalLength)
-                dispatch(changeProgress(progress))
-            }
-        }
+    const {data} = await $host.post('/api/file/upload', formDate,{
+        onUploadProgress: (progressEvent) => {
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setProgress(progress); // Вызываем коллбэк с текущим прогрессом
+          }
     })
     return data
 }
