@@ -105,8 +105,9 @@ const Web = () =>{
             const parentFile = await createDir(formatOne.format, MainDir.id);
 
             formatOne.files.forEach(async (file, index) => {
-              setCurrent(index);
+              
               await uploadFiles(file, parentFile.id, setProgress);
+              setCurrent(index);
             });
           });
     }
