@@ -160,26 +160,35 @@ const Web = () =>{
 
                   <Modal show={showModal} onHide={() => setShowModal(false)} centered>
                     <Modal.Header closeButton>
-                    <Modal.Title>Оформление заказа...</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                    <h6>
-                        Загружено фото: {current + 1} из {amountPhoto}
-                    </h6>
-                    <ProgressBar now={progress} label={`${progress}%`} />
+                    {current===amountPhoto ? 
+                    <>
+                        <Modal.Title>Идет оформление заказа...</Modal.Title>
+                        <Modal.Body>
+                        <h6>
+                            Загружено фото: {current} из {amountPhoto}
+                        </h6>
+                        <ProgressBar now={progress} label={`${progress}%`} />
+                        <h6>Не закрывайте и не обновляйте страницу до окончания загрузки!</h6>
+                        </Modal.Body>
+                    </>
+                    :
+                    <>
+                    <Modal.Title>Заказ принят!</Modal.Title>
+                        <Modal.Body>
 
-                    {current+1===amountPhoto ? 
-                    <Row>
-                        <Col className="mt-3">
-                            <h5 style={{color: 'green'}}>Заказ отправлен!</h5>
-                        </Col>
-                        <Col className="d-flex justify-content-end mt-3">
-                        <Button variant="success" onClick={()=>setShowModal(false)}>закрыть</Button>
-                        </Col>
-                    </Row>
+                        <Row>
+                            <Col className="mt-3">
+                                <h5 style={{color: 'green'}}>Загружено {amountPhoto} фото.</h5>
+                            </Col>
+                            <Col className="d-flex justify-content-end mt-3">
+                            <Button variant="success" onClick={()=>setShowModal(false)}>закрыть</Button>
+                            </Col>
+                        </Row>
+                        </Modal.Body>
+                    </> }
                     
-                    : null}
-                    </Modal.Body>
+                    </Modal.Header>
+                    
                 </Modal>
             
 
