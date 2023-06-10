@@ -1,4 +1,4 @@
-import Print from "./pages/Print"
+//import Print from "./pages/Print"
 import Setting from "./pages/Setting"
 import Statistic from "./pages/Statistic"
 import Table from "./pages/Table"
@@ -11,14 +11,6 @@ export const privateRoutes = [
     {
         path: '/table',
         Component: Table
-    },
-    {
-        path: '/web',
-        Component: Web
-    },
-    {
-        path: '/print',
-        Component: Print
     },
     {
         path: '/usersDB',
@@ -39,12 +31,16 @@ export const privateRoutes = [
     {
         path: '/Cloud',
         Component: Cloud
-    }
+    },
+    {
+        path: '/web',
+        Component: Web
+    },
 ]
 
 export const routes = [
     {
-        path: '/table',
-        Component: Table
+        path: '/web',
+        Component: Web
     }
 ]

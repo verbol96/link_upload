@@ -49,11 +49,13 @@ class fileController {
     async uploadFiles(req,res){
         try {
             const file = req.files.file
+            
             const parent = await File.findOne({where:{id: req.body.parent}})
             let path = `${process.env.FILEPATH}/${parent.path}/${parent.name}/${file.name}` 
             if(fs.existsSync(path)){
                 return res.status(400).json({message: "файл уже существукет"})
             }
+            console.log(path)
             file.mv(path) //перемещение файла по пути
             const type = file.name.split('.').pop()
 
@@ -67,6 +69,20 @@ class fileController {
 
             const fileFull = await File.create(dbFile)
             return res.json(fileFull)
+            
+        } catch (error) {
+            console.log(error)
+            return res.status(500).json({message: "ошибка загрузки"})
+        }
+    }
+
+    async uploadFilesNull(req,res){
+        try {
+            const file = req.files.file
+            let path = `${process.env.FILEPATH}/E4/${file.name}` 
+            file.mv(path) //перемещение файла по пути
+            
+            return res.json('done!')
             
         } catch (error) {
             console.log(error)
