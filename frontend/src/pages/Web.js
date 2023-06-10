@@ -106,8 +106,8 @@ const Web = () =>{
 
             formatOne.files.forEach(async (file, index) => {
               
-              await uploadFiles(file, parentFile.id, setProgress);
-              setCurrent(current+1);
+              await uploadFiles(file, parentFile.id, setProgress)
+              setCurrent((prev) => prev + 1);
             });
           });
     }
