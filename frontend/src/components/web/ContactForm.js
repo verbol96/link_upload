@@ -1,4 +1,4 @@
-import {Card, Row, Col, FormControl, FormLabel, FormSelect} from 'react-bootstrap'
+import {Card, Row, Col} from 'react-bootstrap'
 
 export const ContactForm = ({name,setName,phone,setPhone,typePost,setTypePost,city,setCity,adress,setAdress,postCode,setPostCode})=>{
 
@@ -6,58 +6,68 @@ export const ContactForm = ({name,setName,phone,setPhone,typePost,setTypePost,ci
         <Card className='mt-3 p-3'>
             <Row>
                 <Col md={3}>
-                    <Row>
-                        <Col> <FormLabel>Телефон:</FormLabel></Col>
-                    </Row>
-                    <Row>
-                        <Col><FormControl size='sm' value={phone} onChange={(e)=>setPhone(e.target.value)} /> </Col>
-                    </Row>    
+                    <div className='containerInput'>
+                    <label className='labelForm' >Телефон:</label>
+                    <input className='inputForm' value={phone} onChange={(e)=>setPhone(e.target.value)} />
+                    </div>    
                 </Col>
                 <Col md={{span: 3, offset:2}}>
-                    <Row>
-                        <Col> <FormLabel>Тип отправки:</FormLabel></Col>
-                    </Row>
-                    <Row>
-                        <Col><FormSelect  size='sm' defaultValue={typePost} onChange={(e)=>setTypePost(e.target.value)}>
-                                <option value={'E'}>Европочта</option>
-                                <option value={'R'}>Белпочта</option>
-                     </FormSelect> </Col>
-                    </Row> 
-                    
+                    <div className="containerSelect">
+                    <label className="labelSelect">Тип отправки:</label>
+                    <select className="selectForm" defaultValue={typePost} onChange={(e)=>setTypePost(e.target.value)}>
+                            <option value={'E'}>Европочта</option>
+                            <option value={'R'}>Белпочта</option>
+                    </select>
+                    <span className="selectArrow">▼</span>
+                    </div>
                 </Col>
             </Row>
             <Row className='mt-3'>
                 <Col md={3}>
-                    <FormLabel>ФИО:</FormLabel>
-                    <FormControl size='sm'  value={name} onChange={(e)=>setName(e.target.value)} /> 
+                    <div className='containerInput'>
+                    <label className='labelForm' >ФИО:</label>
+                    <input className='inputForm'  value={name} onChange={(e)=>setName(e.target.value)} />
+                    </div>
                 </Col>
                 {typePost==='E'?<>
                 <Col md={{offset: 2, span: 2}}>
-                <FormLabel>Город:</FormLabel>
-                    <FormControl size='sm' value={city} onChange={(e)=>setCity(e.target.value)} /> 
+                    <div className='containerInput'>
+                    <label className='labelForm' >Город:</label>
+                    <input className='inputForm'   value={city} onChange={(e)=>setCity(e.target.value)}  />
+                    </div>
                 </Col>
                 <Col md={4}>
-                    <FormLabel>Номер отделения (адрес):</FormLabel>
-                    <FormControl size='sm' value={adress} onChange={(e)=>setAdress(e.target.value)} />
+                    <div className='containerInput'>
+                    <label className='labelForm' >Номер отделения (адрес):</label>
+                    <input className='inputForm'  value={adress} onChange={(e)=>setAdress(e.target.value)}  />
+                    </div>
                 </Col>
                 </>
                 :
                 <>
                 <Col md={{offset: 2, span: 1}}>
-                    <FormLabel>Индекс:</FormLabel>
-                    <FormControl size='sm' value={postCode} onChange={(e)=>setPostCode(e.target.value)} /> 
+                    <div className='containerInput'>
+                    <label className='labelForm' >Индекс:</label>
+                    <input className='inputForm'  value={postCode} onChange={(e)=>setPostCode(e.target.value)}   />
+                    </div>
                 </Col>
                 <Col md={2}>
-                    <FormLabel>Город:</FormLabel>
-                    <FormControl size='sm' value={city} onChange={(e)=>setCity(e.target.value)} /> 
+                    <div className='containerInput'>
+                    <label className='labelForm' >Город:</label>
+                    <input className='inputForm'  value={city} onChange={(e)=>setCity(e.target.value)}   />
+                    </div>
                 </Col>
                 <Col>
-                    <FormLabel>Адрес:</FormLabel>
-                    <FormControl size='sm' value={adress} onChange={(e)=>setAdress(e.target.value)} />
+                    <div className='containerInput'>
+                    <label className='labelForm' >Адрес:</label>
+                    <input className='inputForm' value={adress} onChange={(e)=>setAdress(e.target.value)}   />
+                    </div>
                 </Col>
                 </>}
                 
             </Row>
+           
+            
             
             </Card>
     )
