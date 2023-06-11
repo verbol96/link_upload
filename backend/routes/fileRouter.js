@@ -3,10 +3,10 @@ const router = new Router()
 const fileController = require('../controllers/fileController')
 const authMiddleware = require('../middleware/authMiddlware')
 
-router.post('', authMiddleware, fileController.createDir)
-router.post('/upload', authMiddleware, fileController.uploadFiles)
-router.get('', authMiddleware, fileController.getFiles)
-router.delete('', authMiddleware, fileController.deleteFile)
-router.get('/download', authMiddleware, fileController.downloadFile)
+router.post('', fileController.createDir)
+router.post('/upload', fileController.uploadFiles)
+router.get('', fileController.getFiles)
+router.delete('', fileController.deleteFile)
+router.get('/download', fileController.downloadFile)
  
 module.exports = router

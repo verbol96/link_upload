@@ -43,23 +43,41 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
         const arr = Array.from(e.target.files)
         setFormats([...formats.slice(0,index), {...formats[index], files: formats[index].files.concat(arr)}, ...formats.slice(index+1)])
 
-        arr.forEach(el=>{  
-            const reader = new FileReader()
-            reader.onload = (ev) =>{
-                setFilesPrev((prev)=>{
-                return [
-                    ...prev,{
-                    id: uuidv4(),
-                    imageUrl: reader.result,
-                    name: el.name,
-                    FilesInput
-                    }
-                ]
-                })
+        const readAsDataURL = (file) => {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              
+              reader.onload = (ev) => {
+                resolve({
+                  id: uuidv4(),
+                  imageUrl: reader.result,
+                  name: file.name,
+                  FilesInput,
+                });
+              };
+              
+              reader.onerror = (error) => {
+                reject(error);
+              };
+              
+              reader.readAsDataURL(file);
+            });
+          };
+          
+          const loadPreviews = async (files) => {
+            for (const file of files) {
+              try {
+                const preview = await readAsDataURL(file);
+                setFilesPrev((prev) => [...prev, preview]);
+              } catch (error) {
+                console.error('Ошибка чтения файла:', error);
+              }
             }
-            reader.readAsDataURL(el)
-        }) 
+          };
+          
+          loadPreviews(arr);
     }
+
 
     const deleteImg = (image) =>{
         setFormats([...formats.slice(0,index), {...formats[index], files: formats[index].files.filter(el=>el.name!==image.name)}, ...formats.slice(index+1)])
