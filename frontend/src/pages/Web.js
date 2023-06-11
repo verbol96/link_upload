@@ -184,10 +184,7 @@ const Web = () =>{
                     </Modal.Header>
                     
                     <Modal.Body>
-                        <h6>
-                            Загружено фото: {current} из {amountPhoto}
-                        </h6>
-                        <ProgressBar now={progress} label={`${progress}%`} />
+                        <ProgressBar animated now={100} label={`Загружено фото: ${current} из ${amountPhoto}`} />
                         <h6>Не закрывайте и не обновляйте страницу до окончания загрузки!</h6>
                     </Modal.Body>
                     
