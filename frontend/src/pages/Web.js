@@ -116,11 +116,11 @@ const Web = () =>{
         <div>
             <NavBar />
 
-            <Row className="justify-content-center mt-3">
-                <Col md={2}><h2>Форма заказа</h2></Col>
-            </Row>
                 <Row className="justify-content-center mt-3">
                     <Col md={10}>
+                        <Row className="justify-content-start mt-3">
+                            <Col><h2>Форма для заказа:</h2></Col>
+                        </Row>
                         <ContactForm 
                             name={name} setName={setName}
                             phone={phone} setPhone={setPhone}

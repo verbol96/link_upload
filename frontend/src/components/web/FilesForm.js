@@ -87,7 +87,7 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
     }
 
     return(
-        <Card className="p-3 mt-3" style={{backgroundColor: 'rgb(237, 237, 237)'}}>
+        <Card className="p-3 mt-3" style={{backgroundColor: 'rgb(247, 247, 247)'}}>
             <Row>
                 <Col md={2}>
                     <label className='upload_label' htmlFor={index}>загрузить файл</label>

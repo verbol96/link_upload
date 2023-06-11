@@ -52,3 +52,89 @@
     border: none;
     color: rgb(255, 113, 113);
   }
+
+  @media (max-width: 576px) {
+    .cardFile {
+        width: calc(100% / 3 - 20px);
+    }
+  }
+
+
+  
+
+
+  .containerInput {
+    position: relative;
+    margin-top: 10px;
+  }
+  
+  .labelForm {
+    position: absolute;
+    font-size: 0.8rem;
+    color: #005e4c;
+    top: 0;
+    left: 0;
+    padding: 0 5px;
+    background-color: transparent; /* Цвет фона должен быть таким же как у фона родителя или инпута */
+    transform: translateY(-50%);
+  }
+  
+  .inputForm {
+    font-size: 1rem;
+    padding: 0.5rem 0.5rem;
+    border: none;
+    text-align: center;
+    border-bottom: 1.5px solid #005e4c;
+    width: 100%;
+    background: rgb(252, 252, 252);
+    outline: none;
+    transition: border-color 1s;
+  }
+
+  .inputForm:focus {
+    border-bottom: 3px solid #005e4c;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  }
+
+
+  .containerSelect {
+    position: relative;
+    margin-top: 10px;
+  }
+  
+  .labelSelect {
+    position: absolute;
+    font-size: 0.8rem;
+    color: #005e4c;
+    top: 0;
+    left: 0;
+    padding: 0 5px;
+    background-color: transparent;
+    transform: translateY(-50%);
+  }
+  
+  .selectForm {
+    font-size: 1rem;
+    padding: 0.5rem 0.5rem;
+    border: none;
+    text-align: center;
+    border-bottom: 1.5px solid #005e4c;
+    width: 100%;
+    background: rgb(252, 252, 252);
+    outline: none;
+    transition: border-color 1s;
+    appearance: none; /* Убирает стандартный стиль select */
+  }
+  
+  .selectForm:focus {
+    border-bottom: 3px solid #005e4c;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  }
+  
+  .selectArrow {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    pointer-events: none; /* Убирает взаимодействие с указателем мыши */
+    transform: translateY(-50%);
+  }
