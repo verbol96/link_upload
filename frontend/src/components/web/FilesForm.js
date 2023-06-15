@@ -86,52 +86,61 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
         })
     }
 
+
     return(
-        <Card className="p-3 mt-3" style={{backgroundColor: 'rgb(247, 247, 247)'}}>
+        <Card className="p-3 mt-3" style={{border: "0.5px #705CF6 solid", backgroundColor:'inherit', boxShadow: '0px 5px 42px 3px rgba(57, 88, 112, 0.2)'}}>
             <Row>
                 <Col md={2}>
-                    <label className='upload_label' htmlFor={index}>загрузить файл</label>
-                    <input className='upload_input' id={index} type="file" multiple={true}  onChange={(e)=>FilesInput(e)}></input>
-                </Col>
-                <Col md={2}>
-                    <Stack direction="horizontal" gap={2}>
-                        <FormLabel>Тип:</FormLabel>
-                        <FormSelect size='sm' value={el.type} onChange={(e)=>ChangeType(e)}>
+                    <div className="containerSelect">
+                        <label className="labelSelect">Тип:</label>
+                        <select className="selectForm" value={el.type} onChange={(e)=>ChangeType(e)}>
                             {TypePhoto.map((el,index)=><option key={index}>{el}</option>)}
-                        </FormSelect>
-                    </Stack>
-                </Col>
-                <Col md={3}>
-                    <Stack direction="horizontal" gap={2}>
-                        <FormLabel>Размер:</FormLabel>
-                        <FormSelect size='sm' value={el.format} onChange={(e)=>ChangeSize(e)}>
+                        </select>
+                        <span className="selectArrow">▼</span>
+                    </div>
+                    <div className="containerSelect mt-4">
+                        <label className="labelSelect">Размер:</label>
+                        <select className="selectForm"  value={el.format} onChange={(e)=>ChangeSize(e)}>
                             {sizePhoto().map((el,index)=><option key={index}>{el}</option>)}
-                        </FormSelect>
-                    </Stack>
+                        </select>
+                        <span className="selectArrow">▼</span>
+                    </div>
+                    {el.type==='фотографии'
+                    ?
+                    <div className="containerSelect mt-4">
+                    <label className="labelSelect">Бумага:</label>
+                    <select className="selectForm"  value={el.paper} onChange={(e)=>ChangePaper(e)}>
+                        <option>Глянец</option>
+                        <option>Люстра</option>
+                    </select>
+                    <span className="selectArrow">▼</span>
+                    </div>
+                    :
+                    null
+                    }
+                    
                 </Col>
-                {el.type==='фотографии'?
-                <Col md={2}>
-                    <Stack direction="horizontal" gap={2}>
-                        <FormLabel>Бумага:</FormLabel>
-                        <FormSelect size='sm' value={el.paper} onChange={(e)=>ChangePaper(e)}>
-                            <option>Глянец</option>
-                            <option>Люстра</option>
-                        </FormSelect>
-                    </Stack>
+                <Col md={10}>
+                    <div  style={{display: 'flex', flexWrap: "wrap"}}>
+                        
+                        <Card className="cardFile" style={{border: '2.5px #2c1e87 dashed', color: '#2c1e87'}}>
+                            <label className='upload_label' htmlFor={index}>
+                                <div style={{fontSize: 30, textAlign: 'center'}}><i className="bi bi-plus" ></i></div>
+                                <div style={{textAlign: 'center'}}>добавить фото</div>
+                            </label>
+                            <input className='upload_input' id={index} type="file" multiple={true} onChange={(e)=>FilesInput(e)}></input>
+                        </Card>
+
+                        {filesPrev.map((el)=> <ImgCard image={el} key={el.id} deleteImg={deleteImg} /> )}
+                    </div>
                 </Col>
-                :
-                null
-                }
-                
-                <Col md={{offset: el.type==='фотографии'? 2 : 4}}>
-                    <Button size='sm' variant='light' onClick={()=>DeleteFormat(el)}>удалить</Button>
-                </Col>
-                
             </Row>
+            
             <Row>
-                <div  style={{display: 'flex', flexWrap: "wrap"}}>
-                    {filesPrev.map((el)=> <ImgCard image={el} key={el.id} deleteImg={deleteImg} /> )}
-                </div>
+                <Col md={2}>
+                    <button className="buttonForm buttonForm2" onClick={()=>DeleteFormat(el)}>удалить формат</button>
+                </Col>
+                <Col className='mt-3'><h5 className='textH5'>Добавлено {formats[index].files.length} фото {el.format}</h5></Col>
             </Row>
         </Card>
     )
