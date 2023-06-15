@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { NavBar } from "../components/admin/NavBar"
-import {Row, Col, Button, FormCheck, Card, ProgressBar, Modal} from 'react-bootstrap'
+import {Row, Col, Button, ProgressBar, Modal, Tooltip, OverlayTrigger} from 'react-bootstrap'
 import { uploadFiles } from "../http/cloudApi"
 import { ContactForm } from "../components/web/ContactForm"
 import { OtherForm } from "../components/web/OtherForm"
@@ -9,7 +9,6 @@ import { v4 as uuidv4 } from 'uuid'
 import {nanoid} from 'nanoid'
 import { SendToDB } from "../http/tableApi"
 import { createDir } from "../http/cloudApi"
-//import { changeProgress } from "../store/fileReducer"
 
 const Web = () =>{
 
@@ -111,16 +110,45 @@ const Web = () =>{
             });
           });
     }
+
+    const renderTooltip = (props) => (
+        <Tooltip id="button-tooltip" {...props}>
+           Можно загружать разные форматы, для этого нажмите "+ другой формат"
+        </Tooltip>
+      );
   
     return (
-        <div>
-            <NavBar />
+        <div style={{background: '#A5B4C2'}}>
 
-                <Row className="justify-content-center mt-3">
+            {/*<NavBar />*/}
+
+                <Row className="justify-content-center">
                     <Col md={10}>
                         <Row className="justify-content-start mt-3">
-                            <Col><h2>Форма для заказа:</h2></Col>
+                            <Col><h1 className="textH4 textH1">Форма для заказа:</h1></Col>
                         </Row>
+                        
+
+                        <div className='filesForm'>
+                        <Row><h4 className='textH4'><i className="bi bi-1-square" style={{color: 'black', marginRight: 10}}></i> Загрузка фото 
+                        <OverlayTrigger
+                        placement="right"
+                        delay={{ show: 250, hide: 400 }}
+                        overlay={renderTooltip}
+                        >
+                        <i className="bi bi-question-circle icon-question-circle"></i>
+                        </OverlayTrigger> </h4></Row>
+                        
+                            {formats.map((el,index)=><FilesForm key={el.id} index={index} el={el} DeleteFormat={DeleteFormat}
+                                                        formats={formats} setFormats={setFormats} />)}
+                            <Row>
+                                <Col md={2} className='mt-4'>
+                                    <button className="buttonForm buttonForm1" onClick={()=>AddFormat()}>+ другой формат</button>
+                                </Col>
+                            </Row>
+                        </div>   
+                        {/*<FileUpload />*/}
+
                         <ContactForm 
                             name={name} setName={setName}
                             phone={phone} setPhone={setPhone}
@@ -129,29 +157,16 @@ const Web = () =>{
                             adress={adress} setAdress={setAdress}
                             postCode={postCode} setPostCode={setPostCode}
                             />
-
-                        <Card className='p-3 mt-3'>
-                            {formats.map((el,index)=><FilesForm key={el.id} index={index} el={el} DeleteFormat={DeleteFormat}
-                                                        formats={formats} setFormats={setFormats} />)}
-                            <Row>
-                                <Col md={2} className='mt-4'>
-                                    <Button variant='success' onClick={()=>AddFormat()}>+ другой формат</Button>
-                                </Col>
-                            </Row>
-                        </Card>   
-                        {/*<FileUpload />*/}
                         
                         <OtherForm other={other} setOther={setOther} 
                             typeAnswer={typeAnswer} setTypeAnswer={setTypeAnswer}
                             nikname={nikname} setNikname={setNikname} />
 
-                        <Row className="m-5">
-                            <Col md={1}> <FormCheck /></Col>
-                            <Col md={6}>
-                                <p style={{fontSize: 12}}>подтверждаю, что ознакомлен с правилами заказа и данные указаны верно</p>
-                            </Col>
-                            <Col md={{span: 2, offset: 3}}>
-                                <Button variant="success" onClick={()=>upload()}>Оформить заказ!</Button>
+                        <Row className="m-5 ">
+                            
+                            <Col className="d-flex justify-content-center">
+                                <button className="buttonForm" onClick={()=>upload()}>
+                                    <i className="bi bi-cart3" style={{marginRight: 10}}></i> Отправить заказ!</button>
                             </Col>
                         </Row>
                         
@@ -159,7 +174,6 @@ const Web = () =>{
                 </Row>
 
                   <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-                   
                     {current===amountPhoto ? 
                     <>
                     <Modal.Header closeButton>
@@ -188,10 +202,7 @@ const Web = () =>{
                         <h6>Не закрывайте и не обновляйте страницу до окончания загрузки!</h6>
                     </Modal.Body>
                     
-                    </> }
-                    
-                    
-                    
+                    </> }   
                 </Modal>
             
 

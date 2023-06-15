@@ -3,6 +3,7 @@ import { LeftMenu } from './LeftMenu'
 import {useDispatch, useSelector} from 'react-redux'
 import {useState, useEffect} from 'react'
 import { login, logout, refresh } from '../../http/authApi'
+import './style.css'
 
 export const NavBar = () =>{
     const dispach = useDispatch()
@@ -31,17 +32,20 @@ export const NavBar = () =>{
     }
 
     return (
-        <div style={{ backgroundColor: 'DarkSlateGrey', minHeight: 50, width: '103%'}}>
+        <div style={{ 
+            backgroundColor: 'DarkSlateGrey', minHeight: 50, width: '97%',
+            margin: 15, borderRadius: 10
+            }}>
             <LeftMenu />
             
                 
                 {isAuth?<Row>
-                    <Col md={1}>
+                    <Col md={{span: 1, offset: 1}}>
                         <Button variant='dark' className='mt-2' style={{marginLeft: '5%', color: 'black', backgroundColor: 'DarkSlateGrey'}} size='sm' onClick={()=>dispach({type:'showLeftMenu'})}>
                             <i className="bi bi-list"></i>
                         </Button>
                     </Col>
-                    <Col  md={{span: 1, offset: 9}}  >
+                    <Col  md={{span: 1, offset: 8}}  >
                         <Button size='sm' variant='dark' className='mt-2' onClick={()=>Logout()}>выйти</Button>
                     </Col>
                    </Row>

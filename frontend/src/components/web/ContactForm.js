@@ -1,9 +1,23 @@
-import {Card, Row, Col} from 'react-bootstrap'
+import {Row, Col, Tooltip, OverlayTrigger} from 'react-bootstrap'
 
 export const ContactForm = ({name,setName,phone,setPhone,typePost,setTypePost,city,setCity,adress,setAdress,postCode,setPostCode})=>{
 
+    const renderTooltip = (props) => (
+        <Tooltip id="button-tooltip" {...props}>
+           Именно эти данные мы указываем на посылке
+        </Tooltip>
+      );
+
     return(
-        <Card className='mt-3 p-3'>
+        <div className='contactForm'>
+            <Row><h4 className='textH4'><i className="bi bi-2-square" style={{color: 'black', marginRight: 10}}></i> Данные для отправки 
+            <OverlayTrigger
+            placement="right"
+            delay={{ show: 250, hide: 400 }}
+            overlay={renderTooltip}
+            >
+            <i className="bi bi-question-circle icon-question-circle" ></i>
+            </OverlayTrigger> </h4></Row>
             <Row>
                 <Col md={3}>
                     <div className='containerInput'>
@@ -69,6 +83,6 @@ export const ContactForm = ({name,setName,phone,setPhone,typePost,setTypePost,ci
            
             
             
-            </Card>
+            </div>
     )
 }
