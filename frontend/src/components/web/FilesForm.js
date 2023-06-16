@@ -4,6 +4,7 @@ import {useState} from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import './style.css'
 import { useSelector } from 'react-redux'
+import pica from 'pica';
 
 export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
     //console.log(el)
@@ -39,44 +40,79 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
 
     const [filesPrev, setFilesPrev] = useState([])
 
-    const FilesInput = (e) =>{
-        const arr = Array.from(e.target.files)
-        setFormats([...formats.slice(0,index), {...formats[index], files: formats[index].files.concat(arr)}, ...formats.slice(index+1)])
-
-        const readAsDataURL = (file) => {
-            return new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              
-              reader.onload = (ev) => {
-                resolve({
-                  id: uuidv4(),
-                  imageUrl: reader.result,
-                  name: file.name,
-                  FilesInput,
-                });
-              };
-              
-              reader.onerror = (error) => {
-                reject(error);
-              };
-              
-              reader.readAsDataURL(file);
-            });
-          };
-          
-          const loadPreviews = async (files) => {
-            for (const file of files) {
-              try {
-                const preview = await readAsDataURL(file);
-                setFilesPrev((prev) => [...prev, preview]);
-              } catch (error) {
-                console.error('Ошибка чтения файла:', error);
-              }
+    const FilesInput = (e) => {
+        const arr = Array.from(e.target.files);
+        setFormats([
+          ...formats.slice(0, index),
+          { ...formats[index], files: formats[index].files.concat(arr) },
+          ...formats.slice(index + 1),
+        ]);
+      
+        const compressImage = async (file, maxWidth = 800, maxHeight = 800) => {
+          const img = new Image();
+          img.src = URL.createObjectURL(file);
+      
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const picaInstance = pica();
+      
+          return new Promise((resolve, reject) => {
+            img.onload = async () => {
+              const scaleFactor = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+              canvas.width = img.width * scaleFactor;
+              canvas.height = img.height * scaleFactor;
+      
+              await picaInstance.resize(img, canvas, {
+                unsharpAmount: 80,
+                unsharpRadius: 0.6,
+                unsharpThreshold: 2,
+              });
+      
+              ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height);
+              canvas.toBlob(resolve, file.type, 0.8);
+            };
+      
+            img.onerror = (error) => {
+              reject(error);
+            };
+          });
+        };
+      
+        const readAsDataURL = async (file) => {
+          const compressedBlob = await compressImage(file);
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+      
+            reader.onload = (ev) => {
+              resolve({
+                id: uuidv4(),
+                imageUrl: reader.result,
+                name: file.name,
+                FilesInput,
+              });
+            };
+      
+            reader.onerror = (error) => {
+              reject(error);
+            };
+      
+            reader.readAsDataURL(compressedBlob);
+          });
+        };
+      
+        const loadPreviews = async (files) => {
+          for (const file of files) {
+            try {
+              const preview = await readAsDataURL(file);
+              setFilesPrev((prev) => [...prev, preview]);
+            } catch (error) {
+              console.error('Ошибка чтения файла:', error);
             }
-          };
-          
-          loadPreviews(arr);
-    }
+          }
+        };
+      
+        loadPreviews(arr);
+      };
 
 
     const deleteImg = (image) =>{
@@ -88,7 +124,7 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
 
 
     return(
-        <Card className="p-3 mt-3" style={{border: "0.5px #705CF6 solid", backgroundColor:'inherit', boxShadow: '0px 5px 42px 3px rgba(57, 88, 112, 0.2)'}}>
+        <Card className="p-3 mt-3" style={{border: "0.5px #0E3C47 solid", backgroundColor:'inherit', boxShadow: '0px 2px 42px 3px rgba(57, 88, 112, 0.2)'}}>
             <Row>
                 <Col md={2}>
                     <div className="containerSelect">
@@ -123,7 +159,7 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
                 <Col md={10}>
                     <div  style={{display: 'flex', flexWrap: "wrap"}}>
                         
-                        <Card className="cardFile" style={{border: '2.5px #2c1e87 dashed', color: '#2c1e87'}}>
+                        <Card className="cardFile" style={{border: '2.5px #0E3C47 dashed', color: '#0E3C47'}}>
                             <label className='upload_label' htmlFor={index}>
                                 <div style={{fontSize: 30, textAlign: 'center'}}><i className="bi bi-plus" ></i></div>
                                 <div style={{textAlign: 'center'}}>добавить фото</div>
