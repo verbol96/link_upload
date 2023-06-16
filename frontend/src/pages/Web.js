@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid'
 import {nanoid} from 'nanoid'
 import { SendToDB } from "../http/tableApi"
 import { createDir } from "../http/cloudApi"
+import { NavBarForm } from "../components/web/NavBarForm"
 
 const Web = () =>{
 
@@ -118,17 +119,16 @@ const Web = () =>{
       );
   
     return (
-        <div style={{background: '#A5B4C2'}}>
+        <div style={{background: 'linear-gradient(45deg, rgb(109, 146, 143), rgb(190, 195, 149))'}}>
 
             {/*<NavBar />*/}
+                
 
                 <Row className="justify-content-center">
                     <Col md={10}>
-                        <Row className="justify-content-start mt-3">
-                            <Col><h1 className="textH4 textH1">Форма для заказа:</h1></Col>
-                        </Row>
                         
-
+                        <NavBarForm />
+                        
                         <div className='filesForm'>
                         <Row><h4 className='textH4'><i className="bi bi-1-square" style={{color: 'black', marginRight: 10}}></i> Загрузка фото 
                         <OverlayTrigger
@@ -162,7 +162,7 @@ const Web = () =>{
                             typeAnswer={typeAnswer} setTypeAnswer={setTypeAnswer}
                             nikname={nikname} setNikname={setNikname} />
 
-                        <Row className="m-5 ">
+                        <Row className="mt-4 mb-5 ">
                             
                             <Col className="d-flex justify-content-center">
                                 <button className="buttonForm" onClick={()=>upload()}>
