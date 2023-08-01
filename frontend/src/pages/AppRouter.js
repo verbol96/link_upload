@@ -1,37 +1,47 @@
-import {Routes, Route, Navigate} from 'react-router-dom'
 import { routes, privateRoutes } from '../routes'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import {refresh} from '../http/authApi'
+import {refresh, whoAmI} from '../http/authApi'
+import { setUser } from '../store/privatePageReducer'
+import { getOneUser } from '../http/dbApi'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
-const AppRouter = () =>{
-    const dispach = useDispatch()
+const AppRouter = () => {
+  const dispatch = useDispatch();
+  const location = useLocation()
 
-    useEffect(()=>{
-        if(localStorage.getItem('token')){
-            const data = refresh()
-              if (typeof data === 'object') dispach({type: 'authStatus', paylods: true})
+  useEffect(()=>{
+    if(localStorage.getItem('token')){
+        const data = refresh()
+          if (typeof data === 'object') dispatch({type: 'authStatus', paylods: true})
+
+          async function getUser (){
+            const user = await whoAmI()
+            let data = await getOneUser(user.phone)
+            dispatch(setUser(data))
           }
-    },[dispach])
+          getUser()
+    }
+    
+      
+     
+},[dispatch, location.pathname])
 
-    const isAuth = useSelector(state=>state.auth.auth)
 
-    return(
-        <Routes>
-        {isAuth ? 
-            privateRoutes.map(({path, Component})=>{
-                return <Route key={path} path={path} element={<Component />} exact/>}
-           )
-           :
-           routes.map(({path, Component})=>{
-            
-                return <Route key={path} path={path} element={<Component />} exact/>}
-            )
-        }
-
-        <Route path='*' element={<Navigate to='/web'/>} />
+const isAuth = useSelector(state=>state.auth.auth)
+  
+  return (
+    <Routes>
+      {isAuth
+        ? privateRoutes.map(({ path, Component }) => {
+            return <Route key={path} path={path} element={<Component />} />;
+          })
+        : routes.map(({ path, Component }) => {
+            return <Route key={path} path={path} element={<Component />} />;
+          })}
+      <Route path="*" element={<Navigate to="/web" />} />
     </Routes>
-    )
-}
+  );
+};
 
-export default AppRouter
+export default AppRouter;

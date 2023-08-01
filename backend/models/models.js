@@ -1,88 +1,83 @@
-const sequelize = require('../db')
-const {DataTypes} = require('sequelize')
+const sequelize = require('../db');
+const { DataTypes, UUIDV4 } = require('sequelize'); 
 
 const User = sequelize.define('user', {
-    id: {type: DataTypes.INTEGER, primaryKey: true,  autoIncrement: true},
-    phone: {type: DataTypes.STRING, unique: true},
-    name: {type: DataTypes.STRING},
-    nikname: {type: DataTypes.STRING},
-    
-    email: {type: DataTypes.STRING},
-    password: {type: DataTypes.STRING},
-    role: {type: DataTypes.STRING, defaultValue: "USER"}
-})
+  id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
+  phone: { type: DataTypes.STRING, unique: true },
+  FIO: { type: DataTypes.STRING },
+  password: { type: DataTypes.STRING },
+  role: { type: DataTypes.STRING, defaultValue: 'USER' },
 
-const Token = sequelize.define('token', {
-    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-    refreshToken:{type: DataTypes.STRING}
-})
-
-const Adress = sequelize.define('adress', {
-    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-    typePost: {type: DataTypes.STRING},
-    firstClass: {type: DataTypes.BOOLEAN, defaultValue: false},
-    postCode: {type: DataTypes.STRING},
-    city: {type: DataTypes.STRING},
-    adress: {type: DataTypes.STRING},
-    oblast: {type: DataTypes.STRING},
-    raion: {type: DataTypes.STRING},
-})
-
+  typePost: {type: DataTypes.STRING},
+  postCode: {type: DataTypes.STRING},
+  city: {type: DataTypes.STRING},
+  adress: {type: DataTypes.STRING},
+  oblast: {type: DataTypes.STRING},
+  raion: {type: DataTypes.STRING},
+});
 
 const Order = sequelize.define('order', {
-    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-    codeInside: {type: DataTypes.STRING},
-    codeOutside: {type: DataTypes.STRING },
-    price: {type: DataTypes.STRING},
-    other: {type: DataTypes.STRING }, 
-    status: {type: DataTypes.INTEGER}
+  id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
+  order_number: { type: DataTypes.INTEGER,autoIncrement: true},
+
+  codeOutside: {type: DataTypes.STRING },
+  price: {type: DataTypes.STRING},
+  other: {type: DataTypes.STRING }, 
+  notes: {type: DataTypes.STRING }, 
+  status: {type: DataTypes.INTEGER},
+
+  typePost: {type: DataTypes.STRING},
+  firstClass: {type: DataTypes.BOOLEAN, defaultValue: false},
+  postCode: {type: DataTypes.STRING},
+  city: {type: DataTypes.STRING},
+  adress: {type: DataTypes.STRING},
+  oblast: {type: DataTypes.STRING},
+  raion: {type: DataTypes.STRING},
+  FIO: {type: DataTypes.STRING},
+  phone: {type: DataTypes.STRING},
 })
 
+
+const Token = sequelize.define('token', {
+  id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
+  refreshToken:{type: DataTypes.STRING}
+})
+
+
 const Photo = sequelize.define('photo', {
-    id:{type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+    id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
     type: {type: DataTypes.STRING},
     format: {type: DataTypes.STRING},
     amount: {type: DataTypes.INTEGER},
     paper: {type: DataTypes.STRING}
 })
 
-const Status = sequelize.define('status', {
-    id:{type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-    step:{type: DataTypes.INTEGER}
-})
-
 const Settings = sequelize.define('settings', {
-    id:{type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+    id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
+    type:{type: DataTypes.STRING},
     title:{type: DataTypes.STRING},
-    value:{type: DataTypes.STRING},
+    price:{type: DataTypes.STRING},
 
 })
 
 const File = sequelize.define('file', {
-    id:{type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+    id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
     name:{type: DataTypes.STRING},
     type:{type: DataTypes.STRING},
     size:{type: DataTypes.INTEGER, defaultValue: 0},
     path:{type: DataTypes.STRING, defaultValue: ''},
-    parent:{type: DataTypes.INTEGER, defaultValue: 0} //file's ID outside
+    parent:{type: DataTypes.UUID}
 })
 
 User.hasMany(Order)
-User.hasMany(Adress)
-User.hasMany(File)
-
 Order.belongsTo(User)
-Order.belongsTo(Adress)
+
 Order.hasMany(Photo)
-Order.hasMany(Status)
-
-Adress.hasMany(Order)
 Photo.belongsTo(Order) 
-
-Status.belongsTo(Order) 
 
 Token.belongsTo(User)
 
-File.belongsTo(User)
+Photo.hasMany(File)
+File.belongsTo(Photo)
 
-module.exports = {User, Order, Adress, Photo, Status, Settings, Token, File}
+module.exports = {User, Order, Photo, Settings, Token, File}

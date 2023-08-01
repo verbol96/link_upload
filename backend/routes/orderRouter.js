@@ -8,6 +8,7 @@ router.put('/updateStatus/:id', orderController.updateStatus)
 router.put('/updateOrder/:id', orderController.updateOrder)
 router.delete('/deleteOrder/:id', orderController.deleteOrder)
 router.delete('/deleteUser/:id', orderController.deleteUser)
+router.post('/getOneUser', orderController.getOneUser)
 
 router.post('/setCopyDB',  orderController.setCopyDB)
 

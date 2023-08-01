@@ -3,7 +3,6 @@ import {Alert, FormSelect, Row, Col} from 'react-bootstrap'
 import {useEffect, useState} from 'react'
 import { getAll } from "../http/dbApi"
 import _ from 'lodash'
-import '../components/table/table.css'
 
 const Statistic = () =>{
     

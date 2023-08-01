@@ -1,156 +1,195 @@
 import {React, useEffect, useState} from 'react'
-import {Table, Row, Col} from 'react-bootstrap'
-import {useSelector, useDispatch} from 'react-redux'
-import { TableRow } from './TableRow'
-import { FormAdd } from './FormAdd'
-import { TableMenu } from './TableMenu'
+import {useDispatch, useSelector} from 'react-redux'
 import _ from 'lodash'
 import {$host} from '../../http/index'
+import { TableRow } from './TableRow'
+import './TableFull.css'
+import { addOrder, saveOrders, saveSettings, saveUsers } from '../../store/orderReducer'
 
 
-export const TableFull = () =>{
+export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, handleDetailsClick}) =>{
 
+    
     const dispach = useDispatch()
-    const [isFormAdd, setIsFormAdd] = useState(false)
-    const [selectPost, setSelectPost] = useState("All")
-    const [inputSearch, setInputSearch] = useState('')
-    const [filterCheck, setFilterCheck] = useState([1,2,3,4])
-
-    const loading =(res)=>{
-        dispach({type: "saveOrder", payload: _.orderBy(_.orderBy(res.data.order, 'id', 'desc' ), 'status', 'asc' )})
-        dispach({type: "saveUser", payload: res.data.user})
-        dispach({type: "savePhoto", payload: res.data.photo})
-        dispach({type: "saveAdress", payload: res.data.adress})
-    }
-
+     
+     const orders =_.orderBy(_.orderBy(useSelector(state => state.order.order), 'order_number', 'desc' ), 'status', 'asc' )
+ 
     useEffect(()=>{
-
         $host.get('api/order/getAll').then(
             res=> {
-                dispach({type: "saveOrder", payload: _.orderBy(_.orderBy(res.data.order, 'id', 'desc' ), 'status', 'asc' )})
-                dispach({type: "saveUser", payload: res.data.user})
-                dispach({type: "savePhoto", payload: res.data.photo})
-                dispach({type: "saveAdress", payload: res.data.adress})
+                dispach(saveOrders(res.data.orders))
+                dispach(saveSettings(res.data.settings))
+                dispach(saveUsers(res.data.users))
             }
-        )
-        
-    },[isFormAdd, dispach])
+        )  
+    },[dispach])
 
-    const orderFull = useSelector(state=>state.order.order)
-    const user = useSelector(state=>state.order.user)
-    const photo = useSelector(state=>state.order.photo)
-    const adress = useSelector(state=>state.order.adress)
-    const editRow = useSelector(state=>state.order.editRow)
 
+    const [searchQuery, setSearchQuery] = useState(''); // для поиска
+    const [selectedType, setSelectedType] = useState('All'); /// для белпочта/европочта
+    const handleSearchChange = (e) => {
+      setSearchQuery(e.target.value);
+    };
     
-    const OrderList = () =>{
+    const handleSelectChange = (e) => {
+      setSelectedType(e.target.value);
+    };
 
-        //фильтор по чекбоксу
-        let order = orderFull.filter(s=>filterCheck.includes(Number(s.status)))
-        //фильтор по поиску
-        order = order.filter(el=>{
-            const user1 = user.filter(step=>step.id=== el.userId)[0]
-            const adress1 = adress.filter(step=>step.id=== el.adressId)[0]
-            const str = adress1.city.toString()+user1.nikname.toString()+user1.phone.toString()
-            return str.toLowerCase().includes(inputSearch.toLowerCase() )
-        })
-        //фильтор по типу почты
-        switch(selectPost){
-            case 'E': return order.filter(el=>{
-                const adress1 = adress.filter(step=>step.id=== el.adressId)[0]
-                if(adress1.typePost==="E"){
-                    return true
-                    } else return false
-            })
-            case 'R': return order.filter(el=>{
-                const adress1 = adress.filter(step=>step.id=== el.adressId)[0]
-                if(adress1.typePost==="R"){
-                    return true
-                    } else return false
-            })
-            default: {
-                return order
-            }
-            
+    const AddNewOrder = async() =>{
+      const userConfirmation = window.confirm("Добавить новый заказ?");
+
+      const getRandomPhoneNumber = () => {
+        const getRandomInt = (min, max) => {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
         }
-        
-    }
     
-    const SumPrice = () =>{
-        const pr =  OrderList().reduce((sum,el)=>{
-            return sum+Number(el.price)
-        },0)
-       
-        return pr
-    }
-    const SumFormat = () =>{
-        const pr =  OrderList().reduce((sum,el)=>{
-            const photo1=photo.filter(step=>step.orderId === el.id)
-            return sum+ 
-                photo1.reduce((sum1,el1)=>{
-                return sum1+Number(el1.amount)
-                },0)
-            
-        },0)
-       
-        return pr
-
-    }
-    const [indexR, setIndexR] = useState(0) //для прокрутки модального окна
-    const nextShow = (k) =>{
-
-        let i =0
-        OrderList().forEach((el, index)=>{
-            if(editRow.id ===el.id){
-                setIndexR(index)
-                return i=index
-            } 
-            }
-        )
-        
-        const next = OrderList().filter((el,index)=>(index+k) ===i)[0]
-        if (typeof next !== "undefined" && next !== null){
-            dispach({type: "editRow", payload: next})
-            setIsFormAdd(false)
-            setTimeout(()=>setIsFormAdd(true), 100)
+        let phoneNumber = "+37500";
+        for (let i = 0; i < 3; i++) {
+            phoneNumber += getRandomInt(0, 9);
         }
+        phoneNumber +="0000";
+        return phoneNumber;
     }
     
+      if (userConfirmation) {
+        const data = {
+          name: '',
+          phone: getRandomPhoneNumber(),
+          typePost: 'E',
+          city: '',
+          adress: '',
+          oblast: '',
+          raion: '',
+          postCode: '',
+          photo: [],
+          other: '',
+          price: '',
+          firstClass: false,
+        };
+  
+      const response = await $host.post('api/order/addOrder', data)
+      dispach(addOrder(response.data))
+      }
+    }
+
+    const [statusFilterVisible, setStatusFilterVisible] = useState(false);
+
+    const handleStatusFilterMouseEnter = () => {
+      setStatusFilterVisible(true);
+    };
+    
+    const handleStatusFilterMouseLeave = () => {
+      setStatusFilterVisible(false);
+    };
+
+    const [filterCheck, setFilterCheck] = useState([1,2,3,4])
+    const Check = (e, id) =>{
+      if(e){
+          setFilterCheck(filterCheck.concat(id))
+      }else{
+          setFilterCheck(
+              filterCheck.filter(el=>!id.includes(el))
+          )
+      }
+
+  }
+    
+
+    const filteredOrders = orders
+      .filter((order) => {
+        if (selectedType === order.typePost) {
+          return true;
+        }
+        if (selectedType === 'All') {
+          return true;
+        }
+
+        return order.typePost === selectedType;
+      })
+      .filter((order) => {
+        const data = order.FIO+
+                     order.adress+
+                     order.city+
+                     order.phone+
+                     order.postCode+
+                     order.codeOutside+
+                     order.other+
+                     order.price+
+                     order.name+
+                     order.phone
+        return data.toLowerCase().includes(searchQuery.toLowerCase());
+      })
+      .filter(s=>filterCheck.includes(Number(s.status)));
     return(
         <>
-        <TableMenu setIsFormAdd={setIsFormAdd} selectPost= {selectPost} setSelectPost={setSelectPost} editRow={editRow}
-        inputSearch={inputSearch} setInputSearch={setInputSearch} filterCheck={filterCheck} setFilterCheck={setFilterCheck} />
-        <Row className='justify-content-center' style={{backgroundColor: "rgb(232, 232, 232)", minHeight: 1000, width: '103%', overflow: 'hidden'}}>
-        <Col md={10} xs={12} style={{paddingRight: 0}} >
-        <Table responsive size='sm' className='mt-4' bordered hover  style={{backgroundColor:"white", width: '100%'}} >
             
-            <tfoot style={{backgroundColor:"Silver"}}>
-            <tr>
-                <td></td>
-                <td></td>
-                <td style={{fontSize: 11}}>K={OrderList().length}</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td style={{fontSize: 11}}>N={SumFormat()}шт</td>
-                <td></td>
-                <td style={{ textAlign:'right', fontFamily: "Geneva", fontSize:10}}>S={SumPrice().toFixed(2)}</td>
-                <td></td>
-            </tr>
-            </tfoot>
-            <tbody>
-                {OrderList().map((el,index)=><TableRow key={index} el={el} user={user.filter(step=>step.id === el.userId)[0]} 
-                adressOrder={adress.filter(step=>step.id === el.adressId)[0]} isFormAdd={isFormAdd}
-                    setIsFormAdd={setIsFormAdd} photo={photo.filter(step=>step.orderId === el.id)} loading={loading} />)}
-            </tbody>
-         </Table>
-        </Col>
-        </Row>
+            <div className="menu-container">
+                
+                <div className="menu-left">
+                    <button className="menu-button"  onClick={()=>AddNewOrder()}><i className="bi bi-folder-plus" ></i></button>
+                    <select className="menu-select" onChange={handleSelectChange}>
+                        <option value={'All'}>Европочта и Белпочта</option>
+                        <option value={"E"}>только Европочта</option>
+                        <option value={"R"}>только Белпочта</option>
+                    </select>
+                    <input
+                      className="menu-input"
+                      type="text"
+                      placeholder="Поиск"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                    />
+                </div>
 
-        {isFormAdd?<FormAdd isFormAdd={isFormAdd} setIsFormAdd={setIsFormAdd} user={user.filter(el=>el.id === editRow.userId)[0]}
-        adressOrder={adress.filter(el=>el.id === editRow.adressId)[0]} loading={loading} editRow={editRow} photoAll={photo}
-        nextShow={nextShow} indexR={indexR} />:null}
-
+                <div
+                  className="menu-right"
+                  onMouseEnter={handleStatusFilterMouseEnter}
+                  onMouseLeave={handleStatusFilterMouseLeave}
+                >
+                  <div className="status-filter-container">
+                    <button className="menu-button">
+                      <i className="bi bi-filter-square"></i>
+                    </button>
+                    {statusFilterVisible && (
+                      <div className="status-filter-popup">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={filterCheck.includes(1) && filterCheck.includes(2) && filterCheck.includes(3) && filterCheck.includes(4)}
+                          onChange={(e) => Check(e.target.checked, [1, 2, 3, 4])}
+                        />
+                        В работе
+                      </label>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={filterCheck.includes(5)}
+                          onChange={(e) => Check(e.target.checked, [5])}
+                        />
+                        Отправленные
+                      </label>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={filterCheck.includes(6)}
+                          onChange={(e) => Check(e.target.checked, [6])}
+                        />
+                        Архив
+                      </label>
+                    </div>
+                    )}  
+                
+                  </div>
+                  
+                </div>
+                
+            </div>
+            
+            {filteredOrders.map(order => <TableRow key={order.id} order={order} 
+                                handleDetailsClick={handleDetailsClick} selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
+                                collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId} />)}
         </>
     )
 }

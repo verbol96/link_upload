@@ -34,8 +34,8 @@ export const passwordChange = async(oldPW, newPW)=>{
     return data
 }
 
-export const dataChange = async(phone, name, nikname)=>{
-    const {data} = await $host.put('/api/auth/dataChange', {phone, name, nikname})
+export const dataChange = async(phone, FIO)=>{
+    const {data} = await $host.put('/api/auth/dataChange', {phone, FIO})
     return data
 }
 

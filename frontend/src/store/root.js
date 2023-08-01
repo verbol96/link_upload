@@ -4,12 +4,14 @@ import thunk from "redux-thunk";
 import { orderReducer } from './orderReducer'
 import { authReducer } from './authReducer'
 import fileReducer from './fileReducer'
+import privatePageReducer from './privatePageReducer'
 
 
 const rootReducer = combineReducers({
     order: orderReducer,
     auth: authReducer,
-    files: fileReducer
+    files: fileReducer,
+    private: privatePageReducer
 })
 
 export const store = createStore(rootReducer, composeWithDevTools(applyMiddleware(thunk)))

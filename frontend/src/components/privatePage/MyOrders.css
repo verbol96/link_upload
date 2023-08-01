@@ -1,0 +1,39 @@
+.textTitle {
+    font-family: 'Montserrat', sans-serif, 'SemiBold';
+    font-weight: 600;
+    font-size: 28px;
+    padding: 15px;
+    padding-top: 0;
+    color: #000000;
+    margin-top: 30px;
+  }
+
+  .title_list{
+    font-family: 'Montserrat', sans-serif, 'SemiBold';
+    font-weight: 300;
+    font-size: 13px;
+    padding: 0px;
+    margin-top: 40px;
+    color: #000000;
+    
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 30px;
+
+    cursor: pointer;
+    
+  }
+
+
+  .flex_grow {
+    flex-grow: 1;
+    flex-basis: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .first_column{
+    width: 16px;
+  }

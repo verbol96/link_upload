@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@500&display=swap');
+
+
+
+.order_card_t {
+  background: rgb(255, 255, 255);
+  border: none;
+  border-radius: 5px;
+  font-size: 15px;
+  margin: 3px 0px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.14);
+}
+
+
+
+.order_card_t:hover {
+  background: #f0f0f0; 
+}
+
+.order_card_t_expanded {
+  border: 3px solid #6f969d; 
+  box-shadow: 0 6px 6px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.14);
+  margin: 15px 0px;
+}
+
+.order_card_main_t {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 3px 3px 10px;
+  min-width: 0;
+}
+
+.order_card_main_t_expanded{
+  background: #6f969d; 
+}
+
+
+
+.flex_col {
+  flex-grow: 3;
+  flex-basis: 0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 12px;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 500;
+  min-width: 0; /* добавить эту строку */
+  padding: 0 10px;
+}
+
+.ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.flex_col_sm {
+  flex-grow: 1;
+  flex-basis: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+}
+
+.first_col {
+  color: #298390;
+}
+
+
+.select_col{
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  font-size: 13px;
+  border: 1px solid #298390;
+  padding: 0 10px;
+  margin-left: 10px;
+  height: 24px;
+}
+
+.select_col:hover{
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+

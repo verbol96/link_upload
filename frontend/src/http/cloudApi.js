@@ -13,16 +13,11 @@ export const createDir = async(nameDir, parentId)=>{
     return data
 }
 
-export const uploadFiles = async(file, parentFile, setProgress)=>{
+export const uploadFiles = async(file, parentFile)=>{
     const formDate = new FormData()
     formDate.append('file', file)
     formDate.append('parent', parentFile)
-    const {data} = await $host.post('/api/file/upload', formDate,{
-        onUploadProgress: (progressEvent) => {
-            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setProgress(progress); // Вызываем коллбэк с текущим прогрессом
-          }
-    })
+    const {data} = await $host.post('/api/file/upload', formDate)
     return data
 }
 

@@ -30,7 +30,6 @@ export const ListRow = ({el}) =>{
     return(
         <div className='listRow' onClick={(el.type==='dir')?()=>openFile():null}>
             <Row className='justify-content-center'>
-                <Col md={1}>{el.id}</Col>
                 {el.type==='dir'?
                 <Col md={4}><i className="bi bi-folder"></i> {el.name}</Col>
                 :
