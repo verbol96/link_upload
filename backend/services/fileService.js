@@ -7,7 +7,7 @@ class FileService {
         let filePath
         if(path===undefined) filePath = `${process.env.FILEPATH}/${name}`
         else filePath = `${process.env.FILEPATH}/${path}/${name}`
-        console.log(filePath)
+        
         return new Promise((resolve, reject)=>{
             try {
                 if(!fs.existsSync(filePath)) {

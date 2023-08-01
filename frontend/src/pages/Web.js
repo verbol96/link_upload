@@ -1,6 +1,5 @@
-import { useState } from "react"
-import { NavBar } from "../components/admin/NavBar"
-import {Row, Col, Button, ProgressBar, Modal, Tooltip, OverlayTrigger} from 'react-bootstrap'
+import { useState, useEffect } from "react"
+import {Row, Col, ProgressBar, Tooltip, OverlayTrigger} from 'react-bootstrap'
 import { uploadFiles } from "../http/cloudApi"
 import { ContactForm } from "../components/web/ContactForm"
 import { OtherForm } from "../components/web/OtherForm"
@@ -9,14 +8,30 @@ import { v4 as uuidv4 } from 'uuid'
 import {nanoid} from 'nanoid'
 import { SendToDB } from "../http/tableApi"
 import { createDir } from "../http/cloudApi"
-import { NavBarForm } from "../components/web/NavBarForm"
+import { PageAfterUpload } from "../components/web/PageAfterUpload"
+import { NavBar } from "../components/web/NavBar"
+import { useSelector } from "react-redux";
 
 const Web = () =>{
 
-    const [progress, setProgress] = useState(0)  
-    const [showModal, setShowModal] = useState(false);  
+    const adressUser = useSelector(state=>state.private.user)
+    const isAuth = useSelector(state=>state.auth.auth)
+    const user = useSelector(state=>state.private.user)
 
-    const [name, setName] = useState('')
+    useEffect(() => {
+        if (adressUser!==0) {
+            setFIO(adressUser.FIO ?? '');
+            setPhone(user.phone ?? '');
+            setTypePost(adressUser.typePost ?? 'E');
+            setCity(adressUser.city ?? '');
+            setAdress(adressUser.adress ?? '');
+            setPostCode(adressUser.postCode ?? '');
+        }
+      }, [adressUser, user]);
+
+
+
+    const [FIO, setFIO] = useState('')
     const [phone, setPhone] = useState('')
     const [typePost, setTypePost] = useState('E')
     const [city, setCity] = useState('')
@@ -31,7 +46,7 @@ const Web = () =>{
             id: uuidv4(),
             type: 'фотографии',
             format: '10x15',
-            paper: 'glossy',
+            paper: 'глянец',
             files: []
         }
     ])
@@ -43,7 +58,7 @@ const Web = () =>{
             id: uuidv4(),
             type: 'фотографии',
             format: '10x15',
-            paper: 'glossy',
+            paper: 'глянец',
             files: []
         }])
     }
@@ -54,15 +69,15 @@ const Web = () =>{
 
     const [amountPhoto, setAmountPhoto] = useState(0)
     const [current, setCurrent] = useState(0)
+
     const upload = async() =>{
-        setShowModal(true);
         const photo = formats.reduce((acc,el)=> {
             const ff =() =>{
                 switch(el.type){
-                    case 'фотографии': return 'photo'
-                    case 'холсты': return 'holst'
-                    case 'магниты': return 'magnit'
-                    default: return 'photo'
+                    case 'фото': return 'фото'
+                    case 'холст': return 'холст'
+                    case 'магнит': return 'магнит'
+                    default: return 'фото'
                 }
             } 
             let dd ={
@@ -81,7 +96,7 @@ const Web = () =>{
         setAmountPhoto(amount)
         
         const data = {
-            "name": name,
+            "FIO": FIO,
             "phone": phone,
             "typePost": typePost,
             "city": city,
@@ -94,19 +109,21 @@ const Web = () =>{
             "codeInside": nanoid(6),
             "codeOutside": '',
             "oblast": '',
-            "raion": ''
+            "raion": '',
+            'auth': isAuth,
+            'phoneUser': user.phone
         }
         
-        const user = await SendToDB(data)
+        const userData = await SendToDB(data)
 
-        const MainDir = await createDir(typePost+(user.order.id%99+1))
+        const MainDir = await createDir(typePost+(userData.order_number%99+1))
         
         formats.forEach(async (formatOne) => {
             const parentFile = await createDir(formatOne.format, MainDir.id);
 
             formatOne.files.forEach(async (file, index) => {
               
-              await uploadFiles(file, parentFile.id, setProgress)
+              await uploadFiles(file, parentFile.id)
               setCurrent((prev) => prev + 1);
             });
           });
@@ -119,94 +136,73 @@ const Web = () =>{
       );
   
     return (
-        <div style={{background: 'linear-gradient(45deg, rgb(109, 146, 143), rgb(190, 195, 149))'}}>
-
-            {/*<NavBar />*/}
-                
-
+        <div style={{background: 'linear-gradient(45deg, rgb(109, 146, 143), rgb(190, 195, 149))', minHeight: '100vh'}}>
+                <NavBar />
                 <Row className="justify-content-center">
-                    <Col md={10}>
-                        
-                        <NavBarForm />
-                        
-                        <div className='filesForm'>
-                        <Row><h4 className='textH4'><i className="bi bi-1-square" style={{color: 'black', marginRight: 10}}></i> Загрузка фото 
-                        <OverlayTrigger
-                        placement="right"
-                        delay={{ show: 250, hide: 400 }}
-                        overlay={renderTooltip}
-                        >
-                        <i className="bi bi-question-circle icon-question-circle"></i>
-                        </OverlayTrigger> </h4></Row>
-                        
-                            {formats.map((el,index)=><FilesForm key={el.id} index={index} el={el} DeleteFormat={DeleteFormat}
-                                                        formats={formats} setFormats={setFormats} />)}
-                            <Row>
-                                <Col md={2} className='mt-4'>
-                                    <button className="buttonForm buttonForm1" onClick={()=>AddFormat()}>+ другой формат</button>
-                                </Col>
-                            </Row>
-                        </div>   
-                        {/*<FileUpload />*/}
+                <Col md={10}>
+                    
+                   
 
-                        <ContactForm 
-                            name={name} setName={setName}
-                            phone={phone} setPhone={setPhone}
-                            typePost={typePost} setTypePost={setTypePost}
-                            city={city} setCity={setCity}
-                            adress={adress} setAdress={setAdress}
-                            postCode={postCode} setPostCode={setPostCode}
-                            />
-                        
-                        <OtherForm other={other} setOther={setOther} 
-                            typeAnswer={typeAnswer} setTypeAnswer={setTypeAnswer}
-                            nikname={nikname} setNikname={setNikname} />
-
-                        <Row className="mt-4 mb-5 ">
-                            
-                            <Col className="d-flex justify-content-center">
-                                <button className="buttonForm" onClick={()=>upload()}>
-                                    <i className="bi bi-cart3" style={{marginRight: 10}}></i> Отправить заказ!</button>
-                            </Col>
-                        </Row>
-                        
-                    </Col>
-                </Row>
-
-                  <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-                    {current===amountPhoto ? 
+                    {current===0
+                    ?
                     <>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Заказ принят!</Modal.Title>
-                    </Modal.Header>
-                        
-                    <Modal.Body>
+                    <div className='filesForm'>
+                    <Row><h4 className='textH4'><i className="bi bi-1-square" style={{color: 'black', marginRight: 10}}></i> Загрузка фото 
+                    <OverlayTrigger
+                    placement="right"
+                    delay={{ show: 250, hide: 400 }}
+                    overlay={renderTooltip}
+                    >
+                    <i className="bi bi-question-circle icon-question-circle"></i>
+                    </OverlayTrigger> </h4></Row>
+                    
+                        {formats.map((el,index)=><FilesForm key={el.id} index={index} el={el} DeleteFormat={DeleteFormat}
+                                                    formats={formats} setFormats={setFormats} />)}
                         <Row>
-                            <Col className="mt-3">
-                                <h5 style={{color: 'green'}}>Загружено {amountPhoto} фото.</h5>
-                            </Col>
-                            <Col className="d-flex justify-content-end mt-3">
-                            <Button variant="success" onClick={()=>setShowModal(false)}>закрыть</Button>
+                            <Col md={2} className='mt-4'>
+                                <button className="buttonForm buttonForm1" onClick={()=>AddFormat()}>+ другой формат</button>
                             </Col>
                         </Row>
-                    </Modal.Body>
+                    </div>   
+
+                    <ContactForm 
+                        FIO={FIO} setFIO={setFIO}
+                        phone={phone} setPhone={setPhone}
+                        typePost={typePost} setTypePost={setTypePost}
+                        city={city} setCity={setCity}
+                        adress={adress} setAdress={setAdress}
+                        postCode={postCode} setPostCode={setPostCode}
+                         adressUser={adressUser}
+                        />
+                    
+                    <OtherForm other={other} setOther={setOther} 
+                        typeAnswer={typeAnswer} setTypeAnswer={setTypeAnswer}
+                        nikname={nikname} setNikname={setNikname} />
+
+                    <Row className="mt-4 mb-5 ">
+                        
+                        <Col className="d-flex justify-content-center">
+                            <button className="buttonForm" onClick={()=>upload()}>
+                                <i className="bi bi-cart3" style={{marginRight: 10}}></i> Отправить заказ!</button>
+                        </Col>
+                    </Row>
                     </>
                     :
-                    <>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Идет оформление заказа...</Modal.Title>
-                    </Modal.Header>
-                    
-                    <Modal.Body>
+                    current===amountPhoto ?
+                        <PageAfterUpload amountPhoto={amountPhoto} phone = {phone} />
+                    :
+                    <Row>
+                        <h5>Идет оформление заказа...</h5>
                         <ProgressBar animated now={100} label={`Загружено фото: ${current} из ${amountPhoto}`} />
                         <h6>Не закрывайте и не обновляйте страницу до окончания загрузки!</h6>
-                    </Modal.Body>
+                    </Row>
+
+                    }
                     
-                    </> }   
-                </Modal>
+                </Col>
+                </Row>
             
-
-
+            
         </div>
     )
 }

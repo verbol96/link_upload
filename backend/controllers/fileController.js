@@ -18,7 +18,7 @@ class fileController {
                 file = await File.create({name, type, parent, path})
             }else{
                 await FileService.createdDir(name)
-                file = await File.create({name, type})
+                file = await File.create({name, type, parent: '00000000-0000-0000-0000-000000000000'})
             } 
             return res.json(file)
         } catch (error) {
@@ -33,9 +33,11 @@ class fileController {
             if(req.query.parent){
                  files = await File.findAll({where:{parent: req.query.parent}})
             }else{
-                    //console.log('here')
-                 files = await File.findAll({where: {parent: 0}})
-                 if(!files) return res.json('нету файлов')
+                 files = await File.findAll({where: {parent: '00000000-0000-0000-0000-000000000000'}})
+                 if(!files) 
+                 {
+                    return res.json('нету файлов')
+                 }
             }
             
             return res.json(files)

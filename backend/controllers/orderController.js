@@ -1,31 +1,103 @@
-const {User, Order, Adress, Photo, Status} = require('../models/models')
+const {User, Order, Photo, Settings} = require('../models/models')
+const bcryptjs = require('bcryptjs')
+const { Op } = require("sequelize");
 
 
 class orderController{
     async addOrder(req,res) {
-        const {phone, name, nikname, typePost, firstClass, postCode, city, adress, oblast, raion, codeInside, codeOutside, price, other, photo} = req.body
-        let user = await User.findOne({where: {phone: phone}})
-        
-        if(user===null){
-            user = await User.create({phone, name, nikname})
-        }
-        
-        const adressNew = await Adress.create({typePost, firstClass, postCode, city, adress, oblast, raion, userId: user.id})
-        const order = await Order.create({codeInside, codeOutside, price, other, userId: user.id, adressId: adressNew.id, status: 1})
-        await photo.map(el=>
-            Photo.create({type: el.type, format: el.format, amount: el.amount, paper: el. paper, orderId: order.id }))
+        const {phone, FIO, typePost, firstClass, postCode, city, adress,
+             oblast, raion, codeOutside, price, other, notes, photo, auth, phoneUser} = req.body
 
-        await Status.create({step: 1, orderId: order.id})
-        return res.json({order, user})
+        let order
+        if(auth){
+            const user = await User.findOne({where: {phone: phoneUser}})
+            order = await Order.create({codeOutside,price,other,notes, status: 1, typePost,firstClass,
+                postCode,city,adress,oblast,raion,FIO,phone,userId: user.id
+            })
+
+        }else{
+            const pretendent = await User.findOne({where: {phone: phone}})
+            if(pretendent===null){
+                const hashPassword = await bcryptjs.hash('1', 3)
+                const user = await User.create({phone, FIO, password: hashPassword, typePost, postCode,city,adress,oblast,raion})
+                order = await Order.create({codeOutside,price,other,notes, status: 1, typePost,firstClass,
+                    postCode,city,adress,oblast,raion,FIO,phone,userId: user.id
+                })
+            }else{
+                order = await Order.create({codeOutside,price,other,notes, status: 1, typePost,firstClass,
+                    postCode,city,adress,oblast,raion,FIO,phone, userId: pretendent.id
+                })
+            }
+        }
+
+        await photo.map(el=>
+            Photo.create({type: el.type, format: el.format, amount: el.amount, paper: el. paper,orderId: order.id }))
+
+
+        const response = await Order.findOne({
+            where: { id: order.id },
+            include: [
+              {
+                model: User,
+              },
+              {
+                model: Photo,
+              }
+            ],
+          });
+          
+        return res.json(response)
     }
 
+    async updateAdressMain(req,res){
+        const id = req.params.id
+        const {typePost, firstClass, postCode, city, adress, oblast, raion} = req.body
+        const adressMain = await Adress.update({typePost, firstClass, postCode, city, adress, oblast, raion}
+            ,{where: {id:id}})
+        return res.json(adressMain)
+    }
+
+
+
     async getAll(req,res){
-        const order = await Order.findAll()
-        const user = await User.findAll()
-        const photo = await Photo.findAll()
-        const adress = await Adress.findAll()
-        const status = await Status.findAll()
-        return res.json({user, order, adress, photo, status})
+        const orders = await Order.findAll({
+            where: {
+              createdAt: {
+                [Op.gte]: new Date(new Date().getFullYear(), new Date().getMonth() - 2, new Date().getDate())
+              }
+            },
+            include: [
+              {
+                model: User
+              },
+              {
+                model: Photo
+              }
+            ]
+          });
+        const settings = await Settings.findAll()
+        const users = await User.findAll({
+            attributes: { exclude: ['password', 'createdAt', 'updatedAt', 'role'] }
+          });
+        return res.json({orders, settings, users})
+    }
+
+    async getOneUser(req,res){
+        const {phone} = req.body
+        const user = await User.findOne({
+            where: {phone: phone},
+            include: [
+                {
+                    model: Order,
+                    include: [
+                        {
+                          model: Photo,
+                        },
+                      ],
+                }
+              ]
+            })
+        return res.json({user})
     }
 
     async updateStatus(req,res){
@@ -37,46 +109,30 @@ class orderController{
 
     async updateOrder(req,res){
         const id = req.params.id
-        const {phone, name, nikname, typePost, firstClass, postCode, city, adress, oblast, raion, codeInside, codeOutside, price, other, photo, userId, adressId} = req.body
+        
+        const {phone, FIO, typePost, firstClass, postCode, city, adress, oblast, raion, codeOutside, price, other, photo, userId, notes, phoneUser} = req.body
 
-        await Order.update(
-            {
-                codeInside: codeInside, codeOutside: codeOutside, price: price, other: other
-            },
-            {where:{id: id}}
-        )
-       
-        const user = await User.findOne({where: {phone: phone}})
-        if(!user){
-            await User.update(
+        const user = await User.findOne({where:{phone: phoneUser}})
+        
+        if(user){
+            await Order.update(
                 {
-                    phone: phone, name: name, nikname: nikname
+                    codeOutside, price, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, userId: user.id
                 },
-                {where:{id: userId}}
-            )}else{
-                await Order.update(
-                    {
-                        userId: user.id
-                    },
-                    {where:{id: id}}
-                )
-                await User.update(
-                    {
-                        phone: phone, name: name, nikname: nikname
-                    },
-                    {where:{id: user.id}}
-                )
-            }
-
-        await Adress.update(
-            {
-                typePost: typePost, firstClass: firstClass, postCode:postCode,city: city, adress:adress, oblast: oblast, raion: raion
-            },
-            {where:{id: adressId}}
-        )
-
+                {where:{id: id}}
+            )
+        }else{
+            await Order.update(
+                {
+                    codeOutside, price, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion
+                },
+                {where:{id: id}}
+            )
+        }
+        
+        
         await Photo.destroy({where: {orderId: id}})
-
+        
         await photo.map(el=>
             Photo.create({type: el.type, format: el.format, amount: el.amount, paper: el. paper, orderId: id }))
 
@@ -85,9 +141,9 @@ class orderController{
 
     async deleteOrder(req,res){
         const id = req.params.id
+        const order = await Order.findOne({where: {id: id}})
+        await Order.destroy({where: {id: id}})
         await Photo.destroy({where: {orderId: id}})
-        await Status.destroy({where: {orderId: id}})
-        const order = await Order.destroy({where: {id: id}})
         return res.json(order)
     }
 
@@ -100,25 +156,75 @@ class orderController{
 
     //для миграции БД
     async setCopyDB(req, res){
-        const {user, order, photo} = req.body
+        const {user, adress, order, photo} = req.body
+        const orders = order
+        for (let i = 0; i < orders.length; i++) {
+            const el = orders[i];
+            const userEl = await user.find(user => user.id === el.userId);
+            const adressEl = await adress.find(adress => adress.id === el.adressId);
+            const photoEl = await photo.filter(photo => photo.orderId === el.id);
 
-        await user.map(el=>{
-            const {id, phone, name, nikname, typePost, firstClass, postCode, city, adress, oblas, raion, createdAt, updatedAt} = el
-            const user1 =  User.create({id, phone, name, nikname, createdAt, updatedAt})
-            
-        })
-        await user.map(el=>{
-            const {id, phone, name, nikname, typePost, firstClass, postCode, city, adress, oblast, raion, createdAt, updatedAt} = el
-            const adres =  Adress.create({id, typePost, firstClass, postCode, city, adress, oblast, raion, userId: id})
-        })
-        await order.map(el=>{
-            const {id, codeInside, codeOutside, price, other, status, createdAt, updatedAt, userId} = el
-            const order1 =  Order.create({id, codeInside, codeOutside, price, other, status, createdAt, updatedAt, userId, adressId: userId})
-        })  
-        await photo.map(el=>{
-            const {id, type, format, amount, paper, createdAt, updatedAt, orderId} = el
-            const photo =  Photo.create({id, type, format, amount, paper, createdAt, updatedAt, orderId})
-        })  
+            let order;
+            const pretendent = await User.findOne({where: {phone: userEl.phone}});
+            if (pretendent === null) {
+                const hashPassword = await bcryptjs.hash('1', 3);
+                const user = await User.create({
+                    phone: userEl.phone, 
+                    FIO: userEl.name, 
+                    password: hashPassword, 
+                    typePost: adressEl.typePost, 
+                    postCode: adressEl.postCode,
+                    city: adressEl.city, 
+                    adress: adressEl.adress, 
+                    oblast: adressEl.oblast, 
+                    raion: adressEl.raion
+                });
+                order = await Order.create({
+                    codeOutside: el.codeOutside,
+                    price: el.price,
+                    other: el.other,
+                    notes: userEl.nikname,
+                    status: el.status,
+                    typePost: adressEl.typePost,
+                    firstClass: adressEl.firstClass,
+                    postCode: adressEl.postCode,
+                    city: adressEl.city,
+                    adress: adressEl.adress,
+                    oblast: adressEl.oblast,
+                    raion: adressEl.raion,
+                    phone: userEl.phone,
+                    FIO: userEl.name,
+                    userId: user.id,
+                    createdAt: el.createdAt
+                });
+            } else {
+                order = await Order.create({
+                    codeOutside: el.codeOutside, 
+                    price: el.price, 
+                    other: el.other,
+                    notes: userEl.nikname, 
+                    status: el.status, 
+                    typePost: adressEl.typePost,
+                    firstClass: adressEl.firstClass,
+                    postCode: adressEl.postCode,
+                    city: adressEl.city,
+                    adress: adressEl.adress,
+                    oblast: adressEl.oblast,
+                    raion: adressEl.raion, 
+                    phone: userEl.phone,
+                    FIO: userEl.name, 
+                    userId: pretendent.id,
+                    createdAt: el.createdAt
+                });
+            }
+            await Promise.all(photoEl.map(el => Photo.create({
+                type: el.type, 
+                format: el.format, 
+                amount: el.amount, 
+                paper: el. paper,
+                orderId: order.id 
+            })));
+        }
         
         return res.json(user)
     }

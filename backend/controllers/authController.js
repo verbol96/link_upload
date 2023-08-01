@@ -127,10 +127,10 @@ class authController {
 
     async dataChange(req,res, next){
         try {
-            const {phone, name, nikname} = req.body
+            const {phone, FIO} = req.body
             const user = await User.findOne({where:{phone:phone}})
 
-            const data = await User.update({ name: name, nikname: nikname }, {where: {id: user.id}})
+            const data = await User.update({ FIO: FIO}, {where: {id: user.id}})
           
             return res.json(data)
         } catch (error) {

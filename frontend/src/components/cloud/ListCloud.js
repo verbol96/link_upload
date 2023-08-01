@@ -13,7 +13,6 @@ export const ListCloud=() =>{
     return(
         <div className="tableList">
             <Row className='justify-content-center mb-3' style={{backgroundColor: "lightGray"}}>
-                <Col md={1}>ID</Col>
                 <Col md={4}>Имя файла</Col>
                 <Col md={1}>Тип</Col>
                 <Col md={2}>Размер</Col>

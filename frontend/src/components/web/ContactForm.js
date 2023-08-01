@@ -1,12 +1,36 @@
 import {Row, Col, Tooltip, OverlayTrigger} from 'react-bootstrap'
+import MaskedInput from 'react-text-mask';
 
-export const ContactForm = ({name,setName,phone,setPhone,typePost,setTypePost,city,setCity,adress,setAdress,postCode,setPostCode})=>{
+export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city,setCity,
+    adress,setAdress,postCode,setPostCode})=>{
 
     const renderTooltip = (props) => (
         <Tooltip id="button-tooltip" {...props}>
            Именно эти данные мы указываем на посылке
         </Tooltip>
       );
+
+      const phoneMask = [
+        '+',
+        '3',
+        '7',
+        '5',
+        '(',
+        /[0-9]/,
+        /\d/,
+        ')',
+        ' ',
+        /\d/,
+        /\d/,
+        /\d/,
+        '-',
+        /\d/,
+        /\d/,
+        '-',
+        /\d/,
+        /\d/
+      ];
+    
 
     return(
         <div className='contactForm'>
@@ -18,11 +42,20 @@ export const ContactForm = ({name,setName,phone,setPhone,typePost,setTypePost,ci
             >
             <i className="bi bi-question-circle icon-question-circle" ></i>
             </OverlayTrigger> </h4></Row>
+            
             <Row>
                 <Col md={3}>
                     <div className='containerInput'>
                     <label className='labelForm' >Телефон:</label>
-                    <input className='inputForm' value={phone} onChange={(e)=>setPhone(e.target.value)} />
+                    <MaskedInput
+                        mask={phoneMask}
+                        className='inputForm' 
+                        placeholderChar={'\u2000'}
+                        showMask
+                        guide={false}
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                    />
                     </div>    
                 </Col>
                 <Col md={{span: 3, offset:2}}>
@@ -40,7 +73,7 @@ export const ContactForm = ({name,setName,phone,setPhone,typePost,setTypePost,ci
                 <Col md={3}>
                     <div className='containerInput'>
                     <label className='labelForm' >ФИО:</label>
-                    <input className='inputForm'  value={name} onChange={(e)=>setName(e.target.value)} />
+                    <input className='inputForm'  value={FIO} onChange={(e)=>setFIO(e.target.value)} />
                     </div>
                 </Col>
                 {typePost==='E'?<>

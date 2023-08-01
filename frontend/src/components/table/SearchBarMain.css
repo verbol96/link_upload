@@ -1,0 +1,43 @@
+.modalSearch{
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 10;
+    width: 100%;
+    max-height: 300px;
+    overflow: scroll; 
+    background-color: #f5f5f5;
+    border-radius: 0 0 3px 3px;
+    border-top: none;
+    box-shadow: none; 
+    padding: 15px;
+    background-color: #f5f5f5;
+    border: 1px solid #949494;
+    border-top: 0px;
+    border-radius: 0 0 5px 5px;
+    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.14);
+}
+
+.ul_style{
+    list-style: none,;
+    margin: 0;
+    padding: 0;
+}
+
+.li_style{
+    cursor: pointer;
+    padding: 5px;
+    border-bottom: 1px solid #ccc;
+    font-size: 12px;
+    overflow: hidden; 
+    white-space: nowrap;
+}
+
+.li_style>div{
+    font-size: 12px;
+}
+
+.li_style>div>i{
+    font-size: 10px;
+    margin-right: 8px;
+}

@@ -5,6 +5,7 @@ export const FormatOne = ({index, el, thema, DeleteFormat, photo, setPhoto}) =>{
 
 
     const Update = (e, prop) =>{
+        
         if(prop==='type'){
             switch(e.target.value){
                 case 'photo': return setPhoto([...photo.slice(0, index), {type: "photo", format: "А6", amount: "1",  paper: 'glossy'}, ...photo.slice(index + 1)])
@@ -13,6 +14,7 @@ export const FormatOne = ({index, el, thema, DeleteFormat, photo, setPhoto}) =>{
                 default: return setPhoto([...photo.slice(0, index), {type: "photo", format: "А6", amount: "1",  paper: 'glossy'}, ...photo.slice(index + 1)])
             }
         }
+        
         setPhoto([...photo.slice(0, index), {...photo[index], [prop]: e.target.value}, ...photo.slice(index + 1)])
     }
 

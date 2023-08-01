@@ -5,11 +5,14 @@ const router = require('./routes/indexRoute')
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload')
+const bodyParser = require('body-parser');
 
 const app = express()
 const PORT = process.env.PORT
 
 app.use(fileUpload({}))
+app.use(bodyParser.json({ limit: '10mb' })); // ограничение на обьем данных в запросе, увеличил для миграциии БД
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors(

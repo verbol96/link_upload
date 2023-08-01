@@ -1,82 +1,92 @@
 import React from 'react';
-import {Offcanvas, Row, Button} from 'react-bootstrap'
-import {useNavigate} from 'react-router-dom'
-import {useSelector, useDispatch} from 'react-redux'
-import { useEffect, useState } from 'react';
-import { whoAmI } from '../../http/authApi';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import './LeftMenu.css'
 
-export const LeftMenu = ()=>{
-  
-  const navigate = useNavigate()
-  const dispach = useDispatch()
-  const leftMenu = useSelector(state=>state.order.leftMenu)
+export const LeftMenu = () => {
+  const navigate = useNavigate();
+  const location = useLocation(); // добавьте эту строку
+  const dispatch = useDispatch();
+  const leftMenu = useSelector((state) => state.order.leftMenu);
 
-  const [user, setUser] = useState('')
+  const user = useSelector((state) => state.private.user);
 
+  const Close = (link) => {
+    dispatch({ type: 'closeLeftMenu' });
+    navigate(link);
+  };
 
-    useEffect(()=>{
-      async function getUser (){
-          let value = await whoAmI()
-          setUser(value)
-      }
-      getUser()
-
-  },[])
-
-
-  const Close = (link) =>{
-    dispach({type:'closeLeftMenu'})
-    navigate(link)
-  }
+  // Добавьте функцию для определения активного пункта меню
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
 
   return (
     <>
-      <Offcanvas show={leftMenu} onHide={()=>dispach({type:"closeLeftMenu"})} style={{width: 300, backgroundColor:'rgb(232, 232, 232)'}}>
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title>АДМИН ПАНЕЛЬ</Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body>
-        <Row className='mt-3'>
-            <Button variant="dark" onClick={()=>Close('/table')}>
-                Таблица
-            </Button>
-            </Row>
-            <Row className='mt-3'>
-            <Button variant="dark" onClick={()=>Close('/usersDB')}>
-                Клиенты
-            </Button>
-            </Row>
-            <Row className='mt-3'>
-            <Button variant="dark" onClick={()=>Close('/PrivatePage')}>
-                Личный кабинет
-            </Button>
-            </Row>
-            <Row className='mt-3'>
-            <Button variant="dark" onClick={()=>Close('/statistic')}>
-                Статистика
-            </Button>
-            </Row>
-            <Row className='mt-3'>
-            <Button variant="dark" onClick={()=>Close('/web')}>
-                Сайт
-            </Button>
-            </Row>
-            <Row className='mt-3'>
-            <Button variant="dark" onClick={()=>Close('/setting')}>
-                Настройки
-            </Button>
-            </Row>
-            <Row className='mt-3'>
-            <Button variant="dark" onClick={()=>Close('/cloud')}>
-                Link Cloud 
-            </Button>
-            </Row>
-            <h6 style={{marginTop: '300px'}}>{user.name}</h6>
-            <h6>{user.phone}</h6>
-           
-        
-        </Offcanvas.Body>
-      </Offcanvas>
+      {leftMenu && (
+        <div
+          className="overlay"
+          onMouseDown={() => dispatch({ type: 'closeLeftMenu' })}
+        ></div>
+      )}
+      <div className={`offcanvas ${leftMenu ? 'show' : ''}`}>
+        <div className="offcanvas-content">
+          <div className="offcanvas-header">
+            <h5 className="offcanvas-title">АДМИН ПАНЕЛЬ</h5>
+            <button className="close-btn" onClick={() => dispatch({ type: 'closeLeftMenu' })}>
+              &times;
+            </button>
+          </div>
+          <div className="offcanvas-body">
+            <button
+              className={`menu-btn ${isActive('/table') ? 'active' : ''}`}
+              onClick={() => Close('/table')}
+            >
+              Таблица
+            </button>
+            <button
+              className={`menu-btn ${isActive('/usersDB') ? 'active' : ''}`}
+              onClick={() => Close('/usersDB')}
+            >
+              Клиенты
+            </button>
+            <button
+              className={`menu-btn ${isActive('/PrivatePage') ? 'active' : ''}`}
+              onClick={() => Close('/PrivatePage')}
+            >
+              Личный кабинет
+            </button>
+            <button
+              className={`menu-btn ${isActive('/statistic') ? 'active' : ''}`}
+              onClick={() => Close('/statistic')}
+            >
+              Статистика
+            </button>
+            <button
+              className={`menu-btn ${isActive('/web') ? 'active' : ''}`}
+              onClick={() => Close('/web')}
+            >
+              Сайт
+            </button>
+            <button
+              className={`menu-btn ${isActive('/setting') ? 'active' : ''}`}
+              onClick={() => Close('/setting')}
+            >
+              Настройки
+            </button>
+            <button
+              className={`menu-btn ${isActive('/cloud') ? 'active' : ''}`}
+              onClick={() => Close('/cloud')}
+            >
+              Link Cloud
+            </button>
+          </div>
+          <div className="user-info">
+            <div><i className="bi bi-person"></i> {user.FIO}</div>
+            <div><i className="bi bi-telephone"></i>  {user.phone}</div>
+          </div>
+        </div>
+      </div>
     </>
   );
-}
+};

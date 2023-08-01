@@ -9,8 +9,8 @@ class settingsController{
     }
 
     async delete(req,res){
-        const value = req.params.id
-        await Settings.destroy({where: {title: value}})
+        const id = req.params.id
+        await Settings.destroy({where: {id: id}})
         return res.json('done!')
     }
 
@@ -21,9 +21,9 @@ class settingsController{
     }
 
     async add(req,res){
-        const {title, value} = req.body
-        const note = await Settings.create({title: title, value: value})
-        return res.json(note)
+        const {type, title, price} = req.body
+        const responce = await Settings.create({type, title, price})
+        return res.json(responce)
     }
 
 
