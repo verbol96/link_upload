@@ -16,7 +16,7 @@ export const NavBar = () => {
   const [password, setPassword] = useState('');
 
   const Auth = async () => {
-    const data = await login(phone, password);
+    const data = await login(removeNonNumeric(phone), password);
     if (typeof data === 'object') {
       navigate('/PrivatePage');
       dispatch({ type: 'authStatus', paylods: true });
@@ -59,13 +59,15 @@ export const NavBar = () => {
     /\d/
   ];
 
+  const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
+
   return (
     <nav className="navbar">
       <LeftMenu />
       <div className="navbar__left">
         <span
           className="navbar__title"
-          onClick={isAuth ? () => dispatch({ type: 'showLeftMenu' }) : null}
+          onClick={isAuth&&user.role==='ADMIN' ? () => dispatch({ type: 'showLeftMenu' }) : null}
         >
           LINK
         </span>

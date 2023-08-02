@@ -34,7 +34,7 @@ export const NavBar = ({ onMenuItemClick, selectedMenuItem }) =>{
         <nav className="navbar">
           <LeftMenu />
         <div className="navbar__left">
-          <span className="navbar__title" onClick={()=>dispach({type:'showLeftMenu'})}>LINK</span>
+          <span className="navbar__title"  onClick={()=>user.role==='ADMIN' ? dispach({type:'showLeftMenu'}): {}}>LINK</span>
         </div>
   
         <div className="navbar__right">

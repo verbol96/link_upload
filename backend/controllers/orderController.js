@@ -6,12 +6,12 @@ const { Op } = require("sequelize");
 class orderController{
     async addOrder(req,res) {
         const {phone, FIO, typePost, firstClass, postCode, city, adress,
-             oblast, raion, codeOutside, price, other, notes, photo, auth, phoneUser} = req.body
+             oblast, raion, codeOutside, price, other, notes, photo, auth, phoneUser, status} = req.body
 
         let order
         if(auth){
             const user = await User.findOne({where: {phone: phoneUser}})
-            order = await Order.create({codeOutside,price,other,notes, status: 1, typePost,firstClass,
+            order = await Order.create({codeOutside,price,other,notes, status, typePost,firstClass,
                 postCode,city,adress,oblast,raion,FIO,phone,userId: user.id
             })
 
@@ -20,11 +20,11 @@ class orderController{
             if(pretendent===null){
                 const hashPassword = await bcryptjs.hash('1', 3)
                 const user = await User.create({phone, FIO, password: hashPassword, typePost, postCode,city,adress,oblast,raion})
-                order = await Order.create({codeOutside,price,other,notes, status: 1, typePost,firstClass,
+                order = await Order.create({codeOutside,price,other,notes, status, typePost,firstClass,
                     postCode,city,adress,oblast,raion,FIO,phone,userId: user.id
                 })
             }else{
-                order = await Order.create({codeOutside,price,other,notes, status: 1, typePost,firstClass,
+                order = await Order.create({codeOutside,price,other,notes, status, typePost,firstClass,
                     postCode,city,adress,oblast,raion,FIO,phone, userId: pretendent.id
                 })
             }
@@ -49,10 +49,10 @@ class orderController{
         return res.json(response)
     }
 
-    async updateAdressMain(req,res){
+    async updateUserAdress(req,res){
         const id = req.params.id
-        const {typePost, firstClass, postCode, city, adress, oblast, raion} = req.body
-        const adressMain = await Adress.update({typePost, firstClass, postCode, city, adress, oblast, raion}
+        const {typePost, postCode, city, adress} = req.body
+        const adressMain = await User.update({typePost, postCode, city, adress}
             ,{where: {id:id}})
         return res.json(adressMain)
     }
@@ -122,9 +122,12 @@ class orderController{
                 {where:{id: id}}
             )
         }else{
+            const hashPassword = await bcryptjs.hash('1', 3)
+            const user1 = await User.create({phone, FIO, password: hashPassword, typePost, postCode,city,adress,oblast,raion})
+
             await Order.update(
                 {
-                    codeOutside, price, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion
+                    codeOutside, price, other, notes, userId: user1.id, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion
                 },
                 {where:{id: id}}
             )

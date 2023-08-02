@@ -11,8 +11,6 @@ export const getOneUser = async(phone) =>{
     return data
 }
 
-
-
 export const getSettings = async() =>{
     const {data} = await $host.get( 'api/settings/getAll')
     return _.orderBy(data, 'createdAt', 'asc')
@@ -36,6 +34,11 @@ export const deleteSetting = async(id) =>{
 
 export const updateOrder = async(id, data) =>{
     const {res} = $host.put(`api/order/updateOrder/${id}`, data)
+    return res
+}
+
+export const updateUserAdress = async(id, data) =>{
+    const {res} = $host.put(`api/order/updateUserAdress/${id}`, data)
     return res
 }
 

@@ -6,23 +6,34 @@
 
 }
 
-.card_container {
+.card_container_admin {
   display: flex;
   gap: 10px;
   width: 100%;
 }
 
-.card {
+
+
+.card_admin {
   background: #ffffff;
   border: 1px solid rgb(237, 237, 237);
   border-radius: 5px;
   padding: 20px;
-  flex-grow: 1;
   display: flex;
   flex-direction: column;
 }
 
-.card>div:first-child{
+.card_container_admin>div:nth-child(1){
+  flex: 1;
+}
+.card_container_admin>div:nth-child(2){
+  flex: 1;
+}
+.card_container_admin>div:nth-child(3){
+  flex: 1;
+}
+
+.card_admin>div:first-child{
   margin-bottom: 25px;
 }
 

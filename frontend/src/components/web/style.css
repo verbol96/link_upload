@@ -18,14 +18,16 @@
 
 .cardFile {
     width: calc(100% / 7 - 20px);
-    overflow: hidden;
+    overflow: hidden; 
     margin: 10px;
     position: relative;
     border: 1px solid #ccc;
+    border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
     display: flex;
     flex-direction: column;
     background-color: transparent;
+    padding: 10px;
   }
   
   .cardFileInner {
@@ -52,6 +54,10 @@
     background-color: transparent;
     border: none;
     color: rgb(255, 113, 113);
+  }
+
+  .closeButton:hover{
+    transform: scale(1.4);
   }
 
   @media (max-width: 576px) {

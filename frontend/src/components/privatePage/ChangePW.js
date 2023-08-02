@@ -48,7 +48,7 @@ export const ChangePW = ({ShowToast}) =>{
             </div>
 
             <button className="btn btn_save" onClick={() => Change()}>
-                <i className="bi bi-check2-square"></i> изменить
+                <i className="bi bi-check2-square"></i> сохранить изменения
             </button>
         </div>
     )

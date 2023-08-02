@@ -11,6 +11,7 @@ import { createDir } from "../http/cloudApi"
 import { PageAfterUpload } from "../components/web/PageAfterUpload"
 import { NavBar } from "../components/web/NavBar"
 import { useSelector } from "react-redux";
+import Footer from "../components/admin/Footer"
 
 const Web = () =>{
 
@@ -70,6 +71,8 @@ const Web = () =>{
     const [amountPhoto, setAmountPhoto] = useState(0)
     const [current, setCurrent] = useState(0)
 
+    const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
+
     const upload = async() =>{
         const photo = formats.reduce((acc,el)=> {
             const ff =() =>{
@@ -97,7 +100,7 @@ const Web = () =>{
         
         const data = {
             "FIO": FIO,
-            "phone": phone,
+            "phone": removeNonNumeric(phone),
             "typePost": typePost,
             "city": city,
             "adress": adress,
@@ -111,7 +114,8 @@ const Web = () =>{
             "oblast": '',
             "raion": '',
             'auth': isAuth,
-            'phoneUser': user.phone
+            'phoneUser': user.phone,
+            'status': 0
         }
         
         const userData = await SendToDB(data)
@@ -202,7 +206,7 @@ const Web = () =>{
                 </Col>
                 </Row>
             
-            
+            <Footer />
         </div>
     )
 }

@@ -40,7 +40,8 @@
 
 
   .card_form {
-    background: #e9ecef;
+    background: #ffffff;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.14);
     position: relative;
     display: flex;
     justify-content: center;
@@ -53,6 +54,7 @@
     margin-left: auto;
     margin-right: auto;
     padding: 30px;
+    min-height: 400px;
   }
   
   .form_group {
@@ -174,13 +176,15 @@
     background-color: #5a7479;
   }
   
-  .btn_save {
-    background-color: #0e6941;
-    border: none;
+  .btn_save{
+    background-color: #4f7078;
+    border: 2px solid #47646b;
+    border-radius: 5px;
+
   }
-  
-  .btn_save:hover {
-    background-color: #1e7e34;
+  .btn_save:hover{
+    background-color: #7d9ba1;
+    border: 2px solid #688489;
   }
   
 
@@ -188,4 +192,19 @@
     background: #e9ecef; /* Измените этот цвет в соответствии с вашими предпочтениями */
   }
   
-
+  .messagePhone {
+    position: absolute;
+    z-index: 1;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    width: 300px;
+    top: 30px; /* Adjust this as needed */
+    left: 150px; /* Adjust this as needed */
+    font-size: 13px;
+  }
+  
+  .form_group {
+    position: relative;
+  }

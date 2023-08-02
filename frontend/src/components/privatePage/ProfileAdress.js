@@ -1,22 +1,20 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
+import { updateUserAdress } from '../../http/dbApi';
 
 export const ProfileAdress = () => {
-  const adressMain = useSelector((state) => state.private.order[0]);
+  const user = useSelector((state) => state.private.user);
 
-  const [typePost, setTypePost] = useState(adressMain.typePost);
-  const [city, setCity] = useState(adressMain.city);
-  const [adress, setAdress] = useState(adressMain.adress);
-  const [postCode, setPostCode] = useState(adressMain.postCode);
-  const [isEditing, setIsEditing] = useState(false);
-
-  const toggleEdit = () => {
-    setIsEditing(!isEditing);
-  };
+  const [typePost, setTypePost] = useState(user.typePost);
+  const [city, setCity] = useState(user.city);
+  const [adress, setAdress] = useState(user.adress);
+  const [postCode, setPostCode] = useState(user.postCode);
 
   const handleSaveChanges = () => {
-    // Здесь добавьте логику сохранения изменений
-    setIsEditing(false);
+    const data = {
+      typePost,city, adress,postCode
+    }
+    updateUserAdress(user.id, data)
   };
 
   return (
@@ -25,10 +23,9 @@ export const ProfileAdress = () => {
         <label className="form_label"><i className="bi bi-code-square"></i> Тип отправки:</label>
         <div className="containerSelect">
             <select
-            className={`form_control-select ${!isEditing ? 'select_disabled' : ''}`}
+            className={`form_control-select`}
             value={typePost}
             onChange={(e) => setTypePost(e.target.value)}
-            disabled={!isEditing}
             >
             <option value={'E'}>Европочта</option>
             <option value={'R'}>Белпочта</option>
@@ -44,7 +41,6 @@ export const ProfileAdress = () => {
               className="form_control"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              readOnly={!isEditing}
             />
           </div>
           <div className="form_group">
@@ -53,7 +49,6 @@ export const ProfileAdress = () => {
               className="form_control"
               value={adress}
               onChange={(e) => setAdress(e.target.value)}
-              readOnly={!isEditing}
             />
           </div>
         </>
@@ -65,7 +60,6 @@ export const ProfileAdress = () => {
               className="form_control"
               value={postCode}
               onChange={(e) => setPostCode(e.target.value)}
-              readOnly={!isEditing}
             />
           </div>
           <div className="form_group">
@@ -74,7 +68,6 @@ export const ProfileAdress = () => {
               className="form_control"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              readOnly={!isEditing}
             />
           </div>
           <div className="form_group">
@@ -83,22 +76,15 @@ export const ProfileAdress = () => {
               className="form_control"
               value={adress}
               onChange={(e) => setAdress(e.target.value)}
-              readOnly={!isEditing}
             />
           </div>
         </>
       )}
-
-    
+ 
       <div className="button_group">
-        <button className={`btn ${isEditing ? 'btn_cancel' : 'btn_edit'}`} onClick={toggleEdit}>
-          {isEditing ? <><i class="bi bi-x-square"></i> отменить</> : <><i className="bi bi-pencil-square"></i> редактировать</>}
+        <button className="btn btn_save" onClick={handleSaveChanges}>
+          <i className="bi bi-check2-square"></i> сохранить изменения
         </button>
-        {isEditing && (
-          <button className="btn btn_save" onClick={handleSaveChanges}>
-           <i className="bi bi-check2-square"></i> сохранить изменения
-          </button>
-        )}
       </div>
     </div>
   );

@@ -27,25 +27,25 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
     const Warning = () =>{
         let a = []
         if(order.codeOutside){
-            a.push(<i className="bi bi-qr-code" style={{}}></i>)
+            a.push(<i className="bi bi-qr-code" style={{marginLeft: 5}}> </i>)
          }
-        if(order.adress.firstClass === true){
-           a.push( <i className="bi bi-1-square-fill pr-1" style={{color:'red'}}></i>)
+        if(order.firstClass === true){
+           a.push( <i className="bi bi-1-square-fill pr-1" style={{color:'red', marginLeft: 5}}> </i>)
         }
-        if(order.other){
-            a.push( <i className="bi bi-exclamation-square" style={{backgroundColor :'yellow'}}></i>)
+        if(order.notes){
+            a.push( <i className="bi bi-exclamation-square-fill" style={{color: 'orange', marginLeft: 5}}> </i>)
          }
          
         return a.map((el, index)=><span key={index}>{el} </span>)
     }
 
     const ColorBG = [
-        'white',// принят
-        'Orchid',//готово к печати
-        'Gold',// в печати
-        'YellowGreen',// готово к отправке
-        'LightSalmon',// отправлено
-        'white'// оплачено
+        '#97d0d6',// принят -1
+        '#D8BFD8',//обработан -2
+        '#FDFD96',// в печати -3
+        '#98FF98',// упакован -4
+        'DarkGrey',// отправлено -5
+        'white'// оплачено -6
     ]
 
     const ChangeStatus = (event) =>{
@@ -64,7 +64,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
       }
 
     return(
-
+ 
         <div 
             style={order.id === collapsedOrderId ? {backgroundColor: '#c5dce0'} : {}}
             className={`order_card_t${selectedOrder===order.id ? ' order_card_t_expanded' : ''}`}
@@ -81,9 +81,9 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                 <div className='flex_col_sm'> {order.createdAt.split("T")[0].split("-")[2]}.{order.createdAt.split("T")[0].split("-")[1]}</div>
                 <div className='flex_col_sm' style={{color: 'darkgreen', fontWeight: 'bold'}}>{order.typePost + (order.order_number%99+1)}</div>
                 <div className='flex_col'>
-                    <div className='ellipsis'>
-                        {order.FIO}
-                    </div>
+                <div className='ellipsis'>
+                    {order?.user?.FIO}
+                </div>
                 </div>
                 <div className='flex_col' style={{flex:2}}>{formatPhoneNumber(order.phone)}</div>
                 <div className='flex_col' style={{flex:2}}>{order.city}</div>
@@ -94,7 +94,8 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                 </div>
                 <div className='flex_col' style={{flex:1}}>{Warning()}</div>
                 <div className='flex_col_sm'>{order.price}р</div>
-                <select className="select_col" style={{backgroundColor: ColorBG[order.status]}} value={order.status} onChange={(e)=>ChangeStatus(e)} >
+                <select className="select_col" style={{backgroundColor: ColorBG[order.status-1]}} value={order.status} onChange={(e)=>ChangeStatus(e)} >
+                    <option value="0">новый</option>
                     <option value="1">принят</option>
                     <option value="2">обработан</option>
                     <option value="3">в печати</option>

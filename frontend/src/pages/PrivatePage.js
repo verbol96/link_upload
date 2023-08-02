@@ -1,9 +1,10 @@
 import { useState } from "react"
-import {Col, Row} from 'react-bootstrap'
 import { MyOrders } from "../components/privatePage/MyOrders";
 import { Settings } from "../components/privatePage/Settings";
 import { Files } from "../components/privatePage/Files";
 import { NavBar } from "../components/privatePage/NavBar";
+import Footer from "../components/admin/Footer"
+import './style.css'
 
 const PrivatePage = () =>{
 
@@ -16,18 +17,22 @@ const PrivatePage = () =>{
     };
 
     return (
-        <div style={{background: '#f6f6fa', minHeight: '100vh'}}>
+        <div style={{display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f6f6fa'}}>
 
             <NavBar onMenuItemClick={handleMenuItemClick} selectedMenuItem={selectedMenuItem} />
-
-            <Row className="justify-content-center">
-            
-                <Col md={11} className="mt-3">
+        
+            <div className="my-row">
+                <div className="my-col">
                     {selectedMenuItem === 'мои заказы' && <MyOrders />}
                     {selectedMenuItem === 'настройки' && <Settings />}
                     {selectedMenuItem === 'файлы' && <Files />}
-                </Col>
-            </Row>
+                </div>
+            </div>
+        
+            <div style={{marginTop: 'auto'}}>
+                <Footer />
+            </div>
+        
         </div>
     )
 }

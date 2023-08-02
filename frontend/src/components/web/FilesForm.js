@@ -1,4 +1,4 @@
-import {Card, Row, Button, Col, FormSelect, FormLabel, Stack} from 'react-bootstrap'
+import {Card, Row, Col} from 'react-bootstrap'
 import { ImgCard } from './ImgCard'
 import {useState} from 'react'
 import { v4 as uuidv4 } from 'uuid'
@@ -159,13 +159,13 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
                 <Col md={10}>
                     <div  style={{display: 'flex', flexWrap: "wrap"}}>
                         
-                        <Card className="cardFile" style={{border: '2.5px #0E3C47 dashed', color: '#0E3C47'}}>
+                        <div className="cardFile" style={{border: '2.5px #0E3C47 dashed'}}>
                             <label className='upload_label' htmlFor={index}>
                                 <div style={{fontSize: 30, textAlign: 'center'}}><i className="bi bi-plus" ></i></div>
                                 <div style={{textAlign: 'center'}}>добавить фото</div>
                             </label>
                             <input className='upload_input' id={index} type="file" multiple={true} onChange={(e)=>FilesInput(e)}></input>
-                        </Card>
+                        </div>
 
                         {filesPrev.map((el)=> <ImgCard image={el} key={el.id} deleteImg={deleteImg} /> )}
                     </div>
