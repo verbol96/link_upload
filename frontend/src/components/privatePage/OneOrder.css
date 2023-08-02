@@ -6,7 +6,7 @@
     border: 1px solid rgb(203, 203, 203);
     border-radius: 5px;
     margin: 5px;
-    transition: border 0.5s, margin 0.5s; 
+    
     font-size: 15px;
   }
 
@@ -17,7 +17,7 @@
   .order_card_expanded {
     border: 2px solid #6f969d; 
     box-shadow: 0 6px 6px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.14);
-    margin: 10px 0px;
+    margin: 10px 0px 20px;
 }
 
 .order_card_main {

@@ -49,11 +49,7 @@ export const orderReducer = (state = defaultState, action) =>{
                     if (el.id === action.payload.orderId) {
                         return { 
                             ...el, 
-                            ...action.payload.data, 
-                            user: {
-                                ...el.user,
-                                phone: action.payload.data.phoneUser
-                            } 
+                            ...action.payload.data
                         };
                     }
                     return el;

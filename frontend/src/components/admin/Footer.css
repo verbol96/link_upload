@@ -1,0 +1,42 @@
+/* Footer.css */
+.footer {
+    background-color: #363636;
+    padding: 8px;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+  }
+  
+  .footer-content {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .footer-links {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+  }
+
+  .footer-links>div{
+    margin: 10px;
+    
+  }
+
+  .footer-links label, a, i{
+    color: rgb(163, 163, 163);
+  }
+
+  .footer-links a{
+    text-decoration: none;
+  }
+
+  .footer-links div:hover a,
+  .footer-links div:hover i {
+      color: rgb(255, 255, 255);
+  }
+  
+  .footer-copyright {
+    text-align: center;
+    margin-top: 20px;
+  }

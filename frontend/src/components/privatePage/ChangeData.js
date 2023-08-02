@@ -8,7 +8,7 @@ import './Settings.css';
 export const ChangeData = ({ ShowToast }) => {
   const [FIO, setFIO] = useState('');
   const [phone, setPhone] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -24,24 +24,22 @@ export const ChangeData = ({ ShowToast }) => {
     await dataChange(phone, FIO);
     dispatch(changeName(FIO));
     ShowToast('success', 'данные изменены');
-    setIsEditing(false);
-  };
-
-  const toggleEdit = () => {
-    setIsEditing(!isEditing);
   };
 
   return (
     <div className="card_form">
-      <div className="form_group">
+      <div className="form_group"
+          onMouseEnter={() => setShowMessage(true)}
+          onMouseLeave={() => setShowMessage(false)}>
         <label className="form_label"><i className="bi bi-telephone"></i> Телефон</label>
         <input
           className="form_control"
           placeholder="Телефон"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          readOnly={!isEditing}
+          disabled
         />
+        {showMessage && <div className='messagePhone'><i className="bi bi-exclamation-triangle"></i> Действие заблокировано. Для изменеия номера обратитесь к сотруднику LINK в телеграм или инстаграм </div>}
       </div>
       <div className="form_group">
         <label className="form_label"><i className="bi bi-person"></i> ФИО</label>
@@ -50,20 +48,13 @@ export const ChangeData = ({ ShowToast }) => {
           placeholder="ФИО"
           value={FIO}
           onChange={(e) => setFIO(e.target.value)}
-          readOnly={!isEditing}
         />
       </div>
 
-      <div className="button_group">
-        <button className={`btn ${isEditing ? 'btn_cancel' : 'btn_edit'}`} onClick={toggleEdit}>
-          {isEditing ? <><i className="bi bi-x-square"></i> отменить</> : <><i className="bi bi-pencil-square"></i> редактировать</>}
-        </button>
-        {isEditing && (
-          <button className="btn btn_save" onClick={handleChangeData}>
-           <i className="bi bi-check2-square"></i> сохранить изменения
-          </button>
-        )}
-      </div>
+      <button className="btn btn_save" onClick={handleChangeData}>
+        <i className="bi bi-check2-square"></i> сохранить изменения
+      </button>
+
     </div>
   );
 };

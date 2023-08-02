@@ -5,6 +5,7 @@ import {$host} from '../../http/index'
 import { TableRow } from './TableRow'
 import './TableFull.css'
 import { addOrder, saveOrders, saveSettings, saveUsers } from '../../store/orderReducer'
+import { TableFooter } from './TableFooter'
 
 
 export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, handleDetailsClick}) =>{
@@ -67,6 +68,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
           other: '',
           price: '',
           firstClass: false,
+          status:1
         };
   
       const response = await $host.post('api/order/addOrder', data)
@@ -84,7 +86,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
       setStatusFilterVisible(false);
     };
 
-    const [filterCheck, setFilterCheck] = useState([1,2,3,4])
+    const [filterCheck, setFilterCheck] = useState([0,1,2,3,4])
     const Check = (e, id) =>{
       if(e){
           setFilterCheck(filterCheck.concat(id))
@@ -158,7 +160,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                         <input
                           type="checkbox"
                           checked={filterCheck.includes(1) && filterCheck.includes(2) && filterCheck.includes(3) && filterCheck.includes(4)}
-                          onChange={(e) => Check(e.target.checked, [1, 2, 3, 4])}
+                          onChange={(e) => Check(e.target.checked, [0, 1, 2, 3, 4])}
                         />
                         В работе
                       </label>
@@ -190,6 +192,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
             {filteredOrders.map(order => <TableRow key={order.id} order={order} 
                                 handleDetailsClick={handleDetailsClick} selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
                                 collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId} />)}
+            <TableFooter filteredOrders={filteredOrders} />
         </>
     )
 }

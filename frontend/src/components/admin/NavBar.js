@@ -35,7 +35,7 @@ export const NavBar = () =>{
         <nav className="navbar">
           <LeftMenu />
         <div className="navbar__left">
-          <span className="navbar__title"  onClick={isAuth?()=>dispach({type:'showLeftMenu'}):null}>LINK</span>
+          <span className="navbar__title"  onClick={isAuth&&user.role==='ADMIN' ?()=>dispach({type:'showLeftMenu'}):null}>LINK</span>
         </div>
   
         <div className="navbar__right">

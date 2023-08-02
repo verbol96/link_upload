@@ -101,12 +101,14 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     codeOutside: codeOutside,
   };
 
+  const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
+
   const SaveData = () =>{
     updateOrder(order.id, data)
     const dataDispatch = {
       
       FIO: FIO,
-      phone: phone,
+      phone: removeNonNumeric(phone),
       typePost: typePost,
       city: city,
       adress: adress,
@@ -119,7 +121,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       other: other,
       price: price,
       firstClass,
-      phoneUser: phoneUser
+      user: users.find(user => user.phone === phoneUser)
     }
     dispatch(updateOrderAction(order.id, dataDispatch))
     setSelectedOrder(null)
@@ -209,12 +211,12 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
   return (
     <div className="order_details_card">
-      <div className="card_container">
-        <div className="card">
+      <div className="card_container_admin">
+        <div className="card_admin">
           <div>
             <div className='contact_field'>
               <label>ФИО:</label>
-              <input value={FIO} onChange={(e) => setFIO(e.target.value)} />
+              <input  style={{marginLeft: 5}} value={FIO} onChange={(e) => setFIO(e.target.value)} />
             </div>
             <div className='contact_field'>
               <label>Телефон:</label>
@@ -223,7 +225,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
                 onMouseLeave={handleModalMouseLeaveMain}
               >
                 <input
-                  style={{marginLeft: -4}}
+                  style={{}}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
@@ -282,7 +284,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card_admin">
           <div>
           {photo.map((el, index) => <OneFormat index={index} setPhoto={setPhoto} photo={photo} el={el} key={index} DeleteFormat={DeleteFormat} />) }
               <button type="button" onClick={()=>{AddFormat()}}>добавить</button>
@@ -299,7 +301,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
           
         </div>
 
-        <div className="card">
+        <div className="card_admin">
           <div>
             <div className='info_other'>
               <label>Заметки:</label>
