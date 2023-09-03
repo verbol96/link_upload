@@ -5,13 +5,14 @@ import { ContactForm } from "../components/web/ContactForm"
 import { OtherForm } from "../components/web/OtherForm"
 import { FilesForm } from "../components/web/FilesForm"
 import { v4 as uuidv4 } from 'uuid'
-import {nanoid} from 'nanoid'
 import { SendToDB } from "../http/tableApi"
 import { createDir } from "../http/cloudApi"
 import { PageAfterUpload } from "../components/web/PageAfterUpload"
 import { NavBar } from "../components/web/NavBar"
 import { useSelector } from "react-redux";
 import Footer from "../components/admin/Footer"
+import './stylePages.css'
+import { getSettings } from "../http/dbApi"
 
 const Web = () =>{
 
@@ -45,21 +46,19 @@ const Web = () =>{
     const [formats, setFormats] = useState([
         {
             id: uuidv4(),
-            type: 'фотографии',
-            format: '10x15',
-            paper: 'глянец',
+            type: 'photo',
+            format: 'а6',
+            paper: 'glossy',
             files: []
         }
     ])
 
-    //console.log(formats)
-
     const AddFormat = () =>{
         setFormats([...formats, {
             id: uuidv4(),
-            type: 'фотографии',
-            format: '10x15',
-            paper: 'глянец',
+            type: 'photo',
+            format: 'а6',
+            paper: 'glossy',
             files: []
         }])
     }
@@ -73,14 +72,46 @@ const Web = () =>{
 
     const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
 
+    const [settings, setSettings] = useState([])
+
+    useEffect(()=>{
+        async function getPriceList (){
+            let value = await getSettings()
+            setSettings(value)
+        }
+        getPriceList()
+
+    }, [])
+
+    const PriceList = (format) =>{
+        let price = 0
+        settings.forEach(el=>{
+          
+            if(el.title === format) {
+              
+                price = el.price
+            }
+        })
+    
+        return price
+      }
+    
+      const SumTeor =(photo)=> {
+        const pr = photo.reduce((sum, el)=>{
+          return sum+PriceList(el.format)*el.amount
+      },0 )
+    
+      return pr.toFixed(2)
+      }
+
     const upload = async() =>{
         const photo = formats.reduce((acc,el)=> {
             const ff =() =>{
                 switch(el.type){
-                    case 'фото': return 'фото'
-                    case 'холст': return 'холст'
-                    case 'магнит': return 'магнит'
-                    default: return 'фото'
+                    case 'photo': return 'photo'
+                    case 'holst': return 'holst'
+                    case 'magnit': return 'magnit'
+                    default: return 'photo'
                 }
             } 
             let dd ={
@@ -105,11 +136,10 @@ const Web = () =>{
             "city": city,
             "adress": adress,
             "postCode": postCode,
-            "other":other,
+            "other": 'Ответить в ' + typeAnswer + ': '+ nikname + '\n' + other,
+            "notes": '',
             "photo": photo, 
-            "nikname": typeAnswer +': '+nikname,
-            "price": 0,
-            "codeInside": nanoid(6),
+            "price": SumTeor(photo),
             "codeOutside": '',
             "oblast": '',
             "raion": '',
@@ -123,7 +153,7 @@ const Web = () =>{
         const MainDir = await createDir(typePost+(userData.order_number%99+1))
         
         formats.forEach(async (formatOne) => {
-            const parentFile = await createDir(formatOne.format, MainDir.id);
+            const parentFile = await createDir(formatOne.format+' '+formatOne.paper, MainDir.id);
 
             formatOne.files.forEach(async (file, index) => {
               
@@ -140,16 +170,17 @@ const Web = () =>{
       );
   
     return (
-        <div style={{background: 'linear-gradient(45deg, rgb(109, 146, 143), rgb(190, 195, 149))', minHeight: '100vh'}}>
+        <div style={{display: 'flex', flexDirection: 'column',background: '#dbdbdb', minHeight: '100vh'}}>
                 <NavBar />
-                <Row className="justify-content-center">
-                <Col md={10}>
-                    
-                   
+                
+                <div className="flex-container">
+                    <div className="flex-item">
 
                     {current===0
                     ?
                     <>
+                    <div className="title">Оформление заказа</div>
+                    
                     <div className='filesForm'>
                     <Row><h4 className='textH4'><i className="bi bi-1-square" style={{color: 'black', marginRight: 10}}></i> Загрузка фото 
                     <OverlayTrigger
@@ -203,10 +234,12 @@ const Web = () =>{
 
                     }
                     
-                </Col>
-                </Row>
+                </div>
+                </div>
             
-            <Footer />
+            <div style={{marginTop: 'auto'}}>
+                <Footer />
+            </div>
         </div>
     )
 }

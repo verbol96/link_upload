@@ -13,8 +13,33 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
     
     const dispach = useDispatch()
      
-     const orders =_.orderBy(_.orderBy(useSelector(state => state.order.order), 'order_number', 'desc' ), 'status', 'asc' )
- 
+    const [sortKey, setSortKey] = useState('default');
+
+    // Получение данных из Redux
+    let orders =_.orderBy(_.orderBy(useSelector(state => state.order.order), 'createdAt', 'desc' ), 'status', 'asc' )
+  
+    // Функция сортировки
+    const sortOrders = (orders, sortKey) => {
+      switch (sortKey) {
+        case 'price':
+          return _.orderBy(orders, [item => Number(item.price)], 'desc');
+        case 'data':
+          return _.orderBy(orders, ['createdAt'], 'desc');
+        case 'city':
+          return _.orderBy(orders, [item => item.city.toLowerCase()], 'asc');
+        case 'FIO':
+          return _.orderBy(orders, item => item.user && item.user.FIO ? item.user.FIO.trim() : '', 'asc');
+        default:
+          return orders;
+      }
+    };
+
+    // Выполнение сортировки
+    orders = sortOrders(orders, sortKey);
+  
+    const handleSortChange = (e) => {
+      setSortKey(e.target.value);
+    };
     useEffect(()=>{
         $host.get('api/order/getAll').then(
             res=> {
@@ -124,6 +149,18 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
         return data.toLowerCase().includes(searchQuery.toLowerCase());
       })
       .filter(s=>filterCheck.includes(Number(s.status)));
+
+    const DownloadArchive = () =>{
+      $host.get('api/order/getAllArchive').then(
+        res=> {
+            dispach(saveOrders(res.data.orders))
+            dispach(saveSettings(res.data.settings))
+            dispach(saveUsers(res.data.users))
+        }
+    )  
+    }
+    
+
     return(
         <>
             
@@ -143,6 +180,13 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                       value={searchQuery}
                       onChange={handleSearchChange}
                     />
+                    <select className="menu-select"  onChange={handleSortChange}>
+                        <option value={'default'}>по умолчанию</option>
+                        <option value={'price'}>по цене</option>
+                        <option value={'data'}>по дате</option>
+                        <option value={'city'}>по городу</option>
+                        <option value={'FIO'}>по имени</option>
+                    </select>
                 </div>
 
                 <div
@@ -178,7 +222,11 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                           checked={filterCheck.includes(6)}
                           onChange={(e) => Check(e.target.checked, [6])}
                         />
-                        Архив
+                        Оплаченные
+                      </label>
+                      <label>
+                        <button onClick={() => DownloadArchive()}>загрузить архив</button>
+                          
                       </label>
                     </div>
                     )}  

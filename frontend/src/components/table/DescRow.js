@@ -12,7 +12,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
   const dispatch = useDispatch()
   const users = useSelector(state=>state.order.users)
-
+ 
   const [price, setPrice] = useState(order.price || '');
   const [typePost, setTypePost] = useState(order.typePost)
   const [FIO, setFIO] = useState(order.FIO || '')
@@ -29,6 +29,16 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const [notes, setNotes] = useState(order.notes || '')
   const [codeOutside, setCodeOutside] = useState(order.codeOutside || '')
   const [isChanged, setIsChanged] = useState(false);
+
+  const [numRows, setNumRows] = useState(2);
+  const [numRows1, setNumRows1] = useState(2);
+
+  useEffect(() => {
+    const lineCount = other.split('\n').length;
+    setNumRows(lineCount < 2 ? 2 : lineCount);
+    const lineCount1 = notes.split('\n').length;
+    setNumRows1(lineCount1 < 2 ? 2 : lineCount);
+  }, [other, notes]);
 
   const checkChanges = useCallback(() => {
     const initialValues = {
@@ -139,10 +149,10 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
   const AddFormat = () =>{
     const data = {
-        type: "фото",
-        format: "10x15",
-        amount: "0",
-        paper: 'глянец'
+        type: "photo",
+        format: "а6",
+        amount: "1",
+        paper: 'glossy'
     }
     setPhoto([...photo, data])
   }
@@ -175,6 +185,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
     return price
   }
+
 
   const SumTeor =()=> {
     const pr = photo.reduce((sum, el)=>{
@@ -209,17 +220,56 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     setModalVisibleMain(false);
   };
 
+
+  const copyCode = () =>{
+    let text = ''
+    
+    if(typePost === 'E'){
+        text = 
+    `
+    Здравствуйте. Заказ отправили. 
+Сумма наложенного платежа: ${price}р (с учетом пересылки)
+Код для отслеживания: ${codeOutside}
+    `
+    }
+
+    if(typePost === 'R' && !firstClass){
+        text = 
+    `
+    Здравствуйте. Заказ отправили. 
+Сумма наложенного платежа: ${price}р
+Код для отслеживания: ${codeOutside}
+    `
+    }
+
+    if(typePost === 'R' && firstClass){
+        text = 
+    `
+    Здравствуйте. Письмо отправили. Вот данные для оплаты:
+
+4255 1901 5302 8421
+12/23
+
+сумма ${price}р за заказ +2р пересылка. Итого ${Number(price)+2}р
+${codeOutside} - код для отслеживания
+    `
+    }
+    
+
+    return text
+}
+
   return (
     <div className="order_details_card">
       <div className="card_container_admin">
         <div className="card_admin">
           <div>
             <div className='contact_field'>
-              <label>ФИО:</label>
+              <label  onClick={()=>{navigator.clipboard.writeText(FIO)}}>ФИО:</label>
               <input  style={{marginLeft: 5}} value={FIO} onChange={(e) => setFIO(e.target.value)} />
             </div>
             <div className='contact_field'>
-              <label>Телефон:</label>
+              <label  onClick={()=>{navigator.clipboard.writeText(phone)}}>Телефон:</label>
               <div className='search_bar'
                 onMouseEnter={handleModalMouseEnterMain}
                 onMouseLeave={handleModalMouseLeaveMain}
@@ -251,11 +301,11 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
             }
             
             <div className='contact_field'>
-              <label>Город:</label>
+              <label onClick={()=>{navigator.clipboard.writeText(city)}}>Город:</label>
               <input value={city} onChange={(e)=>setCity(e.target.value)} /> 
             </div>
             <div className='contact_field'>
-              <label>
+              <label  onClick={()=>{navigator.clipboard.writeText(adress)}}>
                 {typePost === 'R' ? 'Адрес:' : 'Отделение:'}
               </label>
               <input value={adress} onChange={(e)=>setAdress(e.target.value)} /> 
@@ -264,15 +314,15 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
             {typePost === 'R' ? 
             <>
             <div className='contact_field'>
-              <label>Индекс:</label>
+              <label  onClick={()=>{navigator.clipboard.writeText(postCode)}}>Индекс:</label>
               <input value={postCode} onChange={(e)=>setPostCode(e.target.value)} /> 
             </div> 
             <div className='contact_field'>
-              <label>Район:</label>
+              <label  onClick={()=>{navigator.clipboard.writeText(raion)}}>Район:</label>
               <input value={raion} onChange={(e)=>setRaion(e.target.value)} /> 
             </div> 
             <div className='contact_field'>
-              <label>Область:</label>
+              <label  onClick={()=>{navigator.clipboard.writeText(oblast)}}>Область:</label>
               <input value={oblast} onChange={(e)=>setOblast(e.target.value)} /> 
             </div> 
             </>
@@ -305,12 +355,12 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
           <div>
             <div className='info_other'>
               <label>Заметки:</label>
-              <textarea rows={2}  value={notes} onChange={(e)=>setNotes(e.target.value)}  />
+              <textarea rows={numRows1}  value={notes} onChange={(e)=>setNotes(e.target.value)}  />
             </div>
 
             <div className='info_other'>
               <label>Примечания клиента:</label>
-              <textarea rows={2} value={other} onChange={(e)=>setOther(e.target.value)} />
+              <textarea rows={numRows} value={other} onChange={(e)=>setOther(e.target.value)} />
             </div>
 
             <div className='contact_field'>
@@ -335,7 +385,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
           </div>
           <div className="card_actions">
-            <button className="copy_button"  onClick={()=>{}}>копировать смс</button>
+            <button className="copy_button"  onClick={()=>{navigator.clipboard.writeText(copyCode())}}>копировать смс</button>
             <button className="delete_button" onClick={()=>DeleteOrder()}>удалить заказ</button>
           </div>
         </div>

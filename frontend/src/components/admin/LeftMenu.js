@@ -46,9 +46,9 @@ export const LeftMenu = () => {
             </button>
             <button
               className={`menu-btn ${isActive('/usersDB') ? 'active' : ''}`}
-              onClick={() => Close('/usersDB')}
+              onClick={() => Close('/editor')}
             >
-              Клиенты
+              Редактор фото
             </button>
             <button
               className={`menu-btn ${isActive('/PrivatePage') ? 'active' : ''}`}

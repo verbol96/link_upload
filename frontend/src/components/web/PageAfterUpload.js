@@ -1,5 +1,5 @@
 import {Row, Col} from 'react-bootstrap'
-import './style.css'
+import './styleWeb.css'
 
 export const PageAfterUpload = ({amountPhoto, phone}) =>{
     return(

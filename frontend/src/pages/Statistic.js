@@ -1,49 +1,42 @@
-import { NavBar } from "../components/admin/NavBar"
-import {Alert, FormSelect, Row, Col} from 'react-bootstrap'
+import { NavBarAdmin } from "../components/admin/NavBarAdmin"
+import {FormSelect, Row, Col} from 'react-bootstrap'
 import {useEffect, useState} from 'react'
-import { getAll } from "../http/dbApi"
-import _ from 'lodash'
+import './stylePages.css'
+import { $host } from "../http"
 
 const Statistic = () =>{
     
     const [order, setOrder] = useState([])
     const [days, setDays] = useState([])
     const [weeks, setWeeks] = useState([])
-    const [monthes, setMonthes] = useState([])
     const [type, setType] = useState('day') //тип селекта для отображения
 
+
+
     useEffect(()=>{
-        async function getOrder (){
-            let  value = await getAll()
-            setOrder(_.orderBy(_.orderBy(value, 'id', 'asc' ), 'status', 'asc' ))
-        }
-        getOrder()
-        const startDay = new Date(2023,1,13)
+
+        async function getOrder() {
+            const { data } = await $host.get('api/order/getAllArchive');
+            setOrder(data.orders);
+          }
+          getOrder();
+        const startDay = new Date(2023,0,2)
         let dayN = (Date.now() - startDay)/1000/60/60/24
 
         const day = [] 
         let i = 0
         while(i<dayN){
-            let copyStartDay = new Date(2023,1,13)
+            let copyStartDay = new Date(2023,0,2)
             day.push(new Date(copyStartDay.setDate(copyStartDay.getDate()+i)))
             i++
         }
         setDays(day)
 
-        const month = []
-        i = 0
-        while(i<dayN/30+1){
-            let copyStartDay = new Date(2023,1,1)
-            month.push(new Date(copyStartDay.setMonth(copyStartDay.getMonth()+i)).toLocaleString("ru", {year: 'numeric',  month: 'numeric'}))
-            i++
-        }
-       
-        setMonthes(month)
 
         const week = []
         i = 0
         while(i<dayN/7){
-            let copyStartDay = new Date(2023,1,13)
+            let copyStartDay = new Date(2023,0,2)
             week.push(new Date(copyStartDay.setDate(copyStartDay.getDate()+i*7)))
             i++
         }
@@ -93,11 +86,30 @@ const Statistic = () =>{
         },0)
     }
 
+
+    function generateMonthlySum(orders) {
+        const groupedOrders = orders.reduce((acc, order) => {
+            const date = new Date(order.createdAt);
+            const formattedDate = date.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+        
+            if (!acc[formattedDate]) {
+              acc[formattedDate] = { month: formattedDate, total: 0 };
+            }
+        
+            const price = parseFloat(order.price).toFixed(2);
+            acc[formattedDate].total += Number(price);
+        
+            return acc;
+          }, {});
+        
+          return Object.values(groupedOrders).sort((a, b) => new Date(b.month) - new Date(a.month)).reverse();
+      }
+      const ordersByMonth = generateMonthlySum(order);
    
 
     return(
         <>
-        <NavBar />
+        <NavBarAdmin />
 
         <Row>
             <Col md={{span:2}} style={{marginLeft: '5%'}}>
@@ -139,19 +151,44 @@ const Statistic = () =>{
 
         :
 
-            <Row className="mt-5">
-               {monthes.map((el, index)=><div key={index}>
-                <Row className="justify-content-center">
-                    <Col  md={3}>
-                        <Alert variant="secondary" style={{textAlign: 'center'}}>{el}</Alert>
-                    </Col>
-                    <Col md={3}>
-                        <Alert variant="info"  style={{textAlign: 'center'}}>{sum(el).toFixed(2)}р</Alert>
-                    </Col>
-                </Row>
-                
-                </div>)}
-            </Row>
+        <div>
+            {
+                ordersByMonth.map(el => (
+                    <div 
+                      key={el.month} 
+                      style={{
+                        display: 'flex', 
+                        justifyContent: 'flex-start', 
+                        alignItems: 'center', 
+                        width: '30%', 
+                        margin: '10px auto', 
+                        border: '1px solid black', 
+                        borderRadius: '5px', 
+                        padding: '10px', 
+                        backgroundColor: '#f0f0f0'
+                      }}>
+                      <div 
+                        style={{
+                          flex: 1, 
+                          marginLeft: '10%', 
+                          textAlign: 'left'
+                        }}>
+                        {el.month.replace('г.', '')}
+                      </div>
+                      <div 
+                        style={{
+                          flex: 1, 
+                          marginLeft: '10%', 
+                          fontWeight: 'Bolder', 
+                          textAlign: 'left'
+                        }}>
+                        {Math.floor(el.total).toLocaleString('ru-RU')} руб
+                      </div>
+                    </div>
+                  ))
+            }
+        </div>
+      
         }
         
         </>

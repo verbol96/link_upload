@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { updateUserAdress } from '../../http/dbApi';
+import './Settings.css';
 
 export const ProfileAdress = () => {
   const user = useSelector((state) => state.private.user);

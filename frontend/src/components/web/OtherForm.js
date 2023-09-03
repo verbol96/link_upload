@@ -1,5 +1,6 @@
-import { Card, Row, Col , Tooltip, OverlayTrigger} from "react-bootstrap"
+import {Row, Col , Tooltip, OverlayTrigger} from "react-bootstrap"
 //import {useState} from 'react'
+import './styleWeb.css'
 
 export const OtherForm = ({other, setOther, typeAnswer, setTypeAnswer, nikname, setNikname})=>{
     
@@ -10,7 +11,7 @@ export const OtherForm = ({other, setOther, typeAnswer, setTypeAnswer, nikname, 
       );
 
     return(
-        <Card className="otherForm">
+        <div className="otherForm">
             <Row><h4 className='textH4'><i className="bi bi-3-square" style={{color: 'black', marginRight: 10}}></i> Обратная связь 
             <OverlayTrigger
             placement="right"
@@ -46,6 +47,6 @@ export const OtherForm = ({other, setOther, typeAnswer, setTypeAnswer, nikname, 
                 </div>
                 </Col>  
             </Row>
-        </Card>
+        </div>
     )
 }

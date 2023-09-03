@@ -82,6 +82,26 @@ class orderController{
         return res.json({orders, settings, users})
     }
 
+    async getAllArchive(req,res){
+        
+        const orders = await Order.findAll({
+            
+            include: [
+              {
+                model: User
+              },
+              {
+                model: Photo
+              }
+            ]
+          });
+        const settings = await Settings.findAll()
+        const users = await User.findAll({
+            attributes: { exclude: ['password', 'createdAt', 'updatedAt', 'role'] }
+          });
+        return res.json({orders, settings, users})
+    }
+
     async getOneUser(req,res){
         const {phone} = req.body
         const user = await User.findOne({
@@ -168,11 +188,11 @@ class orderController{
             const photoEl = await photo.filter(photo => photo.orderId === el.id);
 
             let order;
-            const pretendent = await User.findOne({where: {phone: userEl.phone}});
+            const pretendent = await User.findOne({where: {phone: userEl.phone.trim()}});
             if (pretendent === null) {
                 const hashPassword = await bcryptjs.hash('1', 3);
                 const user = await User.create({
-                    phone: userEl.phone, 
+                    phone: userEl.phone.trim(), 
                     FIO: userEl.name, 
                     password: hashPassword, 
                     typePost: adressEl.typePost, 

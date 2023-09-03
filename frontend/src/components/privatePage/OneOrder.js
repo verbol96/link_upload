@@ -2,7 +2,7 @@
 import './OneOrder.css'
 import { OneOrderDesc } from './OneOrderDesc';
 
-export const OneOrder = ({order, handleDetailsClick, selectedOrder, setSelectedOrder}) =>{
+export const OneOrder = ({order, handleDetailsClick, selectedOrder, setSelectedOrder, index}) =>{
     
     const formatPhoneNumber = (phoneNumberString) => {
         const cleaned = phoneNumberString.replace(/\D/g, '');
@@ -30,7 +30,7 @@ export const OneOrder = ({order, handleDetailsClick, selectedOrder, setSelectedO
     'в печати',// упакован -4
     'упакован',// отправлено -5
     'отправлен',// оплачено -6
-    'отправлен'
+    'получен'
 ]
 
     return(
@@ -43,13 +43,14 @@ export const OneOrder = ({order, handleDetailsClick, selectedOrder, setSelectedO
                     <i className="bi bi-chevron-down"></i>
                     }
                 </div>
+                <div className='flex_col_sm'>{index}</div>
                 <div className='flex_col_sm'> {order.createdAt.split("T")[0].split("-")[2]}.{order.createdAt.split("T")[0].split("-")[1]}</div>
                 <div className='flex_col'>{order?.FIO}</div>
                 <div className='flex_col' style={{flex:2}}>{formatPhoneNumber(order.phone)}</div>
                 <div className='flex_col' style={{flex:2}}>{order.city}</div>
                 <div className='flex_col'>{photo()}</div>
                 <div className='flex_col_sm'>{order.price}р</div>
-                <div className='flex_col' style={{flex:1.3}}><button style={{backgroundColor: order.status === 5 || order.status === 6 ? '#b7cbcf' : '#cbd36b', 
+                <div className='flex_col' style={{flex:1.3}}><button style={{backgroundColor: order.status === 6 ? '#ffffff' : order.status === 5 ? '#b7cbcf' : '#cbd36b', 
                                                                             border: order.status===5|| order.status === 6 ? '2px solid #a0babf' : '2px solid #b2b77a', 
                                                                             borderRadius: 5, whiteSpace:'nowrap', width:'100%'}}>{StatusOrder[order.status]}</button></div>
                 </div>

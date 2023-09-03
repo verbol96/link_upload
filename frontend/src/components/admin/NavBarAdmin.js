@@ -3,21 +3,23 @@ import {useNavigate} from 'react-router-dom'
 import {useDispatch, useSelector} from 'react-redux'
 import {logout } from '../../http/authApi'
 import './Navbar.css';
-import { LeftMenu } from '../admin/LeftMenu';
+import { LeftMenu } from './LeftMenu';
 
 
-export const NavBar = () =>{
+export const NavBarAdmin = () =>{
 
     const navigate = useNavigate()
-    const dispach = useDispatch()
+    const dispatch = useDispatch()
     const user = useSelector(state=>state.private.user)
  
     const isAuth = useSelector(state=>state.auth.auth)
 
-      const Logout = async() =>{
-        dispach({type: 'authStatus', paylods: false})
-        await logout()
-     }
+    const Logout = async () => {
+      if (window.confirm("Вы уверены, что хотите выйти?")) {
+          dispatch({type: 'authStatus', payload: false});
+          await logout();
+      }
+  };
 
      const [menuOpen, setMenuOpen] = useState(false);
 
@@ -35,7 +37,7 @@ export const NavBar = () =>{
         <nav className="navbar">
           <LeftMenu />
         <div className="navbar__left">
-          <span className="navbar__title"  onClick={isAuth&&user.role==='ADMIN' ?()=>dispach({type:'showLeftMenu'}):null}>LINK</span>
+          <span className="navbar__title"  onClick={isAuth&&user.role==='ADMIN' ?()=>dispatch({type:'showLeftMenu'}):null}>LINK</span>
         </div>
   
         <div className="navbar__right">
