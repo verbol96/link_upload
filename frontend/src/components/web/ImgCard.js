@@ -1,5 +1,4 @@
-import {Card} from 'react-bootstrap'
-import './style.css'
+import './styleWeb.css'
 
 export const ImgCard = ({image, deleteImg}) =>{
   
@@ -7,14 +6,12 @@ export const ImgCard = ({image, deleteImg}) =>{
     return(
         <div className="cardFile"> 
           <div className="cardFileInner">
-            <Card.Img
-              variant="top"
-              className="cardImage"
-              src={image.imageUrl.toString()}
-            />
+          <img 
+            className="card-image-top" 
+            src={image.imageUrl.toString()} 
+            alt="Card top" 
+          />
             <button
-              variant="light"
-              size="sm"
               className="closeButton"
               onClick={() => deleteImg(image)}
             > 

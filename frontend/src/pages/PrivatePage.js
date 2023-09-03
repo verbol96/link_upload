@@ -4,7 +4,7 @@ import { Settings } from "../components/privatePage/Settings";
 import { Files } from "../components/privatePage/Files";
 import { NavBar } from "../components/privatePage/NavBar";
 import Footer from "../components/admin/Footer"
-import './style.css'
+import './stylePages.css'
 
 const PrivatePage = () =>{
 

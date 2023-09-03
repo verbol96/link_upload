@@ -46,6 +46,7 @@ export const FormatAll = ({photo, setPhoto, thema, price, setPrice}) =>{
         }
         setPhoto([...photo, data])
     }
+    console.log(photo)
 
     const DeleteFormat = (index) =>{
         setPhoto([...photo.slice(0, index), ...photo.slice(index + 1)])

@@ -14,8 +14,8 @@ class fileController {
             if(parent){
                 const parentFile = await File.findOne({where:{id: parent}})
                 const path = `${parentFile.name}`
-                await FileService.createdDir(name, path)
-                file = await File.create({name, type, parent, path})
+                const newName = await FileService.createdDir(name, path)
+                file = await File.create({name: newName.name, type, parent, path})
             }else{
                 await FileService.createdDir(name)
                 file = await File.create({name, type, parent: '00000000-0000-0000-0000-000000000000'})

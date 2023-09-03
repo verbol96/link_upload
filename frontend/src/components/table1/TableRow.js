@@ -78,6 +78,8 @@ export const TableRow = ({el, user, setIsFormAdd, photo, adressOrder, path, isFo
         if(el.id===editRow.id && isFormAdd) return 'green' // когда активна модалка, подсветка строки
         if(el.id===editRow.id) return 'PaleGreen' // 2сек после модалки, подсветка строки
     }
+
+  
    
     return(
         <tr style={{fontSize:13, backgroundColor: ActiveRow() }}>
@@ -90,7 +92,7 @@ export const TableRow = ({el, user, setIsFormAdd, photo, adressOrder, path, isFo
             <td onClick={()=>EditRow()}>{PhotoShow()}</td>
             <td style={{width:56}} onClick={()=>EditRow()}>{Warning()}</td>
             <td style={{width: 110, textAlign:'right', fontFamily: "Geneva"}} onClick={()=>EditRow()}>{el.price}</td>
-            <td style={{width: 110}}>
+            <td style={{width: 110}} onClick={(e)=>e.stopPropagation()}>
                 <FormSelect style={{backgroundColor: ColorBG[el.status-1],  fontSize: 12, margin: -3, marginRight: 0}} size='sm' value={el.status} onChange={(e)=>ChangeStatus(e)}>
                     <option value="1">принят</option>
                     <option value="2">обработан</option>

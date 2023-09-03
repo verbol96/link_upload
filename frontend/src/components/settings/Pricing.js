@@ -7,7 +7,7 @@ export const Pricing = () =>{
 
     const [settings, setSettings] = useState([])
 
-    const [type, setType] = useState('фото')
+    const [type, setType] = useState('photo')
     const [title, setTitle] = useState('')
     const [price, setPrice] = useState('')
 
@@ -51,13 +51,13 @@ export const Pricing = () =>{
             )}
 
             <div className="container">
-                <select 
+                <select  
                     value={type} 
                     onChange={(e)=>setType(e.target.value)}
                 >
-                    <option value='фото'>фото</option>
-                    <option value='холст'>холст</option>
-                    <option value='магнит'>магнит</option>
+                    <option value='photo'>фото</option>
+                    <option value='holst'>холст</option>
+                    <option value='magnit'>магнит</option>
                 </select>
                 <input 
                     value={title} 

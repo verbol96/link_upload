@@ -16,13 +16,13 @@ export const MyOrders =() =>{
         } else {
           setSelectedOrder(orderId);
         }
-      };
-
+      }; 
+      
     return(
         <div>
             <div className='textTitle'>Мои заказы</div>
            {
-                orders.map(order=> <OneOrder key={order.id} order={order}
+                orders.map((order, index)=> <OneOrder key={order.id} order={order} index={orders.length - index}
                   handleDetailsClick={handleDetailsClick} selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder} />
                 )
             }

@@ -1,5 +1,6 @@
 import {Row, Col, Tooltip, OverlayTrigger} from 'react-bootstrap'
 import MaskedInput from 'react-text-mask';
+import './styleWeb.css'
 
 export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city,setCity,
     adress,setAdress,postCode,setPostCode})=>{

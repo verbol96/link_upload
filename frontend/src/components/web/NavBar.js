@@ -24,9 +24,11 @@ export const NavBar = () => {
   };
 
   const Logout = async () => {
-    dispatch({ type: 'authStatus', paylods: false });
-    await logout();
-  };
+    if (window.confirm("Вы уверены, что хотите выйти?")) {
+        dispatch({type: 'authStatus', payload: false});
+        await logout();
+    }
+};
 
   const [menuOpen, setMenuOpen] = useState(false);
 

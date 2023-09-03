@@ -2,7 +2,7 @@
 import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ListCloud } from "../components/cloud/ListCloud"
-import { NavBar } from "../components/admin/NavBar"
+import { NavBarAdmin } from "../components/admin/NavBarAdmin"
 import {getFiles} from '../http/cloudApi'
 import {setFiles, setCurrentDir} from '../store/fileReducer'
 import { Row, Button, Col} from 'react-bootstrap'
@@ -29,7 +29,7 @@ const Cloud = () =>{
     
     return (
         <div>
-            <NavBar />
+            <NavBarAdmin />
             <Row className="m-2">
                 <Col md={2}>
                     <Button variant="dark" size="sm" onClick={currentDir?()=>BackClick():null}>Назад</Button>

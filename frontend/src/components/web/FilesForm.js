@@ -1,32 +1,51 @@
-import {Card, Row, Col} from 'react-bootstrap'
+import {Row, Col} from 'react-bootstrap'
 import { ImgCard } from './ImgCard'
-import {useState} from 'react'
+import {useEffect, useState} from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import './style.css'
-import { useSelector } from 'react-redux'
+import './styleWeb.css'
+import { useDispatch, useSelector } from 'react-redux'
 import pica from 'pica';
+import { saveSettings } from '../../store/orderReducer'
+import { $host } from '../../http'
 
 export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
     //console.log(el)
-    const TypePhoto = ['фотографии', 'холсты', 'магниты']
-    const FormatPhoto = useSelector(state=>state.files.FormatPhoto)
-    const FormatHolst = useSelector(state=>state.files.FormatHolst)
-    const FormatMagnit = useSelector(state=>state.files.FormatMagnit)
 
+    const dispach = useDispatch()
+    
+    useEffect(()=>{
+      $host.get('api/order/getAll').then(
+          res=> {
+              dispach(saveSettings(res.data.settings))
+          }
+      )  
+    },[dispach])
+
+
+
+    const settings = useSelector(state=>state.order.settings)
+   
+    const TypePhoto = ['photo', 'holst', 'magnit']
+   
+    const FormatPhoto = settings.filter(el=>el.type==='photo')
+    const FormatHolst = settings.filter(el=>el.type==='holst')
+    const FormatMagnit = settings.filter(el=>el.type==='magnit')
+
+    
     const sizePhoto =()=>{
         switch(el.type){
-            case 'фотографии': return FormatPhoto
-            case 'холсты': return FormatHolst
-            case 'магниты': return FormatMagnit
+            case 'photo': return FormatPhoto
+            case 'holst': return FormatHolst
+            case 'magnit': return FormatMagnit
             default: return FormatPhoto
         }
     }
 
     const ChangeType = (e)=>{
         let formatValue
-        if(e.target.value==='фотографии') formatValue=FormatPhoto[0]
-        if(e.target.value==='холсты') formatValue=FormatHolst[0]
-        if(e.target.value==='магниты') formatValue=FormatMagnit[0]
+        if(e.target.value==='photo') formatValue=FormatPhoto[0].title
+        if(e.target.value==='holst') formatValue=FormatHolst[0].title
+        if(e.target.value==='magnit') formatValue=FormatMagnit[0].title
         setFormats([...formats.slice(0,index), {...formats[index], type: e.target.value, format: formatValue}, ...formats.slice(index+1)])
     }
 
@@ -124,7 +143,7 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
 
 
     return(
-        <Card className="p-3 mt-3" style={{border: "0.5px #0E3C47 solid", backgroundColor:'inherit', boxShadow: '0px 2px 42px 3px rgba(57, 88, 112, 0.2)'}}>
+        <div className="filesFormFormat">
             <Row>
                 <Col md={2}>
                     <div className="containerSelect">
@@ -137,17 +156,17 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
                     <div className="containerSelect mt-4">
                         <label className="labelSelect">Размер:</label>
                         <select className="selectForm"  value={el.format} onChange={(e)=>ChangeSize(e)}>
-                            {sizePhoto().map((el,index)=><option key={index}>{el}</option>)}
+                            {sizePhoto().map((el,index)=><option key={index}>{el.title}</option>)}
                         </select>
                         <span className="selectArrow">▼</span>
                     </div>
-                    {el.type==='фотографии'
+                    {el.type==='photo'
                     ?
                     <div className="containerSelect mt-4">
                     <label className="labelSelect">Бумага:</label>
                     <select className="selectForm"  value={el.paper} onChange={(e)=>ChangePaper(e)}>
-                        <option>Глянец</option>
-                        <option>Люстра</option>
+                        <option value='glossy'>glossy</option>
+                        <option value='lustre'>lustre</option>
                     </select>
                     <span className="selectArrow">▼</span>
                     </div>
@@ -162,7 +181,7 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
                         <div className="cardFile" style={{border: '2.5px #0E3C47 dashed'}}>
                             <label className='upload_label' htmlFor={index}>
                                 <div style={{fontSize: 30, textAlign: 'center'}}><i className="bi bi-plus" ></i></div>
-                                <div style={{textAlign: 'center'}}>добавить фото</div>
+                                <div style={{textAlign: 'center', padding: 5}}>добавить фото</div>
                             </label>
                             <input className='upload_input' id={index} type="file" multiple={true} onChange={(e)=>FilesInput(e)}></input>
                         </div>
@@ -178,6 +197,6 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
                 </Col>
                 <Col className='mt-3'><h5 className='textH5'>Добавлено {formats[index].files.length} фото {el.format}</h5></Col>
             </Row>
-        </Card>
+        </div>
     )
 }

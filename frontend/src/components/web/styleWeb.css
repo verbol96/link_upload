@@ -27,8 +27,12 @@
     display: flex;
     flex-direction: column;
     background-color: transparent;
-    padding: 10px;
   }
+
+  .card-image-top {
+    width: 100%;
+    /* Другие стили, которые вы хотите применить к изображению */
+}
   
   .cardFileInner {
     width: 100%;
@@ -59,6 +63,11 @@
   .closeButton:hover{
     transform: scale(1.4);
   }
+
+  .card-image-top {
+    width: 100%;
+    /* Другие стили, которые вы хотите применить к изображению */
+}
 
   @media (max-width: 576px) {
     .cardFile {
@@ -171,14 +180,13 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
   }
 
-
-  /* фон карточек 1,2,3 */
-  .contactForm, .otherForm, .filesForm {
-    background-color: #f9f9f9;
-    border-radius: 25px;
-    padding: 30px;
-    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.14);
-    margin-top: 30px;
+  .filesFormFormat{
+    border: 0.5px #2f5766 solid;
+    border-radius: 4px;
+    background-color:'inherit';
+    box-shadow: 0px 0px 17px -1px rgba(61, 96, 94, 0.38);
+    padding: 15px;
+    margin-bottom: 15px;
   }
 
   /* основа шрифта */

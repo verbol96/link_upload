@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { deleteOrder, updateOrder } from '../../http/dbApi';
 import { deleteOrderId } from '../../store/orderReducer';
 import './OneOrderDesc.css'
-import {useState} from 'react'
+import {useState, useEffect} from 'react'
 import { updateOrderPrivate } from '../../store/privatePageReducer';
 
 export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, StatusOrder}) =>{
@@ -26,6 +26,12 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
     const [notes,] = useState(order.notes || '')
     const [codeOutside, setCodeOutside] = useState(order.codeOutside || '')
 
+    const [numRows, setNumRows] = useState(2);
+
+    useEffect(() => {
+        const lineCount = other.split('\n').length;
+        setNumRows(lineCount < 2 ? 2 : lineCount);
+    }, [other]);
 
     const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
 
@@ -179,7 +185,7 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
 
                     <div className='info_other'>
                     <label>Примечания:</label>
-                    <textarea rows={3} value={other} onChange={(e)=>setOther(e.target.value)} />
+                    <textarea rows={numRows} value={other} onChange={(e)=>setOther(e.target.value)} />
                     </div> 
 
                     <div className='contact_field' style={{marginTop: 5}}>
@@ -193,7 +199,7 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
                     </div>
 
                     {
-                    order.status===5?
+                    order.status===5||6?
                     <div className='contact_field'>
                         <label>Штрихкод:</label>
                         <input style={{marginLeft: 5}} value={codeOutside} onChange={e=>setCodeOutside(e.target.value)} /> 

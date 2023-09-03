@@ -5,19 +5,19 @@ import { useSelector } from 'react-redux'
 export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
 
   const settings = useSelector(state=>state.order.settings)
-  const typePhoto = ['фото', 'холст', 'магнит']
-
-  const formatPhoto = settings.filter(el=>el.type==='фото')
-  const formatHolst = settings.filter(el=>el.type==='холст')
-  const formatMagnit = settings.filter(el=>el.type==='магнит')
-
+  const typePhoto = ['photo', 'holst', 'magnit']
+ 
+  const formatPhoto = settings.filter(el=>el.type==='photo')
+  const formatHolst = settings.filter(el=>el.type==='holst')
+  const formatMagnit = settings.filter(el=>el.type==='magnit')
+  
   const Update = (e, prop) =>{
     if(prop==='type'){
         switch(e.target.value){
-            case 'фото': return setPhoto([...photo.slice(0, index), {type: "фото", format: "А6", amount: "1",  paper: 'глянец'}, ...photo.slice(index + 1)])
-            case 'холст': return setPhoto([...photo.slice(0, index), {type: "холст", format: "30x40", amount: "1",  paper: 'глянец'}, ...photo.slice(index + 1)])
-            case 'магнит': return setPhoto([...photo.slice(0, index), {type: "магнит", format: "5x8", amount: "1",  paper: 'глянец'}, ...photo.slice(index + 1)])
-            default: return setPhoto([...photo.slice(0, index), {type: "фото", format: "А6", amount: "1",  paper: 'glossy'}, ...photo.slice(index + 1)])
+            case 'photo': return setPhoto([...photo.slice(0, index), {type: "photo", format: "а6", amount: "1",  paper: 'glossy'}, ...photo.slice(index + 1)])
+            case 'holst': return setPhoto([...photo.slice(0, index), {type: "holst", format: "30x40", amount: "1",  paper: 'glossy'}, ...photo.slice(index + 1)])
+            case 'magnit': return setPhoto([...photo.slice(0, index), {type: "magnit", format: "5x8", amount: "1",  paper: 'glossy'}, ...photo.slice(index + 1)])
+            default: return setPhoto([...photo.slice(0, index), {type: "photo", format: "А6", amount: "1",  paper: 'glossy'}, ...photo.slice(index + 1)])
         }
     }
     setPhoto([...photo.slice(0, index), {...photo[index], [prop]: e.target.value}, ...photo.slice(index + 1)])
@@ -34,18 +34,18 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
             </select>
 
             <select value={el.format} onChange={(e)=>Update(e, 'format')}>
-              {(el.type==='фото')?
+              {(el.type==='photo')?
                   formatPhoto.map((el,index)=><option key={index} value={el.title}>{el.title}</option>) :
-                  (el.type==='холст')?
+                  (el.type==='holst')?
                   formatHolst.map((el,index)=><option key={index} value={el.title}>{el.title}</option>) :
-                      (el.type==='магнит') ?
+                      (el.type==='magnit') ?
                       formatMagnit.map((el,index)=><option key={index} value={el.title}>{el.title}</option>) :
                           null
               }
             </select>
             <select value={el.paper} onChange={(e)=>Update(e, 'paper')}>
-              <option value="люстр">люстр</option>
-              <option value="глянец">глянец</option>
+              <option value="lustre">люстр</option>
+              <option value="glossy">глянец</option>
             </select>
             <button type="button" onClick={()=>DeleteFormat(index)}>удалить</button>
       </div>

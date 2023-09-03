@@ -1,4 +1,4 @@
-import { NavBar } from "../components/admin/NavBar"
+import { NavBarAdmin } from "../components/admin/NavBarAdmin"
 import { TableFull } from "../components/table/TableFull"
 import { Row, Col } from 'react-bootstrap'
 import {useState} from 'react'
@@ -23,7 +23,7 @@ const Table = () =>{
 
     return(
         <div style={{background: 'rgb(243, 243, 243)', minHeight: '100vh'}}>
-           <NavBar />
+           <NavBarAdmin />
 
             <Row className="d-flex justify-content-center" 
                 onClick={()=>setSelectedOrder(null)}
