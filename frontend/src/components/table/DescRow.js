@@ -7,6 +7,7 @@ import { deleteOrderId, updateOrderAction } from '../../store/orderReducer';
 import _ from 'lodash';
 import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
+import {CopyToClipboard} from 'react-copy-to-clipboard'
 
 export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
@@ -25,7 +26,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const [firstClass, setFirstClass] = useState(order.firstClass || false)
   const [other, setOther] =useState(order.other || '')
   const [photo, setPhoto] = useState(order.photos || [])
-  const [phoneUser, setPhoneUser] = useState(order.user?.phone || '');
+  const [phoneUser, setPhoneUser] = useState(order.user?.phone || order.phoneUser || '');
   const [notes, setNotes] = useState(order.notes || '')
   const [codeOutside, setCodeOutside] = useState(order.codeOutside || '')
   const [isChanged, setIsChanged] = useState(false);
@@ -112,7 +113,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   };
 
   const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
-
+  
   const SaveData = () =>{
     updateOrder(order.id, data)
     const dataDispatch = {
@@ -131,8 +132,10 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       other: other,
       price: price,
       firstClass,
-      user: users.find(user => user.phone === phoneUser)
+      phoneUser: phoneUser,
+      user: users.find(user => user.phone === phoneUser) || {FIO:FIO}
     }
+    
     dispatch(updateOrderAction(order.id, dataDispatch))
     setSelectedOrder(null)
     handleDetailsClick(order.id)
@@ -265,11 +268,15 @@ ${codeOutside} - код для отслеживания
         <div className="card_admin">
           <div>
             <div className='contact_field'>
-              <label  onClick={()=>{navigator.clipboard.writeText(FIO)}}>ФИО:</label>
+              <CopyToClipboard text={FIO}>
+              <label>ФИО:</label>
+              </CopyToClipboard>
               <input  style={{marginLeft: 5}} value={FIO} onChange={(e) => setFIO(e.target.value)} />
             </div>
             <div className='contact_field'>
-              <label  onClick={()=>{navigator.clipboard.writeText(phone)}}>Телефон:</label>
+              <CopyToClipboard text={phone}>
+              <label>Телефон:</label>
+              </CopyToClipboard>
               <div className='search_bar'
                 onMouseEnter={handleModalMouseEnterMain}
                 onMouseLeave={handleModalMouseLeaveMain}
@@ -301,28 +308,38 @@ ${codeOutside} - код для отслеживания
             }
             
             <div className='contact_field'>
-              <label onClick={()=>{navigator.clipboard.writeText(city)}}>Город:</label>
+              <CopyToClipboard text={city}>
+              <label>Город:</label>
+              </CopyToClipboard>
               <input value={city} onChange={(e)=>setCity(e.target.value)} /> 
             </div>
             <div className='contact_field'>
-              <label  onClick={()=>{navigator.clipboard.writeText(adress)}}>
+              <CopyToClipboard text={adress}>
+              <label>
                 {typePost === 'R' ? 'Адрес:' : 'Отделение:'}
               </label>
+              </CopyToClipboard>
               <input value={adress} onChange={(e)=>setAdress(e.target.value)} /> 
             </div>
             
             {typePost === 'R' ? 
             <>
             <div className='contact_field'>
-              <label  onClick={()=>{navigator.clipboard.writeText(postCode)}}>Индекс:</label>
+              <CopyToClipboard text={postCode}>
+              <label>Индекс:</label>
+              </CopyToClipboard>
               <input value={postCode} onChange={(e)=>setPostCode(e.target.value)} /> 
             </div> 
             <div className='contact_field'>
-              <label  onClick={()=>{navigator.clipboard.writeText(raion)}}>Район:</label>
+              <CopyToClipboard text={raion}>
+              <label>Район:</label>
+              </CopyToClipboard>
               <input value={raion} onChange={(e)=>setRaion(e.target.value)} /> 
             </div> 
             <div className='contact_field'>
-              <label  onClick={()=>{navigator.clipboard.writeText(oblast)}}>Область:</label>
+              <CopyToClipboard text={oblast}>
+              <label>Область:</label>
+              </CopyToClipboard>
               <input value={oblast} onChange={(e)=>setOblast(e.target.value)} /> 
             </div> 
             </>
@@ -385,7 +402,9 @@ ${codeOutside} - код для отслеживания
 
           </div>
           <div className="card_actions">
-            <button className="copy_button"  onClick={()=>{navigator.clipboard.writeText(copyCode())}}>копировать смс</button>
+            <CopyToClipboard text={copyCode()}>
+            <button className="copy_button">копировать смс</button>
+            </CopyToClipboard>
             <button className="delete_button" onClick={()=>DeleteOrder()}>удалить заказ</button>
           </div>
         </div>

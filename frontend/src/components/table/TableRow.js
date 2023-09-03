@@ -3,6 +3,7 @@ import { updateOrderStatus } from '../../store/orderReducer';
 import './TableRow.css'
 import { useDispatch } from 'react-redux';
 import { DescRow } from './DescRow';
+import {CopyToClipboard} from 'react-copy-to-clipboard'
 
 export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId}) =>{
 
@@ -63,11 +64,11 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
     const Warning = () =>{
         let a = []
         if(order.codeOutside){
-            a.push(<i 
+            a.push(<CopyToClipboard text={order.codeOutside}>
+                <i 
                 className="bi bi-qr-code" 
                 style={{marginLeft: 5}}
-                onClick={()=>{navigator.clipboard.writeText(copyCode())}}
-                > </i>)
+                > </i></CopyToClipboard>)
          }
         if(order.firstClass === true){
            a.push( <i className="bi bi-1-square-fill pr-1" style={{color:'red', marginLeft: 5}}> </i>)
@@ -124,11 +125,17 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                     }
                 </div>
                 <div className='flex_col_sm' > {order.createdAt.split("T")[0].split("-")[2]}.{order.createdAt.split("T")[0].split("-")[1]}</div>
-                <div className='flex_col_sm' style={{color: 'darkgreen', fontWeight: 'bold'}} onClick={()=>{navigator.clipboard.writeText(order.typePost + (order.order_number%99+1) +' ' + order?.user?.FIO)}}>{order.typePost + (order.order_number%99+1)}</div>
+                <CopyToClipboard text={order.typePost + (order.order_number%99+1) +' ' + order?.user?.FIO}>
+                <div className='flex_col_sm' style={{color: 'darkgreen', fontWeight: 'bold'}}>
+                    {order.typePost + (order.order_number%99+1)}
+                </div>
+                </CopyToClipboard>
                 <div className='flex_col' >
-                <div className='ellipsis' onClick={()=>navigator.clipboard.writeText(order.FIO)}>
+                <CopyToClipboard text={order.FIO}>
+                <div className='ellipsis'>
                     {order?.user?.FIO}
                 </div>
+                </CopyToClipboard>
                 </div>
                 <div className='flex_col' style={{flex:2}} >{formatPhoneNumber(order.phone)}</div>
                 <div className='flex_col' style={{flex:2}}>{order.city}</div>
@@ -138,7 +145,9 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                     </div>
                 </div>
                 <div className='flex_col' style={{flex:1}} >{Warning()}</div>
+                <CopyToClipboard text={copyCode()}>
                 <div className='flex_col_sm' >{order.price}р</div>
+                </CopyToClipboard>
                 <select className="select_col" style={{backgroundColor: ColorBG[order.status-1]}} value={order.status} onChange={(e)=>ChangeStatus(e)} >
                     <option value="0">новый</option>
                     <option value="1">принят</option>
