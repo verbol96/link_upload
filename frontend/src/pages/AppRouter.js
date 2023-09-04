@@ -9,6 +9,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 const AppRouter = () => {
   const dispatch = useDispatch();
   const location = useLocation()
+  const [user, setUser]=useState('')
 
   useEffect(()=>{
     if(localStorage.getItem('token')){
@@ -17,6 +18,7 @@ const AppRouter = () => {
 
           async function getUser (){
             const user = await whoAmI()
+            setUser(user.role)
             let data = await getOneUser(user.phone)
             dispatch(setUser(data))
           }
@@ -39,7 +41,8 @@ const isAuth = useSelector(state=>state.auth.auth)
         : routes.map(({ path, Component }) => {
             return <Route key={path} path={path} element={<Component />} />;
           })}
-      <Route path="*" element={<Navigate to="/web" />} />
+        {user==='ADMIN'?<Route path="*" element={<Navigate to="/table" />} />: <Route path="*" element={<Navigate to="/web" />} />}
+      
     </Routes>
   );
 };
