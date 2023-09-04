@@ -145,7 +145,10 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                      order.other+
                      order.price+
                      order.name+
-                     order.phone
+                     order.phone+
+                     order.notes+
+                     order.user.FIO+
+                     order.user.phone
         return data.toLowerCase().includes(searchQuery.toLowerCase());
       })
       .filter(s=>filterCheck.includes(Number(s.status)));
