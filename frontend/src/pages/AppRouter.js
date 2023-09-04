@@ -1,5 +1,5 @@
 import { routes, privateRoutes } from '../routes'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {refresh, whoAmI} from '../http/authApi'
 import { setUser } from '../store/privatePageReducer'
