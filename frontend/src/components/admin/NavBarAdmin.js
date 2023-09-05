@@ -2,7 +2,7 @@ import {useState} from 'react'
 import {useNavigate} from 'react-router-dom'
 import {useDispatch, useSelector} from 'react-redux'
 import {logout } from '../../http/authApi'
-import './Navbar.css';
+import './NavbarAdmin.css';
 import { LeftMenu } from './LeftMenu';
 
 
@@ -16,8 +16,9 @@ export const NavBarAdmin = () =>{
 
     const Logout = async () => {
       if (window.confirm("Вы уверены, что хотите выйти?")) {
-          dispatch({type: 'authStatus', payload: false});
+        dispatch({type: 'authStatus', paylods: false})
           await logout();
+          navigate('/web')
       }
   };
 
@@ -34,25 +35,23 @@ export const NavBarAdmin = () =>{
  
 
     return(
-        <nav className="navbar">
+        <nav className="navbarA">
           <LeftMenu />
-        <div className="navbar__left">
-          <span className="navbar__title"  onClick={isAuth&&user.role==='ADMIN' ?()=>dispatch({type:'showLeftMenu'}):null}>LINK</span>
+        <div className="navbar__leftA">
+          <span className="navbar__titleA"  onClick={isAuth&&user.role==='ADMIN' ?()=>dispatch({type:'showLeftMenu'}):null}>LINK</span>
         </div>
   
-        <div className="navbar__right">
-         
-  
+        <div className="navbar__rightA">
           <div
-            className="nav-button-container"
+            className="nav-button-containerA"
             onMouseEnter={handleMenuOpen}
             onMouseLeave={handleMenuClose}
           >
-            <button className="navbar__profile" onClick={()=>navigate('/PrivatePage')}><i className="bi bi-person-fill"></i>мой профиль <i className="bi bi-chevron-down"></i></button>
+            <button className="navbar__profileA" onClick={()=>navigate('/PrivatePage')}><i className="bi bi-person-fill"></i>мой профиль <i className="bi bi-chevron-down"></i></button>
             {menuOpen && (
-              <div className="navbar__menu">
-                <div className="navbar__menu-item" style={{fontSize: 11, marginBottom: 10}}  onClick={()=>navigate('/PrivatePage')}>  {user.FIO}</div>
-                <div className="navbar__menu-item" onClick={()=>Logout()} ><i className="bi bi-box-arrow-right"></i> выйти</div>
+              <div className="navbar__menuA">
+                <div className="navbar__menu-itemA" style={{fontSize: 11, marginBottom: 10}}  onClick={()=>navigate('/PrivatePage')}>  {user.FIO}</div>
+                <div className="navbar__menu-itemA" onClick={()=>Logout()} ><i className="bi bi-box-arrow-right"></i> выйти</div>
               </div>
             )}
           </div>

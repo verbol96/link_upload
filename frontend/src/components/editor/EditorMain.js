@@ -198,14 +198,18 @@ const handleDownloadMini = () => {
     }
 }
 
-
-
 const getCropperRef = (index) => {
     if (!cropperRefs.current[index]) {
         // Создание новой ссылки, если она еще не существует
         cropperRefs.current[index] = React.createRef();
     }
     return cropperRefs.current[index];
+}
+
+const [isParam, setIsParam] = useState(false)
+
+const ShowParam = () =>{
+  isParam?setIsParam(false):setIsParam(true)
 }
 
   return (
@@ -227,7 +231,25 @@ const getCropperRef = (index) => {
                 <option value="0.6923_9x13">9х13</option>
             </select>
             </div>
+            
+            <button className='button-param' onClick={()=>ShowParam()}>параметры</button>
+            
         </div>
+
+        {
+        isParam &&
+        <div className='param'>
+            <div>верх:</div>
+            <input className='inputParam' />
+            <div>низ:</div>
+            <input className='inputParam' />
+            <div>лево:</div>
+            <input className='inputParam' />
+            <div>право:</div>
+            <input className='inputParam' />
+            <div><button style={{marginLeft: 40}}>изменить</button></div>
+        </div>
+        }
 
       {loading && <ClipLoader size={100} />}
         

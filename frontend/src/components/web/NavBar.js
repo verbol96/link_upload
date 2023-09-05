@@ -27,6 +27,7 @@ export const NavBar = () => {
     if (window.confirm("Вы уверены, что хотите выйти?")) {
         dispatch({type: 'authStatus', payload: false});
         await logout();
+        navigate('/web')
     }
 };
 
@@ -39,6 +40,10 @@ export const NavBar = () => {
   const handleMenuClose = () => {
     setMenuOpen(false);
   };
+
+  const ClickEnter = () =>{
+    !menuOpen && setMenuOpen(true)
+  }
 
   const phoneMask = [
     '+',
@@ -80,10 +85,10 @@ export const NavBar = () => {
           className="nav-button-container"
           onMouseEnter={handleMenuOpen}
           onMouseLeave={handleMenuClose}
+          onClick={()=>ClickEnter()}
         >
           <button
             className="navbar__profile"
-            onClick={() => navigate('/PrivatePage')}
           >
             <i className="bi bi-person-fill"></i>мой профиль{' '}
             <i className="bi bi-chevron-down"></i>

@@ -4,6 +4,8 @@
 
 .order_card_t {
   background: rgb(255, 255, 255);
+  width: 100%;
+  display: inline-block;
   border: none;
   border-radius: 5px;
   font-size: 15px;
@@ -38,17 +40,18 @@
 
 
 .flex_col {
-  flex-grow: 3;
-  flex-basis: 0;
+  
   display: flex;
   justify-content: flex-start;
   align-items: center;
   font-size: 12px;
   font-family: 'Open Sans', sans-serif;
   font-weight: 500;
-  min-width: 0; /* добавить эту строку */
+  min-width: 100px; /* добавить эту строку */
   padding: 0 10px;
 }
+
+
 
 .ellipsis {
   white-space: nowrap;
@@ -58,8 +61,6 @@
 }
 
 .flex_col_sm {
-  flex-grow: 1;
-  flex-basis: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -88,3 +89,30 @@
   appearance: none;
 }
 
+@media (min-width: 768px) {
+  .flex_col {
+    flex-grow: 3;
+    flex-basis: 0;
+  }
+  .flex_col_sm{
+    flex-grow: 1;
+    flex-basis: 0;
+
+  }
+}
+
+@media (max-width: 480px) {
+  .order_card_t{
+    width: min-content;
+  }
+  .flex_col {
+    width: 100px;
+  }
+  .flex_col_sm{
+    width: 35px;
+    margin-left: 5px;
+  }
+  .phoneForMobile{
+    display: none;
+  }
+}

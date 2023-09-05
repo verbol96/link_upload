@@ -37,3 +37,11 @@
   .first_column{
     width: 16px;
   }
+
+  @media (max-width: 480px){
+    .tableFullP {
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+  }
+  

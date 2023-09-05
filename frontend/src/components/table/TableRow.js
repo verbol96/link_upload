@@ -117,7 +117,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                 style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                 onDoubleClick={()=>handleDetailsClick(order.id)} 
                 className={`order_card_main_t${selectedOrder===order.id ? ' order_card_main_t_expanded' : ''}`}>
-                <div className='first_col' >
+                <div className='first_col' onClick={()=>handleDetailsClick(order.id)} >
                     {selectedOrder===order.id ?
                     <i className="bi bi-chevron-up"  style={{color: 'white'}}></i>
                     :
@@ -137,7 +137,11 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                 </div>
                 </CopyToClipboard>
                 </div>
-                <div className='flex_col' style={{flex:2}} >{formatPhoneNumber(order.phone)}</div>
+                <div className='flex_col phoneForMobile' style={{flex:2}} >
+                    <div className='ellipsis'>
+                    {formatPhoneNumber(order.phone)}
+                    </div>
+                </div>
                 <div className='flex_col' style={{flex:2}}>{order.city}</div>
                 <div className='flex_col' >
                     <div className='ellipsis'>

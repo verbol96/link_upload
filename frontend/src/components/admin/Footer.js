@@ -9,7 +9,7 @@ const Footer = () => {
         <div>
           <div className="footer-links">
             <div>
-                <label>Контакты для связи: </label>
+                <label>Контакты: </label>
             </div>
             <div>
                 <a href="https://www.t.me/link_belarus" target="_blank"  rel="noopener noreferrer"><i className="bi bi-telegram"></i>  Telegram</a>

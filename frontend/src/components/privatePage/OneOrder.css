@@ -29,7 +29,7 @@
   }
 
   .order_card_main_expanded{
-    background: #6f969d; 
+    background: #048853; 
 }
 
   .flex_grow {
@@ -44,6 +44,14 @@
     color: #298390;
   }
 
+  .flex_col{
+    width: 100px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    margin: 0 5px;
+  }
+
 
 
 .status_btn{
@@ -54,4 +62,26 @@
     border-radius: 10px;
 }
 
+@media (max-width: 480px) {
+  .order_card{
+    width: min-content;
+  }
+  .flex_col {
+    width: 100px;
+    overflow: hidden;
+    margin: 0 3px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    margin-right: 10px;
+  }
+  .flex_col_sm{
+    width: 35px;
+    margin: 0 5px;
+  }
+
+  .phoneForMobile{
+    display: none;
+  }
+
+}
 

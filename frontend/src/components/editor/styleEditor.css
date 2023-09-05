@@ -109,7 +109,7 @@
     background-color: #cacaca;
   }
   
-  .select-container {
+  .select-container, .button-param {
     width: 200px;
     height: 40px;
     display: block;
@@ -175,3 +175,19 @@
     background-color: #597174;
     border: 2px solid #5c676f;
   }
+
+  .param {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.param div {
+  width: 50px;
+  margin-left: 20px;
+}
+
+.inputParam{
+  width: 80px;
+}

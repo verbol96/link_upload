@@ -2,6 +2,7 @@ import { NavBarAdmin } from "../components/admin/NavBarAdmin"
 import { TableFull } from "../components/table/TableFull"
 import { Row, Col } from 'react-bootstrap'
 import {useState} from 'react'
+import Footer from "../components/admin/Footer"
 
 const Table = () =>{
 
@@ -22,7 +23,7 @@ const Table = () =>{
       };
 
     return(
-        <div style={{background: 'rgb(243, 243, 243)', minHeight: '100vh'}}>
+        <div style={{display: 'flex', flexDirection: 'column',background: 'rgb(243, 243, 243)', minHeight: '100vh'}}>
            <NavBarAdmin />
 
             <Row className="d-flex justify-content-center" 
@@ -35,6 +36,9 @@ const Table = () =>{
                 </Col>
             </Row>
            
+           <div style={{marginTop: 'auto'}}>
+                <Footer />
+            </div>
             
         </div>
     )

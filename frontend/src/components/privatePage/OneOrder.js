@@ -43,10 +43,10 @@ export const OneOrder = ({order, handleDetailsClick, selectedOrder, setSelectedO
                     <i className="bi bi-chevron-down"></i>
                     }
                 </div>
-                <div className='flex_col_sm'>{index}</div>
+                <div className='first_col' style={{color: '#048853', marginLeft: 10, fontSize: 12   }}>{index}</div>
                 <div className='flex_col_sm'> {order.createdAt.split("T")[0].split("-")[2]}.{order.createdAt.split("T")[0].split("-")[1]}</div>
                 <div className='flex_col'>{order?.FIO}</div>
-                <div className='flex_col' style={{flex:2}}>{formatPhoneNumber(order.phone)}</div>
+                <div className='flex_col phoneForMobile' style={{flex:2}}>{formatPhoneNumber(order.phone)}</div>
                 <div className='flex_col' style={{flex:2}}>{order.city}</div>
                 <div className='flex_col'>{photo()}</div>
                 <div className='flex_col_sm'>{order.price}р</div>

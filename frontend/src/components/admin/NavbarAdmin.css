@@ -1,11 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap');
 
-.navbar {
+.navbarA {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background: linear-gradient(45deg, #000000, #125b66);
+    background: linear-gradient(45deg, #2f474c, #39595c);
     color: #333333;
     box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.1);
 
@@ -14,20 +14,20 @@
     font-size: 20px;
   }
   
-  .navbar__left,
-  .navbar__right {
+  .navbar__leftA,
+  .navbar__rightA {
     display: flex;
     align-items: center;
-    margin: 0px 30px 0px 30px;
+    margin: 0px 30px 0px 31px;
     position: relative;
   }
 
-  .navbar__title {
+  .navbar__titleA {
     font-size: 24px;
     color: #ffffff;
   }
   
-  .navbar__profile {
+  .navbar__profileA {
     background-color: transparent;
     border: none;
     color: #ffffff;
@@ -36,12 +36,12 @@
     margin-left: 10px;
   }
   
-  .nav-button-container {
+  .nav-button-containerA {
     position: relative;
     margin-right: 30px;
   }
   
-  .navbar__menu {
+  .navbar__menuA {
     background-color: #ffffff;
     border-radius: 5px;
     position: absolute;
@@ -55,18 +55,45 @@
     transform: translateX(-50%); /* Добавьте это значение */
   }
 
-  .navbar__menu-item--active {
+  .navbar__menu-item--activeA {
     background-color: #d0deff;
     font-weight: bold;
     border-radius: 10px;
   }
   
-  .navbar__menu-item {
+  .navbar__menu-itemA {
     padding: 5px 10px;
     cursor: pointer;
   }
   
-  .navbar__menu-item:hover {
+  .navbar__menu-itemA:hover {
     background-color: #f0f0f0;
   }
 
+@media (max-width: 480px){
+  .navbarA {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 5px 10px 15px;
+  }
+  
+  .navbar__titleA{
+    font-size: 20px;
+  }
+  
+  .navbar__leftA {
+    width: 30%;
+    margin: 0;
+  }
+  
+  .navbar__rightA {
+    width: 70%;
+    margin: 0;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .nav-button-containerA{
+    margin: 0;
+  }
+}
