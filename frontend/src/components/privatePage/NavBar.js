@@ -14,8 +14,9 @@ export const NavBar = ({ onMenuItemClick, selectedMenuItem }) =>{
 
     const Logout = async () => {
       if (window.confirm("Вы уверены, что хотите выйти?")) {
-          dispatch({type: 'authStatus', payload: false});
+        dispatch({type: 'authStatus', paylods: false})
           await logout();
+          navigate('/web')
       }
   };
 

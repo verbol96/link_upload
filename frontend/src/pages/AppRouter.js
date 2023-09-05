@@ -10,6 +10,7 @@ const AppRouter = () => {
   const dispatch = useDispatch();
   const location = useLocation()
   const [userRole, setUserRole]=useState('')
+  const [isUserDataLoaded, setUserDataLoaded] = useState(false)  // новое состояние
 
   useEffect(()=>{
     if(localStorage.getItem('token')){
@@ -21,29 +22,31 @@ const AppRouter = () => {
             setUserRole(user.role)
             let data = await getOneUser(user.phone)
             dispatch(setUser(data))
+            setUserDataLoaded(true)  // устанавливаем в true, когда данные загружены
           }
           getUser()
+    } else {
+      setUserDataLoaded(true)  // устанавливаем в true, если токена нет
     }
-    
-      
-     
 },[dispatch, location.pathname])
-
 
 const isAuth = useSelector(state=>state.auth.auth)
   
   return (
-    <Routes>
-      {isAuth
-        ? privateRoutes.map(({ path, Component }) => {
-            return <Route key={path} path={path} element={<Component />} />;
-          })
-        : routes.map(({ path, Component }) => {
-            return <Route key={path} path={path} element={<Component />} />;
-          })}
-        {userRole==='ADMIN'?<Route path="*" element={<Navigate to="/table" />} />: <Route path="*" element={<Navigate to="/web" />} />}
-      
-    </Routes>
+    isUserDataLoaded && (  // рендерим только когда данные пользователя загружены
+      <Routes>
+        {isAuth
+          ? privateRoutes.map(({ path, Component }) => {
+              return <Route key={path} path={path} element={<Component />} />;
+            })
+          : routes.map(({ path, Component }) => {
+              return <Route key={path} path={path} element={<Component />} />;  
+            })}
+          
+          <Route path="*" element={<Navigate to={userRole==='ADMIN'? "/table" : "/web"} />} />
+        
+      </Routes>
+    )
   );
 };
 

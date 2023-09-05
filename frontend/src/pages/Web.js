@@ -170,6 +170,7 @@ const Web = () =>{
       );
   
     return (
+        <div>
         <div style={{display: 'flex', flexDirection: 'column',background: '#dbdbdb', minHeight: '100vh'}}>
                 <NavBar />
                 
@@ -237,10 +238,12 @@ const Web = () =>{
                 </div>
                 </div>
             
-            <div style={{marginTop: 'auto'}}>
-                <Footer />
-            </div>
+            
         </div>
+        <div style={{marginTop: 'auto'}}>
+        <Footer />
+    </div>
+    </div>
     )
 }
 

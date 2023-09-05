@@ -67,7 +67,7 @@
   border-radius: 4px;
   transition: border 0.15s ease-in-out;
   height: 30px;
-  width: 35%;
+  width: 25%;
 }
 
 .menu-input:focus {
@@ -138,4 +138,23 @@
   top: 100%;
   right: 0;
   z-index: 10;
+}
+
+.tableFull {
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+
+@media (max-width: 480px) {
+  .menu-button {
+    width: 50px;
+  }
+  .menu-select{
+    width: 25%;
+    margin: 0 1px;
+  }
+  .menu-container{
+    margin: 15px 2px 15px;
+  }
 }

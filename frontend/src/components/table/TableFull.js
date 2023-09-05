@@ -170,7 +170,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
             <div className="menu-container">
                 
                 <div className="menu-left">
-                    <button className="menu-button"  onClick={()=>AddNewOrder()}><i className="bi bi-folder-plus" ></i></button>
+                    <button className="menu-button"  onClick={()=>AddNewOrder()}><i style={{color: 'white'}} className="bi bi-folder-plus" ></i></button>
                     <select className="menu-select" onChange={handleSelectChange}>
                         <option value={'All'}>Европочта и Белпочта</option>
                         <option value={"E"}>только Европочта</option>
@@ -199,7 +199,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                 >
                   <div className="status-filter-container">
                     <button className="menu-button">
-                      <i className="bi bi-filter-square"></i>
+                      <i style={{color: 'white'}} className="bi bi-filter-square"></i>
                     </button>
                     {statusFilterVisible && (
                       <div className="status-filter-popup">
@@ -238,11 +238,13 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                   
                 </div>
                 
-            </div>
-            
-            {filteredOrders.map(order => <TableRow key={order.id} order={order} 
+            </div> 
+            <div className='tableFull'>
+            {filteredOrders.map(order => 
+              <div><TableRow key={order.id} order={order} 
                                 handleDetailsClick={handleDetailsClick} selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
-                                collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId} />)}
+                                collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId} /></div>)}
+            </div>
             <TableFooter filteredOrders={filteredOrders} />
         </>
     )
