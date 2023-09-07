@@ -34,7 +34,7 @@ class authController {
         
     }
 
-    async login(req, res, next){
+    async login(req, res, next){ 
         try {
             const {phone, password} = req.body
             const user = await User.findOne({where:{phone: phone}})
@@ -43,7 +43,7 @@ class authController {
             if(!isPassword) return res.json('не верный пароль')
 
 
-            const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '1h'})
+            const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '10s'})
             const refreshToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.REFRESH_KEY, {expiresIn: '72h'})
             
 
@@ -61,19 +61,17 @@ class authController {
     
     async refresh(req, res, next){
         try {
-            
             const token = req.cookies.refreshToken
-            
             const data = jwt.verify(token, process.env.REFRESH_KEY)
             const tokenDB = await Token.findOne({where: {refreshToken: token}})
-            
+
             if(!data || ! tokenDB){
-                return res.json('error refresh')
+                return res.json('error_refresh')
             }
 
             const user = await User.findOne({where: {id: tokenDB.userId}})
 
-            const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '1h'})
+            const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '10s'})
             const refreshToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.REFRESH_KEY, {expiresIn: '72h'})
             
             await Token.update({refreshToken}, {where:{id: tokenDB.id}})
@@ -138,16 +136,20 @@ class authController {
         }
     }
 
-    async whoAmI(req, res, next){
-        try {
+    async whoAmI(req, res, next) {
+        try {   
             const token = req.headers.authorization;
+            if (!token) {
+               return res.status(401).json({ message: 'No authorization token provided' })
+            }
             const {phone} = jwt.verify(token.split(' ')[1], process.env.ACCESS_KEY)
             const user = await User.findOne({where: {phone: phone}})
             return res.json(user)
         } catch (error) {
             console.log(error)
-        }
-        
+            // Отправляем ответ с кодом ошибки и сообщением об ошибке
+            return res.status(401).json({ message: 'Server error' })
+        }   
     }
 
     async addPW(req,res, next){ //это для добавления пароля, если NULL

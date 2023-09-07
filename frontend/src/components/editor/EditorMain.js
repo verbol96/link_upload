@@ -4,18 +4,55 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import './styleEditor.css';
 import { ClipLoader } from 'react-spinners';
+import {$host} from '../../http/index'
 
 
 const EditorMain = () => {
   const [images, setImages] = useState([]);
-  const [aspectRatio, setAspectRatio] = useState("1");
-  const [printSize, setPrintSize] = useState('7x9');
+
+  const [settingEditor, setSettingEditor] = useState([])
+  const [size, setSize] = useState()
+  const [up, setUp] = useState('')
+  const [down, setDown] = useState('')
+  const [left, setLeft] = useState('')
+  const [right, setRight] = useState('')
+  const [aspectRatio, setAspectRatio] = useState('');
+
+  const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
   const cropperRefs = useRef([]);
 
   useEffect(() => {
     cropperRefs.current = cropperRefs.current.slice(0, images.length);
   }, [images]);
+
+
+
+  useEffect(()=>{
+    async function getSettingEditor() {
+      const { data } = await $host.get('api/settings/getSettingsEditor');
+      setSettingEditor(data);
+      if(!data){
+        setSize(data[0].size)
+        setUp(data[0].up)
+        setDown(data[0].down)
+        setLeft(data[0].left)
+        setRight(data[0].right)
+        setAspectRatio(data[0].aspectRatio)
+      }else{
+        setSize('1')
+        setUp('1')
+        setDown('1')
+        setLeft('1')
+        setRight('1')
+        setAspectRatio('1')
+      }
+
+    }
+    getSettingEditor();
+  }, [])
+
+  
 
   const handleImageUpload = (event) => {
     setLoading(true);
@@ -45,22 +82,17 @@ const EditorMain = () => {
 };
 
   const handleAspectRatioChange = (event) => {
-    const [aspectRatio, printSize] = event.target.value.split('_');
-    setAspectRatio(parseFloat(aspectRatio));
-    setPrintSize(printSize);
+    setSize(event.target.value);
+    setAspectRatio(settingEditor.find(el=>el.size===event.target.value).aspectRatio)
+    setUp(settingEditor.find(el=>el.size===event.target.value).up)
+    setDown(settingEditor.find(el=>el.size===event.target.value).down)
+    setLeft(settingEditor.find(el=>el.size===event.target.value).left)
+    setRight(settingEditor.find(el=>el.size===event.target.value).right)
   };
 
   const deleteImages = ()=>{
     setImages([])
   }
-
-  const borderSizes = {
-    '7x9': { top: 0.13, right: 0.13, bottom: 0.36, left: 0.13 },
-    '10x15': { top: 0, right: 0, bottom: 0, left: 0 },
-    '10x12': { top: 0.11, right: 0.11, bottom: 0.73, left: 0.11 },
-    '10x10': { top: 0.059, right: 0.059, bottom: 0.6, left: 0.059 },
-    '9x13': { top: 0, right: 0, bottom: 0, left: 0 },
-};
 
   
 const handleDownloadMini = () => {
@@ -72,7 +104,7 @@ const handleDownloadMini = () => {
                 if (cropperRef.current && cropperRef.current.cropper) {
                   const cropper = cropperRef.current.cropper;
                   let croppedCanvas = cropper.getCroppedCanvas();
-                  const borderSize = borderSizes[printSize];
+                  const borderSize = { top: Number(up), right: Number(right), bottom: Number(down), left: Number(left) };
           
                   // Create a new canvas to resize the cropped canvas
                   const resizeCanvas = document.createElement('canvas');
@@ -145,20 +177,13 @@ const handleDownloadMini = () => {
     Promise.all(imagePromises).then(() => {
         zip.generateAsync({type:"blob"})
           .then(content => {
-            saveAs(content, `${printSize}.zip`);
+            saveAs(content, `${size}.zip`);
           }).catch(error => console.error('Error in zip.generateAsync:', error));
       }).catch(error => console.error('Error in Promise.all:', error));
   };
 
-
-
-  const handleDownload = async () => {
-    const zip = new JSZip();
-    const borderSize = borderSizes[printSize];
-
-    for (let i = 0; i < cropperRefs.current.length; i++) {
-        const cropperRef = cropperRefs.current[i];
-        if (cropperRef.current && cropperRef.current.cropper) {
+  const processImage = async (image, i, totalImages, zip, cropperRef) => {
+            const borderSize = { top: Number(up), right: Number(right), bottom: Number(down), left: Number(left) };
             const cropper = cropperRef.current.cropper;
             const croppedCanvas = cropper.getCroppedCanvas();
 
@@ -182,17 +207,36 @@ const handleDownloadMini = () => {
             }
 
             const blob = new Blob([view], {type: 'image/png'});
-            const image = images[i];
-            zip.file(image.name.replace(/\.[^/.]+$/, "") + ".png", blob);
+            const image1 = images[i];
+            zip.file(image1.name.replace(/\.[^/.]+$/, "") + ".png", blob);
+
+            const currentProgress = ((i + 1) / totalImages) * 100;
+    await new Promise(resolve => setTimeout(resolve, 100));  // Задержка в 100 мс
+    setProgress(currentProgress.toFixed(0));
+    
+  };
+
+  const handleDownload = async () => {
+    const zip = new JSZip();
+    
+    
+    const totalImages = cropperRefs.current.length;
+    setProgress(0);
+    for (let i = 0; i < totalImages; i++) {
+        const cropperRef = cropperRefs.current[i];
+        if (cropperRef.current && cropperRef.current.cropper) {
+          await processImage(images[i], i, totalImages, zip, cropperRef);
         } else {
             console.log('error');
             throw new Error(`Error processing image at index ${i}`);
         }
+        
     }
+    setProgress(100); 
 
     try {
         const content = await zip.generateAsync({type:"blob"});
-        saveAs(content, `${printSize}.zip`);
+        saveAs(content, `${size}.zip`);
     } catch (error) {
         console.error("Error generating zip file:", error);
     }
@@ -212,6 +256,67 @@ const ShowParam = () =>{
   isParam?setIsParam(false):setIsParam(true)
 }
 
+const ChangeSettings = async()=>{
+  const userConfirmation = window.confirm("Вы уверены, что хотите изменить?");
+    
+  if (userConfirmation) {
+    const data1 = {
+      size,
+      aspectRatio,
+      up,
+      down,
+      left,
+      right
+    }
+    await $host.put('api/settings/changeSettingsEditor', data1);
+    const { data } = await $host.get('api/settings/getSettingsEditor');
+        setSettingEditor(data);
+        setSize(data[0].size)
+        setUp(data[0].up)
+        setDown(data[0].down)
+        setLeft(data[0].left)
+        setRight(data[0].right)
+        setAspectRatio(data[0].aspectRatio)
+  }
+ 
+}
+
+const DeleteSettings = async()=>{
+  const userConfirmation = window.confirm("Вы уверены, что хотите удалить?");
+    
+  if (userConfirmation) {
+    await $host.delete(`api/settings/deleteSettingsEditor/${size}`);
+    const { data } = await $host.get('api/settings/getSettingsEditor');
+        setSettingEditor(data);
+        setSize(data[0].size)
+        setUp(data[0].up)
+        setDown(data[0].down)
+        setLeft(data[0].left)
+        setRight(data[0].right)
+        setAspectRatio(data[0].aspectRatio)
+  }
+ 
+}
+
+const progressStyle = {
+  height: '20px',
+  width: `${progress}%`,
+  backgroundColor: '#627173',
+  transition: 'width 0.3s ease-in-out',
+  color: '#fff',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+};
+
+const containerStyle = {
+  width: '100%',
+  backgroundColor: '#fff',
+  border: '1px #627173 solid',
+  borderRadius: '5px',
+  overflow: 'hidden',
+};
+
   return (
     <div>
         <div className='editor-menu'>
@@ -223,12 +328,9 @@ const ShowParam = () =>{
             </label>
 
             <div className="select-container">
-            <select className="select-ratio" value={`${aspectRatio}_${printSize}`} onChange={handleAspectRatioChange}>
-                <option value="1_7x9">Полароид(7x9)</option>
-                <option value="0.6666666666666666_10x15">Стандарт(10х15)</option>
-                <option value="1_10x12">Полароид(10х12)</option>
-                <option value="1_10x10">Квадрат(10х10)</option>
-                <option value="0.6923_9x13">9х13</option>
+            <select className="select-ratio" value={size} onChange={handleAspectRatioChange}>
+                {settingEditor.map(el=><option key={el.id} value={el.size}>{el.size}</option>)}
+               
             </select>
             </div>
             
@@ -239,19 +341,26 @@ const ShowParam = () =>{
         {
         isParam &&
         <div className='param'>
+            <div>имя:</div>
+            <input className='inputParam' value={size} onChange={(e)=>setSize(e.target.value)} />
+            <div>X/Y:</div>
+            <input className='inputParam' value={aspectRatio} onChange={(e)=>setAspectRatio(e.target.value)} />
             <div>верх:</div>
-            <input className='inputParam' />
+            <input className='inputParam' value={up} onChange={(e)=>setUp(e.target.value)} />
             <div>низ:</div>
-            <input className='inputParam' />
+            <input className='inputParam' value={down} onChange={(e)=>setDown(e.target.value)} />
             <div>лево:</div>
-            <input className='inputParam' />
+            <input className='inputParam' value={left} onChange={(e)=>setLeft(e.target.value)} />
             <div>право:</div>
-            <input className='inputParam' />
-            <div><button style={{marginLeft: 40}}>изменить</button></div>
+            <input className='inputParam' value={right} onChange={(e)=>setRight(e.target.value)} />
+            <div><button style={{marginLeft: 40}} onClick={()=>ChangeSettings()}>изменить</button></div>
+            <div><button style={{marginLeft: 70}} onClick={()=>DeleteSettings()}>удалить</button></div>
         </div>
         }
 
       {loading && <ClipLoader size={100} />}
+
+      
         
       <div className="editor-main">
       {images.map((image, index) => (
@@ -263,14 +372,20 @@ const ShowParam = () =>{
         />
         ))}
       </div>
+      {progress===0 || progress===100 ? <div></div>:<div style={{width: '30%', marginLeft: 20}}><div style={containerStyle}>
+        <div style={progressStyle}>{`${progress}%`}</div>
+        </div></div>}
 
+      
       <div className='btn-group'>
-        <button onClick={printSize==='7x9'? handleDownloadMini : handleDownload}>Скачать все</button>
+        <button onClick={size==='7x9'? handleDownloadMini : handleDownload}>Скачать все</button>
         <button onClick={deleteImages}>очистить</button>
       </div>
       
     </div>
   );
 };
+
+
 
 export default EditorMain;

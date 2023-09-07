@@ -8,7 +8,7 @@ router.post('/login', authController.login)
 router.get('/logout', authController.logout)
 router.get('/refresh', authController.refresh)
 
-router.get('/whoAmI', authController.whoAmI)
+router.get('/whoAmI',authMiddleware, authController.whoAmI)
 router.put('/passwordChange', authController.passwordChange)
 router.get('/getUsers',authMiddleware, authController.getUsers)
 router.put('/dataChange', authController.dataChange)

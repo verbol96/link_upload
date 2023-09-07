@@ -241,7 +241,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
             </div> 
             <div className='tableFull'>
             {filteredOrders.map(order => 
-              <div><TableRow key={order.id} order={order} 
+              <div key={order.id} ><TableRow order={order} 
                                 handleDetailsClick={handleDetailsClick} selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
                                 collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId} /></div>)}
             </div>
