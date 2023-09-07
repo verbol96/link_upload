@@ -23,7 +23,7 @@ export const MyOrders =() =>{
             <div className='textTitle'>Мои заказы</div>
             <div className='tableFullP'>
            {
-                orders.map((order, index)=> <div><OneOrder key={order.id} order={order} index={orders.length - index}
+                orders.map((order, index)=> <div key={order.id}><OneOrder order={order} index={orders.length - index}
                   handleDetailsClick={handleDetailsClick} selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder} /></div>
                 )
             }

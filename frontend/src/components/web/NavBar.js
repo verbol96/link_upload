@@ -115,6 +115,7 @@ export const NavBar = () => {
                 <div className="navbar__menu" style={{padding: '20px 10px', width: '200px'}}>
                   
                    <MaskedInput
+                   style={{width: "100%"}}
                     mask={phoneMask}
                     className="my-input-class" // apply this css class
                     placeholder="логин"
@@ -124,6 +125,7 @@ export const NavBar = () => {
                     onChange={(e) => setPhone(e.target.value)}
                   />
                   <input
+                  style={{width: "100%", marginTop: 5}}
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

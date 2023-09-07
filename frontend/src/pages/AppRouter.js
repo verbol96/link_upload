@@ -14,8 +14,8 @@ const AppRouter = () => {
 
   useEffect(()=>{
     if(localStorage.getItem('token')){
-        const data = refresh()
-          if (typeof data === 'object') dispatch({type: 'authStatus', paylods: true})
+        
+          dispatch({type: 'authStatus', paylods: true})
 
           async function getUser (){
             const user = await whoAmI()
