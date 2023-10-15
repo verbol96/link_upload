@@ -16,8 +16,9 @@ const Statistic = () =>{
     useEffect(()=>{
 
         async function getOrder() {
-            const { data } = await $host.get('api/order/getAllArchive');
+            const { data } = await $host.get('api/order/getAllStat');
             setOrder(data.orders);
+            
           }
           getOrder();
         const startDay = new Date(2023,0,2)
@@ -42,6 +43,7 @@ const Statistic = () =>{
         }
        
         setWeeks(week)
+        console.log()
     },[])
 
     const sum =(date)=>{ 
@@ -88,9 +90,11 @@ const Statistic = () =>{
 
 
     function generateMonthlySum(orders) {
+        
         const groupedOrders = orders.reduce((acc, order) => {
+            
             const date = new Date(order.createdAt);
-            const formattedDate = date.toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+            const formattedDate = date.toLocaleString('ru-RU', { month: 'numeric', year: 'numeric' });
         
             if (!acc[formattedDate]) {
               acc[formattedDate] = { month: formattedDate, total: 0 };
@@ -102,9 +106,9 @@ const Statistic = () =>{
             return acc;
           }, {});
         
-          return Object.values(groupedOrders).sort((a, b) => new Date(b.month) - new Date(a.month)).reverse();
+          return Object.values(groupedOrders).sort((a, b) => (b.month) - (a.month));
       }
-      const ordersByMonth = generateMonthlySum(order);
+      const ordersByMonth = order ? generateMonthlySum(order) : [];
    
 
     return(

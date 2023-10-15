@@ -97,6 +97,7 @@
   .contact_field{
     display: flex;
     justify-content: space-between;
+    white-space: pre-line;
   }
   
   .contact_field >label{

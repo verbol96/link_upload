@@ -1,4 +1,4 @@
-import {Row, Col} from 'react-bootstrap'
+
 import { ImgCard } from './ImgCard'
 import {useEffect, useState} from 'react'
 import { v4 as uuidv4 } from 'uuid'
@@ -144,59 +144,54 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
 
     return(
         <div className="filesFormFormat">
-            <Row>
-                <Col md={2}>
-                    <div className="containerSelect">
-                        <label className="labelSelect">Тип:</label>
-                        <select className="selectForm" value={el.type} onChange={(e)=>ChangeType(e)}>
-                            {TypePhoto.map((el,index)=><option key={index}>{el}</option>)}
-                        </select>
-                        <span className="selectArrow">▼</span>
-                    </div>
-                    <div className="containerSelect mt-4">
-                        <label className="labelSelect">Размер:</label>
-                        <select className="selectForm"  value={el.format} onChange={(e)=>ChangeSize(e)}>
-                            {sizePhoto().map((el,index)=><option key={index}>{el.title}</option>)}
-                        </select>
-                        <span className="selectArrow">▼</span>
-                    </div>
-                    {el.type==='photo'
-                    ?
-                    <div className="containerSelect mt-4">
-                    <label className="labelSelect">Бумага:</label>
-                    <select className="selectForm"  value={el.paper} onChange={(e)=>ChangePaper(e)}>
-                        <option value='glossy'>glossy</option>
-                        <option value='lustre'>lustre</option>
-                    </select>
-                    <span className="selectArrow">▼</span>
-                    </div>
-                    :
-                    null
-                    }
-                    
-                </Col>
-                <Col md={10}>
-                    <div  style={{display: 'flex', flexWrap: "wrap"}}>
-                        
-                        <div className="cardFile" style={{border: '2.5px #0E3C47 dashed'}}>
-                            <label className='upload_label' htmlFor={index}>
-                                <div style={{fontSize: 30, textAlign: 'center'}}><i className="bi bi-plus" ></i></div>
-                                <div style={{textAlign: 'center', padding: 5}}>добавить фото</div>
-                            </label>
-                            <input className='upload_input' id={index} type="file" multiple={true} onChange={(e)=>FilesInput(e)}></input>
-                        </div>
-
-                        {filesPrev.map((el)=> <ImgCard image={el} key={el.id} deleteImg={deleteImg} /> )}
-                    </div>
-                </Col>
-            </Row>
             
-            <Row>
-                <Col md={2}>
-                    <button className="buttonForm buttonForm2" onClick={()=>DeleteFormat(el)}>удалить формат</button>
-                </Col>
-                <Col className='mt-3'><h5 className='textH5'>Добавлено {formats[index].files.length} фото {el.format}</h5></Col>
-            </Row>
+          <div className="selectContainer">
+              <div className="containerSelect">
+                  <label className="labelSelect">Тип:</label>
+                  <select className="selectForm" value={el.type} onChange={(e)=>ChangeType(e)}>
+                      {TypePhoto.map((el,index)=><option key={index}>{el}</option>)}
+                  </select>
+                  <span className="selectArrow">▼</span>
+              </div>
+              <div className="containerSelect">
+                  <label className="labelSelect">Размер:</label>
+                  <select className="selectForm"  value={el.format} onChange={(e)=>ChangeSize(e)}>
+                      {sizePhoto().map((el,index)=><option key={index}>{el.title}</option>)}
+                  </select>
+                  <span className="selectArrow">▼</span>
+              </div>
+              {el.type==='photo'
+              ?
+              <div className="containerSelect">
+              <label className="labelSelect">Бумага:</label>
+              <select className="selectForm"  value={el.paper} onChange={(e)=>ChangePaper(e)}>
+                  <option value='glossy'>glossy</option>
+                  <option value='lustre'>lustre</option>
+              </select>
+              <span className="selectArrow">▼</span>
+              </div>
+              :
+              null
+              }
+              
+          </div>
+          
+          <div  style={{display: 'flex', flexWrap: "wrap"}}>
+              <div className="cardFile" style={{border: '2.5px #0E3C47 dashed'}}>
+                  <label className='upload_label' htmlFor={index}>
+                      <div style={{fontSize: 30, textAlign: 'center'}}><i className="bi bi-plus" ></i></div>
+                      <div style={{textAlign: 'center', padding: 5}}>добавить фото</div>
+                  </label>
+                  <input className='upload_input' id={index} type="file" multiple={true} onChange={(e)=>FilesInput(e)}></input>
+              </div>
+
+              {filesPrev.map((el)=> <ImgCard image={el} key={el.id} deleteImg={deleteImg} /> )}
+          </div>
+      
+          <div className='filesFormFormat_footer'>
+              <button className="buttonForm buttonForm2" onClick={()=>DeleteFormat(el)}>удалить формат</button>
+              <span className='textH5'>Добавлено {formats[index].files.length} фото {el.format}</span>
+          </div>
         </div>
     )
 }

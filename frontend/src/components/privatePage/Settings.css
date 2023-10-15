@@ -208,3 +208,24 @@
   .form_group {
     position: relative;
   }
+
+
+  @media (max-width: 480px){
+    .toggle-button-group {
+      width: 90%;
+      margin-top: 5px;
+    }
+    .toggle-button-group button {
+      padding: 10px 0;
+      font-size: 12px;
+    }
+
+    .card_form{
+      width: 90%;
+    }
+
+    .btn{
+      width: 100%;
+      margin: 0;
+    }
+  }
