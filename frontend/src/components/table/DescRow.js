@@ -262,6 +262,8 @@ ${codeOutside} - код для отслеживания
     return text
 }
 
+console.log(order)
+
   return (
     <div className="order_details_card">
       <div className="card_container_admin">

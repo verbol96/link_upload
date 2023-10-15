@@ -259,6 +259,15 @@ class orderController{
         
         return res.json(user)
     }
+
+    //для изменения даты заказа
+    async changeDataOrder(req,res){
+      const id = req.params.id
+      const {data} = req.body
+      await Order.update({createdAt: data},
+        {where: {id: id}})
+      return res.json('')
+  }
 }
 
 module.exports = new orderController()
