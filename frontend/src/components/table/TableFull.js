@@ -72,10 +72,10 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
         }
     
         let phoneNumber = "+37500";
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             phoneNumber += getRandomInt(0, 9);
         }
-        phoneNumber +="0000";
+        phoneNumber +="000";
         return phoneNumber;
     }
     

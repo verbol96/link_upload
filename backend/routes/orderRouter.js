@@ -12,6 +12,8 @@ router.put('/updateUserAdress/:id', orderController.updateUserAdress)
 router.delete('/deleteOrder/:id', orderController.deleteOrder)
 router.delete('/deleteUser/:id', orderController.deleteUser)
 router.post('/getOneUser', orderController.getOneUser)
+router.put('/changeDataOrder/:id', orderController.changeDataOrder)
+
 
 router.post('/setCopyDB',  orderController.setCopyDB)
 
