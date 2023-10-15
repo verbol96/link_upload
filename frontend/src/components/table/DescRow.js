@@ -262,7 +262,7 @@ ${codeOutside} - код для отслеживания
     return text
 }
 
-console.log(order)
+console.log(order.id)
 
   return (
     <div className="order_details_card">
