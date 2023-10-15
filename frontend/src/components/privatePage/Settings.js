@@ -48,6 +48,7 @@ export const Settings = () => {
 
   return (
     <div>
+      <div className='textTitle1'>Настройки</div>
       <ToggleButtonGroup />
       {activeTab === 0 && <ChangeData ShowToast={ShowToast} />}
       {activeTab === 1 && <ChangePW ShowToast={ShowToast} />}

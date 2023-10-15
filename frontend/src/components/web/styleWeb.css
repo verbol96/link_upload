@@ -189,6 +189,10 @@
     margin-bottom: 15px;
   }
 
+  .filesFormFormat>div{
+      margin-bottom: 20px;
+  }
+
   /* основа шрифта */
   /* заголовок блока */
   .textH4 {
@@ -239,7 +243,6 @@
   .buttonForm2{
     background-color: #5a838c;
     font-size: 0.6rem;
-    margin-top: 10px;
     padding: 0.5rem 1rem;
   }
 
@@ -328,3 +331,24 @@
     border-radius: 3px;
     border: 1px solid #ccc;
   }
+
+
+  .selectContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 10px;
+
+}
+
+.selectContainer .containerSelect {
+  flex-basis: calc(33.33% - 10px);
+  max-width: 200px;
+}
+
+.filesFormFormat_footer{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+

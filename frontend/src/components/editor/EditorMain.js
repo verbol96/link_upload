@@ -32,21 +32,12 @@ const EditorMain = () => {
     async function getSettingEditor() {
       const { data } = await $host.get('api/settings/getSettingsEditor');
       setSettingEditor(data);
-      if(!data){
         setSize(data[0].size)
         setUp(data[0].up)
         setDown(data[0].down)
         setLeft(data[0].left)
         setRight(data[0].right)
         setAspectRatio(data[0].aspectRatio)
-      }else{
-        setSize('1')
-        setUp('1')
-        setDown('1')
-        setLeft('1')
-        setRight('1')
-        setAspectRatio('1')
-      }
 
     }
     getSettingEditor();
@@ -378,7 +369,7 @@ const containerStyle = {
 
       
       <div className='btn-group'>
-        <button onClick={size==='7x9'? handleDownloadMini : handleDownload}>Скачать все</button>
+        <button onClick={size==='7x9'||'магнит'? handleDownloadMini : handleDownload}>Скачать все</button>
         <button onClick={deleteImages}>очистить</button>
       </div>
       

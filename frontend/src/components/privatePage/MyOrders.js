@@ -20,7 +20,7 @@ export const MyOrders =() =>{
       
     return(
         <div>
-            <div className='textTitle'>Мои заказы</div>
+            <div className='textTitle1'>Мои заказы</div>
             <div className='tableFullP'>
            {
                 orders.map((order, index)=> <div key={order.id}><OneOrder order={order} index={orders.length - index}

@@ -102,6 +102,14 @@ class orderController{
         return res.json({orders, settings, users})
     }
 
+    async getAllStat(req, res) {
+        const orders = await Order.findAll({
+          attributes: ['price', 'createdAt']
+        });
+      
+        return res.json({orders});
+      }
+
     async getOneUser(req,res){
         const {phone} = req.body
         const user = await User.findOne({

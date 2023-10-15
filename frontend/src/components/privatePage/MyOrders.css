@@ -1,4 +1,4 @@
-.textTitle {
+.textTitle1 {
     font-family: 'Montserrat', sans-serif, 'SemiBold';
     font-weight: 600;
     font-size: 28px;
@@ -42,6 +42,10 @@
     .tableFullP {
       overflow-x: auto;
       white-space: nowrap;
+    }
+    .textTitle1 {
+      font-size: 20px;
+      font-weight: 500;
     }
   }
   
