@@ -88,7 +88,7 @@ const EditorMain = () => {
   
 const handleDownloadMini = () => {
     const zip = new JSZip();
-  
+
     const imagePromises = cropperRefs.current.map((cropperRef, index) => {
         if(index % 2 === 0) {
             return new Promise((resolve, reject) => {
@@ -209,7 +209,6 @@ const handleDownloadMini = () => {
 
   const handleDownload = async () => {
     const zip = new JSZip();
-    
     
     const totalImages = cropperRefs.current.length;
     setProgress(0);
@@ -369,7 +368,7 @@ const containerStyle = {
 
       
       <div className='btn-group'>
-        <button onClick={size==='7x9'||'магнит'? handleDownloadMini : handleDownload}>Скачать все</button>
+        <button onClick={size==='7x9'||size==='магнит'? handleDownloadMini : handleDownload}>Скачать все</button>
         <button onClick={deleteImages}>очистить</button>
       </div>
       
