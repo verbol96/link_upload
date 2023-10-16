@@ -162,7 +162,7 @@ const Web = () =>{
             });
           });
     }
-
+ 
     const renderTooltip = (props) => (
         <Tooltip id="button-tooltip" {...props}>
            Можно загружать разные форматы, для этого нажмите "+ другой формат"
@@ -171,7 +171,7 @@ const Web = () =>{
   
     return (
         <div>
-        <div style={{display: 'flex', flexDirection: 'column',background: '#dbdbdb', minHeight: '100vh'}}>
+        <div style={{display: 'flex', flexDirection: 'column',background: '#dbdbdb', minHeight: '95vh'}}>
                 <NavBar />
                 
                 <div className="flex-container">
