@@ -12,6 +12,8 @@ router.get('/whoAmI',authMiddleware, authController.whoAmI)
 router.put('/passwordChange', authController.passwordChange)
 router.get('/getUsers',authMiddleware, authController.getUsers)
 router.put('/dataChange', authController.dataChange)
-router.put('/addPW', authController.addPW)
+router.put('/changePasswordUser', authController.changePasswordUser)
+
+router.put('/passwordChangeAll', authController.passwordChangeAll) //для сброса всех паролей кроме админских
  
 module.exports = router

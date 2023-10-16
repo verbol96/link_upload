@@ -7,7 +7,7 @@ import Web from "./pages/Web"
 import PrivatePage from "./pages/PrivatePage"
 import Cloud from "./pages/Cloud"
 
-export const privateRoutes = [
+export const adminRoutes = [
     {
         path: '/table',
         Component: Table
@@ -38,7 +38,25 @@ export const privateRoutes = [
     },
 ]
 
-export const routes = [
+export const userRoutes = [
+
+    {
+        path: '/editor',
+        Component: Editor
+    },
+
+    {
+        path: '/PrivatePage',
+        Component: PrivatePage
+    },
+
+    {
+        path: '/web',
+        Component: Web
+    },
+]
+
+export const publicRoutes = [
     {
         path: '/web',
         Component: Web

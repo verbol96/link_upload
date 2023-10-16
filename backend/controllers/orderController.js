@@ -18,7 +18,7 @@ class orderController{
         }else{
             const pretendent = await User.findOne({where: {phone: phone}})
             if(pretendent===null){
-                const hashPassword = await bcryptjs.hash('1', 3)
+                const hashPassword = await bcryptjs.hash('rootPW', 3)
                 const user = await User.create({phone, FIO, password: hashPassword, typePost, postCode,city,adress,oblast,raion})
                 order = await Order.create({codeOutside,price,other,notes, status, typePost,firstClass,
                     postCode,city,adress,oblast,raion,FIO,phone,userId: user.id

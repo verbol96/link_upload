@@ -1,7 +1,7 @@
-import { routes, privateRoutes } from '../routes'
+import {  adminRoutes, publicRoutes, userRoutes } from '../routes'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import {refresh, whoAmI} from '../http/authApi'
+import {whoAmI} from '../http/authApi'
 import { setUser } from '../store/privatePageReducer'
 import { getOneUser } from '../http/dbApi'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
@@ -34,18 +34,24 @@ const isAuth = useSelector(state=>state.auth.auth)
   
   return (
     isUserDataLoaded && (  // рендерим только когда данные пользователя загружены
-      <Routes>
-        {isAuth
-          ? privateRoutes.map(({ path, Component }) => {
-              return <Route key={path} path={path} element={<Component />} />;
-            })
-          : routes.map(({ path, Component }) => {
-              return <Route key={path} path={path} element={<Component />} />;  
-            })}
-          
-          <Route path="*" element={<Navigate to={userRole==='ADMIN'? "/table" : "/web"} />} />
-        
-      </Routes>
+    <Routes>
+      {isAuth
+        ? (
+          userRole === 'ADMIN'
+            ? adminRoutes.map(({ path, Component }) => (
+                <Route key={path} path={path} element={<Component />} />
+              ))
+            : userRoutes.map(({ path, Component }) => (
+                <Route key={path} path={path} element={<Component />} />
+              ))
+        )
+        : publicRoutes.map(({ path, Component }) => (
+            <Route key={path} path={path} element={<Component />} />
+          ))
+      }
+      
+      <Route path="*" element={<Navigate to={isAuth && userRole==='ADMIN'? "/table" : "/web"} />} />
+    </Routes>
     )
   );
 };

@@ -43,3 +43,8 @@ export const whoAmI = async()=>{
     const {data} = await $host.get('/api/auth/whoAmI')
     return data
 }
+
+export const changePasswordUser = async(phone, password)=>{
+    const {data} = await $host.put('/api/auth/changePasswordUser', {phone, password})
+    return data
+}
