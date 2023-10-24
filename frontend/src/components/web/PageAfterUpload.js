@@ -2,7 +2,7 @@ import {Row, Col} from 'react-bootstrap'
 import './styleWeb.css'
 import { useNavigate } from 'react-router-dom';
 
-export const PageAfterUpload = ({amountPhoto, phone}) =>{
+export const PageAfterUpload = ({amountPhoto, phone, setCurrent}) =>{
 
     const navigate = useNavigate();
 
@@ -29,7 +29,7 @@ export const PageAfterUpload = ({amountPhoto, phone}) =>{
                     <h6>Вернуться к  {' '}
                     <button 
                         style={{ textDecoration: 'underline', backgroundColor: 'transparent', border: 'none' }} 
-                        onClick={()=>navigate("/web")}
+                        onClick={()=>setCurrent(0)}
                     >
                             форме заказа  <i style={{color: 'black'}} className="bi bi-arrow-90deg-left"></i>
                         </button>

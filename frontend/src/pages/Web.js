@@ -225,7 +225,7 @@ const Web = () =>{
                     </>
                     :
                     current===amountPhoto ?
-                        <PageAfterUpload amountPhoto={amountPhoto} phone = {phone} />
+                        <PageAfterUpload amountPhoto={amountPhoto} phone = {phone} setCurrent={setCurrent} />
                     :
                     <Row>
                         <h5>Идет оформление заказа...</h5>
