@@ -48,6 +48,19 @@ class fileController {
         }
     }
 
+    async getFilesAll(req,res){
+        try {
+            const files = await File.findAll()
+            
+            
+            return res.json(files)
+            
+        } catch (error) {
+            console.log(error)
+            return res.status(500).json({message: "не получены файлы"})
+        }
+    }
+
     async uploadFiles(req,res){
         try {
             const file = req.files.file

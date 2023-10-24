@@ -1,14 +1,19 @@
 const SET_FILES = "SET_FILES"
+const SET_FILES_ALL = "SET_FILES_ALL"
 const SET_CURRENT_DIR = "SET_CURRENT_DIR"
 const ADD_FILE = "ADD_FILE"
 const PUSH_STACK = 'PUSH_STACK'
 const DELETE_FILE = 'DELETE_FILE'
 const CHANGE_PROGRESS = 'CHANGE_PROGRESS'
+const ADD_STACK = 'ADD_STACK'
+const DEL_STACK = 'DEL_STACK'
 
 const defaultState = {
     files: [],
+    filesAll: [],
     currentDir: null,
     stackDir: [ ],
+    stack: [],
     FormatPhoto: [
         '10x15',
         '10x10',
@@ -39,19 +44,27 @@ const defaultState = {
 export default function fileReducer(state = defaultState, action) {
     switch (action.type) {
         case SET_FILES: return {...state, files: action.payload}
+        case SET_FILES_ALL: return {...state, filesAll: action.payload}
         case SET_CURRENT_DIR: return {...state, currentDir: action.payload}
         case ADD_FILE: return {...state, files:[...state.files, action.payload]}
         case PUSH_STACK: return {...state, stackDir: [...state.stackDir, action.payload]}
         case DELETE_FILE: return {...state, files: [...state.files.filter(file=>file.id!==action.payload)]}
         case CHANGE_PROGRESS: return {...state, progress: action.payload}
+
+        case ADD_STACK: return {...state, stack: [...state.stack, action.payload]}
+        case DEL_STACK: return {...state, stack: state.stack.slice(0, -1)}
         default:
             return state
     }
 }   
 
 export const setFiles = (files) => ({type: SET_FILES, payload: files})
+export const setFilesAll = (files) => ({type: SET_FILES_ALL, payload: files})
 export const setCurrentDir= (dir) => ({type: SET_CURRENT_DIR, payload: dir})
 export const addFile = (file)=>({type: ADD_FILE, payload: file})
 export const pushStack = (dir)=>({type: PUSH_STACK, payload: dir})
 export const deleteFileStore = (fileId)=>({type: DELETE_FILE, payload: fileId})
 export const changeProgress = (value) =>({type: CHANGE_PROGRESS, payload: value})
+
+export const addStack = (file)=>({type: ADD_STACK, payload: file})
+export const delStack = ()=>({type: DEL_STACK})

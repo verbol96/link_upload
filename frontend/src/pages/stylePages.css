@@ -111,3 +111,14 @@
 .cardWeek > div{
     text-align: center;
 }
+
+
+.cloud-menu{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    background: rgb(244, 244, 244);
+    border-radius: 5px;
+    margin: 30px;
+    padding: 10px 20px;
+}

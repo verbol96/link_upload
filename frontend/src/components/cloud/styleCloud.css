@@ -1,13 +1,52 @@
-.tableList{
-    width: 100%;
-    margin-top: 15px;
-}
+.filesList {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin: 25px;
+  }
 
-.listRow{
-    border-bottom: solid rgb(89, 89, 89) 1px;
+  .block-file {
+    width: 130px;
+    height: 130px;
+    margin: 5px;
+    background-color: rgb(236, 236, 236);
+    border-radius: 10px;
+    overflow: hidden; /* Это скроет любой контент, выходящий за пределы блока. */
+    padding: 5px 10px;
 }
-
-.listRow:hover{
+  
+  .file-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+  }
+  
+  .icon-container {
+    font-size: 2em; /* Это увеличит размер иконки. Вы можете изменить это значение по своему усмотрению. */
+  }
+  
+  .file-name, .file-size, .file-date, .file-button {
+    font-size: 0.8em; /* Вы можете изменить размер шрифта, если он слишком мал или велик. */
+    text-align: center; /* Это выровняет текст по центру. */
+    overflow: hidden; /* Это скрывает текст, который выходит за пределы блока. */
+    text-overflow: ellipsis; /* Это добавляет многоточие в конце обрезанного текста. */
+    white-space: nowrap; /* Это предотвращает перенос текста на новую строку. */
+    width: 100%; /* Это ограничивает ширину блока, чтобы текст мог быть обрезан. */
+  }
+  .file-button{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content:space-between;
+  }
+  .file-button button{
+    border: none;
+    background: transparent;
+  }
+  
+.block-file:hover{
     /*transform: scale(1.02);*/
-    background-color: rgb(236, 227, 213);
+    background-color: rgb(244, 244, 244);
+    border: 1px solid rgb(95, 158, 122);
 }
