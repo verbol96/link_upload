@@ -47,8 +47,8 @@ class authController {
             }
             
 
-            const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '10s'})
-            const refreshToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.REFRESH_KEY, {expiresIn: '20s'})
+            const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '1h'})
+            const refreshToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.REFRESH_KEY, {expiresIn: '72h'})
             
 
             await Token.destroy({where: {userId: user.id}})
@@ -65,11 +65,8 @@ class authController {
     
     async refresh(req, res, next){
         try {
-            console.log('3')
             const token = req.cookies.refreshToken
-            console.log('4')
             const data = jwt.verify(token, process.env.REFRESH_KEY)
-            console.log('5')
             const tokenDB = await Token.findOne({where: {refreshToken: token}})
 
             if(!data || ! tokenDB){

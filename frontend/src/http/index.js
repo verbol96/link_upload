@@ -28,9 +28,7 @@ $host.interceptors.response.use(config =>
             
             originalRequest._isRetry = true;
             try {
-                console.log('1')
                 const response = await axios.get('http://85.193.91.221:8001/api/auth/refresh', {withCredentials: true})
-                console.log('2')
                 if(response.data==='error_refresh') localStorage.removeItem('token');
                 else localStorage.setItem('token', response.data.accessToken);
                 return $host.request(originalRequest);
