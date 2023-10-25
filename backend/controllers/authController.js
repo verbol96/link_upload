@@ -92,7 +92,7 @@ class authController {
                     FIO: user.FIO,
                     city: user.city,
                     role: user.role,
-                    createdAt: user.createrAt,
+                    createdAt: user.createdAt,
                     orderCount,
                     totalOrderSum: Number(totalOrderSum.toFixed(2))
                 };
