@@ -33,6 +33,7 @@ $host.interceptors.response.use(config =>
                 else localStorage.setItem('token', response.data.accessToken);
                 return $host.request(originalRequest);
             } catch (e) {
+                localStorage.removeItem('token')
                 console.log('НЕ АВТОРИЗОВАН по refresh')
             }
             
