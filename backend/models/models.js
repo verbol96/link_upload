@@ -7,7 +7,6 @@ const User = sequelize.define('user', {
   FIO: { type: DataTypes.STRING },
   password: { type: DataTypes.STRING },
   role: { type: DataTypes.STRING, defaultValue: 'USER' },
-
   typePost: {type: DataTypes.STRING},
   postCode: {type: DataTypes.STRING},
   city: {type: DataTypes.STRING},
@@ -19,13 +18,11 @@ const User = sequelize.define('user', {
 const Order = sequelize.define('order', {
   id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
   order_number: { type: DataTypes.INTEGER,autoIncrement: true},
-
   codeOutside: {type: DataTypes.STRING },
   price: {type: DataTypes.STRING},
   other: {type: DataTypes.STRING }, 
   notes: {type: DataTypes.STRING }, 
   status: {type: DataTypes.INTEGER},
-
   typePost: {type: DataTypes.STRING},
   firstClass: {type: DataTypes.BOOLEAN, defaultValue: false},
   postCode: {type: DataTypes.STRING},
