@@ -62,7 +62,12 @@ export const users_delete = async(id)=>{
     const {data} = await $host.delete(`/api/auth/usersDelete/${id}`);
     return data
 }
+
 export const users_changePW = async(id, PW)=>{
     const {data} = await $host.put('/api/auth/users_changePW', {id, PW})
+    return data
+}
+export const deleteUsersWithoutOrders = async()=>{
+    const {data} = await $host.get('/api/auth/deleteUsersWithoutOrders')
     return data
 }

@@ -55,6 +55,7 @@ class authController {
             return res.json({user, accessToken, refreshToken})
         } catch (error) {
             console.log(error)
+            return res.status(500).json({error: error.message});
         }
         
     }
@@ -182,6 +183,31 @@ class authController {
         }
     }
 
+    async deleteUsersWithoutOrders(req, res, next) {
+        try {
+            // Найти всех пользователей и их заказы
+            const users = await User.findAll({
+                include: [{
+                    model: Order,
+                    attributes: ['id'],
+                }],
+            });
+    
+            // Отфильтровать пользователей, у которых нет заказов
+            const usersWithoutOrders = users.filter(user => user.orders.length === 0);
+    
+            // Удалить каждого пользователя без заказов
+            for (let user of usersWithoutOrders) {
+                await User.destroy({ where: { id: user.id } });
+            }
+    
+            // Вернуть количество удаленных пользователей
+            return res.json({ deletedUsersCount: usersWithoutOrders.length });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json({error: error.message});
+        }
+    }
 
     async whoAmI(req, res, next) {
         try {   
