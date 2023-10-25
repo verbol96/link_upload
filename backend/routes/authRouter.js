@@ -3,7 +3,6 @@ const router = new Router()
 const authController = require('../controllers/authController')
 const authMiddleware = require('../middleware/authMiddlware')
 
-router.post('/registration' ,authController.registration)
 router.post('/login', authController.login)
 router.get('/logout', authController.logout)
 router.get('/refresh', authController.refresh)
@@ -14,6 +13,8 @@ router.get('/getUsers',authMiddleware, authController.getUsers)
 router.put('/dataChange', authController.dataChange)
 router.put('/changePasswordUser', authController.changePasswordUser)
 
-router.put('/passwordChangeAll', authController.passwordChangeAll) //для сброса всех паролей кроме админских
+router.put('/users_changeData', authController.users_changeData)
+router.delete('/usersDelete/:id', authController.usersDelete);
+router.put('/users_changePW', authController.users_changePW)
  
 module.exports = router

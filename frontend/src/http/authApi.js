@@ -48,3 +48,21 @@ export const changePasswordUser = async(phone, password)=>{
     const {data} = await $host.put('/api/auth/changePasswordUser', {phone, password})
     return data
 }
+
+
+
+
+export const users_changeData = async(id, phone, FIO, city, role)=>{
+    
+    const {data} = await $host.put('/api/auth/users_changeData', {id, phone, FIO, city, role})
+    return data
+}
+export const users_delete = async(id)=>{
+    console.log(id)
+    const {data} = await $host.delete(`/api/auth/usersDelete/${id}`);
+    return data
+}
+export const users_changePW = async(id, PW)=>{
+    const {data} = await $host.put('/api/auth/users_changePW', {id, PW})
+    return data
+}

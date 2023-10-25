@@ -1,4 +1,4 @@
-const {User, Token, File} = require('../models/models')
+const {User, Token, File, Order} = require('../models/models')
 const fileService = require('../services/fileService')
 const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
@@ -6,34 +6,6 @@ require('dotenv').config()
 const { Op } = require("sequelize");
 
 class authController {
-
-
-    async registration(req, res, next){
-        try {
-            const {phone, password} = req.body
-            const candidat = await User.findAll({where:{phone: phone}})
-            if(candidat.length>0) return res.json('такой существует')
-            const hashPassword = await bcryptjs.hash(password, 3)
-            const user = await User.create({phone, password: hashPassword})
-            const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '1h'})
-            const refreshToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.REFRESH_KEY, {expiresIn: '72h'})
-            const token = await Token.findOne({where:{userId: user.id}})
-            if(token){
-                await Token.update({token: refreshToken}, {where:{id: token.id}})
-            }else{
-                await Token.create({refreshToken, userId: user.id})
-            }
-            res.cookie('refreshToken', refreshToken, {maxAge: 30*24*60*60*1000, httpOnly: true})
-            
-            const file = await File.create({name: user.phone, parent: -1 ,userId: user.id})
-            //await fileService.createdDir(file, '')
-
-            return res.json({user, accessToken, refreshToken} )
-        } catch (error) {
-            console.log(error)
-        }
-        
-    }
 
     async login(req, res, next){ 
         try {
@@ -98,12 +70,38 @@ class authController {
         
     }
 
-    async getUsers(req,res){
+    async getUsers(req, res) {
         try {
-            const users = await User.findAll()
-            return res.json(users)
+            const users = await User.findAll({
+                include: [{
+                    model: Order,
+                    attributes: ['price'],
+                }],
+            });
+    
+            const usersWithOrderInfo = users.map(user => {
+                const orderCount = user.orders.length;
+                const totalOrderSum = user.orders.reduce((sum, order) => {
+                    const price = Number(order.price);
+                    return sum + (isNaN(price) ? 0 : price);
+                }, 0);
+    
+                return {
+                    id: user.id,
+                    phone: user.phone,
+                    FIO: user.FIO,
+                    city: user.city,
+                    role: user.role,
+                    createdAt: user.createrAt,
+                    orderCount,
+                    totalOrderSum: Number(totalOrderSum.toFixed(2))
+                };
+            });
+    
+            return res.json(usersWithOrderInfo);
         } catch (error) {
-            console.log(error)
+            console.log(error);
+            return res.status(500).json({error: error.message});
         }
     }
 
@@ -126,31 +124,7 @@ class authController {
             console.log(error)
         }
     }
-
-
-
-    
-    async passwordChangeAll(req, res, next) { //сброс всех паролей кроме админских
-      try {
-        const users = await User.findAll({
-          where: {
-            role: {
-                [Op.ne]: 'ADMIN' 
-            }
-          }
-        });
-    
-        for (const user of users) {
-          const passwordRandom = Math.floor(1000 + Math.random() * 9000).toString();
-          const hashPassword = await bcryptjs.hash(passwordRandom, 3);
-          await user.update({ password: hashPassword });
-        }
-        return res.json({ message: 'Passwords updated successfully' });
-      } catch (error) {
-        console.log(error);
-        next(error); 
-      }
-    }
+ 
 
     async dataChange(req,res, next){
         try {
@@ -176,6 +150,38 @@ class authController {
             console.log(error)
         }
     }
+
+    async users_changeData(req,res, next){
+        try {
+            const {id, phone, FIO, city, role} = req.body
+            const data = await User.update({phone, FIO, city, role}, {where: {id: id}})
+            return res.json(data)
+        } catch (error) {
+            console.log(error)
+            return res.status(500).json({error: error.message})
+        }
+    }
+    async usersDelete(req, res, next){
+        try {
+            const { id } = req.params;
+            const data = await User.destroy({where: {id: id}})
+            return res.json(data)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    async users_changePW(req,res, next){
+        try {
+            const {id, PW} = req.body
+            
+            const hashPassword = await bcryptjs.hash(PW, 3)
+            const data = await User.update({password: hashPassword}, {where: {id: id}})
+            return res.json(data)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
 
     async whoAmI(req, res, next) {
         try {   

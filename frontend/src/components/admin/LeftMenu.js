@@ -69,6 +69,12 @@ export const LeftMenu = () => {
               Сайт
             </button>
             <button
+              className={`menu-btn ${isActive('/users') ? 'active' : ''}`}
+              onClick={() => Close('/users')}
+            >
+              Клиенты
+            </button>
+            <button
               className={`menu-btn ${isActive('/setting') ? 'active' : ''}`}
               onClick={() => Close('/setting')}
             >

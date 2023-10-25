@@ -6,6 +6,7 @@ import Editor from "./pages/Editor"
 import Web from "./pages/Web"
 import PrivatePage from "./pages/PrivatePage"
 import Cloud from "./pages/Cloud"
+import Users from "./pages/Users"
 
 export const adminRoutes = [
     {
@@ -36,6 +37,10 @@ export const adminRoutes = [
         path: '/web',
         Component: Web
     },
+    {
+        path: '/users',
+        Component: Users
+    }
 ]
 
 export const userRoutes = [
