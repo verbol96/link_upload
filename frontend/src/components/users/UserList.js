@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { $host } from '../../http';
 import './styleUsers.css';
 import { OneUser } from './OneUser';
+import { deleteUsersWithoutOrders } from '../../http/authApi';
 
 export const UserList = () => {
     const [users, setUsers] = useState([]);
@@ -58,7 +59,16 @@ export const UserList = () => {
             return data.toLowerCase().includes(search.toLowerCase());
         }), sortKey);
 
-        console.log(users)
+    const clearEmpty = async() =>{
+            if(window.confirm("Вы уверены, что хотите очистить всех пользователей без заказов?")) {
+                try {
+                    const data = await deleteUsersWithoutOrders()
+                    alert("Удалено пользователей: "+data.deletedUsersCount);
+                } catch (error) {
+                    alert("Произошла ошибка при удалении пользователя");
+                }
+            }
+    }
 
     return (
         <div className='usersMain'>
@@ -77,6 +87,7 @@ export const UserList = () => {
                     <option value="дата">по дате добавления</option>
                 </select>
                 <input placeholder='поиск...' onChange={handleSearchChange} />
+                <button style={{fontSize: 12, marginLeft: 'auto', background: 'gray'}} onClick={clearEmpty}>Очистить</button>
             </div>
 
             <div className='usersList'>

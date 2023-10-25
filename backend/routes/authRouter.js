@@ -10,6 +10,8 @@ router.get('/refresh', authController.refresh)
 router.get('/whoAmI',authMiddleware, authController.whoAmI)
 router.put('/passwordChange', authController.passwordChange)
 router.get('/getUsers',authMiddleware, authController.getUsers)
+router.get('/deleteUsersWithoutOrders',authMiddleware, authController.deleteUsersWithoutOrders)
+
 router.put('/dataChange', authController.dataChange)
 router.put('/changePasswordUser', authController.changePasswordUser)
 
