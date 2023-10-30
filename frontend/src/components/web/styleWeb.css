@@ -6,12 +6,15 @@
   
   .upload_label {
     position: relative;
-    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column; /* Добавлено */
     padding: 5px 10px;
     cursor: pointer;
     font-size: 13px;
     height: 100%;
-  }
+}
   .upload_label:hover {
     background-color: #8ca2a7;
   }
@@ -352,3 +355,19 @@
   justify-content: space-between;
 }
 
+.pageUpload{
+  margin-top: 80px;
+}
+
+.pageUpload_info{
+  margin-top: 40px;
+  
+}
+
+.pageUpload_info h6{
+  font-size: 12px;
+}
+
+.pageAfterUpload{
+  margin-top: 80px;
+}

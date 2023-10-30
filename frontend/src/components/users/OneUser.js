@@ -28,6 +28,10 @@ const deleteUser = async () => {
         alert('Нельзя удалить админа')
         return;
     } 
+    if(user.orderCount>0){
+        alert('Нельзя удалить. Имеются заказы')
+        return;
+    } 
     if(window.confirm("Вы уверены, что хотите удалить пользователя?")) {
         try {
             await users_delete(user.id)
