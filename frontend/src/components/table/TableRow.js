@@ -49,7 +49,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
         `
         Здравствуйте. Письмо отправили. Вот данные для оплаты:
     
-    4255 1901 5302 8421
+    6711 7700 1570 5002
     12/23
     
     сумма ${order.price}р за заказ +2р пересылка. Итого ${Number(order.price)+2}р

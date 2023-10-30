@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import {Row, Col, ProgressBar, Tooltip, OverlayTrigger} from 'react-bootstrap'
+import {Row, Col, Tooltip, OverlayTrigger} from 'react-bootstrap'
 import { uploadFiles } from "../http/cloudApi"
 import { ContactForm } from "../components/web/ContactForm"
 import { OtherForm } from "../components/web/OtherForm"
@@ -13,6 +13,7 @@ import { useSelector } from "react-redux";
 import Footer from "../components/admin/Footer"
 import './stylePages.css'
 import { getSettings } from "../http/dbApi"
+import { PageUpload } from "../components/web/PageUpload"
 
 const Web = () =>{
 
@@ -69,6 +70,7 @@ const Web = () =>{
 
     const [amountPhoto, setAmountPhoto] = useState(0)
     const [current, setCurrent] = useState(0)
+    const [step, setStep] = useState(0)
 
     const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
 
@@ -105,6 +107,7 @@ const Web = () =>{
       }
 
     const upload = async() =>{
+        setStep(1)
         const photo = formats.reduce((acc,el)=> {
             const ff =() =>{
                 switch(el.type){
@@ -151,7 +154,7 @@ const Web = () =>{
         const userData = await SendToDB(data)
 
         const MainDir = await createDir(typePost+(userData.order_number%99+1))
-        
+
         formats.forEach(async (formatOne) => {
             const parentFile = await createDir(formatOne.format+' '+formatOne.paper, MainDir.id);
 
@@ -161,6 +164,7 @@ const Web = () =>{
               setCurrent((prev) => prev + 1);
             });
           });
+          setStep(2)
     }
  
     const renderTooltip = (props) => (
@@ -177,7 +181,7 @@ const Web = () =>{
                 <div className="flex-container">
                     <div className="flex-item">
 
-                    {current===0
+                    {step===0
                     ?
                     <>
                     <div className="title">Оформление заказа</div>
@@ -224,14 +228,18 @@ const Web = () =>{
                     </Row>
                     </>
                     :
-                    current===amountPhoto ?
-                        <PageAfterUpload amountPhoto={amountPhoto} phone = {phone} setCurrent={setCurrent} />
-                    :
-                    <Row>
-                        <h5>Идет оформление заказа...</h5>
-                        <ProgressBar animated now={100} label={`Загружено фото: ${current} из ${amountPhoto}`} />
-                        <h6>Не закрывайте и не обновляйте страницу до окончания загрузки!</h6>
-                    </Row>
+
+
+                    step===2 ?
+                        <PageAfterUpload 
+                                amountPhoto={amountPhoto}  
+                                setStep={setStep}
+                                setFormats={setFormats} />
+                        :
+                        <PageUpload 
+                                current={current} 
+                                amountPhoto={amountPhoto} />
+                    
 
                     }
                     

@@ -9,7 +9,6 @@ import { saveSettings } from '../../store/orderReducer'
 import { $host } from '../../http'
 
 export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
-    //console.log(el)
 
     const dispach = useDispatch()
     
@@ -179,8 +178,26 @@ export const FilesForm = ({el, index, DeleteFormat, formats, setFormats}) =>{
           <div  style={{display: 'flex', flexWrap: "wrap"}}>
               <div className="cardFile" style={{border: '2.5px #0E3C47 dashed'}}>
                   <label className='upload_label' htmlFor={index}>
-                      <div style={{fontSize: 30, textAlign: 'center'}}><i className="bi bi-plus" ></i></div>
-                      <div style={{textAlign: 'center', padding: 5}}>добавить фото</div>
+                      
+                          {filesPrev.length=== formats[index].files.length 
+                          ?
+                          <>                          
+                          <div style={{fontSize: 30, textAlign: 'center'}}>
+                            <i style={{color:'black'}} className="bi bi-plus"></i>
+                          </div>
+                          <div style={{textAlign: 'center', padding: 5}}>добавить фото</div>
+                          </>
+
+                          :
+                          <>
+                          <div style={{fontSize: 30, textAlign: 'center'}}>
+                            <div className="spinner-border text-dark" role="status"></div> 
+                            <h6>{filesPrev.length + "/ " + formats[index].files.length}</h6>
+                          </div>
+                          </>
+                          }
+                     
+                      
                   </label>
                   <input className='upload_input' id={index} type="file" multiple={true} onChange={(e)=>FilesInput(e)}></input>
               </div>
