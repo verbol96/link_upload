@@ -91,20 +91,6 @@ class fileController {
         }
     }
 
-    async uploadFilesNull(req,res){
-        try {
-            const file = req.files.file
-            let path = `${process.env.FILEPATH}/E4/${file.name}` 
-            file.mv(path) //перемещение файла по пути
-            
-            return res.json('done!')
-            
-        } catch (error) {
-            console.log(error)
-            return res.status(500).json({message: "ошибка загрузки"})
-        }
-    }
-
     async deleteFile(req,res){
         try {
             
@@ -190,6 +176,20 @@ class fileController {
 
         } catch (error) {
             return res.status(400).json({message:"ошибка скачивания"})
+        }
+    }
+
+    async deleteFileAll(req,res){
+        try {
+            await File.destroy({
+                where: {},
+              });
+            // Удаление всех файлов из папки 'file'
+            FileService.deleteFolderContents(process.env.FILEPATH)
+            return res.json({message:'облако очищено'})
+           
+        } catch (error) {
+            return res.status(400).json({message: "ошибка при удалении"})
         }
     }
 

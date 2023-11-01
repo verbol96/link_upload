@@ -31,6 +31,11 @@ export const deleteFile = async(file)=>{
     return data
 }
 
+export const deleteFileAll = async()=>{
+    const {data} = await $host.delete(`/api/file/all`)
+    return data
+}
+
 export const downloadFiles = async(file, onProgress) => {
     const {data} = await $host.get(`/api/file/download/?id=${file.id}`, {
         responseType: 'blob',
