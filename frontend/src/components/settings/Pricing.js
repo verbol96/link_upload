@@ -3,7 +3,6 @@ import { useState, useEffect } from "react"
 import '../settings/Pricing.css'
 import _ from 'lodash'
 import Footer from "../admin/Footer"
-import { changePasswordUser } from "../../http/authApi"
 
 export const Pricing = () =>{
 
@@ -12,9 +11,6 @@ export const Pricing = () =>{
     const [type, setType] = useState('photo')
     const [title, setTitle] = useState('')
     const [price, setPrice] = useState('')
-
-    const [phone, setPhone] = useState('+375')
-    const [password, setPassword] = useState('')
 
     useEffect(()=>{
         async function getPriceList (){
@@ -41,12 +37,6 @@ export const Pricing = () =>{
             await deleteSetting(id)
             setSettings([...settings.filter(el=>el.id!==id)])
         }
-    }
-
-    const changePassword = async()=>{
-        await changePasswordUser(phone, password)
-        setPhone('')
-        setPassword('')
     }
 
 
@@ -87,19 +77,7 @@ export const Pricing = () =>{
                 </div>
 
 
-                <div style={{margin: 50}}>
-                    <h6>Сменить пароль пользователя:</h6>
-                    <div>
-                        <label style={{marginRight: 10}}>номер: </label>
-                        <input value={phone} onChange={(e)=>setPhone(e.target.value)} />
-                    </div>
-                    <div>
-                        <label style={{marginRight: 10}}>пароль: </label>
-                        <input value={password} onChange={(e)=>setPassword(e.target.value)} />
-                    </div>
-                    <button onClick={()=>changePassword()}>сменить!</button>
-                </div>
-
+               
                 <Footer />
         </>
     )

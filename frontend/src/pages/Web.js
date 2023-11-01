@@ -155,16 +155,17 @@ const Web = () =>{
 
         const MainDir = await createDir(typePost+(userData.order_number%99+1))
 
-        formats.forEach(async (formatOne) => {
-            const parentFile = await createDir(formatOne.format+' '+formatOne.paper, MainDir.id);
-
-            formatOne.files.forEach(async (file, index) => {
-              
-              await uploadFiles(file, parentFile.id)
-              setCurrent((prev) => prev + 1);
+        for (let formatOne of formats) {
+            const parentFile = await createDir(formatOne.format + ' ' + formatOne.paper, MainDir.id);
+            
+            const uploadPromises = formatOne.files.map(async (file, index) => {
+                await uploadFiles(file, parentFile.id);
+                setCurrent((prev) => prev + 1);
             });
-          });
-          setStep(2)
+        
+            await Promise.all(uploadPromises);
+        }
+        setStep(2);
     }
  
     const renderTooltip = (props) => (

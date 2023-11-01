@@ -1,6 +1,8 @@
-const fs = require('fs')
+const fs = require('fs');
+const path = require('path');
 const {File} = require('../models/models')
 require('dotenv').config()
+const rimraf = require('rimraf');
 
 class FileService {
     createdDir(name, path) {
@@ -36,6 +38,18 @@ class FileService {
             fs.rmdirSync(path)
         else 
             fs.unlinkSync(path)
+    }
+
+    
+    // Функция для удаления всех файлов в директории
+    deleteFolderContents(directory) {
+        
+        //rimraf('./few', function (err) { 
+          //  console.log('1111')
+            //if (err) throw err;
+            
+            // Директория удалена
+          //});
     }
     
 }

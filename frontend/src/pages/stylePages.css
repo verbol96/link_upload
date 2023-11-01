@@ -113,12 +113,30 @@
 }
 
 
-.cloud-menu{
+.cloud-menu {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
     flex-wrap: wrap;
-    justify-content: flex-start;
     background: rgb(244, 244, 244);
     border-radius: 5px;
     margin: 30px;
     padding: 10px 20px;
+}
+
+.cloud-menu > div {
+    display: flex;
+    align-items: center;
+}
+.cloud-menu-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center; /* выровнивание по вертикали */
+    justify-content: space-between; /* выровнивание по горизонтали */
+}
+
+.cloud-menu-right h6, .cloud-menu-right button {
+    margin: 0; /* удаление отступов */
+    padding: 0; /* удаление внутренних отступов */
+    line-height: 1.5; /* одинаковая высота строки для текста и кнопки */
 }

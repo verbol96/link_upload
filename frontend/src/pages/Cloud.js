@@ -3,7 +3,7 @@ import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ListCloud } from "../components/cloud/ListCloud"
 import { NavBarAdmin } from "../components/admin/NavBarAdmin"
-import {getFiles, getFilesAll} from '../http/cloudApi'
+import {deleteFileAll, getFiles, getFilesAll} from '../http/cloudApi'
 import {setFiles, setCurrentDir, setFilesAll, delStack} from '../store/fileReducer'
 import Footer from "../components/admin/Footer";
 
@@ -13,6 +13,7 @@ const Cloud = () =>{
     const currentDir = useSelector(state=>state.files.currentDir)
     const stackDir = useSelector(state=>state.files.stackDir)
     const stack = useSelector(state=>state.files.stack)
+    const filesAll = useSelector(state=>state.files.filesAll)
 
     useEffect(()=>{
         async function getFile (){
@@ -37,7 +38,14 @@ const Cloud = () =>{
         dispatch(setCurrentDir(backDir))
         dispatch(delStack())
     }
-    
+
+    const getTotalSize = (files) => files.reduce((total, file) => total + file.size, 0) / (1024 * 1024 * 1024);
+
+    const ClearCloud = async() =>{
+        const data = await deleteFileAll()
+        alert(data.message)
+    }
+
     return (
         <div style={{display: 'flex', flexDirection: 'column',background: '#dbdbdb', minHeight: '100vh'}}>
             <NavBarAdmin />
@@ -49,6 +57,12 @@ const Cloud = () =>{
                 </div>
                 <div style={{marginLeft: 60}}>
                     Облако LINK{stack.map((el, index)=><span key={index}><i className="bi bi-chevron-right"></i> {el} </span>)}
+                </div>
+                <div className="cloud-menu-right">
+                    <h6 style={{fontSize: 14}}>{`Память: ${getTotalSize(filesAll).toFixed(2)}gb / 7gb`}</h6>
+                    <button  
+                        style={{border: '1px solid #dbdbdb', borderRadius: 5, background: 'white', fontSize: 14, marginLeft: 10, padding: '0 20px'}}
+                        onClick={()=>ClearCloud()}>очистить</button>
                 </div>
             </div>
 

@@ -23,6 +23,7 @@
     "jszip": "^3.10.1",
     "pg": "^8.10.0",
     "pg-hstore": "^2.3.4",
+    "rimraf": "^5.0.5",
     "sequelize": "^6.31.1"
   },
   "devDependencies": {
