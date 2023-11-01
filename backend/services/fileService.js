@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const {File} = require('../models/models')
 require('dotenv').config()
-const rimraf = require('rimraf');
 
 class FileService {
     createdDir(name, path) {
