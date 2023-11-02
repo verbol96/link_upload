@@ -30,8 +30,6 @@ class FileService {
     deleteFile(file){
         
         const path = `${process.env.FILEPATH}/${file.dataValues.path}/${file.dataValues.name}`
-        console.log(`file: ${file.dataValues.path}`)
-        console.log(`path: ${path}`)
 
         if(file.type==='dir')
             fs.rmdirSync(path)
@@ -42,13 +40,12 @@ class FileService {
     
     // Функция для удаления всех файлов в директории
     deleteFolderContents(directory) {
-        
-        //rimraf('./few', function (err) { 
-          //  console.log('1111')
-            //if (err) throw err;
-            
-            // Директория удалена
-          //});
+        try {
+            fs.rmSync(process.env.FILEPATH, { recursive: true, force: true });
+            fs.mkdirSync(process.env.FILEPATH);
+          } catch (err) {
+            console.error('Error while removing directory:', err);
+          }
     }
     
 }

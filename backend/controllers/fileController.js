@@ -64,18 +64,20 @@ class fileController {
     async uploadFiles(req,res){
         try {
             const file = req.files.file
+            const fileName = req.body.fileName
+            file.name = fileName
             
             const parent = await File.findOne({where:{id: req.body.parent}})
             let path = `${process.env.FILEPATH}/${parent.path}/${parent.name}/${file.name}` 
             if(fs.existsSync(path)){
                 return res.status(400).json({message: "файл уже существукет"})
             }
-            console.log(path)
+            
             file.mv(path) //перемещение файла по пути
             const type = file.name.split('.').pop()
-
+            
             const dbFile = {
-                name: file.name,
+                name: fileName,
                 type,
                 size: file.size,
                 path:  `${parent.path}/${parent.name}`,
@@ -96,12 +98,12 @@ class fileController {
             
             const file = await File.findOne({where:{id: req.query.id}})
             if(!file) return res.status(400).json({message: "файл не найден"})
-
+    
             if(file.type==='dir'){
-
+    
                 const DeleteDir = async(id, fileMain)=>{
                     const files = await File.findAll({where: {parent: id}})
-
+    
                     for await(const el of files){
                         
                         if(el.type==='dir'){
@@ -109,22 +111,34 @@ class fileController {
                             await DeleteDir(el.id, el)
                             
                         }else{
-                            FileService.deleteFile(el)
                             await File.destroy({where:{id: el.id}})
+                            try {
+                                FileService.deleteFile(el)
+                            } catch (error) {
+                                console.error(`Error deleting file ${el.id}: ${error}`)
+                            }
                         }
                     }
-                    FileService.deleteFile(fileMain)
                     await File.destroy({where:{id: fileMain.id}})
+                    try {
+                        FileService.deleteFile(fileMain)
+                    } catch (error) {
+                        console.error(`Error deleting directory ${fileMain.id}: ${error}`)
+                    }
                 }
-
+    
                 await DeleteDir(file.id, file)
-
+    
                 
                 return res.json({message:'дирректория удалена'})
             }else{
                 
-                FileService.deleteFile(file)
                 await File.destroy({where:{id: file.id}})
+                try {
+                    FileService.deleteFile(file)
+                } catch (error) {
+                    console.error(`Error deleting file ${file.id}: ${error}`)
+                }
                 return res.json({message:"файл удален"})
             }
             

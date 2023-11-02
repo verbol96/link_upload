@@ -42,8 +42,10 @@ const Cloud = () =>{
     const getTotalSize = (files) => files.reduce((total, file) => total + file.size, 0) / (1024 * 1024 * 1024);
 
     const ClearCloud = async() =>{
-        const data = await deleteFileAll()
-        alert(data.message)
+        if (window.confirm('Вы уверены, что хотите удалить все файлы?')) {
+            const data = await deleteFileAll()
+            alert(data.message)
+        }
     }
 
     return (

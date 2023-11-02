@@ -21,6 +21,7 @@ export const createDir = async(nameDir, parentId)=>{
 export const uploadFiles = async(file, parentFile)=>{
     const formDate = new FormData()
     formDate.append('file', file)
+    formDate.append('fileName', file.name);
     formDate.append('parent', parentFile)
     const {data} = await $host.post('/api/file/upload', formDate)
     return data
