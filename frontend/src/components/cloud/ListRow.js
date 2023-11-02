@@ -50,7 +50,7 @@ export const ListRow = ({el}) =>{
             return file.path.includes(path) ? acc + file.size : acc;
         }, 0);
     }
-
+    
     return(
         <div className='block-file' onClick={(el.type==='dir')?()=>openFile():null}>
         <div className='file-info'>

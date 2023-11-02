@@ -38,7 +38,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     const lineCount = other.split('\n').length;
     setNumRows(lineCount < 2 ? 2 : lineCount);
     const lineCount1 = notes.split('\n').length;
-    setNumRows1(lineCount1 < 2 ? 2 : lineCount);
+    setNumRows1(lineCount1 < 2 ? 2 : lineCount1);
   }, [other, notes]);
 
   const checkChanges = useCallback(() => {

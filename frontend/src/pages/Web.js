@@ -139,7 +139,7 @@ const Web = () =>{
             "city": city,
             "adress": adress,
             "postCode": postCode,
-            "other": 'Ответить в ' + typeAnswer + ': '+ nikname + '\n' + other,
+            "other": other,
             "notes": '',
             "photo": photo, 
             "price": SumTeor(photo),
@@ -159,6 +159,7 @@ const Web = () =>{
             const parentFile = await createDir(formatOne.format + ' ' + formatOne.paper, MainDir.id);
             
             const uploadPromises = formatOne.files.map(async (file, index) => {
+                
                 await uploadFiles(file, parentFile.id);
                 setCurrent((prev) => prev + 1);
             });
