@@ -9,6 +9,6 @@ router.delete('/delete/:id', settingsController.delete)
 router.get('/getSettingsEditor', settingsController.getSettingsEditor)
 router.put('/changeSettingsEditor', settingsController.changeSettingsEditor)
 router.delete('/deleteSettingsEditor/:size', settingsController.deleteSettingsEditor)
-
+router.get('/getCopyBD', settingsController.getCopyBD)
 
 module.exports = router

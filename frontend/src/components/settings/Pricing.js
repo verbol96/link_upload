@@ -2,7 +2,6 @@ import { addSettings, deleteSetting, getSettings } from "../../http/dbApi"
 import { useState, useEffect } from "react"
 import '../settings/Pricing.css'
 import _ from 'lodash'
-import Footer from "../admin/Footer"
 
 export const Pricing = () =>{
 
@@ -41,7 +40,7 @@ export const Pricing = () =>{
 
 
     return(
-        <>
+        <div className="containerMain">
             {settings.map((el, index)=>
                 <div  className="container" key={index}>
                     <button style={{border: 'none', background: 'rgb(234, 234, 234)'}}>{el.type}</button>
@@ -77,8 +76,6 @@ export const Pricing = () =>{
                 </div>
 
 
-               
-                <Footer />
-        </>
+        </div>
     )
 }

@@ -1,5 +1,6 @@
-const {Settings, SettingsEditor} = require('../models/models')
-
+const {Settings, SettingsEditor, File, Order, Photo, Token, User} = require('../models/models')
+require('dotenv').config()
+const fs = require('fs');
 
 class settingsController{
    
@@ -51,16 +52,36 @@ class settingsController{
     }
 
 
-
-
-
-
-
-
-
-
-
-   
+    async getCopyBD(req, res) {
+        const file = await File.findAll();
+        const order = await Order.findAll();
+        const photo = await Photo.findAll();
+        const token = await Token.findAll();
+        const user = await User.findAll();
+        const settings = await Settings.findAll();
+        const settingsEditor = await SettingsEditor.findAll();
+    
+        const data = {
+            file,
+            order,
+            photo,
+            token,
+            user,
+            settings,
+            settingsEditor
+        };
+    
+        const jsonString = JSON.stringify(data);
+        const filePath = `${process.env.PATH_BACKUP}/backup/BD.json` ;
+    
+        fs.writeFile(filePath, jsonString, (err) => {
+            if (err) {
+                return res.status(500).send(err);
+            }
+            
+            res.download(filePath); // Set disposition and send it.
+        });
+    }
 }
 
 module.exports = new settingsController()
