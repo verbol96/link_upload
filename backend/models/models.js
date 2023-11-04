@@ -32,7 +32,7 @@ const Order = sequelize.define('order', {
   raion: {type: DataTypes.STRING},
   FIO: {type: DataTypes.STRING},
   phone: {type: DataTypes.STRING},
-  //price_deliver: {type: DataTypes.STRING}
+  price_deliver: {type: DataTypes.STRING}
 })
 
 
