@@ -2,8 +2,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { deleteOrder, updateOrder } from '../../http/dbApi';
 import { deleteOrderId } from '../../store/orderReducer';
 import './OneOrderDesc.css'
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useCallback} from 'react'
 import { updateOrderPrivate } from '../../store/privatePageReducer';
+import _ from 'lodash';
 
 export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, StatusOrder}) =>{
 
@@ -25,7 +26,7 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
     const [phoneUser] = useState(user.phone || '');
     const [notes,] = useState(order.notes || '')
     const [codeOutside, setCodeOutside] = useState(order.codeOutside || '')
-
+    const [isChanged, setIsChanged] = useState(false);
     const [numRows, setNumRows] = useState(2);
 
     useEffect(() => {
@@ -34,6 +35,49 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
     }, [other]);
 
     const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
+
+    const checkChanges = useCallback(() => {
+        const initialValues = {
+          FIO: order.FIO || '',
+          phone: order.phone || '',
+          typePost: order.typePost || '',
+          city: order.city || '',
+          adress: order.adress || '',
+          oblast: order.oblast || '',
+          raion: order.raion || '',
+          postCode: order.postCode || '',
+          other: order.other || '',
+          firstClass: order.firstClass
+        };
+        
+        const currentValues = {
+          FIO,
+          phone,
+          typePost,
+          city,
+          adress,
+          oblast,
+          raion,
+          postCode,
+          other,
+          firstClass
+        };
+    
+        for (const key in initialValues) {
+          if (_.isEqual(initialValues[key], currentValues[key]) === false) {
+            setIsChanged(true);
+            return;
+          }
+        }
+    
+        setIsChanged(false);
+      }, [FIO, phone, typePost, city, adress, oblast, raion, postCode, 
+          other, setIsChanged, order,  firstClass]);
+    
+      useEffect(() => {
+        checkChanges();
+      }, [checkChanges]);
+    
 
     const data = {
         FIO: FIO,
@@ -90,7 +134,7 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
     'Ваш заказ был передан на отправку. По штрихкоду можете его отслеживать.',// отправлен
     '' //оплачен
   ]
- 
+ console.log(order)
 
     return(
         <div className="order_details_card">
@@ -155,11 +199,11 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
                 </div>
 
                 <div className="card_actions">
-                    {
-                    order.status===0?
-                    <button className="save_button" onClick={()=>SaveData()}>Сохранить изменения</button>
-                    :null
-                    }
+                    
+                    <button className="save_button"
+                            onClick={()=>SaveData()}
+                            style={{ backgroundColor: isChanged ? '#dbcc00' : '' }}>Сохранить изменения</button>
+                   
                     
                 </div>
                 </div>
@@ -174,10 +218,25 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
                         
                     </div>
                     <div className="card_actions">
-                        <label>Cумма заказа:</label>
+                        <label>Наложенный:</label>
                         <button className='copy_button' style={{backgroundColor: '#b7cbcf', border: '2px solid #a0babf', borderRadius: 5}}>{order.price}р</button>
                         
                     </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div>
+                            <label>LINK:</label>
+                            <label>{order.price}р</label>
+                        </div>
+                        <div>
+                            <label>пересылка:</label>
+                            <label>{order.price}р</label>
+                        </div>
+                        <div>
+                            <label>прибыль:</label>
+                            <label>{order.price}р</label>
+                        </div>
+                    </div>
+                    
                 </div>
 
                 <div className="card">
@@ -199,10 +258,13 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
                     </div>
 
                     {
-                    order.status===5||6?
+                    order.status===5||order.status===6?
                     <div className='contact_field'>
                         <label>Штрихкод:</label>
-                        <input style={{marginLeft: 5}} value={codeOutside} onChange={e=>setCodeOutside(e.target.value)} /> 
+                        <input  style={{marginLeft: 5}} 
+                                value={codeOutside} 
+                                onChange={e=>setCodeOutside(e.target.value)}
+                                disabled={order.status !== 0 ? true : false} /> 
                     </div>:
                     null}
                     

@@ -13,7 +13,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
   const dispatch = useDispatch()
   const users = useSelector(state=>state.order.users)
- 
+
   const [price, setPrice] = useState(order.price || '');
   const [typePost, setTypePost] = useState(order.typePost)
   const [FIO, setFIO] = useState(order.FIO || '')
@@ -262,7 +262,7 @@ ${codeOutside} - код для отслеживания
     return text
 }
 
-console.log(order.id)
+
 
   return (
     <div className="order_details_card">
@@ -359,11 +359,25 @@ console.log(order.id)
               <button type="button" onClick={()=>{AddFormat()}}>добавить</button>
             </div>
           <div className="card_actions">
-            <button className='copy_button'  onClick={()=>{setPrice(SumTeor())}}>расчет: {SumTeor()}р</button>
+            <button className='copy_button'  onClick={()=>{setPrice(SumTeor())}}>{SumTeor()}р</button>
+            <div  style={{transform: 'scale(0.85)'}}>
+            <select style={{appearance: 'none', padding: '0px 10px'}}>
+              <option>0%</option>
+              <option>10%</option>
+              <option>20%</option>
+            </select>
+            </div>
             <input
               className='price_input'
               type="text"
               value={price}
+              onChange={(e) => setPrice(e.target.value)}
+            />
+            <input
+              className='price_input'
+              style={{width: '20%'}}
+              type="text"
+              value={price/4}
               onChange={(e) => setPrice(e.target.value)}
             />
           </div>

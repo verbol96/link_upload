@@ -125,7 +125,8 @@ class orderController{
                 }
               ]
             })
-        return res.json({user})
+            const order = await Order.findOne({where: {price_deliver: "0"}})
+        return res.json({user, order})
     }
 
     async updateStatus(req,res){
