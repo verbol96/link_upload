@@ -30,7 +30,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
             text = 
         `
         Здравствуйте. Заказ отправили. 
-    Сумма наложенного платежа: ${order.price}р (с учетом пересылки)
+    Сумма наложенного платежа: ${Number(order.price)+Number(order.price_deliver)}р (с учетом пересылки)
     Код для отслеживания: ${order.codeOutside}
         `
         }
@@ -150,7 +150,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                 </div>
                 <div className='flex_col' style={{flex:1}} >{Warning()}</div>
                 <CopyToClipboard text={copyCode()}>
-                <div className='flex_col_sm' >{order.price}р</div>
+                <div className='flex_col_sm' >{Number(order.price) + Number(order.price_deliver)}р</div>
                 </CopyToClipboard>
                 <select className="select_col" style={{backgroundColor: ColorBG[order.status-1]}} value={order.status} onChange={(e)=>ChangeStatus(e)} >
                     <option value="0">новый</option>

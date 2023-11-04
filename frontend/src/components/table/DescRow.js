@@ -15,6 +15,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const users = useSelector(state=>state.order.users)
 
   const [price, setPrice] = useState(order.price || '');
+  const [price_deliver, setPriceDeliver] = useState(order.price_deliver || '');
   const [typePost, setTypePost] = useState(order.typePost)
   const [FIO, setFIO] = useState(order.FIO || '')
   const [phone, setPhone] = useState(order.phone || '')
@@ -33,6 +34,22 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
   const [numRows, setNumRows] = useState(2);
   const [numRows1, setNumRows1] = useState(2);
+
+
+  const defaultSale = useCallback(() => {
+    const count = photo.reduce((sum, photo) => {
+      return sum + Number(photo.amount);
+    }, 0);
+    if(count > 499) return 0.8;
+    if(count > 199) return 0.9;
+    return 1;
+  }, [photo]); 
+  
+  const [sale, setSale] = useState(defaultSale());
+  
+  useEffect(() => {
+    setSale(defaultSale());
+  }, [defaultSale]);  
 
   useEffect(() => {
     const lineCount = other.split('\n').length;
@@ -57,7 +74,8 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       codeOutside: order.codeOutside || '',
       photo: order.photos || [],
       firstClass: order.firstClass,
-      price: order.price || ''
+      price: order.price || '',
+      price_deliver: order.price_deliver || ''
     };
     
     const currentValues = {
@@ -75,7 +93,8 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       codeOutside,
       photo,
       firstClass,
-      price
+      price,
+      price_deliver
     };
 
     for (const key in initialValues) {
@@ -87,7 +106,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
     setIsChanged(false);
   }, [FIO, phone, typePost, city, adress, oblast, raion, postCode, 
-      phoneUser, notes, other, codeOutside, setIsChanged, order, photo, firstClass, price]);
+      phoneUser, notes, other, codeOutside, setIsChanged, order, photo, firstClass, price, price_deliver]);
 
   useEffect(() => {
     checkChanges();
@@ -105,6 +124,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     photo: photo,
     other: other,
     price: price,
+    price_deliver: price_deliver,
     firstClass: firstClass,
     ...(phoneUser.length > 1 ? { phoneUser: phoneUser, userId: order.userId, auth:true } : {}),
     adressId: order.adressId, 
@@ -131,6 +151,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       photos: photo,
       other: other,
       price: price,
+      price_deliver: price_deliver,
       firstClass,
       phoneUser: phoneUser,
       user: users.find(user => user.phone === phoneUser) || {FIO:FIO}
@@ -222,45 +243,6 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const handleModalMouseLeaveMain = () => {
     setModalVisibleMain(false);
   };
-
-
-  const copyCode = () =>{
-    let text = ''
-    
-    if(typePost === 'E'){
-        text = 
-    `
-    Здравствуйте. Заказ отправили. 
-Сумма наложенного платежа: ${price}р (с учетом пересылки)
-Код для отслеживания: ${codeOutside}
-    `
-    }
-
-    if(typePost === 'R' && !firstClass){
-        text = 
-    `
-    Здравствуйте. Заказ отправили. 
-Сумма наложенного платежа: ${price}р
-Код для отслеживания: ${codeOutside}
-    `
-    }
-
-    if(typePost === 'R' && firstClass){
-        text = 
-    `
-    Здравствуйте. Письмо отправили. Вот данные для оплаты:
-
-4255 1901 5302 8421
-12/23
-
-сумма ${price}р за заказ +2р пересылка. Итого ${Number(price)+2}р
-${codeOutside} - код для отслеживания
-    `
-    }
-    
-
-    return text
-}
 
 
 
@@ -359,12 +341,14 @@ ${codeOutside} - код для отслеживания
               <button type="button" onClick={()=>{AddFormat()}}>добавить</button>
             </div>
           <div className="card_actions">
-            <button className='copy_button'  onClick={()=>{setPrice(SumTeor())}}>{SumTeor()}р</button>
+            <button className='copy_button'  onClick={()=>{setPrice((SumTeor()*sale).toFixed(2))}}>{SumTeor()}р</button>
             <div  style={{transform: 'scale(0.85)'}}>
-            <select style={{appearance: 'none', padding: '0px 10px'}}>
-              <option>0%</option>
-              <option>10%</option>
-              <option>20%</option>
+            <select style={{appearance: 'none', padding: '0px 10px'}}
+                    value={sale}
+                    onChange={(e)=>setSale(e.target.value)}>
+              <option value={1}>0%</option>
+              <option value={0.9}>10%</option>
+              <option value={0.8}>20%</option>
             </select>
             </div>
             <input
@@ -375,10 +359,10 @@ ${codeOutside} - код для отслеживания
             />
             <input
               className='price_input'
-              style={{width: '20%'}}
+              style={{width: '20%', height: '75%', marginLeft: 2}}
               type="text"
-              value={price/4}
-              onChange={(e) => setPrice(e.target.value)}
+              value={price_deliver}
+              onChange={(e) => setPriceDeliver(e.target.value)}
             />
           </div>
           
@@ -418,9 +402,9 @@ ${codeOutside} - код для отслеживания
 
           </div>
           <div className="card_actions">
-            <CopyToClipboard text={copyCode()}>
-            <button className="copy_button">копировать смс</button>
-            </CopyToClipboard>
+            
+            <span> </span>
+            
             <button className="delete_button" onClick={()=>DeleteOrder()}>удалить заказ</button>
           </div>
         </div>

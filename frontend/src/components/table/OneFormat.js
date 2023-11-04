@@ -21,6 +21,7 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
         }
     }
     setPhoto([...photo.slice(0, index), {...photo[index], [prop]: e.target.value}, ...photo.slice(index + 1)])
+    
 }
   
   return(
