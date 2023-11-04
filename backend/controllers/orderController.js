@@ -139,14 +139,14 @@ class orderController{
     async updateOrder(req,res){
         const id = req.params.id
         
-        const {phone, FIO, typePost, firstClass, postCode, city, adress, oblast, raion, codeOutside, price, other, photo, userId, notes, phoneUser} = req.body
+        const {phone, FIO, typePost, firstClass, postCode, city, adress, oblast, raion, codeOutside, price, price_deliver, other, photo, userId, notes, phoneUser} = req.body
 
         const user = await User.findOne({where:{phone: phoneUser}})
         
         if(user){
             await Order.update(
                 {
-                    codeOutside, price, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, userId: user.id
+                    codeOutside, price, price_deliver, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, userId: user.id
                 },
                 {where:{id: id}}
             )
@@ -156,7 +156,7 @@ class orderController{
 
             await Order.update(
                 {
-                    codeOutside, price, other, notes, userId: user1.id, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion
+                    codeOutside, price, price_deliver, other, notes, userId: user1.id, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion
                 },
                 {where:{id: id}}
             )
