@@ -150,7 +150,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                 </div>
                 <div className='flex_col' style={{flex:1}} >{Warning()}</div>
                 <CopyToClipboard text={copyCode()}>
-                <div className='flex_col_sm' >{Number(order.price) + Number(order.price_deliver)}р</div>
+                <div className='flex_col_sm' >{(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р</div>
                 </CopyToClipboard>
                 <select className="select_col" style={{backgroundColor: ColorBG[order.status-1]}} value={order.status} onChange={(e)=>ChangeStatus(e)} >
                     <option value="0">новый</option>
