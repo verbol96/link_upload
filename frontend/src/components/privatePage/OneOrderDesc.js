@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteOrder, updateOrder } from '../../http/dbApi';
+import { deleteOrder, getSettings, updateOrder } from '../../http/dbApi';
 import { deleteOrderId } from '../../store/orderReducer';
 import './OneOrderDesc.css'
 import {useState, useEffect, useCallback} from 'react'
@@ -20,7 +20,7 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
     const [oblast] = useState(order.oblast || '')
     const [raion] = useState(order.raion || '')
     const [postCode, setPostCode] = useState(order.postCode || '')
-    const [firstClass] = useState(order.firstClass || false)
+    const [firstClass, setFirstClass] = useState(order.firstClass || false)
     const [other, setOther] =useState(order.other || '')
     const [photo] = useState(order.photos || [])
     const [phoneUser] = useState(user.phone || '');
@@ -134,7 +134,39 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
     'Ваш заказ был передан на отправку. По штрихкоду можете его отслеживать.',// отправлен
     '' //оплачен
   ]
- console.log(order)
+
+
+    const [settings, setSettings] = useState([])
+
+    useEffect(()=>{
+        async function getPriceList (){
+            let value = await getSettings()
+            setSettings(value)
+        }
+        getPriceList()
+
+    }, [])
+    const PriceList = (format) =>{
+        let price = 0
+        settings.forEach(el=>{
+        
+            if(el.title === format) {
+            
+                price = el.price
+            }
+        })
+
+        return price
+    }
+
+
+    const SumTeor =()=> {
+        const pr = photo.reduce((sum, el)=>{
+        return sum+PriceList(el.format)*el.amount
+    },0 )
+
+    return pr.toFixed(2)
+    }
 
     return(
         <div className="order_details_card">
@@ -174,6 +206,13 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
                     
                     <label></label>
                     </div>
+                    {typePost==='R'?
+                    <div className='contact_field'>
+                        <label>1 класс:</label>
+                        <input  disabled={order.status !== 0 ? true : false} type='checkbox' checked={firstClass} onChange={(e)=>setFirstClass(e.target.checked)} /> 
+                    </div>
+                    :null
+                    }
                     
                     
                     <div className='contact_field'>
@@ -219,21 +258,29 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
                     </div>
                     <div className="card_actions">
                         <label>Наложенный:</label>
-                        <button className='copy_button' style={{backgroundColor: '#b7cbcf', border: '2px solid #a0babf', borderRadius: 5}}>{order.price}р</button>
+                        <button className='copy_button' style={{backgroundColor: '#b7cbcf', border: '2px solid #a0babf', borderRadius: 5}}>{Number(order.price)+Number(order.price_deliver)}р</button>
                         
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                         <div>
-                            <label>LINK:</label>
-                            <label>{order.price}р</label>
+                            <label style={{fontSize: 15, color: 'black'}}>LINK =</label>
+                            <label>{(SumTeor()*0.8).toFixed(2)}р</label>
                         </div>
                         <div>
-                            <label>пересылка:</label>
-                            <label>{order.price}р</label>
+                            <label><i style={{fontSize: 15, color: 'black'}} className="bi bi-truck"></i> = </label>
+                            <label> {order.price_deliver}р</label>
                         </div>
                         <div>
-                            <label>прибыль:</label>
-                            <label>{order.price}р</label>
+                            <label><i style={{fontSize: 15, color: 'black'}} className="bi bi-currency-dollar"></i>=</label>
+                            <label>
+                                {order.firstClass?
+                                (-Number(order.price)-Number(order.price_deliver)).toFixed(2)
+                                :
+                                (Number(order.price)-SumTeor()*0.8).toFixed(2)
+                                }р
+                                
+                                
+                            </label>
                         </div>
                     </div>
                     
