@@ -49,7 +49,7 @@ export const OneOrder = ({order, handleDetailsClick, selectedOrder, setSelectedO
                 <div className='flex_col phoneForMobile' style={{flex:2}}>{formatPhoneNumber(order.phone)}</div>
                 <div className='flex_col' style={{flex:2}}>{order.city}</div>
                 <div className='flex_col'>{photo()}</div>
-                <div className='flex_col_sm'>{order.price}р</div>
+                <div className='flex_col_sm'>{Number(order.price)+Number(order.price_deliver)}р</div>
                 <div className='flex_col' style={{flex:1.3}}><button style={{backgroundColor: order.status === 6 ? '#ffffff' : order.status === 5 ? '#b7cbcf' : '#cbd36b', 
                                                                             border: order.status===5|| order.status === 6 ? '2px solid #a0babf' : '2px solid #b2b77a', 
                                                                             borderRadius: 5, whiteSpace:'nowrap', width:'100%'}}>{StatusOrder[order.status]}</button></div>
