@@ -8,6 +8,7 @@ import { getSettings } from '../../http/dbApi'
 export const MyOrders = () => {
 
     const allOrders = useSelector(state => state.private.order);
+    const user = useSelector((state) => state.private.user);
     const sortedOrders = _.orderBy(allOrders, 'createdAt', 'desc');
 
     const [selectedOrder, setSelectedOrder] = useState(null);
@@ -87,11 +88,15 @@ export const MyOrders = () => {
     return (
         <div>
             <div className='textTitle1'>Мои заказы</div>
-            <div className='datePickerContainer'>
-                <i style={{fontSize: 25}} className="bi bi-calendar3"></i>
-                <input className='datePickerInput' type="date" value={startDate ? startDate.toISOString().substr(0, 10) : ''} onChange={(e) => handleDateChange(e.target.value, endDate)} />
-                <input className='datePickerInput' type="date" value={endDate.toISOString().substr(0, 10)} onChange={(e) => handleDateChange(startDate, e.target.value)} />
-            </div>
+
+            {user.role !== 'USER' && 
+                <div className='datePickerContainer'>
+                    <i style={{fontSize: 25}} className="bi bi-calendar3"></i>
+                    <input className='datePickerInput' type="date" value={startDate ? startDate.toISOString().substr(0, 10) : ''} onChange={(e) => handleDateChange(e.target.value, endDate)} />
+                    <input className='datePickerInput' type="date" value={endDate.toISOString().substr(0, 10)} onChange={(e) => handleDateChange(startDate, e.target.value)} />
+                </div>
+            }
+            
             <div className='tableFullP'>
             {
                 orders.map((order, index)=> 
@@ -102,9 +107,12 @@ export const MyOrders = () => {
                 )
             }
             </div>
-            <div className='footer_myOrder'>
-                <p>Расчет: {calculateTotal()}</p>
-            </div>
+            {user.role !== 'USER' && 
+                <div className='footer_myOrder'>
+                    <p>Расчет: {calculateTotal()}</p>
+                </div>
+            }
+
         </div>
     )
 }

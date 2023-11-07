@@ -258,31 +258,46 @@ export const OneOrderDesc = ({order, setSelectedOrder, handleDetailsClick, Statu
                     </div>
                     <div className="card_actions">
                         <label>Наложенный:</label>
-                        <button className='copy_button' style={{backgroundColor: '#b7cbcf', border: '2px solid #a0babf', borderRadius: 5}}>{Number(order.price)+Number(order.price_deliver)}р</button>
+                        <button className='copy_button' style={{backgroundColor: '#b7cbcf', border: '2px solid #a0babf', borderRadius: 5}}>{(Number(order.price)+Number(order.price_deliver)).toFixed(2)}р</button>
                         
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                        <div>
-                            <label style={{fontSize: 15, color: 'black'}}>LINK =</label>
-                            <label>{(SumTeor()*0.8).toFixed(2)}р</label>
+                    {user.role !== 'USER' ?
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                            <div>
+                                <label style={{fontSize: 15, color: 'black'}}>LINK =</label>
+                                <label>{(SumTeor()*0.8).toFixed(2)}р</label>
+                            </div>
+                            <div>
+                                <label><i style={{fontSize: 15, color: 'black'}} className="bi bi-truck"></i> = </label>
+                                <label> {order.price_deliver}р</label>
+                            </div>
+                            
+                            <div>
+                                <label><i style={{fontSize: 15, color: 'black'}} className="bi bi-currency-dollar"></i>=</label>
+                                <label>
+                                    {order.firstClass?
+                                    (-Number(order.price)-Number(order.price_deliver)).toFixed(2)
+                                    :
+                                    (Number(order.price)-SumTeor()*0.8).toFixed(2)
+                                    }р
+                                    
+                                    
+                                </label>
+                            </div>
                         </div>
-                        <div>
-                            <label><i style={{fontSize: 15, color: 'black'}} className="bi bi-truck"></i> = </label>
-                            <label> {order.price_deliver}р</label>
+                        :
+                        <div style={{ display: 'flex', justifyContent: 'end', fontSize: 12, gap: 10 }}>
+                            <div>
+                                <label style={{fontSize: 15, color: 'black'}}>заказ =</label>
+                                <label>{order.price}р</label>
+                            </div>
+                            <div>
+                                <label><i style={{fontSize: 15, color: 'black'}} className="bi bi-truck"></i> = </label>
+                                <label> {order.price_deliver}р</label>
+                            </div>
                         </div>
-                        <div>
-                            <label><i style={{fontSize: 15, color: 'black'}} className="bi bi-currency-dollar"></i>=</label>
-                            <label>
-                                {order.firstClass?
-                                (-Number(order.price)-Number(order.price_deliver)).toFixed(2)
-                                :
-                                (Number(order.price)-SumTeor()*0.8).toFixed(2)
-                                }р
-                                
-                                
-                            </label>
-                        </div>
-                    </div>
+                    }
+                    
                     
                 </div>
 
