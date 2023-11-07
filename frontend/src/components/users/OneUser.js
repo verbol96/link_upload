@@ -60,6 +60,7 @@ const changePassword = async () => {
             <input style={{flex: 1}} value={city} onChange={(e)=>setCity(e.target.value)} />
             <select style={{flex: 1}} value={role} onChange={(e)=>setRole(e.target.value)} >
                 <option value={'USER'}>USER</option>
+                <option value={'PARTNER'}>PARTNER</option>
                 <option value={'ADMIN'}>ADMIN</option>
             </select>
             <button onClick={saveUser}>сохранить</button>

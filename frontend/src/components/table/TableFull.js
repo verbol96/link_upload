@@ -1,4 +1,4 @@
-import {React, useEffect, useState} from 'react'
+import {React, useEffect, useState, useRef} from 'react'
 import {useDispatch, useSelector} from 'react-redux'
 import _ from 'lodash'
 import {$host} from '../../http/index'
@@ -124,6 +124,10 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
   }
     
 
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(new Date());
+
+
     const filteredOrders = orders
       .filter((order) => {
         if (selectedType === order.typePost) {
@@ -151,7 +155,28 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                      order.user?.phone
         return data.toLowerCase().includes(searchQuery.toLowerCase());
       })
-      .filter(s=>filterCheck.includes(Number(s.status)));
+      .filter(s=>filterCheck.includes(Number(s.status)))
+      .filter((order) => {
+        const orderDate = new Date(order.createdAt);
+        return !startDate || !endDate || (orderDate >= startDate && orderDate <= endDate);
+    });
+
+
+    const startDateSet = useRef(false);
+    useEffect(() => {
+      if (orders.length > 0 && !startDateSet.current) {
+          setStartDate(new Date(orders[orders.length - 1].createdAt));
+          startDateSet.current = true;
+      }
+    }, [orders]);
+    
+
+
+
+    const handleDateChange = (start, end) => {
+        setStartDate(new Date(start));
+        setEndDate(new Date(end));
+    }
 
     const DownloadArchive = () =>{
       $host.get('api/order/getAllArchive').then(
@@ -159,9 +184,13 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
             dispach(saveOrders(res.data.orders))
             dispach(saveSettings(res.data.settings))
             dispach(saveUsers(res.data.users))
+    
+            // Добавьте следующую строку для обновления startDate
+            setStartDate(new Date(res.data.orders[res.data.orders.length - 1].createdAt));
         }
-    )  
+      )  
     }
+
     
 
     return(
@@ -190,7 +219,12 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                         <option value={'city'}>по городу</option>
                         <option value={'FIO'}>по имени</option>
                     </select>
-                </div>
+                    
+                    <input className='menu-input' style={{textAlign: 'center'}} type="date" value={startDate ? startDate.toISOString().substr(0, 10) : ''} onChange={(e) => handleDateChange(e.target.value, endDate)} />
+                    <i style={{color: '#2f616b'}} className="bi bi-chevron-right"></i>
+                    <input className='menu-input' style={{textAlign: 'center'}} type="date" value={endDate.toISOString().substr(0, 10)} onChange={(e) => handleDateChange(startDate, e.target.value)} />
+                
+                </div> 
 
                 <div
                   className="menu-right"

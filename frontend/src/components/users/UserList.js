@@ -51,8 +51,9 @@ export const UserList = () => {
 
     const sortedAndFilteredUsers = sortUsers([...users]
         .filter(user => {
-            if (role !== 'ADMIN') return true;
-            return user.role === 'ADMIN';
+            if (role === 'ADMIN') return user.role === 'ADMIN';
+            if (role === 'PARTNER') return user.role === 'PARTNER';
+            return true;
         })
         .filter((user) => {
             const data = user.FIO + user.phone + user.city;
@@ -76,6 +77,7 @@ export const UserList = () => {
                 <button><i style={{color: 'white'}} className="bi bi-people"></i> {sortedAndFilteredUsers.length}</button>
                 <select onChange={handleRoleChange}>
                     <option value="все">все</option>
+                    <option value="PARTNER">партнеры</option>
                     <option value="ADMIN">админы</option>
                 </select>
                 <select onChange={handleSortChange}>
