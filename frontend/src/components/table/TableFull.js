@@ -98,6 +98,8 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
   
       const response = await $host.post('api/order/addOrder', data)
       dispach(addOrder(response.data))
+      const newOrderDate = new Date(response.data.createdAt);
+      setEndDate(prevEndDate => newOrderDate > prevEndDate ? newOrderDate : prevEndDate);
       }
     }
 
