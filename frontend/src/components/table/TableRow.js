@@ -30,7 +30,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
             text = 
         `
         Здравствуйте. Заказ отправили. 
-    Сумма наложенного платежа: ${Number(order.price)+Number(order.price_deliver)}р (с учетом пересылки)
+    Сумма наложенного платежа: ${(Number(order.price)+Number(order.price_deliver)).toFixed(2)}р (с учетом пересылки)
     Код для отслеживания: ${order.codeOutside}
         `
         }
@@ -52,7 +52,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
     6711 7700 1570 5002
     12/23
     
-    сумма ${order.price}р за заказ +2р пересылка. Итого ${Number(order.price)+2}р
+    сумма ${order.price}р за заказ +2р пересылка. Итого ${(Number(order.price)+2).toFixed(2)}р
     ${order.codeOutside} - код для отслеживания
         `
         }
