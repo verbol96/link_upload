@@ -68,6 +68,17 @@ const SettingsEditor = sequelize.define('settingsEditor', {
   right:{type: DataTypes.STRING}
 })
 
+const SettingEditor = sequelize.define('settingEditor', {
+  id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
+  name:{type: DataTypes.STRING},
+  width:{type: DataTypes.STRING},
+  height:{type: DataTypes.STRING},
+  top:{type: DataTypes.STRING},
+  bottom:{type: DataTypes.STRING},
+  left:{type: DataTypes.STRING},
+  right:{type: DataTypes.STRING}
+})
+
 const File = sequelize.define('file', {
     id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
     name:{type: DataTypes.STRING},
@@ -88,4 +99,4 @@ Token.belongsTo(User)
 Photo.hasMany(File)
 File.belongsTo(Photo)
 
-module.exports = {User, Order, Photo, Settings, Token, File, SettingsEditor}
+module.exports = {User, Order, Photo, Settings, Token, File, SettingsEditor, SettingEditor}

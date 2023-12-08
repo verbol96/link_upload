@@ -1,4 +1,4 @@
-const {Settings, SettingsEditor, File, Order, Photo, Token, User} = require('../models/models')
+const {Settings, SettingsEditor, SettingEditor, File, Order, Photo, Token, User} = require('../models/models')
 require('dotenv').config()
 const fs = require('fs');
 
@@ -81,6 +81,30 @@ class settingsController{
             
             res.download(filePath); // Set disposition and send it.
         });
+    }
+
+    async getSettingEditor(req,res){
+        const settings = await SettingEditor.findAll()
+        return res.json(settings)
+    }
+
+    async deleteSettingEditor(req,res){
+        const name = req.params.name
+        const settings = await SettingEditor.destroy({where:{name}})
+        return res.json(settings)
+    }
+
+    async changeSettingEditor(req, res) {
+        const { name, width, height, top, bottom, left, right } = req.body;
+        let frame = await SettingEditor.findOne({ where: { name } });
+    
+        if (frame) {
+            const response = await SettingEditor.update({ width, height, top, bottom, left, right }, { where: { name } });
+            return res.json(response);
+        } else {
+            const response = await SettingEditor.create({ name, width, height, top, bottom, left, right });
+            return res.json(response);
+        }
     }
 }
 
