@@ -1,0 +1,228 @@
+.menu-editor{
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  width: 50%;
+  border-bottom: 1px solid rgb(92, 96, 95);
+  padding-bottom: 20px;
+  margin: 20px 0;
+}
+
+.file-input {
+  flex: 8 ;
+  height: 30px;
+  border: 1px dashed rgb(96, 117, 111);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-right: 40px;
+}
+
+.select-menu-out{
+  flex: 4;
+  height: 30px;
+  border: 1px solid rgb(96, 117, 111);
+  margin: 5px;
+  border-radius: 5px;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background-color: #ffffff;
+
+}
+.select-menu-out:after {
+  content: "\25BC";
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 3px 15px 3px 3px;
+  background-color: #ffffff;
+  cursor: pointer;
+  pointer-events: none;
+  transition: 0s all ease;
+  z-index: 1;
+}
+
+.select-menu-in{
+  width: 100%;
+  height: 100%;
+  padding-left: 15px;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  border: none;
+  position: relative;
+  z-index: 2;
+}
+
+.button-menu{
+  flex: 1;
+  height: 30px;
+  margin: 5px;
+  border: 1px solid rgb(96, 117, 111);
+  background: #ffffff;
+  border-radius: 5px;
+}
+
+.settings-container {
+  position: relative;
+  z-index: 9999;
+  /* другие стили */
+}
+
+.settings-editor{
+  position: absolute;
+  left:-250px;
+  width: 300px;
+  border: 1px solid rgb(96, 117, 111);
+  background: #ffffff;
+  border-radius: 5px;
+  padding: 15px;
+}
+
+.settings-editor-row{
+  display: flex;
+  flex-direction: row;
+}
+
+.settings-editor-row label{
+  flex:1;
+}
+
+.settings-editor-row input{
+  flex:1;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.table-editor {
+  border: 1px dashed black;
+  margin: auto;
+  margin-top: 20px;
+}
+
+.table-editor td {
+  border: none;
+  height: 40px;
+  width: 40px;
+}
+
+.table-editor input {
+  width: 35px;
+}
+
+
+.edit-main {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content:flex-start;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgb(92, 96, 95);
+}
+ 
+
+.image-block {
+  position: relative;
+  width: calc(20% - 20px);
+  margin: 10px;
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgb(184, 184, 184);
+  box-shadow: 5px 6px 10px -5px rgba(128, 128, 128, 0.6);
+  border-radius: 5px;
+}
+
+.image-info{
+  
+  font-size: 12px;
+  height: 30px;
+  background: #dddddd;
+  border-radius: 5px;
+  border: 0.5px solid #b1b1b1;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.image-info label{
+  padding: 5px;
+  text-align: center;
+  flex: 3;
+  background: #dddddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.image-info button{
+  border: 0.5px solid #b1b1b1;
+  border-radius: 2px;
+  background: #dddddd;
+  flex: 1;
+}
+
+.image-cropper{
+  position: relative;
+  height: 220px;
+  margin: 10px;
+}
+
+.containerClassName{  /*область cropper*/
+  
+}
+
+.mediaClassName { /*область фотографии*/
+}
+
+.cropAreaClassName { /*область обрезки*/
+  border: 1px dotted rgb(0, 0, 0) !important;
+  color: rgba(255, 255, 255, 0.7)!important;
+}
+
+
+
+.image-button-group {
+  display: flex;
+  justify-content: space-between;
+  height: 30px;
+  background: #dddddd;
+}
+
+.image-button-group button {
+  flex-grow: 1;
+  text-align: center; /* Чтобы текст кнопки был по центру */
+  border: 0.5px solid #b1b1b1;
+  border-radius: 2px;
+  background: #dddddd;
+  font-size: 12px;
+}
+
+.image-button-group i{
+  color: black;
+}
+
+
+
+.btn-save-editor{
+  margin: 20px;
+  width: 150px;
+  height: 40px;
+  border: 2px solid rgb(96, 117, 111);
+  background: #ffffff;
+  border-radius: 5px;
+}
+
+.btn-delete-editor{
+  margin: 20px;
+  margin-left: 0;
+  width: 100px;
+  height: 30px;
+  border: 1px solid rgb(150, 154, 153);
+  background: #ffffff;
+  border-radius: 5px;
+}
