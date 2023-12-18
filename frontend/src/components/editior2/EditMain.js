@@ -4,9 +4,12 @@ import './styleEditor.css';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { $host } from '../../http';
+import imageCompression from 'browser-image-compression';
 
 const EditMain = () => {
     const [images, setImages] = useState([]);
+    const [imagesOriginal, setImagesOriginal] = useState([]);
+
     const [aspectRatio, setAspectRatio] = useState(2/3)
     const [settings, setSettings] = useState(false)
     const cropperRefs = useRef([]);
@@ -51,9 +54,21 @@ const EditMain = () => {
         getSettingEditor();
       },[])
 
-    const handleImageUpload = (event) => {
+    const handleImageUpload = async(event) => {
         const files = Array.from(event.target.files);
-        setImages(files);
+        setImagesOriginal(files);
+
+        const options = {
+            maxWidthOrHeight: 500
+          }
+
+        try {
+            const compressionPromises = files.map((file) => imageCompression(file, options));
+            const compressedFiles = await Promise.all(compressionPromises);
+            setImages(compressedFiles); 
+          } catch (error) {
+            console.log(error);
+          }
     }; 
 
     const getCropperRef = (index) => {
@@ -63,9 +78,9 @@ const EditMain = () => {
         return cropperRefs.current[index];
     }
 
-    const saveOne = () =>{
+    const saveOne = async() =>{
         setProgress(true)
-        setTimeout(()=>{
+        
             const zip = new JSZip();
             const imageFolder = zip.folder(name);
             
@@ -74,33 +89,59 @@ const EditMain = () => {
                 const cropperRef = cropperRefs.current[i];
                 if (cropperRef && cropperRef.current) {
                     const cropper = cropperRef.current;
-                    const croppedCanvas = cropper.getCropData();
 
+                    const imageOrig1 = new Image();
+                    imageOrig1.src = URL.createObjectURL(imagesOriginal[i]);
+
+                    await new Promise((resolve) => {
+                        imageOrig1.onload = resolve;
+                      });
+
+                    const canvas1 = document.createElement('canvas');
+                    const context1 = canvas1.getContext('2d');
+                    if(cropper.props.rotation%180===0){
+                        canvas1.width = imageOrig1.naturalWidth
+                        canvas1.height = imageOrig1.naturalHeight
+                    }else{
+                        canvas1.width = imageOrig1.naturalHeight
+                        canvas1.height = imageOrig1.naturalWidth
+                    }
+                    
+                    context1.save();
+                    context1.translate(canvas1.width / 2, canvas1.height / 2);
+                    context1.rotate(cropper.props.rotation * Math.PI / 180);  // Поворот на 90 градусов
+                    context1.drawImage(imageOrig1, -imageOrig1.width / 2, -imageOrig1.height / 2);
+                    context1.restore();
+
+                    const croppedCanvas = cropper.getCropData();
                     const canvas = document.createElement('canvas');
                     const context = canvas.getContext('2d');
+
+                    const k=imageOrig1.naturalWidth/cropper.mediaSize.naturalWidth
 
                     let addX=0 // добавленения если у кропа есть белые поля
                     let addY=0 // добавленения если у кропа есть белые поля
 
                     let { x, y} = croppedCanvas.croppedAreaPixels; 
+                    x=x*k
+                    y=y*k
                     const widthCrop =croppedCanvas.croppedAreaPixels.width
                     const heightCrop =croppedCanvas.croppedAreaPixels.height
 
                     if(x<0) addX=Math.abs(x)
                     if(y<0) addY=Math.abs(y)
 
-                    const leftN = widthCrop*left/width
-                    const rightN = widthCrop*right/width
-                    const topN = heightCrop*top/height
-                    const bottomN = heightCrop*bottom/height
-                    canvas.width = widthCrop+leftN+rightN;
-                    canvas.height = heightCrop+topN+bottomN;
-                    
+                    const leftN = widthCrop*left/width*k
+                    const rightN = widthCrop*right/width*k
+                    const topN = heightCrop*top/height*k
+                    const bottomN = heightCrop*bottom/height*k
+                    canvas.width = (widthCrop*k+leftN+rightN);
+                    canvas.height = (heightCrop*k+topN+bottomN);             
 
                     context.fillStyle = 'white';
                     context.fillRect(0, 0, canvas.width, canvas.height);
                     
-                    context.drawImage(cropper.imageRef.current, x, y, widthCrop, heightCrop, addX+leftN, addY+topN, widthCrop, heightCrop);
+                    context.drawImage(canvas1, x, y, widthCrop*k, heightCrop*k, addX+leftN, addY+topN, widthCrop*k, heightCrop*k);
                     const imageDataUrl = canvas.toDataURL('image/png');
         
                     croppedCanvas.width = 0;
@@ -125,6 +166,7 @@ const EditMain = () => {
                     view = null;
                     arraybuffer = null;
                     blob = null;
+                
                     
                     
                 } else {
@@ -136,14 +178,14 @@ const EditMain = () => {
             zip.generateAsync({type:"blob"}).then((content) => {
                 saveAs(content, `${name}.zip`);
             });
-        }, 500)
+        
 
         setTimeout(()=>{setProgress(false)},1500)
     }
 
-    const saveDouble =() =>{
+    const saveDouble =async() =>{
         setProgress(true)
-        setTimeout(()=>{const zip = new JSZip();
+        const zip = new JSZip();
         const imageFolder = zip.folder(name);
         
         
@@ -156,30 +198,58 @@ const EditMain = () => {
                 const cropper = cropperRef.current;
                 const croppedCanvas = cropper.getCropData();
 
+                const imageOrig1 = new Image();
+                imageOrig1.src = URL.createObjectURL(imagesOriginal[i]);
+
+                await new Promise((resolve) => {
+                    imageOrig1.onload = resolve;
+                  });
+
+                const canvas1 = document.createElement('canvas');
+                const context1 = canvas1.getContext('2d');
+                if(cropper.props.rotation%180===0){
+                    canvas1.width = imageOrig1.naturalWidth
+                    canvas1.height = imageOrig1.naturalHeight
+                }else{
+                    canvas1.width = imageOrig1.naturalHeight
+                    canvas1.height = imageOrig1.naturalWidth
+                }
+                
+                context1.save();
+                context1.translate(canvas1.width / 2, canvas1.height / 2);
+                context1.rotate(cropper.props.rotation * Math.PI / 180);  // Поворот на 90 градусов
+                context1.drawImage(imageOrig1, -imageOrig1.width / 2, -imageOrig1.height / 2);
+                context1.restore();
+
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
+
+                const k=imageOrig1.naturalWidth/cropper.mediaSize.naturalWidth
 
                 let addX=0 // добавленения если у кропа есть белые поля
                 let addY=0 // добавленения если у кропа есть белые поля
 
                 let { x, y} = croppedCanvas.croppedAreaPixels; 
+                x=x*k
+                y=y*k
                 const widthCrop =croppedCanvas.croppedAreaPixels.width
                 const heightCrop =croppedCanvas.croppedAreaPixels.height
 
                 if(x<0) addX=Math.abs(x)
                 if(y<0) addY=Math.abs(y)
 
-                const leftN = widthCrop*left/width
-                const rightN = widthCrop*right/width
-                const topN = heightCrop*top/height
-                const bottomN = heightCrop*bottom/height
-                canvas.width = (widthCrop+leftN+rightN)*2;
-                canvas.height = heightCrop+topN+bottomN;
+                const leftN = widthCrop*left/width*k
+                const rightN = widthCrop*right/width*k
+                const topN = heightCrop*top/height*k
+                const bottomN = heightCrop*bottom/height*k
+                canvas.width = (widthCrop*k+leftN+rightN)*2;
+                canvas.height = (heightCrop*k+topN+bottomN);    
 
                 context.fillStyle = 'white';
                 context.fillRect(0, 0, canvas.width, canvas.height);
-                context.drawImage(cropper.imageRef.current, x, y, widthCrop, heightCrop, addX+leftN, addY+topN, widthCrop, heightCrop);
+                context.drawImage(canvas1, x, y, widthCrop*k, heightCrop*k, addX+leftN, addY+topN, widthCrop*k, heightCrop*k);
 
+                //первый штрих
                 context.beginPath();
                 context.moveTo(canvas.width/2, 0);
                 context.lineTo(canvas.width/2, canvas.height/100);
@@ -187,6 +257,7 @@ const EditMain = () => {
                 context.strokeStyle = '#dfdfdf'; 
                 context.stroke();
 
+                //второй штрих
                 context.beginPath();
                 context.moveTo(canvas.width/2, canvas.height-canvas.height/100);
                 context.lineTo(canvas.width/2, canvas.height);
@@ -197,9 +268,35 @@ const EditMain = () => {
                 if(cropperRef1){
                     const cropper1 = cropperRef1.current;
                     const croppedCanvas1 = cropper1.getCropData();
-    
+
+                    const imageOrig1 = new Image();
+                    imageOrig1.src = URL.createObjectURL(imagesOriginal[i+1]);
+
+                    await new Promise((resolve) => {
+                        imageOrig1.onload = resolve;
+                    });
+
+                    const canvas1 = document.createElement('canvas');
+                    const context1 = canvas1.getContext('2d');
+                    if(cropper1.props.rotation%180===0){
+                        canvas1.width = imageOrig1.naturalWidth
+                        canvas1.height = imageOrig1.naturalHeight
+                    }else{
+                        canvas1.width = imageOrig1.naturalHeight
+                        canvas1.height = imageOrig1.naturalWidth
+                    }
+                    
+                    context1.save();
+                    context1.translate(canvas1.width / 2, canvas1.height / 2);
+                    context1.rotate(cropper1.props.rotation * Math.PI / 180);  // Поворот на 90 градусов
+                    context1.drawImage(imageOrig1, -imageOrig1.width / 2, -imageOrig1.height / 2);
+                    context1.restore(); 
+
+
                     let addX1=0 // добавленения если у кропа есть белые поля
                     let addY1=0 // добавленения если у кропа есть белые поля
+
+                    const k1=imageOrig1.naturalWidth/cropper1.mediaSize.naturalWidth
     
                     let x1 = croppedCanvas1.croppedAreaPixels.x; 
                     let y1 = croppedCanvas1.croppedAreaPixels.y; 
@@ -209,8 +306,7 @@ const EditMain = () => {
                     if(x1<0) addX1=Math.abs(x1)
                     if(y1<0) addY1=Math.abs(y1)
 
-                    console.log(widthCrop+'-'+  heightCrop+'-'+ widthCrop1+'-'+ heightCrop1)
-                    context.drawImage(cropper1.imageRef.current, x1, y1, widthCrop1, heightCrop1, canvas.width/2+addX1+leftN, addY1+topN, widthCrop, heightCrop);
+                    context.drawImage(canvas1, x1, y1, widthCrop1*k1, heightCrop1*k1, (canvas.width/2)+(addX1*widthCrop/widthCrop1*k)+leftN, addY1*widthCrop/widthCrop1*k+topN, widthCrop*k, heightCrop*k);
                 }
                 
                 const imageDataUrl = canvas.toDataURL('image/png');
@@ -237,18 +333,15 @@ const EditMain = () => {
                 view = null;
                 arraybuffer = null;
                 blob = null;
-                
                
             } else {
                 console.warn(`Image ${i} could not be processed.`);
             }
         }
-
     
         zip.generateAsync({type:"blob"}).then((content) => {
             saveAs(content, `${name}.zip`);
         });
-    }, 500)
 
         setTimeout(()=>{setProgress(false)},1500)
     }
