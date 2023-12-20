@@ -10,6 +10,8 @@ router.get('/getFilesAll', fileController.getFilesAll)
 router.delete('', fileController.deleteFile)
 router.delete('/all', fileController.deleteFileAll)
 router.get('/download', fileController.downloadFile)
+router.get('/thumb', fileController.displayFile)
+
 
  
 module.exports = router

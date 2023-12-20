@@ -8,7 +8,6 @@ export const ListCloud=() =>{
 
     const files = _.orderBy(useSelector(state=>state.files.files), 'createdAt', 'desc')
     
-
     return(
         <div className="filesList">
 
