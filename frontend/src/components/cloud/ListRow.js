@@ -1,6 +1,6 @@
-import {useState } from 'react'
+import {useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { deleteFile, downloadFiles } from '../../http/cloudApi'
+import { deleteFile, downloadFiles, displayFileImg } from '../../http/cloudApi'
 import { deleteFileStore, pushStack, setCurrentDir, addStack } from '../../store/fileReducer'
 import './styleCloud.css'
 
@@ -9,6 +9,26 @@ export const ListRow = ({el}) =>{
     const currentDir = useSelector(state=>state.files.currentDir)
     const [isDownload, setisDownload] = useState(false)
     const [loadingCount, setLoadingCount] = useState(0)
+
+    const [thumb, setThumb] = useState('')
+
+
+    useEffect(() => {
+        const displayFile = async (fileId) => {
+            try {
+                const data = await displayFileImg(fileId)
+                setThumb(data);
+            } catch (error) {
+                console.error('Error fetching the image:', error);
+            }
+        };
+
+        if (el.type !== 'dir') {
+            displayFile(el.id);
+        }
+    }, [el]);
+
+
    
     const openFile = () =>{
         dispatch(pushStack(currentDir))
@@ -50,6 +70,7 @@ export const ListRow = ({el}) =>{
             return file.path.includes(path) ? acc + file.size : acc;
         }, 0);
     }
+
     
     return(
         <div className='block-file' onClick={(el.type==='dir')?()=>openFile():null}>
@@ -60,7 +81,8 @@ export const ListRow = ({el}) =>{
                     el.type==='dir'?
                     <i style={{color: 'Teal'}} className="bi bi-folder"></i> 
                     :
-                    <i style={{color: 'Teal'}} className="bi bi-image-fill"></i> 
+                    <>{thumb ? <img style={{width: '100%'}} src={thumb} alt="Loaded from server" /> : <p>Loading...</p>}</>
+                    
                 }
             </div>
             <div className='file-size'>

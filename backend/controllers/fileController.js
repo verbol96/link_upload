@@ -2,9 +2,13 @@ const {User, File} = require('../models/models')
 require('dotenv').config()
 const FileService = require('../services/fileService')
 const fs = require('fs')
-const archiver = require('archiver')
-const zlib = require("zlib");
 const JSZip = require('jszip')
+const path = require('path');
+const mime = require('mime-types');
+const sharp = require('sharp');
+  
+
+
 
 class fileController {
     async createDir(req, res){
@@ -207,7 +211,55 @@ class fileController {
         }
     }
 
-   
+    
+
+    
+  
+    
+    async displayFile(req, res) {
+        try {
+            const file = await File.findOne({ where: { id: req.query.id } });
+            
+            if (!file) {
+                return res.status(404).json({ message: "Файл не найден" });
+            }
+    
+            const filePath = path.join(process.env.FILEPATH, file.path, file.name);
+    
+            if (file.type !== 'dir') {
+                // Определяем MIME-тип файла
+                const contentType = mime.contentType(path.extname(filePath)) || 'application/octet-stream';
+    
+                // Установим правильный content-type
+                res.contentType(contentType);
+    
+                // Проверяем, является ли файл изображением
+                if (mime.lookup(filePath).startsWith('image/')) {
+                    // Используем sharp для изменения размера изображения
+                    sharp(filePath)
+                        .resize(200) // Измените на желаемый размер
+                        .toBuffer()
+                        .then(data => {
+                            res.end(data); // Отправляем сжатое изображение
+                        })
+                        .catch(err => {
+                            console.error('Error processing image', err);
+                            res.status(500).json({ message: "Ошибка при обработке изображения" });
+                        });
+                } else {
+                    // Для неизображений просто отправляем файл
+                    res.sendFile(filePath);
+                }
+            } else {
+                res.status(400).json({ message: "Невозможно отобразить директорию" });
+            }
+        } catch (error) {
+            console.error('Error in displayFile:', error);
+            res.status(500).json({ message: "Ошибка при попытке отобразить файл" });
+        } 
+    }
+
 }
+
 
 module.exports = new fileController()

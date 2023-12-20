@@ -306,7 +306,7 @@ const EditMain = () => {
                     if(x1<0) addX1=Math.abs(x1)
                     if(y1<0) addY1=Math.abs(y1)
 
-                    context.drawImage(canvas1, x1, y1, widthCrop1*k1, heightCrop1*k1, (canvas.width/2)+(addX1*widthCrop/widthCrop1*k)+leftN, addY1*widthCrop/widthCrop1*k+topN, widthCrop*k, heightCrop*k);
+                    context.drawImage(canvas1, x1*k1, y1*k1, widthCrop1*k1, heightCrop1*k1, (canvas.width/2)+(addX1*widthCrop/widthCrop1*k)+leftN, addY1*widthCrop/widthCrop1*k+topN, widthCrop*k, heightCrop*k);
                 }
                 
                 const imageDataUrl = canvas.toDataURL('image/png');
