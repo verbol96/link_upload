@@ -24,6 +24,8 @@ const EditMain = () => {
     const [right, setRight] = useState(0)
     const [bottom, setBottom] = useState(0)
 
+    const [nameArchive, setNameArchive] = useState('')
+
     useEffect(()=>{
         async function getSettingEditor() {
           const { data } = await $host.get('api/settings/getSettingEditor');
@@ -78,12 +80,23 @@ const EditMain = () => {
         return cropperRefs.current[index];
     }
 
+    function getBrowserName() {
+        const agent = window.navigator.userAgent.toLowerCase();
+      
+        if (agent.indexOf('chrome') > -1 && agent.indexOf('safari') > -1) {
+            return 'chrome';
+        } else if (agent.indexOf('safari') > -1) {
+            return 'safari';
+        } else {
+            // Добавьте проверку для других браузеров, если необходимо
+            return 'unknown';
+        }
+    }
+
     const saveOne = async() =>{
         setProgress(true)
         
             const zip = new JSZip();
-            const imageFolder = zip.folder(name);
-            
             
             for (let i = 0; i < cropperRefs.current.length; i++) {
                 const cropperRef = cropperRefs.current[i];
@@ -123,14 +136,15 @@ const EditMain = () => {
                     let addY=0 // добавленения если у кропа есть белые поля
 
                     let { x, y} = croppedCanvas.croppedAreaPixels; 
+                    
                     x=x*k
                     y=y*k
                     const widthCrop =croppedCanvas.croppedAreaPixels.width
                     const heightCrop =croppedCanvas.croppedAreaPixels.height
-
+                   
                     if(x<0) addX=Math.abs(x)
                     if(y<0) addY=Math.abs(y)
-
+                    
                     const leftN = widthCrop*left/width*k
                     const rightN = widthCrop*right/width*k
                     const topN = heightCrop*top/height*k
@@ -140,8 +154,17 @@ const EditMain = () => {
 
                     context.fillStyle = 'white';
                     context.fillRect(0, 0, canvas.width, canvas.height);
+
+                    const browserName = getBrowserName();
+
+                    if (browserName === 'chrome') {
+                        // Chrome специфичный код
+                        context.drawImage(canvas1, x, y, widthCrop*k, heightCrop*k, leftN, topN, widthCrop*k, heightCrop*k);
+                    } else {
+                        // Код для остальных браузеров или стандартное поведение
+                        context.drawImage(canvas1, x, y, widthCrop*k, heightCrop*k, addX+leftN, addY+topN, widthCrop*k, heightCrop*k);
+                    }
                     
-                    context.drawImage(canvas1, x, y, widthCrop*k, heightCrop*k, addX+leftN, addY+topN, widthCrop*k, heightCrop*k);
                     const imageDataUrl = canvas.toDataURL('image/png');
         
                     croppedCanvas.width = 0;
@@ -159,15 +182,13 @@ const EditMain = () => {
 
                     let blob = new Blob([view], {type: 'image/png'});
                     const name = images[i].name.split('.')[0]
-                    imageFolder.file(`${name}.png`, blob);
+                    zip.file(`${name}.png`, blob);
                     URL.revokeObjectURL(blob);
 
                     imageData = null;
                     view = null;
                     arraybuffer = null;
                     blob = null;
-                
-                    
                     
                 } else {
                     console.warn(`Image ${i} could not be processed.`);
@@ -176,7 +197,7 @@ const EditMain = () => {
 
         
             zip.generateAsync({type:"blob"}).then((content) => {
-                saveAs(content, `${name}.zip`);
+                saveAs(content, `${nameArchive}_${name}.zip`);
             });
         
 
@@ -186,8 +207,6 @@ const EditMain = () => {
     const saveDouble =async() =>{
         setProgress(true)
         const zip = new JSZip();
-        const imageFolder = zip.folder(name);
-        
         
         for (let i = 0; i < cropperRefs.current.length; i+=2) {
             const cropperRef = cropperRefs.current[i];
@@ -247,22 +266,31 @@ const EditMain = () => {
 
                 context.fillStyle = 'white';
                 context.fillRect(0, 0, canvas.width, canvas.height);
-                context.drawImage(canvas1, x, y, widthCrop*k, heightCrop*k, addX+leftN, addY+topN, widthCrop*k, heightCrop*k);
+                const browserName = getBrowserName();
+
+                    if (browserName === 'chrome') {
+                        // Chrome специфичный код
+                        context.drawImage(canvas1, x, y, widthCrop*k, heightCrop*k, leftN, topN, widthCrop*k, heightCrop*k);
+                    } else {
+                        // Код для остальных браузеров или стандартное поведение
+                        context.drawImage(canvas1, x, y, widthCrop*k, heightCrop*k, addX+leftN, addY+topN, widthCrop*k, heightCrop*k);
+                    }
+                
 
                 //первый штрих
                 context.beginPath();
                 context.moveTo(canvas.width/2, 0);
                 context.lineTo(canvas.width/2, canvas.height/100);
-                context.lineWidth = canvas.width/1000;
-                context.strokeStyle = '#dfdfdf'; 
+                context.lineWidth = canvas.width/700;
+                context.strokeStyle = '#b9b9b9'; 
                 context.stroke();
 
                 //второй штрих
                 context.beginPath();
                 context.moveTo(canvas.width/2, canvas.height-canvas.height/100);
                 context.lineTo(canvas.width/2, canvas.height);
-                context.lineWidth = canvas.width/1000;
-                context.strokeStyle = '#dfdfdf'; 
+                context.lineWidth = canvas.width/700;
+                context.strokeStyle = '#b9b9b9'; 
                 context.stroke();
 
                 if(cropperRef1){
@@ -306,7 +334,13 @@ const EditMain = () => {
                     if(x1<0) addX1=Math.abs(x1)
                     if(y1<0) addY1=Math.abs(y1)
 
-                    context.drawImage(canvas1, x1*k1, y1*k1, widthCrop1*k1, heightCrop1*k1, (canvas.width/2)+(addX1*widthCrop/widthCrop1*k)+leftN, addY1*widthCrop/widthCrop1*k+topN, widthCrop*k, heightCrop*k);
+                    if (browserName === 'chrome') {
+                        // Chrome специфичный код
+                        context.drawImage(canvas1, x1*k1, y1*k1, widthCrop1*k1, heightCrop1*k1, (canvas.width/2)+leftN, topN, widthCrop*k, heightCrop*k);
+                    } else {
+                        // Код для остальных браузеров или стандартное поведение
+                        context.drawImage(canvas1, x1*k1, y1*k1, widthCrop1*k1, heightCrop1*k1, (canvas.width/2)+(addX1*widthCrop/widthCrop1*k)+leftN, addY1*widthCrop/widthCrop1*k+topN, widthCrop*k, heightCrop*k);
+                    }
                 }
                 
                 const imageDataUrl = canvas.toDataURL('image/png');
@@ -326,7 +360,7 @@ const EditMain = () => {
 
                 let blob = new Blob([view], {type: 'image/png'});
                 const name = images[i].name.split('.')[0]
-                imageFolder.file(`${name}.png`, blob);
+                zip.file(`${name}.png`, blob);
                 URL.revokeObjectURL(blob);
 
                 imageData = null;
@@ -340,7 +374,7 @@ const EditMain = () => {
         }
     
         zip.generateAsync({type:"blob"}).then((content) => {
-            saveAs(content, `${name}.zip`);
+            saveAs(content, `${nameArchive}_${name}.zip`);
         });
 
         setTimeout(()=>{setProgress(false)},1500)
@@ -429,6 +463,11 @@ const EditMain = () => {
                     <input type="file" multiple accept="image/*" style={{display:'none'}}  onChange={handleImageUpload} className="file-input-field" />
                     
                 </label>
+
+                <div className='input-menu'>
+                    <input  className='input-menu-in' placeholder='номер заказа' value={nameArchive} onChange={(e)=>setNameArchive(e.target.value)} />
+                </div>
+
                 <div className='select-menu-out'>
                     <select className='select-menu-in' value={name} onChange={(e)=>changeSelect(e.target.value)}>
                             {settingsDB.map((el,index)=> <option key={index} value={el.name}>{el.name}</option>)}

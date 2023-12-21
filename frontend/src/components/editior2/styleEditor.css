@@ -21,6 +21,25 @@
   margin-right: 40px;
 }
 
+.input-menu{
+  flex: 4;
+  height: 30px;
+  border: 1px solid rgb(96, 117, 111);
+  margin: 5px;
+  border-radius: 5px;
+}
+
+.input-menu-in{
+  width: 100%;
+  border: none;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.input-menu-in:focus {
+  outline: none;
+}
+
 .select-menu-out{
   flex: 4;
   height: 30px;
