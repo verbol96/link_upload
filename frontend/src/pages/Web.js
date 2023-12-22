@@ -14,6 +14,7 @@ import Footer from "../components/admin/Footer"
 import './stylePages.css'
 import { getSettings } from "../http/dbApi"
 import { PageUpload } from "../components/web/PageUpload"
+import axios from "axios"
 
 const Web = () =>{
 
@@ -75,6 +76,14 @@ const Web = () =>{
     const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
 
     const [settings, setSettings] = useState([])
+    const [codeSMS, setCodeSMS] = useState(null)
+    const [codeCheck, setCodeCheck] = useState(null)
+
+    const generateRandomNumber = () => {
+        const number = Math.floor(1000 + Math.random() * 9000); // Генерирует число от 1000 до 9999
+        setCodeSMS(number);
+      };
+    
 
     useEffect(()=>{
         async function getPriceList (){
@@ -82,7 +91,7 @@ const Web = () =>{
             setSettings(value)
         }
         getPriceList()
-
+        generateRandomNumber()
     }, [])
 
     const PriceList = (format) =>{
@@ -174,6 +183,14 @@ const Web = () =>{
            Можно загружать разные форматы, для этого нажмите "+ другой формат"
         </Tooltip>
       );
+
+      const sendSMS = async() =>{
+        await axios.post('https://app.sms.by/api/v1/sendQuickSMS', {
+             token: '130395df632782a478f4d310be453c10',
+             message: codeSMS, 
+             phone: phone 
+            });
+      }
   
     return (
         <div>
@@ -221,11 +238,29 @@ const Web = () =>{
                         typeAnswer={typeAnswer} setTypeAnswer={setTypeAnswer}
                         nikname={nikname} setNikname={setNikname} />
 
-                    <Row className="mt-4 mb-5 ">
+                    <Row className="mt-4 mb-5 " style={{padding: '0 5vw'}}>
                         
-                        <Col className="d-flex justify-content-center">
-                            <button className="buttonForm" onClick={()=>upload()}>
-                                <i className="bi bi-cart3" style={{marginRight: 10}}></i> Отправить заказ!</button>
+                        <Col style={{display: 'flex', justifyContent: 'space-between'}}> 
+                            <div style={{border: '1px solid black', padding: '5px 15px', borderRadius: 5, background: '#f9f9f9'}}>
+                                <div>
+                                    <label>Подтверждение номера {phone}</label>
+                                </div>
+                                <div>
+                                    <button onClick={sendSMS}>отправить код</button>
+                                    <input placeholder={codeCheck} onChange={(e)=>setCodeCheck(Number(e.target.value))} style={{textAlign: 'center'}} />
+                                    {
+                                        codeSMS===codeCheck ? 
+                                        <i style={{color: 'green', fontSize: 23}} className="bi bi-check"></i>
+                                        :
+                                        <i style={{color: 'red', fontSize: 23}} className="bi bi-x-lg"></i>
+                                    }
+                                    
+                                </div>
+                                
+                            </div>
+                            <button className="buttonForm" style={{background: codeSMS!==codeCheck && 'grey'}} disabled={ codeSMS===codeCheck ? false: true} onClick={()=>upload()}>
+                                <i className={codeSMS===codeCheck ?"bi bi-cart3" : "bi bi-arrow-left"} style={{marginRight: 10}}></i> { codeSMS===codeCheck ?  'Отправить заказ!' : 'Подтвердите номер '} </button>
+                            
                         </Col>
                     </Row>
                     </>
