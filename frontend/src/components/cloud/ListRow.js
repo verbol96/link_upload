@@ -73,31 +73,31 @@ export const ListRow = ({el}) =>{
 
     
     return(
-        <div className='block-file' onClick={(el.type==='dir')?()=>openFile():null}>
-        <div className='file-info'>
-            <span style={{fontSize: 13}} className='file-name'>{el.name}</span>
-            <div className='icon-container'>
-                {   isDownload? <span style={{fontSize: 13}}><i style={{color: 'Teal', fontSize: '18px'}} className="bi bi-cloud-download"></i> {loadingCount}%</span>:
+        <div className='block-file no-select' onClick ={(el.type==='dir')?()=>openFile():null}>
+            <div className='file-name'>{el.name}</div>
+            <div className='image-container'>
+                    {  
+                    isDownload? <div style={{fontSize: 20, textAlign: 'center'}}><i className="bi bi-cloud-download icon-menu"></i> {loadingCount}%</div>:
                     el.type==='dir'?
-                    <i style={{color: 'Teal'}} className="bi bi-folder"></i> 
+                        <i className="bi bi-folder icon-menu"></i> 
                     :
-                    <>{thumb ? <img style={{width: '100%'}} src={thumb} alt="Loaded from server" /> : <p>Loading...</p>}</>
+                    <>
+                        {thumb ? 
+                            <img className='imageFull' src={thumb} alt="Loaded from server" /> 
+                        : 
+                            <p>загрузка</p>
+                        }
+                    </>
                     
-                }
+                    }
             </div>
-            <div className='file-size'>
-            {el.type === 'dir' 
-                ? ( calculateFolderSize(el) / 1024 / 1024).toFixed(2)
-                : (el.size / 1024 / 1024).toFixed(2)
-            }
-            мб
+            <div className='button-group1'>
+                <button onClick={(e)=>downloadFile(e)}>скачать / {el.type === 'dir' 
+                    ? ( calculateFolderSize(el) / 1024 / 1024).toFixed(2)
+                    : (el.size / 1024 / 1024).toFixed(2)
+                }мб</button>
+                <button onClick={(e)=>deleteFileClick(e)}><i className="bi bi-x-lg"></i></button>
             </div>
-            <span  style={{fontSize: 9}} className='file-date'>{el.createdAt.slice(0,10)}</span>
-            <div className='file-button'>
-                <span><button onClick={(e)=>downloadFile(e)}><i style={{color: 'Teal', fontSize: '19px'}} className="bi bi-cloud-arrow-down"></i></button></span>
-                <span><button onClick={(e)=>deleteFileClick(e)}><i style={{color: 'LightCoral', fontSize: '16px'}} className="bi bi-x-lg"></i></button></span>
-            </div>
-        </div>
         </div>
     )
 }

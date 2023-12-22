@@ -49,15 +49,15 @@ const Cloud = () =>{
     }
 
     return (
-        <div style={{display: 'flex', flexDirection: 'column',background: '#dbdbdb', minHeight: '100vh'}}>
+        <div style={{display: 'flex', flexDirection: 'column',background: '#e8e8e8', minHeight: '100vh'}}>
             <NavBarAdmin />
-            <div className="cloud-menu">
+            <div className="cloud-menu"> 
                 <div>
-                    <button style={{border: '1px solid #dbdbdb', borderRadius: 5, background: 'white', width: 50}} onClick={currentDir?()=>BackClick():null}>
+                    <button style={{border: '1px solid #dbdbdb', borderRadius: 5, background: 'white', width: '40px'}} onClick={currentDir?()=>BackClick():null}>
                         <i style={{color: 'black'}} className="bi bi-arrow-left"></i>
                     </button>
                 </div>
-                <div style={{marginLeft: 60}}>
+                <div className="cloud-menu-path">
                     Облако LINK{stack.map((el, index)=><span key={index}><i className="bi bi-chevron-right"></i> {el} </span>)}
                 </div>
                 <div className="cloud-menu-right">

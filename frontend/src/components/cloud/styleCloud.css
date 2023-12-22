@@ -2,51 +2,90 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
-    margin: 25px;
+    margin: 2vw;
   }
 
   .block-file {
-    width: 130px;
-    height: 130px;
+    width: calc((96vw - 70px)/7);
+    height: calc((96vw - 70px)/7);
     margin: 5px;
-    background-color: rgb(236, 236, 236);
-    border-radius: 10px;
+    background-color: #ffffff;
+    border-radius: 5px;
     overflow: hidden; /* Это скроет любой контент, выходящий за пределы блока. */
-    padding: 5px 10px;
+    border: 1px solid rgb(198, 198, 198);
+}
+
+
+
+@media (max-width: 1023px) {
+  .block-file {
+    width: calc((96vw - 50px)/5);
+    height: calc((96vw - 50px)/5);
+  }
+}
+
+@media (max-width: 767px) {
+  .block-file {
+    width: calc((96vw - 30px)/3);
+    height: calc((96vw - 30px)/3);
+  }
+}
+
+.file-name{
+  height: 25px;
+  font-size: 10px;
+  text-align: center;
+  padding: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
   
-  .file-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    height: 100%;
+.image-container {
+  width: 100%;
+  height: calc(100% - 50px);
+  padding: 0 25px;
+  text-align: center;
+}
+
+      .imageFull{
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+}
+
+.button-group1{
+  height: 25px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 5px;
+  width: 100%;
+  padding: 5px;
+}
+
+      .button-group1 button{
+        height: 100%;
+        font-size: 8px;
+        border: 1px solid rgb(198, 198, 198);
+        border-radius: 3px;
+        background: #ffffff;
+      }
+
+.no-select {   /* отключение выделения текста */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Нестандартный Chrome и Opera, а также стандарт для будущих браузеров */
+}
+
+.icon-menu{
+  color: Teal;
+  font-size: 70px;
+}
+
+@media  (max-width: 767px) {
+  .icon-menu{
+    font-size: 50px;
   }
-  
-  .icon-container {
-    font-size: 2em; /* Это увеличит размер иконки. Вы можете изменить это значение по своему усмотрению. */
-  }
-  
-  .file-name, .file-size, .file-date, .file-button {
-    font-size: 0.8em; /* Вы можете изменить размер шрифта, если он слишком мал или велик. */
-    text-align: center; /* Это выровняет текст по центру. */
-    overflow: hidden; /* Это скрывает текст, который выходит за пределы блока. */
-    text-overflow: ellipsis; /* Это добавляет многоточие в конце обрезанного текста. */
-    white-space: nowrap; /* Это предотвращает перенос текста на новую строку. */
-    width: 100%; /* Это ограничивает ширину блока, чтобы текст мог быть обрезан. */
-  }
-  .file-button{
-    display: flex;
-    flex-wrap: wrap;
-    justify-content:space-between;
-  }
-  .file-button button{
-    border: none;
-    background: transparent;
-  }
-  
-.block-file:hover{
-    /*transform: scale(1.02);*/
-    background-color: rgb(244, 244, 244);
-    border: 1px solid rgb(95, 158, 122);
 }
