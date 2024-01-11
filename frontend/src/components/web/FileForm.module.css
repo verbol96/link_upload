@@ -66,21 +66,11 @@
     width: 100%;
     outline: none;
     transition: border-color 1s;
-    appearance: none; /* Убирает стандартный стиль select */
+    -webkit-appearance: none;
+    appearance: none;
+    background: white;
+    color: black;
     box-shadow: 0 3px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-  }
-
-  @media (max-width: 769px){
-    .selectForm { 
-      font-size: 12px;
-      height: 30px;
-      padding-left: 5px;
-      text-align: left;
-    }
-
-    .labelSelect{
-      font-size: 12px;
-    }
   }
   
   .selectArrow {
@@ -89,6 +79,25 @@
     top: 50%;
     pointer-events: none; /* Убирает взаимодействие с указателем мыши */
     transform: translateY(-50%);
+  }
+
+  @media (max-width: 769px){
+    .selectForm { 
+      font-size: 12px;
+      height: 30px;
+      padding-left: 5px;
+      text-align: left;
+      padding-right: 15px;
+    }
+
+    .labelSelect{
+      padding: 0px;
+      font-size: 10px;
+    }
+
+    .selectArrow {
+      right: 2px;
+    }
   }
 
   .cards{

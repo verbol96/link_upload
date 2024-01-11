@@ -31,9 +31,11 @@
 
 .smsGroup button{
     border: none;
-    background: #a2a2a2;
+    background: rgb(119, 119, 119); 
+    color: #ffffff;
     border-radius: 5px;
     padding: 0 30px;
+    box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.3);
 }
 
 .smsGroup input{

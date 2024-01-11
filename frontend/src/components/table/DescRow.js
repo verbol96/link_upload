@@ -8,6 +8,7 @@ import _ from 'lodash';
 import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
 import {CopyToClipboard} from 'react-copy-to-clipboard'
+import { deleteFile } from '../../http/cloudApi';
 
 export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
@@ -162,12 +163,13 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     handleDetailsClick(order.id)
   }
 
-  const DeleteOrder = () => {
+  const DeleteOrder = async() => {
     const userConfirmation = window.confirm("Вы уверены, что хотите удалить этот заказ?");
     
     if (userConfirmation) {
-      deleteOrder(order.id);
+      await deleteOrder(order.id);
       dispatch(deleteOrderId(order.id));
+      await deleteFile(order.main_dir_id)
     }
   };
 

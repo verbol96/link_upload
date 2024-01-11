@@ -64,6 +64,7 @@
 .formatNavigate{
     width: 100%;
     display: flex;
+    gap: 2px;
 }
 
 .formatNavBtn{
@@ -105,8 +106,12 @@
 
 .navLabel{
     display: flex;
-    justify-content: space-between;
-    padding-left: 20%;
+    justify-content: space-around;
+    white-space: nowrap;
+}
+
+.navLabelDelete{
+    min-width: max-content;
 }
 
 @media (max-width: 769px) {

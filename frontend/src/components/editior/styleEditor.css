@@ -8,6 +8,13 @@
   margin: 20px 0;
 }
 
+@media (max-width: 769px){
+  .menu-editor{
+    width: 100%;
+  }
+  
+}
+
 .file-input {
   flex: 8 ;
   height: 30px;
@@ -146,14 +153,22 @@
 
 .image-block {
   position: relative;
-  width: calc(20% - 20px);
+  width: calc(100vw/4 - 20px);
   margin: 10px;
-  height: 280px;
+  height: calc(100vw/4 - 45px);
   display: flex;
   flex-direction: column;
   border: 1px solid rgb(184, 184, 184);
   box-shadow: 5px 6px 10px -5px rgba(128, 128, 128, 0.6);
   border-radius: 5px;
+}
+
+@media(max-width: 769px){
+  .image-block {
+    margin: 10px 40px;
+    width: calc(100vw - 20px);
+    height: calc(100vw - 90px);
+  }
 }
 
 .image-info{
