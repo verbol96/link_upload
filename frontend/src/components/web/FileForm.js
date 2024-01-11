@@ -80,10 +80,8 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats}) =
         }
 
         const createObj = async(file) =>{
-            console.log(getBrowserName())
             if(file.type==='image/heic'){
                 if(getBrowserName()==='safari'){
-                    console.log('11')
                     const asyncOperationWithPromise =async()=> {
                         return new Promise((resolve, reject) => {
                             loadImage(
@@ -254,12 +252,12 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats}) =
             case '40x55': return '40x55'
             case '50x70': return '50x70'
             case '55x55': return '55x55'
-            case '55x80': return '55x80s'
+            case '55x80': return '55x80'
             case '<а6': return 'другой до 10х15'
             case '<а7': return 'другой до 7.5х10'
             case '<а5': return 'другой до 15х20'
             case '<а4': return 'другой до 20х30'
-            default: return 'неизвестно'
+            default: return false;
         }
     }
 
@@ -278,13 +276,13 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats}) =
                 <div className={style.containerSelect}>
                     <label className={style.labelSelect}>Размер:</label>
                     <select className={style.selectForm}  value={formats[item].format} onChange={(e)=>ChangeSize(e)}>
-                        {sizePhoto().map((el,index)=><option key={index} value={el.title}>{ShowTitle(el.title)}</option>)}
+                        {sizePhoto().map((el,index)=>ShowTitle(el.title)&&<option key={index} value={el.title}>{ShowTitle(el.title)}</option>)}
                     </select>
                     <span className={style.selectArrow}>▼</span>
                 </div>
-                <div className={style.containerInput}>
+                <div className={style.containerInput}> 
                     <label className={style.labelSelect}>Копий:</label>
-                    <input className={style.selectForm} value={formats[item].copies} onChange={(e)=>ChangeCopies(e)} />
+                    <input className={style.selectForm} value={formats[item].copies} style={{textAlign: 'center', padding: 0}} onChange={(e)=>ChangeCopies(e)} />
                 </div>
                 {formats[item].type==='photo'
                 ?

@@ -57,7 +57,7 @@ export const SendGroup =({phone, upload, isAuth, setIsValid})=>{
                         <label>{phone}</label>
                     </div>
                     <div className={style.smsGroup}>
-                        <button onClick={sendSMS} disabled={isSendSMS&&true}>{isSendSMS? `отправлен(${tik})`: 'отправить код'}</button>
+                        <button onClick={sendSMS} disabled={isSendSMS&&true}>{isSendSMS? `отправлен(${tik})`: ' отправить код'}</button>
                         <input value={codeCheck} placeholder="код из СМС" onChange={(e)=>setCodeCheck(e.target.value)} style={{textAlign: 'center'}} />
                         <label>
                         {

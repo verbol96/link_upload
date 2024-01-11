@@ -25,9 +25,7 @@ const EditorOne = ({ image, aspectRatioDef, cropperRef }) => {
     return Math.abs(crop1.x - crop2.x) < epsilon &&
            Math.abs(crop1.y - crop2.y) < epsilon;
   }
-
-
-
+  
   useEffect(() => {
     setAspectRatio(Number(aspectRatioDef));
     }, [aspectRatioDef]);

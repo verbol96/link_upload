@@ -240,14 +240,14 @@ const Web = () =>{
                             Загрузка фото 
                         </h4>
 
-                        <div className={style.formatNavigate}>
+                        <div className={style.formatNavigate}> 
                             {formats.map((el,index)=>
                                 <button className={style.formatNavBtn} style={{background: index===item && '#164a4a',color: index===item && 'white',border: index===item && '1px solid #164a4a'}} 
                                         onClick={()=>setItem(index)} 
                                         key={index}>
                                     <div className={style.navLabel}>
                                         <div>{ShowTitle(el.format)}</div>
-                                        <div><i onClick={()=>DeleteFormat(el)} style={{color: 'white'}} className="bi bi-x-lg"></i></div>
+                                        <div className={style.navLabelDelete}><i onClick={()=>DeleteFormat(el)} style={{color: 'white'}} className="bi bi-x-lg"></i></div>
                                          
                                     </div>
                                 </button>)
