@@ -15,10 +15,8 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
      
     const [sortKey, setSortKey] = useState('default');
 
-    // Получение данных из Redux
     let orders =_.orderBy(_.orderBy(useSelector(state => state.order.order), 'createdAt', 'desc' ), 'status', 'asc' )
-  
-    // Функция сортировки
+
     const sortOrders = (orders, sortKey) => {
       switch (sortKey) {
         case 'price':
@@ -34,7 +32,6 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
       }
     };
 
-    // Выполнение сортировки
     orders = sortOrders(orders, sortKey);
   
     const handleSortChange = (e) => {
@@ -49,7 +46,6 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
             }
         )  
     },[dispach])
-
 
     const [searchQuery, setSearchQuery] = useState(''); // для поиска
     const [selectedType, setSelectedType] = useState('All'); /// для белпочта/европочта
@@ -165,16 +161,15 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
 
 
     const startDateSet = useRef(false);
+    
     useEffect(() => {
       if (orders.length > 0 && !startDateSet.current) {
-          setStartDate(new Date(orders[orders.length - 1].createdAt));
+          let ordersDataStart =_.orderBy(orders, 'createdAt', "desc" )
+          setStartDate(new Date(ordersDataStart[orders.length - 1].createdAt));
           startDateSet.current = true;
       }
     }, [orders]);
     
-
-
-
     const handleDateChange = (start, end) => {
         setStartDate(new Date(start));
         setEndDate(new Date(end));

@@ -1,6 +1,6 @@
 const {User, Order, Photo, Settings} = require('../models/models')
 const bcryptjs = require('bcryptjs')
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 
 
 class orderController{
@@ -30,9 +30,9 @@ class orderController{
             }
         }
 
-        await photo.map(el=>
-            Photo.create({type: el.type, format: el.format, amount: el.amount, paper: el. paper,orderId: order.id }))
-
+        await Promise.all(photo.map(async el => {
+          await Photo.create({id: el.id, type: el.type, format: el.format, amount: el.amount, copies: el.copies, paper: el.paper, orderId: order.id });
+        }));
 
         const response = await Order.findOne({
             where: { id: order.id },
@@ -51,13 +51,11 @@ class orderController{
 
     async updateUserAdress(req,res){
         const id = req.params.id
-        const {typePost, postCode, city, adress} = req.body
-        const adressMain = await User.update({typePost, postCode, city, adress}
+        const {FIO, typePost, postCode, city, adress} = req.body
+        const adressMain = await User.update({FIO, typePost, postCode, city, adress}
             ,{where: {id:id}})
         return res.json(adressMain)
     }
-
-
 
     async getAll(req,res){
         const orders = await Order.findAll({
@@ -139,14 +137,14 @@ class orderController{
     async updateOrder(req,res){
         const id = req.params.id
         
-        const {phone, FIO, typePost, firstClass, postCode, city, adress, oblast, raion, codeOutside, price, price_deliver, other, photo, userId, notes, phoneUser} = req.body
+        const {phone, FIO, typePost, firstClass, postCode, city, adress, oblast, raion, codeOutside, price, price_deliver, other, photo, userId, notes, phoneUser, main_dir_id} = req.body
 
         const user = await User.findOne({where:{phone: phoneUser}})
         
         if(user){
             await Order.update(
                 {
-                    codeOutside, price, price_deliver, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, userId: user.id
+                    codeOutside, price, price_deliver, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, userId: user.id, main_dir_id
                 },
                 {where:{id: id}}
             )
@@ -156,17 +154,17 @@ class orderController{
 
             await Order.update(
                 {
-                    codeOutside, price, price_deliver, other, notes, userId: user1.id, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion
+                    codeOutside, price, price_deliver, other, notes, userId: user1.id, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, main_dir_id
                 },
                 {where:{id: id}}
             )
         }
-        
-        
-        await Photo.destroy({where: {orderId: id}})
-        
-        await photo.map(el=>
-            Photo.create({type: el.type, format: el.format, amount: el.amount, paper: el. paper, orderId: id }))
+
+        await Promise.all(photo.map(async el => {
+          await Photo.update({type: el.type, format: el.format, amount: el.amount, paper: el. paper, copies: el.copies}, 
+                {where: {id: el.id}}
+                );
+        }));
 
         return res.json(id)
     }

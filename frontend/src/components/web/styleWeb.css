@@ -19,58 +19,8 @@
     background-color: #8ca2a7;
   }
 
-.cardFile {
-    width: calc(100% / 7 - 20px);
-    overflow: hidden; 
-    margin: 10px;
-    position: relative;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-    display: flex;
-    flex-direction: column;
-    background-color: transparent;
-  }
 
-  .card-image-top {
-    width: 100%;
-    /* Другие стили, которые вы хотите применить к изображению */
-}
-  
-  .cardFileInner {
-    width: 100%;
-    height: 0;
-    padding-bottom: 100%;
-    position: relative;
-  }
-  
-  .cardFile img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    object-fit: contain;
-    transition: opacity 0.3s ease;
-  }
-  
-  .closeButton {
-    position: absolute;
-    top: 0;
-    right: 0;
-    background-color: transparent;
-    border: none;
-    color: rgb(255, 113, 113);
-  }
 
-  .closeButton:hover{
-    transform: scale(1.4);
-  }
-
-  .card-image-top {
-    width: 100%;
-    /* Другие стили, которые вы хотите применить к изображению */
-}
 
   @media (max-width: 576px) {
     .cardFile {
@@ -126,44 +76,6 @@
     margin-top: 10px;
   }
   
-  .labelSelect {
-    position: absolute;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 400;
-    font-size: 0.8rem;
-    color: #2D4B52;
-    top: 0;
-    left: 0;
-    padding: 0 5px;
-    background-color: transparent;
-    transform: translateY(-50%);
-  }
-  
-  .selectForm {
-    font-size: 1rem;
-    padding: 0.5rem 0.5rem;
-    border: none;
-    text-align: center;
-    border-bottom: 1.5px solid #2B606D;
-    width: 100%;
-    outline: none;
-    transition: border-color 1s;
-    appearance: none; /* Убирает стандартный стиль select */
-    box-shadow: 0 3px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-  }
-  
-  .selectForm:focus, .selectForm:hover {
-    border-bottom: 3.5px solid #0E3C47;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-  }
-  
-  .selectArrow {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    pointer-events: none; /* Убирает взаимодействие с указателем мыши */
-    transform: translateY(-50%);
-  }
 
   /* Стили для area */
   .textareaForm {
@@ -183,14 +95,7 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
   }
 
-  .filesFormFormat{
-    border: 0.5px #2f5766 solid;
-    border-radius: 4px;
-    background-color:'inherit';
-    box-shadow: 0px 0px 17px -1px rgba(61, 96, 94, 0.38);
-    padding: 15px;
-    margin-bottom: 15px;
-  }
+
 
   .filesFormFormat>div{
       margin-bottom: 20px;

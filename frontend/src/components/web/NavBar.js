@@ -81,6 +81,7 @@ export const NavBar = () => {
       </div>
 
       <div className="navbar__right">
+
         <div
           className="nav-button-container"
           onMouseEnter={handleMenuOpen}
@@ -124,7 +125,7 @@ export const NavBar = () => {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
-                  <input
+                  <input 
                   style={{width: "100%", marginTop: 5}}
                     type="password"
                     value={password}

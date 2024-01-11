@@ -1,0 +1,69 @@
+.container{
+    display: flex;;
+}
+
+.menuList{
+    flex: 1;
+    background: #eaeaea;
+    min-height: calc(100vh - 122px);
+    display: flex;
+    flex-direction: column;
+    padding: 50px 0;
+    font-family: 'Montserrat', sans-serif, 'SemiBold ';
+    font-weight: 400;
+    font-size: 12px;
+}
+
+.menuListPhone{
+    font-size: 15px;
+    text-align: center; 
+    color: #919191; 
+    margin-bottom: 20px;
+}
+
+.menuItem{
+    width: 90%;
+    margin: 5px auto;
+    padding: 10px;
+    height: 40px;
+    border-radius: 5px;
+    text-align: center;
+    background: rgb(255, 255, 255);
+    color: rgb(62, 62, 62);
+}
+
+.menuContent{
+    margin-top: 40px;
+    flex: 6;
+    padding: 0 2vw; 
+}
+
+@media (max-width: 769px){
+    .container{
+        flex-direction: column;
+    }
+
+    .menuListPhone{
+        margin: 10px 0;
+        padding: 0 10px;
+        text-align: left;
+    }
+
+    .menuList
+    {
+        margin: 0 5px;
+        min-height: max-content;
+        padding: 0;
+    }
+
+    .menuListItem{
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+    }
+    .menuItem{
+        
+    }
+
+}
+

@@ -2,12 +2,12 @@
 import Setting from "./pages/Setting"
 import Statistic from "./pages/Statistic"
 import Table from "./pages/Table"
-import Editor from "./pages/Editor"
 import Web from "./pages/Web"
 import PrivatePage from "./pages/PrivatePage"
 import Cloud from "./pages/Cloud"
 import Users from "./pages/Users"
-import Editor2 from "./pages/Editor2"
+import { Auth } from "./pages/Auth"
+import Editor from "./pages/Editor"
 
 export const adminRoutes = [
     {
@@ -17,10 +17,6 @@ export const adminRoutes = [
     {
         path: '/editor',
         Component: Editor
-    },
-    {
-        path: '/editor2',
-        Component: Editor2
     },
     {
         path: '/statistic',
@@ -70,5 +66,9 @@ export const publicRoutes = [
     {
         path: '/web',
         Component: Web
+    },
+    {
+        path: '/auth',
+        Component: Auth
     }
 ]

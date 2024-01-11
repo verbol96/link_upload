@@ -1,8 +1,8 @@
-import { NavBarAdmin } from "../components/admin/NavBarAdmin"
 import {FormSelect, Row, Col} from 'react-bootstrap'
 import {useEffect, useState} from 'react'
 import './stylePages.css'
 import { $host } from "../http"
+import { NavBar } from "../components/admin/NavBar"
 
 const Statistic = () =>{
     
@@ -113,7 +113,7 @@ const Statistic = () =>{
 
     return(
         <>
-        <NavBarAdmin />
+        <NavBar />
 
         <Row>
             <Col md={{span:2}} style={{marginLeft: '5%'}}>

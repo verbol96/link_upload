@@ -1,60 +1,154 @@
-import { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { dataChange } from '../../http/authApi';
-import { whoAmI } from '../../http/authApi';
-import { changeName } from '../../store/privatePageReducer';
-import './Settings.css';
+import { useState } from 'react';
+import { useSelector,useDispatch } from 'react-redux';
+import { getOneUser, updateUserAdress } from '../../http/dbApi';
+import style from './ChangeData.module.css'
+import { setUser } from '../../store/privatePageReducer';
 
-export const ChangeData = ({ ShowToast }) => {
-  const [FIO, setFIO] = useState('');
-  const [phone, setPhone] = useState('');
-  const [showMessage, setShowMessage] = useState(false);
+export const ChangeData = () => {
+  const user = useSelector((state) => state.private.user);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    async function getUser() {
-      let value = await whoAmI();
-      setFIO(value.FIO);
-      setPhone(value.phone);
+  const [FIO, setFIO] = useState(user.FIO);
+  const [typePost, setTypePost] = useState(user.typePost);
+  const [city, setCity] = useState(user.city);
+  const [adress, setAdress] = useState(user.adress);
+  const [postCode, setPostCode] = useState(user.postCode);
+
+  const [isEdit, setIsEdit] = useState(false)
+ 
+  const ClickBtn = async() =>{
+
+    if(isEdit){
+      const data = {
+        FIO, typePost, city, adress, postCode
+      }
+      updateUserAdress(user.id, data)
+
+      let data1 = await getOneUser(user.phone)
+      dispatch(setUser(data1))
     }
-    getUser();
-  }, []);
+    setIsEdit(prev=>!prev)
+  }
 
-  const handleChangeData = async () => {
-    await dataChange(phone, FIO);
-    dispatch(changeName(FIO));
-    ShowToast('success', 'данные изменены');
-  };
+  const ShowTypePost = () =>{
+    if(user.typePost==='R') return 'Белпочта'
+    else return 'Европочта'
+  }
 
-  return (
-    <div className="card_form">
-      <div className="form_group"
-          onMouseEnter={() => setShowMessage(true)}
-          onMouseLeave={() => setShowMessage(false)}>
-        <label className="form_label"><i className="bi bi-telephone"></i> Телефон</label>
-        <input
-          className="form_control"
-          placeholder="Телефон"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          disabled
+
+  return ( 
+    <div className={style.cardForm}>
+      <div className={style.formGroup} style={{marginBottom: 40}}>
+        <label className={style.formLabel}>ФИО:</label>
+        {isEdit?
+         <input 
+         spellCheck="false"
+         className={style.formInput}
+         placeholder="ФИО"
+         value={FIO}
+         onChange={(e) => setFIO(e.target.value)}
         />
-        {showMessage && <div className='messagePhone'><i className="bi bi-exclamation-triangle"></i> Действие заблокировано. Для изменеия номера обратитесь к сотруднику LINK в телеграм или инстаграм </div>}
+        :
+        <label  className={style.formLabel1}>{user.FIO}</label>
+        }
+        
+       
       </div>
-      <div className="form_group">
-        <label className="form_label"><i className="bi bi-person"></i> ФИО</label>
-        <input
-          className="form_control"
-          placeholder="ФИО"
-          value={FIO}
-          onChange={(e) => setFIO(e.target.value)}
-        />
+      <div className={style.formGroup}>
+        <label className={style.formLabel}> Тип отправки:</label>
+        {isEdit?
+        <div className={style.formForSelect}>
+          <select
+            disabled={isEdit?false:true}
+            className={style.formSelect}
+            value={typePost}
+            onChange={(e) => setTypePost(e.target.value)}
+            >
+            <option value={'E'}>Европочта</option>
+            <option value={'R'}>Белпочта</option>
+          </select>
+        </div>
+        :
+        <label  className={style.formLabel1}>{ShowTypePost()}</label>
+        }
       </div>
 
-      <button className="btn btn_save" onClick={handleChangeData}>
-        <i className="bi bi-check2-square"></i> сохранить изменения
-      </button>
-
+      {typePost === 'E' ? (
+        <>
+          <div className={style.formGroup}>
+            <label className={style.formLabel}> Город:</label>
+            {isEdit?
+            <input
+              disabled={isEdit?false:true}
+              spellCheck="false"
+              className={style.formInput}
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+            />
+            :
+            <label  className={style.formLabel1}>{user.city}</label>
+            }
+          </div>
+          <div className={style.formGroup}>
+            <label className={style.formLabel}>Отделение:</label>
+            {isEdit?
+            <input
+              disabled={isEdit?false:true}
+              className={style.formInput}
+              value={adress}
+              onChange={(e) => setAdress(e.target.value)}
+            />
+            :
+            <label  className={style.formLabel1}>{user.adress}</label>
+            }
+          </div>
+        </>
+      ) : (
+        <>
+          <div className={style.formGroup}>
+            <label className={style.formLabel}> Индекс:</label>
+            {isEdit?
+            <input
+              className={style.formInput}
+              value={postCode}
+              onChange={(e) => setPostCode(e.target.value)}
+            />
+            :
+            <label  className={style.formLabel1}>{user.postCode}</label>
+            }
+          </div>
+          <div className={style.formGroup}>
+            <label className={style.formLabel}> Город:</label>
+            {isEdit?
+            <input
+              className={style.formInput}
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+            />
+            :
+            <label  className={style.formLabel1}>{user.city}</label>
+            }
+          </div>
+          <div className={style.formGroup}>
+            <label className={style.formLabel}> Адрес:</label>
+            {isEdit?
+            <input
+              className={style.formInput}
+              value={adress}
+              onChange={(e) => setAdress(e.target.value)}
+            />
+            :
+            <label  className={style.formLabel1}>{user.adress}</label>
+            }
+          </div>
+        </>
+      )}
+ 
+      <div className={style.buttonGroup}>
+        <button className={isEdit? style.btnSave:style.btnEdit} onClick={ClickBtn}>
+           {isEdit? 'Сохранить изменения': 'Редактировать'}
+        </button>
+      </div>
     </div>
   );
 };

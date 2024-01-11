@@ -12,9 +12,9 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
     const photo = () =>{
          return order.photos.reduce((sum, el)=>{
             if(el.paper==='lustre'){
-                return sum+el.amount+"шт("+el.format+")ЛЮСТР "
+                return sum+el.amount*el.copies+"шт("+el.format+")ЛЮСТР "
             }else{
-                return sum+el.amount+"шт("+el.format+") "
+                return sum+el.amount*el.copies+"шт("+el.format+") "
             }
         }, '')
     }
@@ -49,8 +49,8 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
         `
         Здравствуйте. Письмо отправили. Вот данные для оплаты:
     
-    6711 7700 1570 5002
-    12/23
+    4255 1901 3053 1026
+    12/26
     
     сумма ${order.price}р за заказ +2р пересылка. Итого ${(Number(order.price)+2).toFixed(2)}р
     ${order.codeOutside} - код для отслеживания

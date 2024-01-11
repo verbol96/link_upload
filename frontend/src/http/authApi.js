@@ -20,7 +20,7 @@ export const refresh = async()=>{
 }
 
 export const logout = async()=>{
-    localStorage.removeItem('token')
+    localStorage.clear();
     await $host.get('/api/auth/logout')
 }
 
@@ -46,6 +46,11 @@ export const whoAmI = async()=>{
 
 export const changePasswordUser = async(phone, password)=>{
     const {data} = await $host.put('/api/auth/changePasswordUser', {phone, password})
+    return data
+}
+
+export const sendSms = async(phone, code)=>{
+    const {data} = await $host.post('/api/auth/sendSms', {phone, code})
     return data
 }
 

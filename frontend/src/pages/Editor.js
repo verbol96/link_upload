@@ -1,18 +1,14 @@
-
 import Footer from "../components/admin/Footer";
-import { NavBarAdmin } from "../components/admin/NavBarAdmin";
-import EditorMain from "../components/editor/EditorMain";
-
-
+import { NavBar } from "../components/admin/NavBar";
+import EditMain from "../components/editior/EditMain";
 
 const Editor = () => {
  
-
   return (
-    <div style={{display: 'flex', flexDirection: 'column',background: '#dbdbdb', minHeight: '100vh'}}>
-      <NavBarAdmin />
+    <div style={{display: 'flex', flexDirection: 'column', minHeight: '100vh'}}>
+      <NavBar />
 
-      <EditorMain />
+      <EditMain /> 
 
       <div style={{marginTop: 'auto'}}>
         <Footer />
