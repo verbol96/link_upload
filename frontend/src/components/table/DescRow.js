@@ -138,7 +138,6 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     updateOrder(order.id, data)
 
     const dataDispatch = {
-      
       FIO: FIO,
       phone: removeNonNumeric(phone),
       typePost: typePost,
