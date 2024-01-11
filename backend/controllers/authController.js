@@ -4,25 +4,21 @@ const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
 const { Op } = require("sequelize");
+const axios = require('axios')
 
 class authController {
 
     async login(req, res, next){ 
         try {
-            const {phone, password} = req.body
-            const user = await User.findOne({where:{phone: phone}})
-            if(!user) return res.json('не верный телефон')
-
-            if(password!='rootPW'){
-                const isPassword = await bcryptjs.compare(password, user.password)
-                if(!isPassword) return res.json('не верный пароль')
+            const {phone} = req.body
+            let user = await User.findOne({where:{phone: phone}})
+            if(!user) {
+                user = await User.create({phone, FIO: '', adress: '', city: '', postCode:'', typePost: 'E'})
             }
-            
 
-            const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '24h'})
+            const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '48h'})
             const refreshToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.REFRESH_KEY, {expiresIn: '72h'})
             
-
             await Token.destroy({where: {userId: user.id}})
             await Token.create({refreshToken, userId: user.id})
 
@@ -223,6 +219,16 @@ class authController {
             // Отправляем ответ с кодом ошибки и сообщением об ошибке
             return res.status(401).json({ message: 'Server error' })
         }   
+    }
+
+    async sendSms(req,res){
+        const {phone, code} = req.body
+        const response = await axios.post('https://app.sms.by/api/v1/sendQuickSMS', {
+            token: process.env.TOKEN_SMS,
+            message: code.toString(), 
+            phone: phone.replace(/[^0-9+]/g, '') 
+        });
+        return res.json(response.data)
     }
 
 }

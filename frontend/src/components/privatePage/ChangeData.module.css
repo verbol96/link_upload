@@ -1,0 +1,142 @@
+.cardForm {
+    background: #ffffff;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.14);
+    border-radius: 5px;
+    width: 60%;
+    padding: 30px 60px;
+    margin: 50px auto;
+    font-family: 'Montserrat', sans-serif, 'SemiBold ';
+    font-weight: 400;
+    font-size: 14px;
+}
+
+
+
+
+.formGroup{
+    display: flex;
+    flex-direction: row;
+    margin: 5px 0;
+}
+
+.formLabel{
+    flex: 1;
+    padding: 5px 20px;
+    color: #2C3531;
+}
+
+.formLabel1{
+    flex: 1;
+    padding: 5px 20px;
+    color: #116466;
+}
+
+
+
+.formInput{
+    flex: 2;
+    border: none;
+    border: 1px solid #2C3531;
+    border-bottom: 2px solid #2C3531;
+    border-radius: 5px;
+    padding: 3px 20px;
+    text-align: center;
+} 
+
+@media (max-width: 769px){
+    .cardForm{
+        width: 90%;
+        padding: 5px;
+    }
+
+    .formLabel{
+        flex: 2;
+    }
+
+    .formLabel1{
+        flex: 4;
+        text-align: center;
+    }
+
+    .formLabel, .formLabel1{
+        padding: 5px;
+    }
+    .formInput{
+        flex: 4;
+        padding: 5px;
+    }
+}
+
+.formForSelect{
+    flex: 2;
+    border: 1px solid #2C3531;
+    border-bottom: 2.5px solid #2C3531;
+    border-radius: 5px;
+    text-align: center;
+    position: relative;
+    display: inline-block;
+}
+
+.formForSelect:after {
+    content: '▼';
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #555;
+    font-size: 14px;
+  }
+
+.formSelect{
+    padding: 3px 20px;
+    border: none;
+    width: 100%;
+    -webkit-appearance: none; /* Удалите стандартную стрелку в Chrome и Safari */
+    -moz-appearance: none; /* Удалите стандартную стрелку в Firefox */
+    appearance: none; /* Удалите стандартную стрелку в других браузерах */
+}
+
+.formSelect:focus {
+    outline: none;
+}
+
+.buttonGroup{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    
+    margin-top: 40px;
+}
+
+.btnSave{
+    width: 40%;
+    min-width: max-content;
+    border: none;
+    background: #2C3531;
+    color: #ffffff;
+    border-radius: 5px;
+    padding: 10px 20px;
+    text-align: center;
+    
+}
+
+.btnSave:hover{
+    background: #485851;
+}
+
+.btnEdit{
+    width: 40%;
+    min-width: max-content;
+    border: none;
+    background: #3AAFA9;
+    border: 2px solid #369f9b;
+    border-radius: 5px;
+    padding: 10px 20px;
+    text-align: center;
+    color: #ffffff;
+}
+
+.btnEdit:hover{
+    background: #116466;
+}

@@ -1,0 +1,87 @@
+.sendGroup{
+    padding-right: 5vw;
+    margin: 40px 0;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Montserrat', sans-serif, 'SemiBold ';
+    font-weight: 400;
+}
+
+@media (max-width: 769px) {
+    .sendGroup{
+        flex-direction: column;
+        margin: 10px;
+        padding: 0;
+    }
+}
+
+.sendSmsForm{
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    padding: 15px 30px;
+    box-shadow: 0px 0px 6px 1px rgba(61, 96, 94, 0.38);
+    border: 2px solid #874545;
+}
+
+.smsGroup{
+    display: flex;
+    justify-content: space-between;
+    gap: 10px
+}
+
+.smsGroup button{
+    border: none;
+    background: #a2a2a2;
+    border-radius: 5px;
+    padding: 0 30px;
+}
+
+.smsGroup input{
+    border: none;
+    border: 1px solid rgb(97, 97, 97);
+    border-radius: 5px;
+}
+
+@media (max-width: 769px) {
+    .smsGroup{
+        flex-direction: column;
+        
+    }
+
+    .smsGroup button, input{
+        height: 35px;
+        width: 100%;
+    }
+
+    .smsGroup label{
+        display: none;
+        text-align: center;
+    }
+
+}
+
+.buttonForm {
+    width: 30vw;
+    font-size: 1.2rem;
+    color: #ffffff;
+    background-color: #093e3f;
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer; 
+    transition: color 1s, background-color 0.5s, scale 1s;
+    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.14);
+    padding: 15px 30px;
+  }
+  
+.buttonForm:hover {
+    background-color: #116466;
+    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.05), 0 5px 5px rgba(0, 0, 0, 0.05);
+    scale: 1.03;
+}
+
+@media (max-width: 769px) {
+    .buttonForm{
+        width: 100%;
+    }
+}

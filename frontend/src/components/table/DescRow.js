@@ -38,7 +38,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
   const defaultSale = useCallback(() => {
     const count = photo.reduce((sum, photo) => {
-      return sum + Number(photo.amount);
+      return sum + Number(photo.amount*photo.copies);
     }, 0);
     if(count > 499) return 0.8;
     if(count > 199) return 0.9;
@@ -136,6 +136,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   
   const SaveData = () =>{
     updateOrder(order.id, data)
+
     const dataDispatch = {
       
       FIO: FIO,
@@ -176,6 +177,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
         type: "photo",
         format: "а6",
         amount: "1",
+        copies: 1,
         paper: 'glossy'
     }
     setPhoto([...photo, data])
@@ -213,7 +215,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
   const SumTeor =()=> {
     const pr = photo.reduce((sum, el)=>{
-      return sum+PriceList(el.format)*el.amount
+      return sum+PriceList(el.format)*el.amount*el.copies
   },0 )
 
   return pr.toFixed(2)

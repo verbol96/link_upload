@@ -14,10 +14,10 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
   const Update = (e, prop) =>{
     if(prop==='type'){
         switch(e.target.value){
-            case 'photo': return setPhoto([...photo.slice(0, index), {type: "photo", format: "а6", amount: "1",  paper: 'glossy'}, ...photo.slice(index + 1)])
-            case 'holst': return setPhoto([...photo.slice(0, index), {type: "holst", format: "30x40", amount: "1",  paper: 'glossy'}, ...photo.slice(index + 1)])
-            case 'magnit': return setPhoto([...photo.slice(0, index), {type: "magnit", format: "5x8", amount: "1",  paper: 'glossy'}, ...photo.slice(index + 1)])
-            default: return setPhoto([...photo.slice(0, index), {type: "photo", format: "А6", amount: "1",  paper: 'glossy'}, ...photo.slice(index + 1)])
+            case 'photo': return setPhoto([...photo.slice(0, index), {type: "photo", format: "а6", amount: "1", copies: 1,  paper: 'glossy'}, ...photo.slice(index + 1)])
+            case 'holst': return setPhoto([...photo.slice(0, index), {type: "holst", format: "30x40", amount: "1", copies: 1,  paper: 'glossy'}, ...photo.slice(index + 1)])
+            case 'magnit': return setPhoto([...photo.slice(0, index), {type: "magnit", format: "5x8", amount: "1", copies: 1,  paper: 'glossy'}, ...photo.slice(index + 1)])
+            default: return setPhoto([...photo.slice(0, index), {type: "photo", format: "А6", amount: "1", copies: 1,  paper: 'glossy'}, ...photo.slice(index + 1)])
         }
     }
     setPhoto([...photo.slice(0, index), {...photo[index], [prop]: e.target.value}, ...photo.slice(index + 1)])
@@ -44,6 +44,7 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
                           null
               }
             </select>
+            <input value={el.copies}  onChange={(e)=>Update(e, 'copies')}/>
             <select value={el.paper} onChange={(e)=>Update(e, 'paper')}>
               <option value="lustre">люстр</option>
               <option value="glossy">глянец</option>

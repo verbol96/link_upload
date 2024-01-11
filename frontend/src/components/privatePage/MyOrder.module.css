@@ -1,0 +1,38 @@
+.footer{
+    font-family: 'Montserrat', sans-serif, 'SemiBold ';
+    font-weight: 400;
+    padding: 5px 20px;
+    margin: 20px 0;
+    height: 35px;
+    border-radius: 5px;
+    background: grey;
+    color: white;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-size: 13px;
+}
+
+.menu{
+    font-family: 'Montserrat', sans-serif, 'SemiBold ';
+    font-weight: 400;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 5px;
+}
+
+.menu input{
+    height: 25px;
+    border-radius: 5px;
+    border: none;
+    color: #116466;
+    border: 1.5px solid #116466;
+    padding: 0px 5px;
+}
+
+@media (max-width: 769px) {
+    .menu input{
+        width: min-content;
+    }
+}

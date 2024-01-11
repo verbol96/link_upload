@@ -1,25 +1,22 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { OneOrder } from './OneOrder'
-import './MyOrders.css'
 import _ from 'lodash'
 import { getSettings } from '../../http/dbApi'
+import style from './MyOrder.module.css'
 
-export const MyOrders = () => {
+export const MyOrdersAdmin = () => {
 
     const allOrders = useSelector(state => state.private.order);
-    const user = useSelector((state) => state.private.user);
     const sortedOrders = _.orderBy(allOrders, 'createdAt', 'desc');
 
     const [selectedOrder, setSelectedOrder] = useState(null);
 
-    // Initialize the dates as null
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(new Date());
 
     const startDateSet = useRef(false);
 
-    // Set the start date as the date of the first order when sortedOrders updates
     useEffect(() => {
         if (sortedOrders.length > 0 && !startDateSet.current) {
             setStartDate(new Date(sortedOrders[sortedOrders.length - 1].createdAt));
@@ -68,7 +65,6 @@ export const MyOrders = () => {
         return price
     }
 
-
     const SumTeor =(photo)=> {
         const pr = photo.reduce((sum, el)=>{
         return sum+PriceList(el.format)*el.amount
@@ -87,17 +83,14 @@ export const MyOrders = () => {
 
     return (
         <div>
-            <div className='textTitle1'>Мои заказы</div>
-
-            {user.role !== 'USER' && 
-                <div className='datePickerContainer'>
-                    <i style={{fontSize: 25}} className="bi bi-calendar3"></i>
-                    <input className='datePickerInput' type="date" value={startDate ? startDate.toISOString().substr(0, 10) : ''} onChange={(e) => handleDateChange(e.target.value, endDate)} />
-                    <input className='datePickerInput' type="date" value={endDate.toISOString().substr(0, 10)} onChange={(e) => handleDateChange(startDate, e.target.value)} />
-                </div>
-            }
-            
-            <div className='tableFullP'>
+ 
+            <div className={style.menu}>
+                <i style={{fontSize: 25, color: '#116466'}} className="bi bi-calendar3"></i>
+                <input type="date" value={startDate ? startDate.toISOString().substr(0, 10) : ''} onChange={(e) => handleDateChange(e.target.value, endDate)} />
+                <input type="date" value={endDate.toISOString().substr(0, 10)} onChange={(e) => handleDateChange(startDate, e.target.value)} />
+            </div>
+        
+            <div>
             {
                 orders.map((order, index)=> 
                     <div key={order.id}>
@@ -107,11 +100,10 @@ export const MyOrders = () => {
                 )
             }
             </div>
-            {user.role !== 'USER' && 
-                <div className='footer_myOrder'>
-                    <p>Расчет: {calculateTotal()}</p>
-                </div>
-            }
+
+            <div className={style.footer}>    
+                <div>Расчет: {calculateTotal()}</div>
+            </div>
 
         </div>
     )

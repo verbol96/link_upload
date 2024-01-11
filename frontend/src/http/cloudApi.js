@@ -6,6 +6,11 @@ export const getFiles = async(dirId)=>{
     return data
 }
 
+export const getFilesPhotosId = async(id)=>{
+    const {data} = await $host.post(`/api/file/getFilesPhotosId`, {id: id})
+    return data 
+}
+
 export const getFilesAll = async()=>{
     const {data} = await $host.get(`/api/file/getFilesAll`)
     return data 
@@ -18,17 +23,18 @@ export const createDir = async(nameDir, parentId)=>{
     return data
 }
 
-export const uploadFiles = async(file, parentFile)=>{
+export const uploadFiles = async(file, parentFile, id)=>{
     const formDate = new FormData()
-    formDate.append('file', file)
-    formDate.append('fileName', file.name);
+    formDate.append('id', id)
+    formDate.append('file', file.file)
+    formDate.append('fileName', file.file.name);
     formDate.append('parent', parentFile)
     const {data} = await $host.post('/api/file/upload', formDate)
     return data
 }
 
-export const deleteFile = async(file)=>{
-    const {data} = await $host.delete(`/api/file?id=${file.id}`)
+export const deleteFile = async(id)=>{
+    const {data} = await $host.delete(`/api/file?id=${id}`)
     return data
 }
 

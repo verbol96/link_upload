@@ -11,6 +11,8 @@ router.delete('', fileController.deleteFile)
 router.delete('/all', fileController.deleteFileAll)
 router.get('/download', fileController.downloadFile)
 router.get('/thumb', fileController.displayFile)
+router.post('/getFilesPhotosId', fileController.getFilesPhotosId)
+
 
 
  

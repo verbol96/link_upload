@@ -6,9 +6,6 @@ const JSZip = require('jszip')
 const path = require('path');
 const mime = require('mime-types');
 const sharp = require('sharp');
-  
-
-
 
 class fileController {
     async createDir(req, res){
@@ -68,6 +65,7 @@ class fileController {
     async uploadFiles(req,res){
         try {
             const file = req.files.file
+            const fileId = req.body.id
             const fileName = req.body.fileName
             file.name = fileName
             
@@ -85,7 +83,8 @@ class fileController {
                 type,
                 size: file.size,
                 path:  `${parent.path}/${parent.name}`,
-                parent: parent.id
+                parent: parent.id,
+                photoId: fileId
             }
 
             const fileFull = await File.create(dbFile)
@@ -210,32 +209,21 @@ class fileController {
             return res.status(400).json({message: "ошибка при удалении"})
         }
     }
-
-    
-
-    
-  
     
     async displayFile(req, res) {
         try {
             const file = await File.findOne({ where: { id: req.query.id } });
-            
-            if (!file) {
-                return res.status(404).json({ message: "Файл не найден" });
-            }
+            if (!file) return res.status(404).json({ message: "Файл не найден" });
     
             const filePath = path.join(process.env.FILEPATH, file.path, file.name);
     
             if (file.type !== 'dir') {
-                // Определяем MIME-тип файла
                 const contentType = mime.contentType(path.extname(filePath)) || 'application/octet-stream';
     
-                // Установим правильный content-type
                 res.contentType(contentType);
     
-                // Проверяем, является ли файл изображением
                 if (mime.lookup(filePath).startsWith('image/')) {
-                    // Используем sharp для изменения размера изображения
+
                     sharp(filePath)
                         .resize(200) // Измените на желаемый размер
                         .toBuffer()
@@ -247,7 +235,6 @@ class fileController {
                             res.status(500).json({ message: "Ошибка при обработке изображения" });
                         });
                 } else {
-                    // Для неизображений просто отправляем файл
                     res.sendFile(filePath);
                 }
             } else {
@@ -257,6 +244,19 @@ class fileController {
             console.error('Error in displayFile:', error);
             res.status(500).json({ message: "Ошибка при попытке отобразить файл" });
         } 
+    }
+
+    async getFilesPhotosId(req,res){
+        const id = req.body.id
+
+        try {
+            const files = await File.findAll({where:{photoId: id}})
+            return res.json(files)
+            
+        } catch (error) {
+            console.log(error)
+            return res.status(500).json({message: "не получены файлы"})
+        }
     }
 
 }

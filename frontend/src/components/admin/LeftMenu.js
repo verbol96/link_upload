@@ -5,7 +5,7 @@ import './LeftMenu.css'
 
 export const LeftMenu = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // добавьте эту строку
+  const location = useLocation(); 
   const dispatch = useDispatch();
   const leftMenu = useSelector((state) => state.order.leftMenu);
 
@@ -46,8 +46,8 @@ export const LeftMenu = () => {
             </button>
             
             <button
-              className={`menu-btn ${isActive('/editor2') ? 'active' : ''}`}
-              onClick={() => Close('/editor2')}
+              className={`menu-btn ${isActive('/editor') ? 'active' : ''}`}
+              onClick={() => Close('/editor')}
             >
               Редактор фото
             </button>

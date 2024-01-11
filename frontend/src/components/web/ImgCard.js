@@ -1,21 +1,20 @@
-import './styleWeb.css'
+import style from './ImgCard.module.css'
 
 export const ImgCard = ({image, deleteImg}) =>{
-  
 
     return(
-        <div className="cardFile"> 
-          <div className="cardFileInner">
+        <div className={style.cardFile}> 
+          <div className={style.cardFileInner}>
           <img 
-            className="card-image-top" 
-            src={image.imageUrl.toString()} 
+            className={style.cardImageTop} 
+            src={image.url} 
             alt="Card top" 
           />
-            <button
-              className="closeButton"
-              onClick={() => deleteImg(image)}
+            <button 
+              className={style.closeButton}
+              onClick={() => deleteImg(image.id)}
             > 
-            <i className="bi bi-x-circle-fill" ></i>
+            <i style={{color: '#3AAFA9', background: 'white', padding: 2, borderRadius: 5}} className="bi bi-x-square-fill"></i>
             </button>
           </div>
         </div>

@@ -2,10 +2,10 @@
 import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ListCloud } from "../components/cloud/ListCloud"
-import { NavBarAdmin } from "../components/admin/NavBarAdmin"
 import {deleteFileAll, getFiles, getFilesAll} from '../http/cloudApi'
 import {setFiles, setCurrentDir, setFilesAll, delStack} from '../store/fileReducer'
 import Footer from "../components/admin/Footer";
+import { NavBar } from "../components/admin/NavBar"
 
  
 const Cloud = () =>{
@@ -15,7 +15,7 @@ const Cloud = () =>{
     const stack = useSelector(state=>state.files.stack)
     const filesAll = useSelector(state=>state.files.filesAll)
 
-    useEffect(()=>{
+    useEffect(()=>{ 
         async function getFile (){
             let value = await getFiles(currentDir)
             dispatch(setFiles(value))
@@ -50,7 +50,7 @@ const Cloud = () =>{
 
     return (
         <div style={{display: 'flex', flexDirection: 'column',background: '#e8e8e8', minHeight: '100vh'}}>
-            <NavBarAdmin />
+            <NavBar />
             <div className="cloud-menu"> 
                 <div>
                     <button style={{border: '1px solid #dbdbdb', borderRadius: 5, background: 'white', width: '40px'}} onClick={currentDir?()=>BackClick():null}>

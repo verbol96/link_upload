@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import Footer from "../components/admin/Footer";
-import { NavBarAdmin } from "../components/admin/NavBarAdmin";
 import OtherSettings from "../components/settings/OtherSettings";
 import { Pricing } from "../components/settings/Pricing";
 import './SettingsPage.css';
+import { NavBar } from '../components/admin/NavBar';
 
 const Setting = () => {
     const [activeTab, setActiveTab] = useState(0);
@@ -33,7 +33,7 @@ const Setting = () => {
 
     return (
         <div style={{display: 'flex', flexDirection: 'column', minHeight: '100vh'}}>
-            <NavBarAdmin />
+            <NavBar />
             
             <ToggleButtonGroup />
 

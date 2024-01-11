@@ -32,7 +32,8 @@ const Order = sequelize.define('order', {
   raion: {type: DataTypes.STRING},
   FIO: {type: DataTypes.STRING},
   phone: {type: DataTypes.STRING},
-  price_deliver: {type: DataTypes.STRING}
+  price_deliver: {type: DataTypes.STRING},
+  main_dir_id: { type: DataTypes.UUID}
 })
 
 
@@ -47,7 +48,8 @@ const Photo = sequelize.define('photo', {
     type: {type: DataTypes.STRING},
     format: {type: DataTypes.STRING},
     amount: {type: DataTypes.INTEGER},
-    paper: {type: DataTypes.STRING}
+    paper: {type: DataTypes.STRING},
+    copies: {type: DataTypes.INTEGER, defaultValue: 1}
 })
 
 const Settings = sequelize.define('settings', {

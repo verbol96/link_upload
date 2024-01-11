@@ -10,7 +10,7 @@ const AppRouter = () => {
   const dispatch = useDispatch();
   const location = useLocation()
   const [userRole, setUserRole]=useState('')
-  const [isUserDataLoaded, setUserDataLoaded] = useState(false)  // новое состояние
+  const [isUserDataLoaded, setUserDataLoaded] = useState(false)  
 
   useEffect(()=>{
     if(localStorage.getItem('token')){
@@ -51,7 +51,7 @@ const isAuth = useSelector(state=>state.auth.auth)
           ))
       }
       
-      <Route path="*" element={<Navigate to={isAuth && userRole==='ADMIN'? "/table" : "/web"} />} />
+      <Route path="*" element={<Navigate to={isAuth && userRole==='ADMIN'? "/table" : isAuth ? "/PrivatePage": '/web'} />} />
     </Routes>
     )
   );

@@ -1,0 +1,19 @@
+.pageAfterUpload{
+    width: 80%;
+    margin: auto;
+
+    background: white;
+    padding: 8vw;
+    border-radius: 10px;
+} 
+
+@media(max-width: 769px){
+    .pageAfterUpload{
+        width: 90%;
+        padding: 8vw 6vw;
+    }
+
+    .title{
+        margin-bottom: 30px;
+    }
+}

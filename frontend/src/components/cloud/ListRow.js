@@ -12,7 +12,7 @@ export const ListRow = ({el}) =>{
 
     const [thumb, setThumb] = useState('')
 
-
+ 
     useEffect(() => {
         const displayFile = async (fileId) => {
             try {
@@ -42,7 +42,7 @@ export const ListRow = ({el}) =>{
         const confirmation = window.confirm('Вы уверены, что хотите удалить этот файл?')
         
         if (confirmation) {
-            await deleteFile(el)
+            await deleteFile(el.id)
             dispatch(deleteFileStore(el.id))
             alert('Файл удален')
         } 
@@ -92,7 +92,7 @@ export const ListRow = ({el}) =>{
                     }
             </div>
             <div className='button-group1'>
-                <button onClick={(e)=>downloadFile(e)}>скачать / {el.type === 'dir' 
+                <button onClick={(e)=>downloadFile(e)}><i style={{color: 'black', fontSize: 11}} className="bi bi-cloud-arrow-up"></i>  {el.type === 'dir' 
                     ? ( calculateFolderSize(el) / 1024 / 1024).toFixed(2)
                     : (el.size / 1024 / 1024).toFixed(2)
                 }мб</button>

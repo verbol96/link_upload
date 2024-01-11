@@ -61,12 +61,12 @@
   justify-content: space-between;
   gap: 5px;
   width: 100%;
-  padding: 5px;
+  padding: 3px;
 }
 
       .button-group1 button{
         height: 100%;
-        font-size: 8px;
+        font-size: 11px;
         border: 1px solid rgb(198, 198, 198);
         border-radius: 3px;
         background: #ffffff;

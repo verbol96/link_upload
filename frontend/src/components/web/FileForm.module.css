@@ -1,0 +1,139 @@
+.filesFormFormat{
+    border: 0.5px #2f5766 solid;
+    border-radius: 0 5px 5px 5px;
+    padding: 20px 10px;
+}
+
+@media (max-width: 769px) {
+  .filesFormFormat{
+    padding-top: 20px;
+  }
+}
+
+.selectContainer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    flex-direction: row;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+
+@media (max-width: 769px) {
+  .selectContainer{
+    gap: 5px;
+    margin: 10px 0 30px; 
+    padding: 0px;
+  }
+}
+
+.containerSelect{
+    flex: 2;
+    min-width: max-content;
+    max-width: 200px;
+    position: relative;
+}
+
+.containerInput{
+  flex: 1;
+  max-width: 100px;
+  position: relative;
+
+}
+
+
+.labelSelect {
+    position: absolute;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    color: #2D4B52;
+    top: 0;
+    left: 0;
+    padding: 0 5px;
+    background-color: transparent;
+    transform: translateY(-50%);
+  }
+  
+  .selectForm { 
+    font-size: 14px;
+    height: 35px;
+    padding-left: 10px;
+    border: none;
+    text-align: center;
+    border-bottom: 1.5px solid #2C3531;
+    width: 100%;
+    outline: none;
+    transition: border-color 1s;
+    appearance: none; /* Убирает стандартный стиль select */
+    box-shadow: 0 3px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  }
+
+  @media (max-width: 769px){
+    .selectForm { 
+      font-size: 12px;
+      height: 30px;
+      padding-left: 5px;
+      text-align: left;
+    }
+
+    .labelSelect{
+      font-size: 12px;
+    }
+  }
+  
+  .selectArrow {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    pointer-events: none; /* Убирает взаимодействие с указателем мыши */
+    transform: translateY(-50%);
+  }
+
+  .cards{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 30px 10px 0 0;
+  }
+
+  .cardFile {
+    width: calc(100% / 8 - 10px);
+    height: calc(12.5vw - 40px);
+    overflow: hidden; 
+    position: relative;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    display: flex;
+    flex-direction: column;
+    background-color: transparent;
+  }
+  
+  @media (max-width: 769px) {
+    .cards{
+      gap: 5px;
+      margin: 15px 0 0 0;
+    }
+
+    .cardFile{
+      width: calc(100% / 3 - 4px);
+      height: calc(33vw - 30px);
+    }
+  }
+
+  .uploadLabel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column; /* Добавлено */
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    height: 100%;
+}
+  .uploadLabel:hover {
+    background-color: #8ca2a7;
+  }

@@ -1,0 +1,60 @@
+
+.navBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 5vw;
+    background: linear-gradient(45deg,#2C3531, #298687);
+    color: #333333;
+    font-family: 'Montserrat', sans-serif, 'SemiBold ';
+    font-weight: 400;
+  }
+
+  /*
+  2C3531 - темноболотный
+  116466 - болотный
+  3AAFA9 - салатовый
+  eaeaea - светлый фон(почти белый)
+  */
+
+.logo{
+  font-size: 28px;
+  color: white;
+}
+
+.menu{
+  display: flex; 
+  gap: 1vw;
+}
+
+.labelMenu{
+  cursor: pointer;
+  font-size: 15px;
+  transition: scale 0.5s;
+  border: 0.5px solid rgb(120, 185, 166);
+  padding: 5px 15px;
+  border-radius: 5px;
+  min-width: 100px;
+  text-align: center;
+}
+
+.labelMenu:hover{
+  scale: 1.07;
+}
+
+@media (max-width: 769px) {
+  .navBar{
+    padding: 10px 10px 10px 20px;
+  } 
+  .labelMenu{
+    min-width: 0px;
+    font-size: 13px;
+  }
+  .labelMenu{
+    border: none;
+    padding: 5px;
+  }
+  .menu{
+    gap: 10px;
+  }
+}
