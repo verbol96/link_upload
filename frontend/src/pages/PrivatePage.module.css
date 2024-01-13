@@ -30,6 +30,7 @@
     text-align: center;
     background: rgb(255, 255, 255);
     color: rgb(62, 62, 62);
+    white-space: nowrap;
 }
 
 .menuContent{

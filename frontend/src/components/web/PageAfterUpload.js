@@ -2,27 +2,28 @@ import style from './PageAfterUpload.module.css'
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '../../http/authApi';
+import { useEffect } from 'react';
 
 export const PageAfterUpload = ({amountPhoto, phone}) =>{
 
     const navigate = useNavigate();
     const dispatch = useDispatch()
     const isAuth = useSelector(state=>state.auth.auth)
-    const user = useSelector(state=>state.private.user)
 
     const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
 
-    const ToPrivate = async() =>{
+    useEffect(()=>{
+        if(isAuth) return;
 
-        let phoneLogin=phone
-        if(isAuth) phoneLogin = user.phone
-        const data = await login(removeNonNumeric(phoneLogin));
+        const login1 = async() =>{
+            const data = await login(removeNonNumeric(phone));
+             if (typeof data === 'object') dispatch({ type: 'authStatus', paylods: true });
 
-        if (typeof data === 'object') {
-        navigate('/PrivatePage');
-        dispatch({ type: 'authStatus', paylods: true });
         }
-    }
+
+        login1()
+    },[dispatch, isAuth, phone])
+
 
     return(
         <div className={style.pageAfterUpload}>
@@ -37,7 +38,7 @@ export const PageAfterUpload = ({amountPhoto, phone}) =>{
                     <h6>Проверить заказ и его статус можете в{' '}
                     <button 
                         style={{ textDecoration: 'underline', backgroundColor: 'transparent', border: 'none' }} 
-                        onClick={()=>ToPrivate()}
+                        onClick={()=> navigate('/PrivatePage')}
                     >
                             личном кабинете <i style={{color: 'black'}} className="bi bi-house-door"></i>
                         </button>

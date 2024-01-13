@@ -10,7 +10,7 @@
 @media (max-width: 769px) {
     .sendGroup{
         flex-direction: column;
-        margin: 10px;
+        margin: 10px 0px 30px;
         padding: 0;
     }
 }

@@ -207,7 +207,11 @@ export const OneOrder = ({order}) =>{
                                 <div style={{flex: 1}}>сумма заказа:</div>
                                 <div style={{flex: 3, fontWeight: 600}}>
                                 {(Number(order.price)).toFixed(2)}р 
-                                {order.price_deliver!=='0' && <span style={{fontWeight: 400}}>( +{order.price_deliver}р пересылка )</span>}
+                                {order.price_deliver==='0' ? 
+                                    <span style={{fontWeight: 400}}> + пересылка  <i style={{color: 'black'}} className="bi bi-question-lg"></i>р </span>
+                                :
+                                    <span style={{fontWeight: 400}}> +{order.price_deliver}р пересылка</span>
+                                }
                                 </div>
                                 
                             </div>
@@ -249,10 +253,11 @@ export const OneOrder = ({order}) =>{
                     <div style={{flex: 1}}> <i style={{fontSize: 20, color: '#116466'}} className="bi bi-caret-down-fill"></i></div>
                     <div style={{flex: 1}}> {order.createdAt.split("T")[0].split("-")[2]}.{order.createdAt.split("T")[0].split("-")[1]}</div>
                     <div className={style.mobileNone}>  {order.FIO}</div>
+                    <div className={style.laptopNone}>  {order.FIO.split(' ')[0] && order.FIO.split(' ')[0]}</div>
                     <div className={style.mobileNone}> {formatPhoneNumber(order.phone)}</div>
-                    <div> {order.city}</div>
-                    <div style={{flex: 1}}> {(Number(order.price)+Number(order.price_deliver)).toFixed(2)}р</div>
-                    <div style={{flex: 3}}><button style={{backgroundColor: order.status === 6 ||order.status === 5 ? 'grey' : '#3AAFA9',  
+                    <div className={style.mobileNone}> {order.city}</div>
+                    <div style={{flex: 1, minWidth: 50}}> {(Number(order.price)+Number(order.price_deliver)).toFixed(2)}р</div>
+                    <div style={{flex: 3, maxWidth: '25%'}}><button style={{backgroundColor: order.status === 6 ||order.status === 5 ? 'grey' : '#3AAFA9',  
                                         border: 'none', borderRadius: 5, width:'100%', color: 'white'}}>{StatusOrder[order.status]}</button></div>
                
                 </div>

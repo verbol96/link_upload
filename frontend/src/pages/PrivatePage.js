@@ -10,7 +10,7 @@ import { MyOrdersAdmin } from "../components/privatePage/MyOrdersAdmin";
 
 const PrivatePage = () =>{
 
-    const menu = ['Мои заказы', 'Личные данные', 'Файлы']
+    const menu = ['Мои заказы', 'Личные данные', 'Облако']
     const user = useSelector(state=>state.private.user)
 
     const [item, setItem] = useState(0)
@@ -27,13 +27,21 @@ const PrivatePage = () =>{
 
         }
     }
+
+    const ShowUser = () =>{
+        if(!user.FIO) return user.phone
+        const splitUser = user.FIO.split(' ')
+        if(splitUser.length>1) return splitUser[0]+' '+splitUser[1]
+        if(splitUser.length===1) return splitUser[0]
+        
+    }
  
     return (
         <div style={{display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f6f6fa'}}>
             <NavBar />
             <div className={style.container}> 
                 <div className={style.menuList}>
-                    <div className={style.menuListPhone}>{user.phone}</div>
+                    <div className={style.menuListPhone}>{ShowUser()}</div>
                     <div className={style.menuListItem}>
                         {menu.map((el,index)=><div className={style.menuItem} style={{background: item===index && '#116466',color: item===index && 'white'}} key={index} onClick={()=>{setItem(index)}}>{el}</div>)}
                      </div>

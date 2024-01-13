@@ -36,3 +36,25 @@
         width: min-content;
     }
 }
+
+.container{
+    font-family: 'Montserrat', sans-serif, 'SemiBold ';
+    font-weight: 400;
+}
+
+.listVoid{
+    width: 100%;
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.container button{
+    width: max-content;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    border: 1.5px solid #116466;
+    background: #116466;
+}

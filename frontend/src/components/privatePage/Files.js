@@ -1,8 +1,10 @@
+import style from './Files.module.css'
+
 export const Files = () =>{
     return(
-        <>
+        <div className={style.container}>
 
-            <h6>Данная страница находится в разработке. </h6>
-        </>
+            <div>Данная страница находится в разработке. </div>
+        </div>
     )
 }
