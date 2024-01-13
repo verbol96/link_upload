@@ -2,6 +2,13 @@ import React from 'react';
 import './Footer.css'; // импортируем файл стилей
 
 const Footer = () => {
+
+  const getNowYear = () =>{
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    return currentYear
+  }
+
   return (
     <footer className="footer">
       <div className="footer-content">
@@ -21,7 +28,7 @@ const Footer = () => {
         </div>
         <div className="footer-links">
             <div>
-                <label><i className="bi bi-c-circle"></i> LINK 2023</label>
+                <label><i className="bi bi-c-circle"></i> LINK {getNowYear()}</label>
             </div>
         </div>
        

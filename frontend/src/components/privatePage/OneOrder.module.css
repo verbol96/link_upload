@@ -28,6 +28,12 @@
     }
 }
 
+@media (min-width: 769px){
+    .laptopNone{
+        display: none;
+    }
+}
+
 .desc{
     margin: 30px 0px;
     width: 100%;

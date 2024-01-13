@@ -150,14 +150,18 @@
   border-bottom: 1px solid rgb(92, 96, 95);
 }
  
+.containerOne{
+  width: 25%;
+  padding: 10px;
+}
 
 .image-block {
   position: relative;
-  width: calc(100vw/4 - 20px);
-  margin: 10px;
-  height: calc(100vw/4 - 45px);
+  width: 100%;
+  height: calc(100vw/4 + 40px);
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   border: 1px solid rgb(184, 184, 184);
   box-shadow: 5px 6px 10px -5px rgba(128, 128, 128, 0.6);
   border-radius: 5px;
@@ -202,20 +206,23 @@
 
 .image-cropper{
   position: relative;
-  height: 220px;
+  height: calc(100vw/4 - 42px);
   margin: 10px;
 }
 
 .containerClassName{  /*область cropper*/
   
+
 }
 
 .mediaClassName { /*область фотографии*/
+  
 }
 
 .cropAreaClassName { /*область обрезки*/
   border: 1px dotted rgb(0, 0, 0) !important;
   color: rgba(255, 255, 255, 0.7)!important;
+
 }
 
 
@@ -259,4 +266,17 @@
   border: 1px solid rgb(150, 154, 153);
   background: #ffffff;
   border-radius: 5px;
+}
+
+.zoomDiv{
+  padding: 0 10px;
+  width: 70%;
+}
+
+.zoom-range {
+  margin: auto;
+  border-top: 5px solid #fff;
+  border-bottom: 5px solid #fff;
+  background: #3f51b5;
+  width: 100%;
 }

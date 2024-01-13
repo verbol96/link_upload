@@ -27,7 +27,10 @@ export const ChangeData = () => {
       let data1 = await getOneUser(user.phone)
       dispatch(setUser(data1))
     }
-    setIsEdit(prev=>!prev)
+    setTimeout(()=>{
+      setIsEdit(prev=>!prev)
+    }, 300)
+    
   }
 
   const ShowTypePost = () =>{
@@ -38,6 +41,10 @@ export const ChangeData = () => {
 
   return ( 
     <div className={style.cardForm}>
+      <div className={style.formGroup}>
+        <label className={style.formLabel}>Телефон:</label>
+        <label  className={style.formLabel1}>{user.phone}</label>
+      </div>
       <div className={style.formGroup} style={{marginBottom: 40}}>
         <label className={style.formLabel}>ФИО:</label>
         {isEdit?
