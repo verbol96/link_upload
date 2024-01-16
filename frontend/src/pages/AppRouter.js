@@ -51,7 +51,7 @@ const isAuth = useSelector(state=>state.auth.auth)
           ))
       }
       
-      <Route path="*" element={<Navigate to={isAuth && userRole==='ADMIN'? "/table" : isAuth ? "/PrivatePage": '/web'} />} />
+      <Route path="*" element={<Navigate to={isAuth && userRole==='ADMIN'? "/table" : isAuth ? "/private": '/web'} />} />
     </Routes>
     )
   );
