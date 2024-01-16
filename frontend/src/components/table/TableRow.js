@@ -127,7 +127,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                 <div className='flex_col_sm' > {order.createdAt.split("T")[0].split("-")[2]}.{order.createdAt.split("T")[0].split("-")[1]}</div>
                 <CopyToClipboard text={order.typePost + (order.order_number%99+1) +' ' + order?.user?.FIO}>
                 <div className='flex_col_sm' style={{color: 'darkgreen', fontWeight: 'bold'}}>
-                    {order.typePost + (order.order_number%99+1)}
+                    {order.typePost + (order.order_number%1000) +'(' + (order.order_number%99+1)+ ')'}
                 </div>
                 </CopyToClipboard>
                 <div className='flex_col' >

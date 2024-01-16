@@ -27,11 +27,11 @@ export const adminRoutes = [
         Component: Setting
     },
     {
-        path: '/PrivatePage',
+        path: '/private',
         Component: PrivatePage
     },
     {
-        path: '/Cloud',
+        path: '/cloud',
         Component: Cloud
     },
     {
@@ -52,7 +52,7 @@ export const userRoutes = [
     },
 
     {
-        path: '/PrivatePage',
+        path: '/private',
         Component: PrivatePage
     },
 

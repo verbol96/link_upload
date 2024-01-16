@@ -9,6 +9,7 @@ import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
 import {CopyToClipboard} from 'react-copy-to-clipboard'
 import { deleteFile } from '../../http/cloudApi';
+import { sendSms } from '../../http/authApi';
 
 export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
@@ -172,6 +173,15 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       await deleteFile(order.main_dir_id)
     }
   };
+
+  const SendSms = async() =>{
+    const userConfirmation = window.confirm(`Отправить смс: "Заказ отпрвлен. Код для отслеживания: ${codeOutside}. Подробнее в личном кабинете link1.by"`);
+    
+    if (userConfirmation) {
+      const code = `Заказ отпрвлен. Код для отслеживания: ${codeOutside}. Подробнее в личном кабинете link1.by`
+      await sendSms(phone, code)
+    }
+  }
 
   const AddFormat = () =>{
     const data = {
@@ -351,6 +361,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
                     onChange={(e)=>setSale(e.target.value)}>
               <option value={1}>0%</option>
               <option value={0.9}>10%</option>
+              <option value={0.85}>15%</option>
               <option value={0.8}>20%</option>
             </select>
             </div>
@@ -406,7 +417,12 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
           </div>
           <div className="card_actions">
             
-            <span> </span>
+            {order.status > 4 ? 
+              <button className="SendSms_button" onClick={()=>SendSms()}>смс об отправке</button>
+            :
+              <span></span>
+            }
+            
             
             <button className="delete_button" onClick={()=>DeleteOrder()}>удалить заказ</button>
           </div>
