@@ -19,8 +19,7 @@ export const SendGroup =({phone, upload, isAuth, setIsValid})=>{
         setTimeout(()=>{
             setIsSendSMS(false)
         }, 60000)
-        //await sendSms(phone, code)
-        console.log(code)
+        await sendSms(phone, code)
     }
 
     const TikTak = () =>{

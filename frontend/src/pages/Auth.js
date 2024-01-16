@@ -63,8 +63,7 @@ export const Auth = () =>{
         }
         const code = Math.floor(1000 + Math.random() * 9000);
         setCodeSMS(code)
-        //await sendSms(removeNonNumeric(phone), code)
-        console.log(code)
+        await sendSms(removeNonNumeric(phone), code)
         setPassword('')
         setIsSend(true)
         setDisableSms(true)
