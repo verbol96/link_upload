@@ -171,16 +171,12 @@ export const OneOrder = ({order}) =>{
                             </div>
                             <div className={style.rowInfo}>
                                 <div style={{flex: 1}}>штрихкод: </div>
-                                <div style={{display: "flex", flex: 3, fontSize: 11, gap:1}}>
+                                <div style={{display: "flex", flex: 3, fontSize: 11, gap:1, maxWidth: 'calc(75% - 10px)'}}>
                                     <button style={{fontWeight:600, border: '1px solid silver', borderRadius: 5, flex: '2', textAlign: 'center', background:'white'}}> {order.codeOutside? order.codeOutside: '-'}</button>
                                     {order.typePost==='R' &&
                                     <button className={style.btnInfo}
                                         onClick={() => {
-                                            if (order.codeOutside) {
-                                                if(order.type==='R') window.open(`https://belpost.by/Otsleditotpravleniye?number=${order.codeOutside}`, '_blank');
-                                                
-                                            
-                                            }
+                                            if (order.codeOutside) window.open(`https://belpost.by/Otsleditotpravleniye?number=${order.codeOutside}`, '_blank')
                                         }}
                                         >   
                                             отследить

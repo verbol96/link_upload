@@ -2,7 +2,7 @@ import {useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { deleteFile, downloadFiles, displayFileImg } from '../../http/cloudApi'
 import { deleteFileStore, pushStack, setCurrentDir, addStack } from '../../store/fileReducer'
-import './styleCloud.css'
+import style from './ListRow.module.css'
 
 export const ListRow = ({el}) =>{
     const dispatch = useDispatch()
@@ -40,7 +40,7 @@ export const ListRow = ({el}) =>{
         e.stopPropagation()
     
         const confirmation = window.confirm('Вы уверены, что хотите удалить этот файл?')
-        
+         
         if (confirmation) {
             await deleteFile(el.id)
             dispatch(deleteFileStore(el.id))
@@ -62,6 +62,7 @@ export const ListRow = ({el}) =>{
     }
 
     const files = useSelector(state=>state.files.filesAll)
+
     const calculateFolderSize = (el) =>{
         let path
         if(el.path) path =  el.path+'/'+el.name
@@ -73,17 +74,19 @@ export const ListRow = ({el}) =>{
 
     
     return(
-        <div className='block-file no-select' onClick ={(el.type==='dir')?()=>openFile():null}>
-            <div className='file-name'>{el.name}</div>
-            <div className='image-container'>
-                    {  
+        <div className={style.blockFile} onClick ={(el.type==='dir')?()=>openFile():null}>
+            <div className={style.fileName}>{el.name}</div>
+            <div className={style.imageContainer}>
+                    {   
                     isDownload? <div style={{fontSize: 20, textAlign: 'center'}}><i className="bi bi-cloud-download icon-menu"></i> {loadingCount}%</div>:
                     el.type==='dir'?
-                        <i className="bi bi-folder icon-menu"></i> 
+                        <div className={style.iconMenu} >
+                            <span className="bi bi-folder"></span> 
+                        </div>
                     :
                     <>
                         {thumb ? 
-                            <img className='imageFull' src={thumb} alt="Loaded from server" /> 
+                            <img className={style.imageFull} src={thumb} alt="Loaded from server" /> 
                         : 
                             <p>загрузка</p>
                         }
@@ -91,12 +94,14 @@ export const ListRow = ({el}) =>{
                     
                     }
             </div>
-            <div className='button-group1'>
-                <button onClick={(e)=>downloadFile(e)}><i style={{color: 'black', fontSize: 11}} className="bi bi-cloud-arrow-up"></i>  {el.type === 'dir' 
+            <div className={style.buttonGroup1}>
+                <button className={style.buttonSize} onClick={(e)=>downloadFile(e)}>
+                    <i className="bi bi-cloud-arrow-up"></i>  {el.type === 'dir' 
                     ? ( calculateFolderSize(el) / 1024 / 1024).toFixed(2)
                     : (el.size / 1024 / 1024).toFixed(2)
-                }мб</button>
-                <button onClick={(e)=>deleteFileClick(e)}><i className="bi bi-x-lg"></i></button>
+                    }мб
+                </button>
+                <button className={style.buttonDelete} onClick={(e)=>deleteFileClick(e)}><i className="bi bi-x-lg"></i></button>
             </div>
         </div>
     )

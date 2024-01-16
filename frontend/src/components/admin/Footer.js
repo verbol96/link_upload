@@ -1,5 +1,5 @@
 import React from 'react';
-import './Footer.css'; // импортируем файл стилей
+import style from './Footer.module.css'; // импортируем файл стилей
 
 const Footer = () => {
 
@@ -10,11 +10,11 @@ const Footer = () => {
   }
 
   return (
-    <footer className="footer">
-      <div className="footer-content">
+    <footer className={style.footer}>
+      <div className={style.footerContent}>
 
         <div>
-          <div className="footer-links">
+          <div className={style.footerLinks}>
             <div>
                 <label>Контакты: </label>
             </div>
@@ -26,7 +26,7 @@ const Footer = () => {
             </div>
           </div>
         </div>
-        <div className="footer-links">
+        <div className={style.footerLinks}>
             <div>
                 <label><i className="bi bi-c-circle"></i> LINK {getNowYear()}</label>
             </div>

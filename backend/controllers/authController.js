@@ -230,7 +230,6 @@ class authController {
         });
         return res.json(response.data)
     }
-
 }
 
 module.exports = new authController()

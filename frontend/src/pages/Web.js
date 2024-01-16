@@ -174,7 +174,7 @@ const Web = () =>{
 
         const userData = await SendToDB(data)
         
-        const MainDir = await createDir(typePost+(userData.order_number%99+1))
+        const MainDir = await createDir(typePost+(userData.order_number%1000))
 
         let newUserData = {...userData}
         newUserData.main_dir_id = MainDir.id
@@ -183,7 +183,7 @@ const Web = () =>{
         await updateOrder(userData.id, newUserData)
 
         for (let formatOne of formats) {
-            const parentFile = await createDir(formatOne.format + ' ' + formatOne.paper, MainDir.id);
+            const parentFile = await createDir(formatOne.format + '_' + formatOne.paper + '_копий_' +formatOne.copies, MainDir.id);
 
             const uploadPromises = formatOne.files.map(async (file) => {
                 await uploadFiles(file, parentFile.id, formatOne.id);

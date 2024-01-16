@@ -38,12 +38,14 @@
 
  .btnSend{ 
     width: 40%;
+    min-width: max-content;
     border: none;
     border-radius: 5px;
     padding: 10px 20px;
     height: 50px;
     background: #116466;
     color: #ffffff;
+    white-space: nowrap;
  }
 
  .btnSend:hover{
@@ -56,7 +58,10 @@
    }
    .btnSend{
       width: 80%;
-      font-size: 15px;
+      font-size: 14px;
+   }
+   .row{
+      gap: 5px;
    }
  }
 

@@ -61,7 +61,7 @@ const Cloud = () =>{
                     Облако LINK{stack.map((el, index)=><span key={index}><i className="bi bi-chevron-right"></i> {el} </span>)}
                 </div>
                 <div className="cloud-menu-right">
-                    <h6 style={{fontSize: 14}}>{`Память: ${getTotalSize(filesAll).toFixed(2)}gb / 7gb`}</h6>
+                    <h6 style={{fontSize: 14}}>{`Память: ${getTotalSize(filesAll).toFixed(2)}gb / 60gb`}</h6>
                     <button  
                         style={{border: '1px solid #dbdbdb', borderRadius: 5, background: 'white', fontSize: 14, marginLeft: 10, padding: '0 20px'}}
                         onClick={()=>ClearCloud()}>очистить</button>

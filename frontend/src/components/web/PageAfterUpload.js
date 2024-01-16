@@ -38,7 +38,7 @@ export const PageAfterUpload = ({amountPhoto, phone}) =>{
                     <h6>Проверить заказ и его статус можете в{' '}
                     <button 
                         style={{ textDecoration: 'underline', backgroundColor: 'transparent', border: 'none' }} 
-                        onClick={()=> navigate('/PrivatePage')}
+                        onClick={()=> navigate('/private')}
                     >
                             личном кабинете <i style={{color: 'black'}} className="bi bi-house-door"></i>
                         </button>

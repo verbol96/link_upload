@@ -39,13 +39,13 @@ export const NavBar = () =>{
             {isAuth?
             <>
               {
-                location.pathname === '/PrivatePage'
+                location.pathname === '/private'
                 ? 
-                  <label className={style.labelMenu} style={{color: 'white'}} onClick={() => navigate('/Web')}>
+                  <label className={style.labelMenu} style={{color: 'white'}} onClick={() => navigate('/web')}>
                   Форма заказа
                   </label>
               :
-                  <label className={style.labelMenu} style={{color: 'white'}} onClick={() => navigate('/PrivatePage')}>
+                  <label className={style.labelMenu} style={{color: 'white'}} onClick={() => navigate('/private')}>
                   Личный кабинет
                   </label>
               }
@@ -58,13 +58,13 @@ export const NavBar = () =>{
             :
               <>
               {
-                location.pathname === '/Auth'
+                location.pathname === '/auth'
                 ?
-                <label className={style.labelMenu} style={{color: 'white'}} onClick={() => navigate('/Web')}>
+                <label className={style.labelMenu} style={{color: 'white'}} onClick={() => navigate('/web')}>
                 Форма заказа
                 </label>
                 :
-                <label className={style.labelMenu} style={{color: 'white'}} onClick={() => navigate('/Auth')}>
+                <label className={style.labelMenu} style={{color: 'white'}} onClick={() => navigate('/auth')}>
                 Войти
                 </label>
               }

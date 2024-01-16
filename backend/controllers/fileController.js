@@ -1,4 +1,4 @@
-const {User, File} = require('../models/models')
+const {User, File, Photo, Order} = require('../models/models')
 require('dotenv').config()
 const FileService = require('../services/fileService')
 const fs = require('fs')
@@ -257,6 +257,94 @@ class fileController {
             console.log(error)
             return res.status(500).json({message: "не получены файлы"})
         }
+    }
+
+    async importBackup(req,res){
+        const {file, photo, user, order} = req.body
+
+      for(let i = 0; i < user.length; i++){
+        await User.create({
+            id: user[i].id,
+            phone: user[i].phone,
+            FIO: user[i].FIO,
+            password: user[i].password,
+            role: user[i].role,
+            typePost: user[i].typePost,
+            createdAt: user[i].createdAt,
+            updatedAt: user[i].updatedAt,
+            postCode: user[i].photoId,
+            city: user[i].role,
+            adress: user[i].typePost,
+            oblast: user[i].createdAt,
+            raion: user[i].updatedAt
+        })
+      }
+   
+      for(let i = 0; i < order.length; i++){
+        await Order.create({
+            id: order[i].id,
+            order_number: order[i].order_number,
+            FIO: order[i].FIO,
+            typePost: order[i].typePost,
+            createdAt: order[i].createdAt,
+            updatedAt: order[i].updatedAt,
+            postCode: order[i].photoId,
+            city: order[i].role,
+            adress: order[i].typePost,
+            oblast: order[i].createdAt,
+            raion: order[i].updatedAt,
+            firstClass: order[i].firstClass,
+            phone: order[i].phone,
+            price_deliver: order[i].price_deliver,
+            main_dir_id: order[i].main_dir_id,
+            userId: order[i].userId,
+            codeOutside: order[i].codeOutside,
+            price: order[i].price,
+            other: order[i].other,
+            notes: order[i].notes,
+            status: order[i].status
+        
+        })
+      }
+
+        try {
+            for (let i = 0; i < photo.length; i++) {
+                
+                await Photo.create({
+                    id: photo[i].id,
+                    type: photo[i].type,
+                    format: photo[i].format,
+                    amount: photo[i].amount,
+                    paper: photo[i].paper,
+                    copies: photo[i].copies,
+                    createdAt: photo[i].createdAt,
+                    updatedAt: photo[i].updatedAt,
+                    orderId: photo[i].orderId,
+                })
+            }
+        } catch (error) {
+            console.log(error)
+        }
+
+        try {
+            for (let i = 0; i < file.length; i++) {
+
+                await File.create({
+                    id: file[i].id,
+                    name: file[i].name,
+                    type: file[i].type,
+                    size: file[i].size,
+                    path: file[i].path,
+                    parent: file[i].parent,
+                    createdAt: file[i].createdAt,
+                    updatedAt: file[i].updatedAt,
+                    photoId: file[i].photoId,
+                })
+            }
+        } catch (error) {
+            console.log(error)
+        }
+        return res.json({message: 'готово'})
     }
 
 }

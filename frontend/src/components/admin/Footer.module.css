@@ -7,36 +7,36 @@
     width: 100%;
   }
   
-  .footer-content {
+  .footerContent {
     display: flex;
     justify-content: space-between;
   }
   
-  .footer-links {
+  .footerLinks {
     display: flex;
     justify-content: space-between;
     flex-direction: row;
   }
 
-  .footer-links>div{
+  .footerLinks>div{
     margin: 10px;
     
   }
 
-  .footer-links label, a, i{
+  .footerLinks label, a, i{
     color: rgb(163, 163, 163);
   }
 
-  .footer-links a{
+  .footerLinks a{
     text-decoration: none;
   }
 
-  .footer-links div:hover a,
-  .footer-links div:hover i {
+  .footerLinks div:hover a,
+  .footerLinks div:hover i {
       color: rgb(255, 255, 255);
   }
   
-  .footer-copyright {
+  .footerCopyright {
     text-align: center;
     margin-top: 20px;
   }

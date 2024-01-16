@@ -13,6 +13,8 @@ router.get('/download', fileController.downloadFile)
 router.get('/thumb', fileController.displayFile)
 router.post('/getFilesPhotosId', fileController.getFilesPhotosId)
 
+router.post('/importBackup', fileController.importBackup)
+
 
 
  
