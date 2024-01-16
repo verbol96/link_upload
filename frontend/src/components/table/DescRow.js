@@ -417,7 +417,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
           </div>
           <div className="card_actions">
             
-            {order.status > 4 ? 
+            {order.status > 3 ? 
               <button className="SendSms_button" onClick={()=>SendSms()}>смс об отправке</button>
             :
               <span></span>
