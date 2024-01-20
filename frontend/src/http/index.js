@@ -2,7 +2,7 @@ import axios from "axios"
 
 const $host = axios.create({
     withCredentials: true,
-    //baseURL: 'http://localhost:8001/' //для local
+    //baseURL: 'http://localhost:8002/' //для local
     baseURL: 'http://85.193.91.221:8002/' // для server
 })
 

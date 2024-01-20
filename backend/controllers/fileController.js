@@ -70,16 +70,25 @@ class fileController {
             file.name = fileName
             
             const parent = await File.findOne({where:{id: req.body.parent}})
-            let path = `${process.env.FILEPATH}/${parent.path}/${parent.name}/${file.name}` 
-            if(fs.existsSync(path)){
-                return res.status(400).json({message: "файл уже существукет"})
+            let filePath = `${process.env.FILEPATH}/${parent.path}/${parent.name}/${file.name}`;
+            let fileExists = fs.existsSync(filePath);
+            let count = 1;
+            let newFileName =   fileName  
+
+            while (fileExists) {
+                const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
+                const fileExtension = file.name.split('.').pop();
+                newFileName = `${fileNameWithoutExtension} (${count}).${fileExtension}`;
+                filePath = `${process.env.FILEPATH}/${parent.path}/${parent.name}/${newFileName}`;
+                fileExists = fs.existsSync(filePath);
+                count++;
             }
-            
-            file.mv(path) //перемещение файла по пути
+
+            file.mv(filePath);
             const type = file.name.split('.').pop()
             
             const dbFile = {
-                name: fileName,
+                name: newFileName,
                 type,
                 size: file.size,
                 path:  `${parent.path}/${parent.name}`,

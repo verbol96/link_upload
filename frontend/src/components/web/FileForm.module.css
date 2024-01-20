@@ -146,3 +146,16 @@
   .uploadLabel:hover {
     background-color: #8ca2a7;
   }
+
+  .notLoad{
+    font-family: 'Montserrat', sans-serif, 'SemiBold ';
+    font-weight: 500;
+    font-size: 11px;
+    margin-top: 30px;
+  }
+
+  .notLoadRow{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
