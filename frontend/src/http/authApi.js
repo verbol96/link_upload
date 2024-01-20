@@ -1,7 +1,4 @@
 import {$host} from './index'
-import jwt_decode from "jwt-decode"
-
-
 
 export const login = async(phone, password)=>{
     const {data} = await $host.post('/api/auth/login', {phone, password})

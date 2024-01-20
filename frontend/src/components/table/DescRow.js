@@ -175,10 +175,10 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   };
 
   const SendSms = async() =>{
-    const userConfirmation = window.confirm(`Отправить смс: "Заказ отпрвлен. Код для отслеживания: ${codeOutside}. Подробнее в личном кабинете link1.by"`);
+    const userConfirmation = window.confirm(`Отправить смс: "Заказ отправлен. Код отслеживания: ${codeOutside}. Подробнее: link1.by"`);
     
     if (userConfirmation) {
-      const code = `Заказ отпрвлен. Код для отслеживания: ${codeOutside}. Подробнее в личном кабинете link1.by`
+      const code = `Заказ отправлен. Код отслеживания: ${codeOutside}. Подробнее: link1.by`
       await sendSms(phone, code)
     }
   }

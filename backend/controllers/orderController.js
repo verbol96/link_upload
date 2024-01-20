@@ -14,10 +14,13 @@ class orderController{
             order = await Order.create({codeOutside,price,other,notes, status, typePost,firstClass,
                 postCode,city,adress,oblast,raion,FIO,phone,userId: user.id
             })
-            await User.update({FIO, typePost, postCode, city, adress },
-              {where: 
-                {id: user.id}
-              })
+
+            if(user.role === 'USER'){
+              await User.update({FIO, typePost, postCode, city, adress },
+                {where: 
+                  {id: user.id}
+                })
+            }
 
         }else{
             const pretendent = await User.findOne({where: {phone: phone}})

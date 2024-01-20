@@ -2,14 +2,14 @@ import { useRef , useEffect, useState} from "react";
 import { ImgCard } from "./ImgCard";
 import style from './FileForm.module.css'
 import { useDispatch, useSelector } from 'react-redux'
-import { $host } from "../../http";
 import { saveSettings } from "../../store/orderReducer";
 import { v4 as uuidv4 } from 'uuid'
 import loadImage from 'blueimp-load-image'
 import heic2any from "heic2any";
+import { getSettings } from "../../http/dbApi";
 
 
-export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats}) =>{
+export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, notLoad, setNotLoad}) =>{
 
     const fileInput = useRef(null); //для кастомного input(file)
     const dispach = useDispatch()
@@ -22,11 +22,11 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats}) =
     const FormatMagnit = settings.filter(el=>el.type==='magnit')
 
     useEffect(()=>{
-        $host.get('api/order/getAll').then(
-            res=> {
-                dispach(saveSettings(res.data.settings))
-            }
-        )  
+        async function getPriceList (){
+            let value = await getSettings()
+            dispach(saveSettings(value))
+        }
+        getPriceList()
     },[dispach])
 
     const sizePhoto =()=>{
@@ -74,98 +74,108 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats}) =
             } else if (agent.indexOf('safari') > -1) {
                 return 'safari';
             } else {
-                // Добавьте проверку для других браузеров, если необходимо
                 return 'unknown';
             }
         }
 
         const createObj = async(file) =>{
-            if(file.type==='image/heic'){
-                if(getBrowserName()==='safari'){
-                    const asyncOperationWithPromise =async()=> {
-                        return new Promise((resolve, reject) => {
-                            loadImage(
-                                file,
-                                (canvas) => {
-                                    canvas.toBlob(
-                                        (blob) => {
-                                            resolve({
-                                                id: uuidv4(),
-                                                name: file.name,
-                                                file: blob
-                                            });
-                                        },
-                                        'image/jpeg'
-                                    );
-                                },
-                                { canvas: true }
-                            );
-                        });
-                        }
-                    return asyncOperationWithPromise()
-                    .then((result) => {
-                        const name = result.name.split('.')[0]
-                        let file = new File([result.file], name+'.jpeg', {type: "image/jpeg"});
-                        const obj = {
-                            id: uuidv4(),
-                            file: file
-                        }
-                      return obj;
-                    })    
-                }else{
-                    const result = await heic2any({
-                        blob: file,
-                        toType: "image/jpeg",
-                    });
-                    const newfile = new File([result], file.name.split('.')[0]+'.jpeg', { type: "image/jpeg" });
-                    const obj = {
-                        id: uuidv4(),
-                        file: newfile
-                    }
-                    return obj
-                }   
-            }
-
-            if(file.type!=='image/jpeg' && file.type!=='image/png'){
-                const asyncOperationWithPromise =async()=> {
-                    return new Promise((resolve, reject) => {
+            try {
+                const type = file.name.split('.').pop().toLowerCase();
+              
+                if (type === 'heic') {
+                  if (getBrowserName() === 'safari') {
+                    const asyncOperationWithPromise = async () => {
+                      return new Promise((resolve, reject) => {
                         loadImage(
-                            file,
-                            (canvas) => {
-                                canvas.toBlob(
-                                    (blob) => {
-                                        resolve({
-                                            id: uuidv4(),
-                                            name: file.name,
-                                            file: blob
-                                        });
-                                    },
-                                    'image/jpeg'
-                                );
-                            },
-                            { canvas: true }
+                          file,
+                          (canvas) => {
+                            canvas.toBlob(
+                              (blob) => {
+                                resolve({
+                                  id: uuidv4(),
+                                  name: file.name,
+                                  file: blob
+                                });
+                              },
+                              'image/jpeg'
+                            );
+                          },
+                          { canvas: true }
                         );
-                    });
-                    }
-                return asyncOperationWithPromise()
-                .then((result) => {
-                    const name = result.name.split('.')[0]
-                    let file = new File([result.file], name+'.jpeg', {type: "image/jpeg"});
-                    const obj = {
+                      });
+                    };
+              
+                    return asyncOperationWithPromise().then((result) => {
+                      const name = result.name.split('.')[0];
+                      let file = new File([result.file], name + '.jpeg', { type: 'image/jpeg' });
+                      const obj = {
                         id: uuidv4(),
                         file: file
-                    }
-                  return obj;
-                })
-
-            }
-            else{
-                const obj = {
+                      };
+                      return obj;
+                    });
+                  } else {
+                    const result = await heic2any({
+                      blob: file,
+                      toType: 'image/jpeg'
+                    });
+                    const newfile = new File([result], file.name.split('.')[0] + '.jpeg', { type: 'image/jpeg' });
+                    const obj = {
+                      id: uuidv4(),
+                      file: newfile
+                    };
+                    return obj;
+                  }
+                }
+              
+                if (type === 'webp' || type === 'bmp') {
+                  const asyncOperationWithPromise = async () => {
+                    return new Promise((resolve, reject) => {
+                      loadImage(
+                        file,
+                        (canvas) => {
+                          canvas.toBlob(
+                            (blob) => {
+                              resolve({
+                                id: uuidv4(),
+                                name: file.name,
+                                file: blob
+                              });
+                            },
+                            'image/jpeg'
+                          );
+                        },
+                        { canvas: true }
+                      );
+                    });
+                  };
+              
+                  return asyncOperationWithPromise().then((result) => {
+                    const name = result.name.split('.')[0];
+                    let file = new File([result.file], name + '.jpeg', { type: 'image/jpeg' });
+                    const obj = {
+                      id: uuidv4(),
+                      file: file
+                    };
+                    return obj;
+                  });
+                }
+              
+                if (type === 'jpeg' || type === 'jpg' || type === 'png') {
+                  const obj = {
                     id: uuidv4(),
                     file: file
+                  };
+                  return obj;
                 }
-                return obj
-            }
+              
+                return 0;
+
+              } catch (error) {
+                console.log(error)
+                return 0;
+              }
+            
         }
 
         const scaleImg = async(el) =>{
@@ -194,12 +204,20 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats}) =
                     });
                 }
             })
-    }
+        }
 
         const downloadImg = async() =>{
             setLoad({isLoad: true, count: files.length})
             for(const file of files){
                 const original = await createObj(file)
+                if(original === 0) {
+                    setNotLoad(prevFilesPrevArray => {
+                        let newFilesPrevArray = [...prevFilesPrevArray];
+                        newFilesPrevArray[item] = [...newFilesPrevArray[item], file.name];
+                        return newFilesPrevArray;
+                    });
+                    continue;
+                }
                 setFormats(prev => {
                     let newArr = [...prev];
                     newArr[item] = {
@@ -275,7 +293,7 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats}) =
                 </div>
                 <div className={style.containerSelect}>
                     <label className={style.labelSelect}>Размер:</label>
-                    <select className={style.selectForm}  value={formats[item].format} onChange={(e)=>ChangeSize(e)}>
+                    <select className={style.selectForm} value={formats[item].format} onChange={(e)=>ChangeSize(e)}>
                         {sizePhoto().map((el,index)=>ShowTitle(el.title)&&<option key={index} value={el.title}>{ShowTitle(el.title)}</option>)}
                     </select>
                     <span className={style.selectArrow}>▼</span>
@@ -327,6 +345,10 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats}) =
                     return <ImgCard key={index} image={el} deleteImg={deleteImg} />
                 })}
 
+            </div>
+
+            <div className={style.notLoad}>
+                {notLoad[item].map((el, index)=> <div className={style.notLoadRow} key={index}>{el} - формат не поддерживается</div>)}
             </div>
         </div>
     )

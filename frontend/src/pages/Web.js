@@ -39,6 +39,8 @@ const Web = () =>{
         getPriceList()
     }, [])
 
+   
+
     const [FIO, setFIO] = useState('')
     const [phone, setPhone] = useState('')
     const [typePost, setTypePost] = useState('E')
@@ -61,6 +63,7 @@ const Web = () =>{
             files: []
         }
     ])
+    const [notLoad, setNotLoad] = useState([[]])
     const [item, setItem] = useState(0)
     const [isValid, setIsValid] = useState(false)
 
@@ -76,6 +79,7 @@ const Web = () =>{
             files: []
         }])
         setFilesPrev(prev=>[...prev, []])
+        setNotLoad(prev=>[...prev, []])
         setItem(formats.length)
     }
 
@@ -86,6 +90,7 @@ const Web = () =>{
             setTimeout(()=>{
             if(formats.length===1) return;
             setFormats([...formats.filter(one=>one!==el)])
+            setNotLoad(prev=>[...prev.filter((one,index)=>index!==item)])
             setFilesPrev(prev=>[...prev.filter((one,index)=>index!==item)])
             setItem(prev=>{
                 if(prev===0) return 0
@@ -186,6 +191,7 @@ const Web = () =>{
             const parentFile = await createDir(formatOne.format + '_' + formatOne.paper + '_копий_' +formatOne.copies, MainDir.id);
 
             const uploadPromises = formatOne.files.map(async (file) => {
+                
                 await uploadFiles(file, parentFile.id, formatOne.id);
                 setCurrent((prev) => prev + 1);
             });
@@ -257,7 +263,8 @@ const Web = () =>{
                     
 
                         <FileForm item={item} setFormats={setFormats} formats={formats}
-                                   setFilesPrev={setFilesPrev} filesPrev={filesPrev[item]} />
+                                   setFilesPrev={setFilesPrev} filesPrev={filesPrev[item]}
+                                   notLoad={notLoad} setNotLoad={setNotLoad} />
 
                         <div>
                             <div className={style.formatsInfo}>
