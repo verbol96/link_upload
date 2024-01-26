@@ -132,8 +132,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
         >
             <div
                 style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
-                onClick={()=> {if (window.innerWidth > 768) handleDetailsClick(order.id)}} 
-                onDoubleClick={()=>{ if (window.innerWidth <= 768) handleDetailsClick(order.id)}} 
+                onDoubleClick={()=>{ handleDetailsClick(order.id)}} 
                 className={`order_card_main_t${selectedOrder===order.id ? ' order_card_main_t_expanded' : ''}`}>
                 <div className='col_origin' onClick={()=>handleDetailsClick(order.id)} >
                     {ShowOrigin()}
