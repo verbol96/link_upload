@@ -106,6 +106,23 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
         }
         return 'неверный номер';
       } 
+
+    const ShowData = () =>{
+
+        const data = `${order.createdAt.split("T")[0].split("-")[2]}.${order.createdAt.split("T")[0].split("-")[1]}`
+        const time = `${order.createdAt.split("T")[1].split(":")[0]}:${order.createdAt.split("T")[1].split(":")[1]}`
+        return `${data} (${time})`
+    }
+
+    const ShowOrigin = () =>{
+        switch(order.origin){
+            case 'telegram': return <i style={{color: 'darkgreen'}} className="bi bi-send"></i>
+            case 'website': return <i style={{color: 'darkgreen'}} className="bi bi-lightning-fill"></i>  
+            case 'email': return <i style={{color: 'darkgreen'}} className="bi bi-envelope"></i>
+            default:  return <i style={{color: 'darkgreen'}} className="bi bi-send"></i>
+        }
+    }
+
     return(
  
         <div 
@@ -115,42 +132,31 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
         >
             <div
                 style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
-                onDoubleClick={()=>handleDetailsClick(order.id)} 
+                onClick={()=> {if (window.innerWidth > 768) handleDetailsClick(order.id)}} 
+                onDoubleClick={()=>{ if (window.innerWidth <= 768) handleDetailsClick(order.id)}} 
                 className={`order_card_main_t${selectedOrder===order.id ? ' order_card_main_t_expanded' : ''}`}>
-                <div className='first_col' onClick={()=>handleDetailsClick(order.id)} >
-                    {selectedOrder===order.id ?
-                    <i className="bi bi-chevron-up"  style={{color: 'white'}}></i>
-                    :
-                    <i className="bi bi-chevron-down"></i>
-                    }
+                <div className='col_origin' onClick={()=>handleDetailsClick(order.id)} >
+                    {ShowOrigin()}
                 </div>
-                <div className='flex_col_sm' > {order.createdAt.split("T")[0].split("-")[2]}.{order.createdAt.split("T")[0].split("-")[1]}</div>
+                <div className='col_data' > {ShowData()}</div>
                 <CopyToClipboard text={order.typePost + (order.order_number%1000) +' ' + order?.user?.FIO}>
-                <div className='flex_col_sm' style={{color: 'darkgreen', fontWeight: 'bold'}}>
+                <div className='col_number' style={{color: 'darkgreen', fontWeight: 'bold', minWidth: 60}}>
                     {order.typePost + (order.order_number%1000) }
                 </div>
                 </CopyToClipboard>
-                <div className='flex_col' >
                 <CopyToClipboard text={order.FIO}>
-                <div className='ellipsis'>
-                    {order?.user?.FIO}
-                </div>
+                    <div className='col_fio overflow' >
+                            {order?.user?.FIO}
+                    </div>
                 </CopyToClipboard>
-                </div>
-                <div className='flex_col phoneForMobile' style={{flex:2}} >
-                    <div className='ellipsis'>
+                <div className='col_phone' >
                     {formatPhoneNumber(order.phone)}
-                    </div>
                 </div>
-                <div className='flex_col' style={{flex:2}}>{order.city}</div>
-                <div className='flex_col' >
-                    <div className='ellipsis'>
-                    {photo()}
-                    </div>
-                </div>
-                <div className='flex_col' style={{flex:1}} >{Warning()}</div>
+                <div className='col_city overflow'>{order.city}</div>
+                <div className='col_photo overflow'>{photo()}</div>
+                <div className='col_warn'>{Warning()}</div>
                 <CopyToClipboard text={copyCode()}>
-                <div className='flex_col_sm' >{(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р</div>
+                <div className='col_price' >{(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р</div>
                 </CopyToClipboard>
                 <select className="select_col" style={{backgroundColor: ColorBG[order.status-1]}} value={order.status} onChange={(e)=>ChangeStatus(e)} >
                     <option value="0">новый</option>

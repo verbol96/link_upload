@@ -5,6 +5,8 @@ const ADD_ORDER = 'ADD_ORDER'
 const UPDATE_ORDER = 'UPDATE_ORDER'
 const DELETE_ORDER = 'DELETE_ORDER'
 const SAVE_USERS = 'SAVE_USERS'
+const UPDATE_SMS_ADD = 'UPDATE_SMS_ADD'
+const UPDATE_SMS_SEND = 'UPDATE_SMS_SEND'
 
 const defaultState = {
     settings: [],
@@ -58,6 +60,36 @@ export const orderReducer = (state = defaultState, action) =>{
 
         case DELETE_ORDER: 
             return {...state, order: state.order.filter(el=>el.id!==action.payload)}
+        
+        case UPDATE_SMS_ADD:
+            return {
+                ...state,
+                order: state.order.map((el) => {
+                if (el.id === action.payload) {
+                    return {
+                    ...el,
+                    is_sms_add: true,
+                    };
+                } else {
+                    return el; // Вернуть элемент без изменений
+                }
+                }),
+            };
+        
+        case UPDATE_SMS_SEND:
+            return {
+                ...state,
+                order: state.order.map((el) => {
+                if (el.id === action.payload) {
+                    return {
+                    ...el,
+                    is_sms_send: true,
+                    };
+                } else {
+                    return el; // Вернуть элемент без изменений
+                }
+                }),
+            };
 
         default: return state
     }
@@ -75,4 +107,7 @@ export const saveUsers = (users) => ({type: SAVE_USERS, payload: users});
 export const addOrder = (orderNew)=>({type: 'ADD_ORDER', payload: orderNew})
 export const updateOrderAction = (orderId, data) =>({type: 'UPDATE_ORDER', payload: {orderId, data}})
 export const deleteOrderId = (id) =>({type:'DELETE_ORDER', payload: id})
+
+export const updateSmsAdd  = (id) =>({type: 'UPDATE_SMS_ADD', payload: id})
+export const updateSmsSend  = (id) =>({type: 'UPDATE_SMS_SEND', payload: id})
   

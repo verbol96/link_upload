@@ -6,13 +6,13 @@ const { Op, where } = require("sequelize");
 class orderController{
     async addOrder(req,res) {
         const {phone, FIO, typePost, firstClass, postCode, city, adress,
-             oblast, raion, codeOutside, price, other, notes, photo, auth, phoneUser, status} = req.body
+             oblast, raion, codeOutside, price, other, notes, photo, auth, phoneUser, status, origin} = req.body
 
         let order
         if(auth){
             const user = await User.findOne({where: {phone: phoneUser}})
             order = await Order.create({codeOutside,price,other,notes, status, typePost,firstClass,
-                postCode,city,adress,oblast,raion,FIO,phone,userId: user.id
+                postCode,city,adress,oblast,raion,FIO,phone,userId: user.id, origin
             })
 
             if(user.role === 'USER'){
@@ -28,11 +28,11 @@ class orderController{
                 const hashPassword = await bcryptjs.hash('rootPW', 3)
                 const user = await User.create({phone, FIO, password: hashPassword, typePost, postCode,city,adress,oblast,raion})
                 order = await Order.create({codeOutside,price,other,notes, status, typePost,firstClass,
-                    postCode,city,adress,oblast,raion,FIO,phone,userId: user.id
+                    postCode,city,adress,oblast,raion,FIO,phone,userId: user.id, origin
                 })
             }else{
                 order = await Order.create({codeOutside,price,other,notes, status, typePost,firstClass,
-                    postCode,city,adress,oblast,raion,FIO,phone, userId: pretendent.id
+                    postCode,city,adress,oblast,raion,FIO,phone, userId: pretendent.id, origin
                 })
             }
         }
@@ -144,14 +144,15 @@ class orderController{
     async updateOrder(req,res){
         const id = req.params.id
         
-        const {phone, FIO, typePost, firstClass, postCode, city, adress, oblast, raion, codeOutside, price, price_deliver, other, photo, userId, notes, phoneUser, main_dir_id} = req.body
+        const {phone, FIO, typePost, firstClass, postCode, city, adress, oblast, raion,
+           codeOutside, price, price_deliver, other, photo, userId, notes, phoneUser, main_dir_id, origin, is_sms_add, is_sms_send} = req.body
 
         const user = await User.findOne({where:{phone: phoneUser}})
         
         if(user){
             await Order.update(
                 {
-                    codeOutside, price, price_deliver, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, userId: user.id, main_dir_id
+                    codeOutside, price, price_deliver, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, userId: user.id, main_dir_id, origin, is_sms_add, is_sms_send
                 },
                 {where:{id: id}}
             )
@@ -161,7 +162,7 @@ class orderController{
 
             await Order.update(
                 {
-                    codeOutside, price, price_deliver, other, notes, userId: user1.id, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, main_dir_id
+                    codeOutside, price, price_deliver, other, notes, userId: user1.id, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, main_dir_id, origin, is_sms_add, is_sms_send
                 },
                 {where:{id: id}}
             )

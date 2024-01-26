@@ -37,6 +37,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
     const handleSortChange = (e) => {
       setSortKey(e.target.value);
     };
+
     useEffect(()=>{
         $host.get('api/order/getAll').then(
             res=> {
@@ -49,6 +50,8 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
 
     const [searchQuery, setSearchQuery] = useState(''); // для поиска
     const [selectedType, setSelectedType] = useState('All'); /// для белпочта/европочта
+    const [origin, setOrigin] = useState('All'); /// для белпочта/европочта
+
     const handleSearchChange = (e) => {
       setSearchQuery(e.target.value);
     };
@@ -56,6 +59,10 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
     const handleSelectChange = (e) => {
       setSelectedType(e.target.value);
     };
+
+    const OriginChange = (e) =>{
+      setOrigin(e.target.value)
+    }
 
     const AddNewOrder = async() =>{
       const userConfirmation = window.confirm("Добавить новый заказ?");
@@ -138,6 +145,16 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
         return order.typePost === selectedType;
       })
       .filter((order) => {
+        if (origin === order.origin) {
+          return true;
+        }
+        if (origin === 'All') {
+          return true;
+        }
+
+        return order.origin === origin;
+      })
+      .filter((order) => {
         const data = order.FIO+
                      order.adress+
                      order.city+
@@ -201,6 +218,12 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                         <option value={'All'}>Европочта и Белпочта</option>
                         <option value={"E"}>только Европочта</option>
                         <option value={"R"}>только Белпочта</option>
+                    </select>
+                    <select className="menu-select" style={{marginLeft: 0}} onChange={OriginChange}>
+                        <option value={'All'}>Сайт, телеграм, почта</option>
+                        <option value={'website'}>только сайт</option>
+                        <option value={'telegram'}>только телеграм</option>
+                        <option value={'email'}>только почта</option>
                     </select>
                     <input
                       className="menu-input"

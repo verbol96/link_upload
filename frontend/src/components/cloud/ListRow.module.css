@@ -33,6 +33,12 @@
     font-size: 10px;
     text-align: center;
     padding: 5px;
+    
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .fileName :first-child{
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

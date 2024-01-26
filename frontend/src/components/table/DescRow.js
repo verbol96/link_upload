@@ -3,7 +3,7 @@ import './DescRow.css';
 import { OneFormat } from './OneFormat';
 import { deleteOrder, getSettings, updateOrder } from '../../http/dbApi';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteOrderId, updateOrderAction } from '../../store/orderReducer';
+import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsSend } from '../../store/orderReducer';
 import _ from 'lodash';
 import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
@@ -33,6 +33,9 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const [notes, setNotes] = useState(order.notes || '')
   const [codeOutside, setCodeOutside] = useState(order.codeOutside || '')
   const [isChanged, setIsChanged] = useState(false);
+  const [origin, setOrigin] = useState(order.origin || '');
+  const [is_sms_add, setIs_sms_add] = useState(order.is_sms_add || '');
+  const [is_sms_send, setIs_sms_send] = useState(order.is_sms_send || '');
 
   const [numRows, setNumRows] = useState(2);
   const [numRows1, setNumRows1] = useState(2);
@@ -77,7 +80,8 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       photo: order.photos || [],
       firstClass: order.firstClass,
       price: order.price || '',
-      price_deliver: order.price_deliver || ''
+      price_deliver: order.price_deliver || '',
+      origin: order.origin || ''
     };
     
     const currentValues = {
@@ -96,7 +100,8 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       photo,
       firstClass,
       price,
-      price_deliver
+      price_deliver,
+      origin
     };
 
     for (const key in initialValues) {
@@ -108,7 +113,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
     setIsChanged(false);
   }, [FIO, phone, typePost, city, adress, oblast, raion, postCode, 
-      phoneUser, notes, other, codeOutside, setIsChanged, order, photo, firstClass, price, price_deliver]);
+      phoneUser, notes, other, codeOutside, setIsChanged, order, photo, firstClass, price, price_deliver, origin]);
 
   useEffect(() => {
     checkChanges();
@@ -132,6 +137,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     adressId: order.adressId, 
     notes: notes,
     codeOutside: codeOutside,
+    origin: origin
   };
 
   const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
@@ -156,7 +162,8 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       price_deliver: price_deliver,
       firstClass,
       phoneUser: phoneUser,
-      user: users.find(user => user.phone === phoneUser) || {FIO:FIO}
+      user: users.find(user => user.phone === phoneUser) || {FIO:FIO},
+      origin: origin
     }
     
     dispatch(updateOrderAction(order.id, dataDispatch))
@@ -174,14 +181,30 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     }
   };
 
-  const SendSms = async() =>{
+  const SmsAdd = async() =>{
+    const userConfirmation = window.confirm(`Отправить смс: "Заказ принят. Проверить статус можно в личном кабинете www.link1.by"`);
+    
+    if (userConfirmation) {
+      const code = `Заказ принят. Проверить статус можно в личном кабинете www.link1.by`
+      //await sendSms(phone, code)
+      setIs_sms_add(true)
+      dispatch(updateSmsAdd(order.id))
+      updateOrder(order.id, {...data, is_sms_add: true})
+    }
+  }
+
+  const SmsSend = async() =>{
     const userConfirmation = window.confirm(`Отправить смс: "Заказ отправлен. Код отслеживания: ${codeOutside}. Подробнее: link1.by"`);
     
     if (userConfirmation) {
       const code = `Заказ отправлен. Код отслеживания: ${codeOutside}. Подробнее: link1.by`
-      await sendSms(phone, code)
+      //await sendSms(phone, code)
+      setIs_sms_send(true)
+      dispatch(updateSmsSend(order.id))
+      updateOrder(order.id, {...data, is_sms_send: true})
     }
   }
+
 
   const AddFormat = () =>{
     const data = {
@@ -239,6 +262,13 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     }else return ''
   }
 
+  const isUser = () =>{
+    const pretend = users.find(user => user.phone === phoneUser)
+    if(pretend.role  === 'USER'){
+      return true
+    }else return false
+  }
+
   const [modalVisible, setModalVisible] = useState(false);
   const [modalVisibleMain, setModalVisibleMain] = useState(false);
 
@@ -256,8 +286,6 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const handleModalMouseLeaveMain = () => {
     setModalVisibleMain(false);
   };
-
-
 
   return (
     <div className="order_details_card">
@@ -384,6 +412,14 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
         <div className="card_admin">
           <div>
+           <div className='origin'>
+              <label>Источник:</label>
+              <select value={origin} onChange={(e)=>setOrigin(e.target.value)}>
+                  <option value={'website'}>website</option>
+                  <option value={'telegram'}>telegram</option>
+                  <option value={'email'}>email</option>
+              </select>
+            </div>
             <div className='info_other'>
               <label>Заметки:</label>
               <textarea rows={numRows1}  value={notes} onChange={(e)=>setNotes(e.target.value)}  />
@@ -407,7 +443,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
             </div>
             <div className='contact_field'>
               <label></label>
-              <label style={{fontSize: 12, flex: 2}}>{showFIO()}</label>
+              <label style={{fontSize: 12, flex: 2, color: !isUser() && 'red'}}>{showFIO()}</label>
             </div>
             <div className='contact_field'>
               <label>Штрихкод:</label>
@@ -416,11 +452,14 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
           </div>
           <div className="card_actions">
-            
-            {order.status > 3 ? 
-              <button className="SendSms_button" onClick={()=>SendSms()}>смс об отправке</button>
-            :
-              <span></span>
+            {
+              is_sms_add ? <label><i style={{color: 'darkgreen'}} className="bi bi-check-all"></i>принят</label>
+              : <button className="SendSms_button" onClick={()=>SmsAdd()}><i style={{color: 'darkgreen', marginRight: 10}} className="bi bi-telephone-forward"></i> принят</button>
+            }
+
+            {
+              is_sms_send ? <label><i style={{color: 'darkgreen'}} className="bi bi-check-all"></i>отправлен</label>
+              : <button className="SendSms_button" onClick={()=>SmsSend()}><i style={{color: 'darkgreen', marginRight: 10}} className="bi bi-telephone-forward"></i>отправлен</button>
             }
             
             

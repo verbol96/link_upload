@@ -33,7 +33,10 @@ const Order = sequelize.define('order', {
   FIO: {type: DataTypes.STRING},
   phone: {type: DataTypes.STRING},
   price_deliver: {type: DataTypes.STRING},
-  main_dir_id: { type: DataTypes.UUID}
+  main_dir_id: { type: DataTypes.UUID},
+  origin: {type: DataTypes.STRING},
+  is_sms_add: {type: DataTypes.BOOLEAN},
+  is_sms_send: {type: DataTypes.BOOLEAN}
 })
 
 

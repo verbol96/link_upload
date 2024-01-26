@@ -107,6 +107,18 @@ export const OneOrder = ({order}) =>{
         return price
     }
 
+    const textMessage = () =>{
+        let text
+
+        if(order.typePost === 'E')
+            text = `Ваш заказ передан на отправку. По штрихкоду можете его отследить: ${order.codeOutside}. Стоимость ${order.price}р + доставка ${order.price_deliver}р`
+
+        if(order.typePost === 'R')
+            text = `Ваш заказ передан на отправку. Отследить можете по ссылке: https://belpost.by/Otsleditotpravleniye?number=${order.codeOutside}. Стоимость ${order.price}р`
+
+        return text
+    }
+
     return(
         <>
         {
@@ -182,13 +194,25 @@ export const OneOrder = ({order}) =>{
                                             отследить
                                     </button>
                                     }
-                                    <CopyToClipboard text={order.codeOutside || ' '}>
-                                    <button className={style.btnInfo}
-                                        onClick={()=>CopyCode()}
-                                    >
-                                            копировать {isCopy && <i style={{color: 'green'}} className="bi bi-clipboard-check"></i>}
-                                    </button>
-                                    </CopyToClipboard>
+                                    {
+                                        user.role !== 'USER' ?
+                                            <CopyToClipboard text={textMessage()}>
+                                            <button className={style.btnInfo}
+                                                onClick={()=>CopyCode()}
+                                            >
+                                                    копировать SMS {isCopy && <i style={{color: 'green'}} className="bi bi-clipboard-check"></i>}
+                                            </button>
+                                            </CopyToClipboard>
+                                        :
+                                            <CopyToClipboard text={order.codeOutside || ' '}>
+                                            <button className={style.btnInfo}
+                                                onClick={()=>CopyCode()}
+                                            >
+                                                    копировать {isCopy && <i style={{color: 'green'}} className="bi bi-clipboard-check"></i>}
+                                            </button>
+                                            </CopyToClipboard>
+                                    }
+                                    
                                 </div>
                             </div>
 
