@@ -72,10 +72,18 @@ export const ListRow = ({el}) =>{
         }, 0);
     }
 
+    const ShowData = () =>{
+        const [data, time] = el.createdAt.split('T')
+        return `${data.split('-')[2]}.${data.split('-')[1]} (${time.split(':')[0]}:${time.split(':')[1]})`
+    }
     
     return(
         <div className={style.blockFile} onClick ={(el.type==='dir')?()=>openFile():null}>
-            <div className={style.fileName}>{el.name}</div>
+            <div className={style.fileName}>
+                <div>{el.name}</div>
+                {el.type==='dir'&&<div>{ShowData()}</div> }
+            </div>
+            
             <div className={style.imageContainer}>
                     {   
                     isDownload? <div style={{fontSize: 20, textAlign: 'center'}}><i className="bi bi-cloud-download icon-menu"></i> {loadingCount}%</div>:

@@ -63,7 +63,7 @@ export const Auth = () =>{
         }
         const code = Math.floor(1000 + Math.random() * 9000);
         setCodeSMS(code)
-        await sendSms(removeNonNumeric(phone), code)
+        await sendSms(removeNonNumeric(phone), `${code} - код для подтверждения`)
         //console.log(code)
         setPassword('')
         setIsSend(true)

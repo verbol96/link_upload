@@ -9,9 +9,14 @@ export const ListCloud=() =>{
     const files = _.orderBy(useSelector(state=>state.files.files), 'createdAt', 'desc')
     
     return(
-        <div className={style.filesList}>
+        <>
+            <div className={style.menu}>Файлов: {files.length}</div>
 
-            {files.map((el,index)=><ListRow el={el} key={index} />)}
-        </div>
+            <div className={style.filesList}>
+                {files.map((el,index)=><ListRow el={el} key={index} />)}
+            </div>
+        
+        </>
+        
     )
 }

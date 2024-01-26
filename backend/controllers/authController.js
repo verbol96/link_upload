@@ -225,6 +225,7 @@ class authController {
         const {phone, code} = req.body
         const response = await axios.post('https://app.sms.by/api/v1/sendQuickSMS', {
             token: process.env.TOKEN_SMS,
+            alphaname_id: 4879,
             message: code.toString(), 
             phone: phone.replace(/[^0-9+]/g, '') 
         });

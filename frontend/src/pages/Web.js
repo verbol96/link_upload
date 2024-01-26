@@ -174,7 +174,8 @@ const Web = () =>{
             "raion": '',
             'auth': isAuth,
             'phoneUser': user.phone,
-            'status': 0
+            'status': 0,
+            'origin': 'website'
         }
 
         const userData = await SendToDB(data)
