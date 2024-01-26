@@ -186,7 +186,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     
     if (userConfirmation) {
       const code = `Заказ принят. Проверить статус можно в личном кабинете www.link1.by`
-      //await sendSms(phone, code)
+      await sendSms(phone, code)
       setIs_sms_add(true)
       dispatch(updateSmsAdd(order.id))
       updateOrder(order.id, {...data, is_sms_add: true})
@@ -198,7 +198,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     
     if (userConfirmation) {
       const code = `Заказ отправлен. Код отслеживания: ${codeOutside}. Подробнее: link1.by`
-      //await sendSms(phone, code)
+      await sendSms(phone, code)
       setIs_sms_send(true)
       dispatch(updateSmsSend(order.id))
       updateOrder(order.id, {...data, is_sms_send: true})
