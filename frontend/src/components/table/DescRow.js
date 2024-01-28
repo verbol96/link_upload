@@ -177,7 +177,12 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     if (userConfirmation) {
       await deleteOrder(order.id);
       dispatch(deleteOrderId(order.id));
-      await deleteFile(order.main_dir_id)
+
+      const userConfirmation1 = window.confirm("Удалить файлы заказа с сервера?");
+      if (userConfirmation1) {
+        await deleteFile(order.main_dir_id)
+      }
+      
     }
   };
 
@@ -264,9 +269,10 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
   const isUser = () =>{
     const pretend = users.find(user => user.phone === phoneUser)
-    if(pretend.role  === 'USER'){
-      return true
+    if(pretend){
+        return pretend.role  === 'USER'
     }else return false
+    
   }
 
   const [modalVisible, setModalVisible] = useState(false);

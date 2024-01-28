@@ -82,7 +82,7 @@ class orderController{
           });
         const settings = await Settings.findAll()
         const users = await User.findAll({
-            attributes: { exclude: ['password', 'createdAt', 'updatedAt', 'role'] }
+            attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
           });
         return res.json({orders, settings, users})
     }

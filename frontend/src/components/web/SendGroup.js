@@ -20,7 +20,7 @@ export const SendGroup =({phone, upload, isAuth, setIsValid})=>{
             setIsSendSMS(false)
         }, 60000)
         await sendSms(phone, `${code} - код для подтверждения`)
-        
+        //console.log(code)
     }
 
     const TikTak = () =>{
