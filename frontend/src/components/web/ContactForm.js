@@ -58,7 +58,12 @@ export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city
                     <input className={style.inputForm}   value={city} onChange={(e)=>setCity(e.target.value)}  />
                 </div>
                 <div className={style.containerInput} style={{flex: 5}}>
-                    <label className={style.labelForm} >Номер отделения (адрес):</label>
+                    {
+                    typePost==='R' ?
+                    <label className={style.labelForm} >Улица, дом, квартира:</label>
+                    :
+                    <label className={style.labelForm} >Номер отделения либо его адрес:</label>
+                    }
                     <input className={style.inputForm}  value={adress} onChange={(e)=>setAdress(e.target.value)}  />
                 </div>
             </div>
