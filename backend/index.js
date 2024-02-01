@@ -6,6 +6,7 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload')
 const bodyParser = require('body-parser');
+const https = require('https');
 
 const app = express()
 const PORT = process.env.PORT
@@ -24,11 +25,20 @@ app.use(cors(
 ))
 app.use('/api', router)
 
+const httpsOptions = {
+    key: fs.readFileSync('/etc/nginx/ssl/link1.by.key'),
+    cert: fs.readFileSync('/etc/nginx/ssl/link1.by.crt')
+  };
+  
+  const server = https.createServer(httpsOptions, app);
+  
+
 const start = async() =>{
     try {
         await sequelize.authenticate()
         await sequelize.sync()
-        app.listen(PORT, ()=> console.log(`server started! ${PORT}`))
+        server.listen(PORT, () => console.log(`Secure server started on port ${PORT}`));
+        //app.listen(PORT, ()=> console.log(`server started! ${PORT}`))
     } catch (error) {
         console.log(error)
     }
