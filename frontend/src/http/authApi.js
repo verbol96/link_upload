@@ -50,9 +50,9 @@ export const sendSms = async(phone, code)=>{
 
 
 
-export const users_changeData = async(id, phone, FIO, city, role)=>{
+export const users_changeData = async(id, phone, FIO, typePost, city, adress, postCode, raion, oblast, role)=>{
     
-    const {data} = await $host.put('/api/auth/users_changeData', {id, phone, FIO, city, role})
+    const {data} = await $host.put('/api/auth/users_changeData', {id, phone, FIO, typePost, city, adress, postCode, raion, oblast, role})
     return data
 }
 export const users_delete = async(id)=>{

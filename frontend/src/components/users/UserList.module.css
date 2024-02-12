@@ -1,0 +1,67 @@
+.usersMain{
+    margin: 30px;
+}
+
+.usersMenu{
+    display: flex;
+    justify-content: left;
+    align-items: center;
+}
+
+.usersMenu button, .usersMenu select, .usersMenu input {
+    margin-left: 10px;
+  }
+  
+  .usersMenu button {
+    background-color: #2f616b;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 15px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.1s ease;
+    height: 30px;
+    width: 75px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .usersMenu button:hover {
+    background-color: #415351;
+    border: 1px solid #000000e2;
+  }
+  
+  .usersMenu select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    font-family: 'Montserrat', sans-serif, 'SemiBold';
+    font-weight: 500;
+    font-size: 11px;
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #2f616b;
+    padding: 0 10px;
+    height: 30px;
+    width: 150px;
+  }
+  
+  .usersMenu select:focus {
+    outline: none;
+    box-shadow: none;
+  }
+  
+  .usersMenu input {
+    width: 200px;
+      height: 30px;
+      padding: 5px 10px;
+      border: 1px solid #2f616b;
+      border-radius: 5px;
+      font-size: 14px;
+  }
+
+  .usersList{
+    margin-top: 40px;
+  }

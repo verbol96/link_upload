@@ -161,7 +161,8 @@ const Web = () =>{
         const data = {
             "FIO": FIO,
             "phone": removeNonNumeric(phone),
-            "typePost": typePost,
+            "typePost": typePost==='R1' ? 'R' : typePost,
+            "firstClass": typePost==='R1' ? true : false,
             "city": city,
             "adress": adress,
             "postCode": postCode,

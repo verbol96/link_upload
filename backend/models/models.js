@@ -36,6 +36,7 @@ const Order = sequelize.define('order', {
   main_dir_id: { type: DataTypes.UUID},
   origin: {type: DataTypes.STRING},
   is_sms_add: {type: DataTypes.BOOLEAN},
+  is_sms_error: {type: DataTypes.BOOLEAN},
   is_sms_send: {type: DataTypes.BOOLEAN}
 })
 

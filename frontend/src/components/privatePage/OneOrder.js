@@ -219,7 +219,7 @@ export const OneOrder = ({order}) =>{
                             <div className={style.rowInfo}>
                                 <div style={{flex: 1, maxWidth: '25%'}}>примечания:</div>
                                 <div style={{flex: 3, fontSize: 11}}>
-                                <textarea disabled rows={2} value={order.other} onChange={()=>{}} style={{ border: '1px solid silver', borderRadius: 5, width: '100%'}}></textarea>
+                                <textarea disabled rows={order.other.split('\n').length<2?2:order.other.split('\n').length} value={order.other} onChange={()=>{}} style={{ border: '1px solid silver', borderRadius: 5, width: '100%'}}></textarea>
                                 </div>
                             </div>
                              

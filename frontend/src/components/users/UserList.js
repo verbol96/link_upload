@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { $host } from '../../http';
-import './styleUsers.css';
-import { OneUser } from './OneUser';
 import { deleteUsersWithoutOrders } from '../../http/authApi';
+import { UserDesc } from './UserDesc';
+import style from './UserList.module.css'
 
 export const UserList = () => {
     const [users, setUsers] = useState([]);
@@ -17,7 +17,7 @@ export const UserList = () => {
         }
         getUsersList();
     }, []);
-
+    
     const handleSortChange = (e) => {
         setSortKey(e.target.value);
     };
@@ -72,8 +72,8 @@ export const UserList = () => {
     }
 
     return (
-        <div className='usersMain'>
-            <div className='usersMenu'>
+        <div className={style.usersMain}>
+            <div className={style.usersMenu}>
                 <button><i style={{color: 'white'}} className="bi bi-people"></i> {sortedAndFilteredUsers.length}</button>
                 <select onChange={handleRoleChange}>
                     <option value="все">все</option>
@@ -92,8 +92,8 @@ export const UserList = () => {
                 <button style={{fontSize: 12, marginLeft: 'auto', background: 'gray'}} onClick={clearEmpty}>Очистить</button>
             </div>
 
-            <div className='usersList'>
-                {sortedAndFilteredUsers.map((user) => <OneUser key={user.id} user={user} />)}
+            <div className={style.usersList}>
+                {sortedAndFilteredUsers.map((user) => <UserDesc key={user.id} user={user} />)}
             </div>
         </div>
     );

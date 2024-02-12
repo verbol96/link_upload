@@ -91,6 +91,7 @@ export const LeftMenu = () => {
           <div className="user-info">
             <div><i className="bi bi-person"></i> {user.FIO}</div>
             <div><i className="bi bi-telephone"></i>  {user.phone}</div>
+            <div style={{marginTop: 5, cursor: 'pointer'}} onClick={()=>Close('/history')}><i className="bi bi-info-circle"></i> версия сайта 4.2</div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 const {User, Order, Photo, Settings} = require('../models/models')
 const bcryptjs = require('bcryptjs')
 const { Op, where } = require("sequelize");
+const moment = require('moment-timezone');
 
 
 class orderController{
@@ -41,17 +42,25 @@ class orderController{
           await Photo.create({id: el.id, type: el.type, format: el.format, amount: el.amount, copies: el.copies, paper: el.paper, orderId: order.id });
         }));
 
-        const response = await Order.findOne({
-            where: { id: order.id },
-            include: [
-              {
-                model: User,
-              },
-              {
-                model: Photo,
-              }
-            ],
-          });
+        let response = await Order.findOne({
+          where: { id: order.id },
+          include: [
+            {
+              model: User,
+            },
+            {
+              model: Photo,
+            },
+          ],
+        });
+        
+        if (response) {
+
+          response =  {
+            ...response.toJSON(),
+            createdAt: moment(response.createdAt).tz('Europe/Moscow').format()
+          }
+        }
           
         return res.json(response)
     }
@@ -84,7 +93,16 @@ class orderController{
         const users = await User.findAll({
             attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
           });
-        return res.json({orders, settings, users})
+
+          const moscowOrders = orders.map(order => {
+            const moscowTime = moment(order.createdAt).tz('Europe/Moscow'); // Преобразование в Московскую временную зону
+            return {
+              ...order.toJSON(),
+              createdAt: moscowTime.format() // Форматирование даты и времени в строку
+            };
+          });
+          
+        return res.json({orders: moscowOrders, settings, users})
     }
 
     async getAllArchive(req,res){
@@ -104,7 +122,16 @@ class orderController{
         const users = await User.findAll({
             attributes: { exclude: ['password', 'createdAt', 'updatedAt', 'role'] }
           });
-        return res.json({orders, settings, users})
+
+          const moscowOrders = orders.map(order => {
+            const moscowTime = moment(order.createdAt).tz('Europe/Moscow'); // Преобразование в Московскую временную зону
+            return {
+              ...order.toJSON(),
+              createdAt: moscowTime.format() // Форматирование даты и времени в строку
+            };
+          });
+
+        return res.json({orders: moscowOrders, settings, users})
     }
 
     async getAllStat(req, res) {

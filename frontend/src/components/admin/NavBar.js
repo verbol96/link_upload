@@ -65,7 +65,7 @@ export const NavBar = () =>{
                 </label>
                 :
                 <label className={style.labelMenu} style={{color: 'white'}} onClick={() => navigate('/auth')}>
-                Войти
+                Личный кабинет
                 </label>
               }
               </>
