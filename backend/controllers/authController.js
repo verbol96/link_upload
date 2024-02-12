@@ -87,14 +87,18 @@ class authController {
                     id: user.id,
                     phone: user.phone,
                     FIO: user.FIO,
+                    typePost: user.typePost,
                     city: user.city,
+                    adress: user.adress,
+                    postCode: user.postCode,
+                    oblast: user.oblast,
+                    raion: user.raion,
                     role: user.role,
                     createdAt: user.createdAt,
                     orderCount,
                     totalOrderSum: Number(totalOrderSum.toFixed(2))
                 };
             });
-    
             return res.json(usersWithOrderInfo);
         } catch (error) {
             console.log(error);
@@ -150,8 +154,8 @@ class authController {
 
     async users_changeData(req,res, next){
         try {
-            const {id, phone, FIO, city, role} = req.body
-            const data = await User.update({phone, FIO, city, role}, {where: {id: id}})
+            const {id, phone, FIO, typePost, city, adress, postCode, raion, oblast, role} = req.body
+            const data = await User.update({phone, FIO, typePost, city, adress, postCode, raion, oblast, role}, {where: {id: id}})
             return res.json(data)
         } catch (error) {
             console.log(error)

@@ -3,7 +3,7 @@ import './DescRow.css';
 import { OneFormat } from './OneFormat';
 import { deleteOrder, getSettings, updateOrder } from '../../http/dbApi';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsSend } from '../../store/orderReducer';
+import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsError, updateSmsSend } from '../../store/orderReducer';
 import _ from 'lodash';
 import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
@@ -15,7 +15,6 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
   const dispatch = useDispatch()
   const users = useSelector(state=>state.order.users)
-
   const [price, setPrice] = useState(order.price || '');
   const [price_deliver, setPriceDeliver] = useState(order.price_deliver || '');
   const [typePost, setTypePost] = useState(order.typePost)
@@ -36,6 +35,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const [origin, setOrigin] = useState(order.origin || '');
   const [is_sms_add, setIs_sms_add] = useState(order.is_sms_add || '');
   const [is_sms_send, setIs_sms_send] = useState(order.is_sms_send || '');
+  const [is_sms_error, setIs_sms_error] = useState(order.is_sms_error || '');
 
   const [numRows, setNumRows] = useState(2);
   const [numRows1, setNumRows1] = useState(2);
@@ -186,6 +186,18 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     }
   };
 
+  const SmsError = async() =>{
+    const userConfirmation = window.confirm(`Отправить смс: "Ошибка в заказе. Подробнее в личном кабинете: www.link1.by"`);
+    
+    if (userConfirmation) {
+      const code = `Ошибка в заказе. Подробнее в личном кабинете: www.link1.by`
+      await sendSms(phone, code)
+      setIs_sms_error(true)
+      dispatch(updateSmsError(order.id))
+      updateOrder(order.id, {...data, is_sms_error: true})
+    }
+  }
+
   const SmsAdd = async() =>{
     const userConfirmation = window.confirm(`Отправить смс: "Заказ принят. Проверить статус можно в личном кабинете www.link1.by"`);
     
@@ -199,10 +211,10 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   }
 
   const SmsSend = async() =>{
-    const userConfirmation = window.confirm(`Отправить смс: "Заказ отправлен. Код отслеживания: ${codeOutside}. Подробнее: link1.by"`);
+    const userConfirmation = window.confirm(`Отправить смс: "Заказ отправлен. Код посылки: ${codeOutside}. Подробнее: www.link1.by"`);
     
     if (userConfirmation) {
-      const code = `Заказ отправлен. Код отслеживания: ${codeOutside}. Подробнее: link1.by`
+      const code = `Заказ отправлен. Код посылки: ${codeOutside}. Подробнее: www.link1.by`
       await sendSms(phone, code)
       setIs_sms_send(true)
       dispatch(updateSmsSend(order.id))
@@ -292,6 +304,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const handleModalMouseLeaveMain = () => {
     setModalVisibleMain(false);
   };
+
 
   return (
     <div className="order_details_card">
@@ -430,7 +443,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
               <label>Заметки:</label>
               <textarea rows={numRows1}  value={notes} onChange={(e)=>setNotes(e.target.value)}  />
             </div>
-
+ 
             <div className='info_other'>
               <label>Примечания клиента:</label>
               <textarea rows={numRows} value={other} onChange={(e)=>setOther(e.target.value)} />
@@ -459,15 +472,42 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
           </div>
           <div className="card_actions">
             {
-              is_sms_add ? <label><i style={{color: 'darkgreen'}} className="bi bi-check-all"></i>принят</label>
-              : <button className="SendSms_button" onClick={()=>SmsAdd()}><i style={{color: 'darkgreen', marginRight: 10}} className="bi bi-telephone-forward"></i> принят</button>
+              order.status === 0 ? (
+                is_sms_error ? (
+                  <label>
+                    <i style={{ color: 'darkgreen' }} className="bi bi-check-all"></i> ошибка
+                  </label>
+                ) : (
+                  <button className="SendSms_button" onClick={SmsError}>
+                    <i style={{ color: 'darkgreen', marginRight: 10 }} className="bi bi-telephone-forward"></i> ошибка
+                  </button>
+                )
+              ) : (
+                is_sms_add ? (
+                  <label>
+                    <i style={{ color: 'darkgreen' }} className="bi bi-check-all"></i>принят
+                  </label>
+                ) : (
+                  <button className="SendSms_button" onClick={SmsAdd}>
+                    <i style={{ color: 'darkgreen', marginRight: 10 }} className="bi bi-telephone-forward"></i> принят
+                  </button>
+                )
+              )
             }
 
             {
-              is_sms_send ? <label><i style={{color: 'darkgreen'}} className="bi bi-check-all"></i>отправлен</label>
-              : <button className="SendSms_button" onClick={()=>SmsSend()}><i style={{color: 'darkgreen', marginRight: 10}} className="bi bi-telephone-forward"></i>отправлен</button>
+              order.status !== 0 ? (
+              is_sms_send ? (
+                <label>
+                  <i style={{ color: 'darkgreen' }} className="bi bi-check-all"></i> отправлен
+                </label>
+              ) : (
+                <button className="SendSms_button" onClick={SmsSend}>
+                  <i style={{ color: 'darkgreen', marginRight: 10 }} className="bi bi-telephone-forward"></i> отправлен
+                </button>
+              )
+              ) : null
             }
-            
             
             <button className="delete_button" onClick={()=>DeleteOrder()}>удалить заказ</button>
           </div>

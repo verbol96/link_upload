@@ -7,6 +7,7 @@ import {CopyToClipboard} from 'react-copy-to-clipboard'
 
 export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId}) =>{
 
+    
     const dispatch = useDispatch();
 
     const photo = () =>{

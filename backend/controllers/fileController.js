@@ -6,6 +6,7 @@ const JSZip = require('jszip')
 const path = require('path');
 const mime = require('mime-types');
 const sharp = require('sharp');
+const moment = require('moment-timezone');
 
 class fileController {
     async createDir(req, res){
@@ -30,16 +31,24 @@ class fileController {
 
     async getFiles(req,res){
         try {
-            let files
+            let files1
             if(req.query.parent){
-                 files = await File.findAll({where:{parent: req.query.parent}})
+                 files1 = await File.findAll({where:{parent: req.query.parent}})
             }else{
-                 files = await File.findAll({where: {parent: '00000000-0000-0000-0000-000000000000'}})
-                 if(!files) 
+                 files1 = await File.findAll({where: {parent: '00000000-0000-0000-0000-000000000000'}})
+                 if(!files1) 
                  {
                     return res.json('нету файлов')
-                 }
+                 } 
             }
+
+            const files = files1.map(order => {
+                const moscowTime = moment(order.createdAt).tz('Europe/Moscow'); // Преобразование в Московскую временную зону
+                return {
+                  ...order.toJSON(),
+                  createdAt: moscowTime.format() // Форматирование даты и времени в строку
+                };
+              });
             
             return res.json(files)
             
@@ -51,8 +60,15 @@ class fileController {
 
     async getFilesAll(req,res){
         try {
-            const files = await File.findAll()
+            const files1 = await File.findAll()
             
+            const files = files1.map(order => {
+                const moscowTime = moment(order.createdAt).tz('Europe/Moscow'); // Преобразование в Московскую временную зону
+                return {
+                    ...order.toJSON(),
+                    createdAt: moscowTime.format() // Форматирование даты и времени в строку
+                };
+            });
             
             return res.json(files)
             

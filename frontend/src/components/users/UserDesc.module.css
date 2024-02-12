@@ -1,0 +1,32 @@
+.row{
+    width: 100%; 
+    display: flex;
+    font-size: 12px;
+    text-align: center;
+    background: white;
+    margin-top: 5px;
+    gap: 5px;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.input{
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    border: 1px solid lightgray;
+    border-radius: 3px;
+    background: white;
+
+    min-width: 50px;
+    padding: 0 5px;
+}
+
+.span{
+    flex: 2;
+    min-width: 50px;
+    padding: 0 5px;
+    font-size: 11px;
+    color: #2C3531;
+}

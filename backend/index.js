@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload')
 const bodyParser = require('body-parser');
 const https = require('https');
+const fs = require('fs');
 
 const app = express()
 const PORT = process.env.PORT
@@ -19,7 +20,7 @@ app.use(cookieParser())
 app.use(cors(
     {
         credentials: true,
-        origin: ['http://link1.by', 'https://link1.by']
+        origin: 'https://link1.by'
         //origin: 'http://localhost:3000'
     }
 ))
@@ -28,17 +29,17 @@ app.use('/api', router)
 const httpsOptions = {
     key: fs.readFileSync('/etc/nginx/ssl/link1.by.key'),
     cert: fs.readFileSync('/etc/nginx/ssl/link1.by.crt')
-  };
+};
   
-  const server = https.createServer(httpsOptions, app);
+const server = https.createServer(httpsOptions, app);
   
 
 const start = async() =>{
     try {
         await sequelize.authenticate()
         await sequelize.sync()
-        server.listen(PORT, () => console.log(`Secure server started on port ${PORT}`));
-        //app.listen(PORT, ()=> console.log(`server started! ${PORT}`))
+        server.listen(PORT, () => console.log(`Secure server started on port ${PORT}`)); //для server
+        //app.listen(PORT, ()=> console.log(`server started! ${PORT}`)) //для local
     } catch (error) {
         console.log(error)
     }

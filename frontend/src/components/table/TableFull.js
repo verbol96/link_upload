@@ -100,6 +100,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
         };
   
       const response = await $host.post('api/order/addOrder', data)
+      
       dispach(addOrder(response.data))
       const newOrderDate = new Date(response.data.createdAt);
       setEndDate(prevEndDate => newOrderDate > prevEndDate ? newOrderDate : prevEndDate);
@@ -200,7 +201,8 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
             dispach(saveUsers(res.data.users))
     
             // Добавьте следующую строку для обновления startDate
-            setStartDate(new Date(res.data.orders[res.data.orders.length - 1].createdAt));
+            let ordersDataStart =_.orderBy(res.data.orders, 'createdAt', "desc" )
+            setStartDate(new Date(ordersDataStart[ordersDataStart.length - 1].createdAt));
         }
       )  
     }

@@ -56,9 +56,8 @@ const EditorOne = ({ image, aspectRatioDef, cropperRef }) => {
   
   useEffect(() => {
     setAspectRatio(Number(aspectRatioDef));
-    onCropSizeChange()
-    }, [aspectRatioDef]);
-
+    onCropSizeChange();// eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aspectRatioDef]);
 
   const addField = () => {
     const dataImg = cropperRef.current.mediaSize
@@ -85,7 +84,10 @@ const EditorOne = ({ image, aspectRatioDef, cropperRef }) => {
   const minZoom = () =>{
       if(btnActive){
         const media = cropperRef.current.mediaSize
-        const value = cropSize.height/media.height
+        const value = Math.min(
+          cropSize.height/media.height,
+          cropSize.width/media.width,
+      );
         return forZoom*value
       } 
       else return 1*forZoom
@@ -137,7 +139,7 @@ const EditorOne = ({ image, aspectRatioDef, cropperRef }) => {
                 value={zoom}
                 min={minZoom()}
                 max={btnActive? 1.01*forZoom : 3*forZoom}
-                step={0.02}
+                step={0.01}
                 aria-labelledby="Zoom"
                 onChange={(e) => {
                   setZoom(e.target.value)

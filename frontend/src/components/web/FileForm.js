@@ -79,8 +79,12 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
         }
 
         const createObj = async(file) =>{
+
+           console.log(file.size)
             try {
                 const type = file.name.split('.').pop().toLowerCase();
+
+                if(file.size===0) return 0
               
                 if (type === 'heic') {
                   if (getBrowserName() === 'safari') {

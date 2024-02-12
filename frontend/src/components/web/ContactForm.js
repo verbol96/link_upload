@@ -41,12 +41,13 @@ export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city
                     <select className={style.selectForm} defaultValue={typePost} onChange={(e)=>setTypePost(e.target.value)}>
                             <option value={'E'}>Европочта</option>
                             <option value={'R'}>Белпочта</option>
+                            <option value={'R1'}>Белпочта(1 класс)</option>
                     </select>
                     <span className={style.selectArrow}>▼</span>
                 </div>
                 
                 {
-                    typePost==='R' &&
+                    (typePost==='R' || typePost==='R1') &&
                     <div className={style.containerInput} style={{flex: 1}}>
                         <label className={style.labelForm} >Индекс:</label>
                         <input className={style.inputForm}   value={postCode} onChange={(e)=>setPostCode(e.target.value)}  />
@@ -59,7 +60,7 @@ export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city
                 </div>
                 <div className={style.containerInput} style={{flex: 5}}>
                     {
-                    typePost==='R' ?
+                    (typePost==='R' || typePost==='R1') ?
                     <label className={style.labelForm} >Улица, дом, квартира:</label>
                     :
                     <label className={style.labelForm} >Номер отделения либо его адрес:</label>

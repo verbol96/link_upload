@@ -3,7 +3,7 @@ import axios from "axios"
 const $host = axios.create({
     withCredentials: true,
     //baseURL: 'http://localhost:8002/' //для local
-    baseURL: 'https://85.193.91.221:8002/' // для server
+    baseURL: 'https://link1.by:8002/' // для server
 })
 
 $host.interceptors.request.use((config) => {
@@ -28,7 +28,7 @@ $host.interceptors.response.use(config =>
             
             originalRequest._isRetry = true;
             try {
-                const response = await axios.get('https://85.193.91.221:8002/api/auth/refresh', {withCredentials: true})
+                const response = await axios.get('https://link1.by:8002/api/auth/refresh', {withCredentials: true})
                 if(response.data==='error_refresh') localStorage.removeItem('token');
                 else localStorage.setItem('token', response.data.accessToken);
                 return $host.request(originalRequest);
