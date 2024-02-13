@@ -194,11 +194,14 @@ class orderController{
                 {where:{id: id}}
             )
         }
-        
-        await Photo.destroy({where: {orderId: id}})
 
         await Promise.all(photo.map(async el => {
-          await Photo.create({id: el.id, type: el.type, format: el.format, amount: el.amount, copies: el.copies, paper: el.paper, orderId: id });
+          try{
+            await Photo.update({type: el.type, format: el.format, amount: el.amount, copies: el.copies, paper: el.paper, orderId: id }, {where: {id: el.id}});
+
+          }catch{
+            await Photo.create({id: el.id, type: el.type, format: el.format, amount: el.amount, copies: el.copies, paper: el.paper, orderId: id });
+          }
         }));
 
 

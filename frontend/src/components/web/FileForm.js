@@ -80,7 +80,6 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
 
         const createObj = async(file) =>{
 
-           console.log(file.size)
             try {
                 const type = file.name.split('.').pop().toLowerCase();
 
