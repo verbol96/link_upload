@@ -4,8 +4,6 @@ import style from './ContactForm.module.css'
 
 export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city,setCity,
     adress,setAdress,postCode,setPostCode, other, setOther, isValid})=>{
-
-
      
     return(
         <>
@@ -38,7 +36,7 @@ export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city
             <div className={style.rowInfo}>
                 <div className={style.containerSelect} style={{flex: 3}}>
                     <label className={style.labelSelect}>Тип отправки:</label>
-                    <select className={style.selectForm} defaultValue={typePost} onChange={(e)=>setTypePost(e.target.value)}>
+                    <select className={style.selectForm} value={typePost} onChange={(e)=>setTypePost(e.target.value)}>
                             <option value={'E'}>Европочта</option>
                             <option value={'R'}>Белпочта</option>
                             <option value={'R1'}>Белпочта(1 класс)</option>

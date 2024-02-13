@@ -53,7 +53,7 @@ export const OneOrderFile = ({el}) =>{
             default: return 'неизвестно'
         }
     }
- 
+ console.log(el.id)
     return(
         <div className={style.container}>
             <div className={style.rowMenu}>
