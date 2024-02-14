@@ -172,24 +172,24 @@ class orderController{
         const id = req.params.id
         
         const {phone, FIO, typePost, firstClass, postCode, city, adress, oblast, raion,
-           codeOutside, price, price_deliver, other, photo, userId, notes, phoneUser, main_dir_id, origin, is_sms_add, is_sms_send} = req.body
+           codeOutside, price, price_deliver, other, photo, userId, notes, phoneUser, main_dir_id, origin, is_sms_error, is_sms_add, is_sms_send, date_sent} = req.body
 
         const user = await User.findOne({where:{phone: phoneUser}})
         
         if(user){
             await Order.update(
                 {
-                    codeOutside, price, price_deliver, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, userId: user.id, main_dir_id, origin, is_sms_add, is_sms_send
+                    codeOutside, price, price_deliver, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, userId: user.id, main_dir_id, origin, is_sms_error, is_sms_add, is_sms_send, date_sent
                 },
                 {where:{id: id}}
             )
         }else{
             const hashPassword = await bcryptjs.hash('1', 3)
-            const user1 = await User.create({phone, FIO, password: hashPassword, typePost, postCode,city,adress,oblast,raion})
+            const user1 = await User.create({phone: phoneUser, FIO, password: hashPassword, typePost, postCode,city,adress,oblast,raion})
 
             await Order.update(
                 {
-                    codeOutside, price, price_deliver, other, notes, userId: user1.id, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, main_dir_id, origin, is_sms_add, is_sms_send
+                    codeOutside, price, price_deliver, other, notes, userId: user1.id, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, main_dir_id, origin, is_sms_error, is_sms_add, is_sms_send, date_sent
                 },
                 {where:{id: id}}
             )

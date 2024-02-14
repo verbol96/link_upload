@@ -157,6 +157,24 @@
   box-shadow: 0 6px 6px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.14);
 }
 
+.inputData {
+  padding: 5px 20px;
+  font-family: 'Montserrat', sans-serif, 'SemiBold';
+  font-weight: 500;
+  font-size: 11px;
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #2f616b;
+  border-radius: 4px;
+  width: max-content;
+  height: 25px;
+}
+
+.inputData:focus {
+  outline: none;
+  border: 2px solid #3f5154;
+}
+
 
 .format_group{
   display: flex;

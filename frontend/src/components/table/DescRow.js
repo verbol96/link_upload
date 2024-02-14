@@ -36,6 +36,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const [is_sms_add, setIs_sms_add] = useState(order.is_sms_add || '');
   const [is_sms_send, setIs_sms_send] = useState(order.is_sms_send || '');
   const [is_sms_error, setIs_sms_error] = useState(order.is_sms_error || '');
+  const [date_sent, setDate_sent] = useState(order.date_sent || '')
 
   const [numRows, setNumRows] = useState(2);
   const [numRows1, setNumRows1] = useState(2);
@@ -81,7 +82,8 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       firstClass: order.firstClass,
       price: order.price || '',
       price_deliver: order.price_deliver || '',
-      origin: order.origin || ''
+      origin: order.origin || '',
+      date_sent: order.date_sent || ''
     };
     
     const currentValues = {
@@ -101,7 +103,8 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       firstClass,
       price,
       price_deliver,
-      origin
+      origin,
+      date_sent
     };
 
     for (const key in initialValues) {
@@ -113,7 +116,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
     setIsChanged(false);
   }, [FIO, phone, typePost, city, adress, oblast, raion, postCode, 
-      phoneUser, notes, other, codeOutside, setIsChanged, order, photo, firstClass, price, price_deliver, origin]);
+      phoneUser, notes, other, codeOutside, setIsChanged, order, photo, firstClass, price, price_deliver, origin, date_sent]);
 
   useEffect(() => {
     checkChanges();
@@ -134,10 +137,10 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     price_deliver: price_deliver,
     firstClass: firstClass,
     ...(phoneUser.length > 1 ? { phoneUser: phoneUser, userId: order.userId, auth:true } : {}),
-    adressId: order.adressId, 
     notes: notes,
     codeOutside: codeOutside,
-    origin: origin
+    origin: origin,
+    date_sent: date_sent
   };
 
   const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
@@ -163,7 +166,8 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       firstClass,
       phoneUser: phoneUser,
       user: users.find(user => user.phone === phoneUser) || {FIO:FIO},
-      origin: origin
+      origin: origin,
+      date_sent: date_sent
     }
     
     dispatch(updateOrderAction(order.id, dataDispatch))
@@ -438,6 +442,10 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
                   <option value={'telegram'}>telegram</option>
                   <option value={'email'}>email</option>
               </select>
+            </div>
+            <div className='origin'>
+              <label>Отправка ожидается:</label>
+              <input className='inputData' type='date' value={date_sent} onChange={(e)=>setDate_sent(e.target.value)} />
             </div>
             <div className='info_other'>
               <label>Заметки:</label>

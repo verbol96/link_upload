@@ -129,6 +129,16 @@ const Web = () =>{
     return pr.toFixed(2)
     }
 
+    const ShowDiscount = () =>{
+        const amount = formats.reduce((sum, el)=>{
+            return sum+ el.files.length*el.copies
+        }, 0)
+
+        if(amount>499) return `скидка 20% применится после проверки заказа`
+        if(amount>199) return `скидка 10% применится после проверки заказа`
+        return ''
+    }
+
     const upload = async() =>{
         setStep(1)
         const photo = formats.reduce((acc,el)=> {
@@ -280,6 +290,7 @@ const Web = () =>{
                             </div>
                             <div className={style.formatsInfoAll}>
                                 <label>Сумма за все: {SumTeorIn()}</label>
+                                <div style={{fontSize: 12, fontWeight: 'normal'}}>{ShowDiscount()}</div>
                             </div>
                         </div>
                     </div>   
