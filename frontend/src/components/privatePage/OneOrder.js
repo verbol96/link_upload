@@ -164,7 +164,6 @@ export const OneOrder = ({order}) =>{
                                     <div style={{flex: 5, fontWeight: 600}}>{order.adress}</div>
                                 </div>
                             </div>
-
                         </div>
 
                         <div style={{flex: 3, display: 'flex', flexDirection:'column', justifyContent:'space-between', border: '1px solid silver', padding: 10, borderRadius:5, gap: 10}}>
@@ -179,12 +178,22 @@ export const OneOrder = ({order}) =>{
                                         {MessageStatus[order.status]}
                                     </label>
                                 </div>
+                            </div>
+                            {(order.status > 0 && order.status <= 4 ) &&
+                            <div className={style.rowInfo}>
+                                <div style={{flex: 1}}>отправка ожидается:</div>
+                                <div style={{flex: 3}}>
+                                    <input className={style.inputData} value={order.date_sent.split('-')[2] +'.'+ order.date_sent.split('-')[1] +'.'+  order.date_sent.split('-')[0]} readOnly />
+                                </div>
                                 
                             </div>
+                            }
+
+                            {order.status > 4 &&
                             <div className={style.rowInfo}>
                                 <div style={{flex: 1}}>штрихкод: </div>
-                                <div style={{display: "flex", flex: 3, fontSize: 11, gap:1, maxWidth: 'calc(75% - 10px)'}}>
-                                    <button style={{fontWeight:600, border: '1px solid silver', borderRadius: 5, flex: '2', textAlign: 'center', background:'white'}}> {order.codeOutside? order.codeOutside: '-'}</button>
+                                <div style={{display: "flex", flex: 3, fontSize: 11, gap:1, maxWidth: 'calc(75% - 7px)'}}>
+                                    <input className={style.inputData} value={order.codeOutside? order.codeOutside: '-'} readOnly />
                                     {order.typePost==='R' &&
                                     <button className={style.btnInfo}
                                         onClick={() => {
@@ -215,6 +224,7 @@ export const OneOrder = ({order}) =>{
                                     
                                 </div>
                             </div>
+                            }
 
                             <div className={style.rowInfo}>
                                 <div style={{flex: 1, maxWidth: '25%'}}>примечания:</div>

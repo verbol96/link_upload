@@ -1,8 +1,8 @@
 import { TableFull } from "../components/table/TableFull"
-import { Row, Col } from 'react-bootstrap'
 import {useState} from 'react'
 import Footer from "../components/admin/Footer"
 import { NavBar } from "../components/admin/NavBar"
+import style from './Table.module.css'
 
 const Table = () =>{
 
@@ -26,15 +26,13 @@ const Table = () =>{
         <div style={{display: 'flex', flexDirection: 'column',background: 'rgb(243, 243, 243)', minHeight: '100vh'}}>
            <NavBar />
 
-            <Row className="d-flex justify-content-center" 
-                onClick={()=>setSelectedOrder(null)}
-            >
-                <Col md={11}>
+            <div className={style.row} onClick={()=>setSelectedOrder(null)}>
+                <div className={style.col}>
                     <TableFull selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
                         collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId}
                         handleDetailsClick={handleDetailsClick} />
-                </Col>
-            </Row>
+                </div>
+            </div>
            
            <div style={{marginTop: 'auto'}}>
                 <Footer />

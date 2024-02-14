@@ -135,45 +135,45 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                 style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                 onDoubleClick={()=>{ handleDetailsClick(order.id)}} 
                 className={`order_card_main_t${selectedOrder===order.id ? ' order_card_main_t_expanded' : ''}`}>
-                <div className='col_origin' onClick={()=>handleDetailsClick(order.id)} >
-                    {ShowOrigin()}
-                </div>
-                <div className='col_data' > {ShowData()}</div>
-                <CopyToClipboard text={order.typePost + (order.order_number%1000) +' ' + order?.user?.FIO}>
-                <div className='col_number' style={{color: 'darkgreen', fontWeight: 'bold', minWidth: 60}}>
-                    {order.typePost + (order.order_number%1000) }
-                </div>
-                </CopyToClipboard>
-                <CopyToClipboard text={order.FIO}>
-                    <div className='col_fio overflow' >
-                            {order?.user?.FIO}
+                    <div className='col_origin' onClick={()=>handleDetailsClick(order.id)} >
+                        {ShowOrigin()}
                     </div>
-                </CopyToClipboard>
-                <div className='col_phone' >
-                    {formatPhoneNumber(order.phone)}
-                </div>
-                <div className='col_city overflow'>{order.city}</div>
-                <div className='col_photo overflow'>{photo()}</div>
-                <div className='col_warn'>{Warning()}</div>
-                <CopyToClipboard text={copyCode()}>
-                <div className='col_price' >{(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р</div>
-                </CopyToClipboard>
-                <select className="select_col" style={{backgroundColor: ColorBG[order.status-1]}} value={order.status} onChange={(e)=>ChangeStatus(e)} >
-                    <option value="0">новый</option>
-                    <option value="1">принят</option>
-                    <option value="2">обработан</option>
-                    <option value="3">в печати</option>
-                    <option value="4">упакован</option>
-                    <option value="5">отправлен</option>
-                    <option value="6">оплачен</option>
-                </select>
-                </div>
-                {
-                selectedOrder===order.id 
-                ? 
-                <DescRow order={order} setSelectedOrder={setSelectedOrder} handleDetailsClick={handleDetailsClick}  />
-                :null
-                }
+                    <div className='col_data' > {ShowData()}</div>
+                    <CopyToClipboard text={order.typePost + (order.order_number%1000) +' ' + order?.user?.FIO}>
+                    <div className='col_number' style={{color: 'darkgreen', fontWeight: 'bold', minWidth: 60}}>
+                        {order.typePost + (order.order_number%1000) }
+                    </div>
+                    </CopyToClipboard>
+                    <CopyToClipboard text={order.FIO}>
+                        <div className='col_fio overflow NoMobile' >
+                                {order?.user?.FIO}
+                        </div>
+                    </CopyToClipboard>
+                    <div className='col_phone NoMobile' >
+                        {formatPhoneNumber(order.phone)}
+                    </div>
+                    <div className='col_city overflow NoMobile'>{order.city}</div>
+                    <div className='col_photo overflow '>{photo()}</div>
+                    <div className='col_warn'>{Warning()}</div>
+                    <CopyToClipboard text={copyCode()}>
+                    <div className='col_price' >{(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р</div>
+                    </CopyToClipboard>
+                    <select className="select_col" style={{backgroundColor: ColorBG[order.status-1]}} value={order.status} onChange={(e)=>ChangeStatus(e)} >
+                        <option value="0">новый</option>
+                        <option value="1">принят</option>
+                        <option value="2">обработан</option>
+                        <option value="3">в печати</option>
+                        <option value="4">упакован</option>
+                        <option value="5">отправлен</option>
+                        <option value="6">оплачен</option>
+                    </select>
+                    </div>
+                    {
+                    selectedOrder===order.id 
+                    ? 
+                    <DescRow order={order} setSelectedOrder={setSelectedOrder} handleDetailsClick={handleDetailsClick}  />
+                    :null
+                    }
         </div>
             
     )
