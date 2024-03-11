@@ -94,7 +94,7 @@ export const MyOrdersAdmin = () => {
             {
                 orders.map((order, index)=> 
                     <div key={order.id}>
-                        <OneOrder order={order} index={orders.length - index}
+                        <OneOrder order={order} index={index}
                         handleDetailsClick={handleDetailsClick} selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder} />
                     </div>
                 )

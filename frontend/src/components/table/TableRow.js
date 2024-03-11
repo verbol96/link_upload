@@ -31,7 +31,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
             text = 
         `
         Здравствуйте. Заказ отправили. 
-    Сумма наложенного платежа: ${(Number(order.price)+Number(order.price_deliver)).toFixed(2)}р (с учетом пересылки)
+    Сумма наложенного платежа: ${(Number(order.price)+Number(order.price_deliver)).toFixed(2)}р 
     Код для отслеживания: ${order.codeOutside}
         `
         }

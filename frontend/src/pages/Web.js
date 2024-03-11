@@ -190,8 +190,8 @@ const Web = () =>{
         }
 
         const userData = await SendToDB(data)
-        
-        const MainDir = await createDir(typePost+(userData.order_number%1000))
+        const typePostName = (typePost==='R1') ? 'R' : typePost
+        const MainDir = await createDir(typePostName+(userData.order_number%1000))
 
         let newUserData = {...userData}
         newUserData.main_dir_id = MainDir.id

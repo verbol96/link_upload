@@ -12,7 +12,7 @@ const defaultState = {
 export default function privatePageReducer(state = defaultState, action) {
     switch (action.type) {
         case SET_USER: return {...state,   user: action.payload.user, 
-                                            order: action.payload.user.orders
+                                            order: action.payload.orders
                                           }
         case CHANGE_NAME: return {...state, user: {...state.user, FIO: action.payload}}
 

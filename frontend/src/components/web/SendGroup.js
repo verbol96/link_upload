@@ -43,6 +43,7 @@ export const SendGroup =({phone, upload, isAuth, setIsValid})=>{
         if(isAuth) upload()
         else{
             setIsFormSms(true)
+            sendSMS()
             if(codeSMS===Number(codeCheck)) upload()
         }
     }
@@ -54,12 +55,13 @@ export const SendGroup =({phone, upload, isAuth, setIsValid})=>{
             <>
                 <div  className={style.sendSmsForm} style={{border: codeSMS===Number(codeCheck) && '2px solid green'}}>
                     <div style={{margin: 5, textAlign: 'center'}}>
-                        <label style={{marginRight: 10}}>Подтверждение номера: </label>
+                        <label style={{marginRight: 10}}>Код отправлен на номер: </label>
                         <label>{phone}</label>
                     </div>
                     <div className={style.smsGroup}>
-                        <button onClick={sendSMS} disabled={isSendSMS&&true}>{isSendSMS? `отправлен(${tik})`: ' отправить код'}</button>
-                        <input value={codeCheck} placeholder="код из СМС" onChange={(e)=>setCodeCheck(e.target.value)} style={{textAlign: 'center'}} />
+                        
+                        <button onClick={sendSMS} style={{ background: isSendSMS&&'rgb(200, 200, 200)'}} disabled={isSendSMS&&true}>{isSendSMS? `новый код через ${tik} сек`: ' отправить новый код'}</button>
+                        <input value={codeCheck} placeholder="код из SMS" onChange={(e)=>setCodeCheck(e.target.value)} style={{textAlign: 'center'}} />
                         <label>
                         {
                             codeSMS===Number(codeCheck) ? 

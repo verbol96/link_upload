@@ -1,0 +1,135 @@
+.mobileMain{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu{
+    margin: 0px 0px;
+    display: flex;
+    flex-direction: row;
+    font-size: 10px;
+    gap: 3px;
+    height: 61.5px;
+    border-bottom: 1.5px solid rgb(205, 205, 205);
+    padding: 15px 5px;
+    background: #e1e1e1;
+}
+
+        .menu input{
+            flex: 2;
+            border-radius: 5px;
+            padding: 0 5px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            border: 1.5px solid rgb(0, 59, 0);
+            height: 30px;
+            background: rgb(242, 242, 242);
+            
+        }
+        .menu input:hover{
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+          }
+
+        .menu select{
+            flex: 1;
+            max-width: 80px;
+            border-radius: 5px;
+            padding: 0 5px;
+            border: 1.5px solid rgb(0, 59, 0);
+            background: rgb(242, 242, 242);
+        }
+
+        .menu :nth-child(1){
+            max-width: 50px;
+        }
+
+        .menu :nth-child(4){
+            max-width: 100px;
+        }
+
+
+.mobileOrder{
+    height: 50px;
+    border-bottom: 1.5px solid rgb(205, 205, 205);
+    margin: 2px;
+    padding: 5px 0px;
+    background: rgb(244, 244, 244);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.mobileOrderSelected{
+    height: 50px;
+    border-bottom: 1.5px solid rgb(205, 205, 205);
+    margin: 2px;
+    padding: 5px 0px;
+    background: rgb(222, 222, 222);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.origin{
+    flex: 1.5;
+    margin-left: 5px;
+    display: flex;
+    flex-direction: column;
+    font-size: 10px;
+}
+
+        .circle{
+            border-radius: 20px;
+            border: 1px solid rgb(157, 179, 127);
+            padding: 0 5px;
+        }
+        .origin :nth-child(2){
+            text-align: center;
+        }
+
+.contact{
+    flex: 4;
+    max-width: 200px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+}
+
+        .contact :nth-child(2){
+            font-size: 10px;
+            font-weight: normal;
+            display: flex;
+            justify-content: space-between;
+        }
+
+.data{
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    font-family: 'Montserrat', sans-serif, 'SemiBold ';
+    font-weight: 400;
+    text-align: center;
+}
+
+        .data select{
+            border-radius: 8px;
+            padding: 2px;
+            font-size: 10px;
+        }
+
+        .dataPhoto{
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
+        }
