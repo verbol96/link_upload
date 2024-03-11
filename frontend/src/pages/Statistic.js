@@ -94,8 +94,8 @@ const Statistic = () =>{
         const groupedOrders = orders.reduce((acc, order) => {
             
             const date = new Date(order.createdAt);
-            const formattedDate = date.toLocaleString('ru-RU', { month: 'numeric', year: 'numeric' });
-        
+            const formattedDate1 = date.toLocaleString('ru-RU', {year: 'numeric', month: 'numeric' });
+            const formattedDate = formattedDate1.split('.')[1] +'.'+ formattedDate1.split('.')[0]
             if (!acc[formattedDate]) {
               acc[formattedDate] = { month: formattedDate, total: 0 };
             }
@@ -105,8 +105,9 @@ const Statistic = () =>{
         
             return acc;
           }, {});
-        
+          
           return Object.values(groupedOrders).sort((a, b) => (b.month) - (a.month));
+          
       }
       const ordersByMonth = order ? generateMonthlySum(order) : [];
    

@@ -153,12 +153,20 @@ class orderController{
                         {
                           model: Photo,
                         },
-                      ],
+                      ], 
                 }
               ]
             })
-            const order = await Order.findOne({where: {price_deliver: "0"}})
-        return res.json({user, order})
+
+            const moscowOrders = user.orders.map(order => {
+              const moscowTime = moment(order.createdAt).tz('Europe/Moscow'); // Преобразование в Московскую временную зону
+              return {
+                ...order.toJSON(),
+                createdAt: moscowTime.format() // Форматирование даты и времени в строку
+              };
+            });
+
+        return res.json({user, orders: moscowOrders})
     }
 
     async updateStatus(req,res){
@@ -197,6 +205,7 @@ class orderController{
 
         await Promise.all(photo.map(async el => {
           try{
+            if(el.amount === 0) await Photo.destroy({where: {id: el.id}})
             await Photo.update({type: el.type, format: el.format, amount: el.amount, copies: el.copies, paper: el.paper, orderId: id }, {where: {id: el.id}});
 
           }catch{

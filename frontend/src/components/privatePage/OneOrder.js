@@ -8,9 +8,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { deleteFile } from '../../http/cloudApi';
 
 
-export const OneOrder = ({order}) =>{
+export const OneOrder = ({order, index}) =>{
 
-    const [selectedOrder, setSelectedOrder] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState(index === 0 ? true : false);
     const user = useSelector(state=>state.private.user)
     const [isCopy, setIsCopy] = useState(false)
     const dispatch = useDispatch()
@@ -273,7 +273,7 @@ export const OneOrder = ({order}) =>{
 
                     <div className={style.files}>
                         
-                        {order.photos.map((el,index)=><OneOrderFile key={index} el={el} />)}
+                        {order.photos.map((el,index)=><OneOrderFile key={index} el={el} status={order.status} PriceList={PriceList} />)}
 
                     </div>
                    

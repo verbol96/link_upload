@@ -8,8 +8,10 @@ const Table = () =>{
 
     const [selectedOrder, setSelectedOrder] = useState(null); // выбранный заказ для полного отображения
     const [collapsedOrderId, setCollapsedOrderId] = useState(null) //для подсветки закрытого заказа
+  
     
     const handleDetailsClick = (orderId) => { //состояние описания заказа
+      
         if (selectedOrder === orderId) {
           setSelectedOrder(null);
         } else {
@@ -34,9 +36,8 @@ const Table = () =>{
                 </div>
             </div>
            
-           <div style={{marginTop: 'auto'}}>
-                <Footer />
-            </div>
+           
+            <Footer />
             
         </div>
     )
