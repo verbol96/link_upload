@@ -2,8 +2,8 @@
 import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ListCloud } from "../components/cloud/ListCloud"
-import {deleteFileAll, getFiles, getFilesAll} from '../http/cloudApi'
-import {setFiles, setCurrentDir, setFilesAll, delStack} from '../store/fileReducer'
+import {deleteFile, getFiles, getFilesAll} from '../http/cloudApi'
+import {setFiles, setCurrentDir, setFilesAll, delStack, deleteFileStore} from '../store/fileReducer'
 import Footer from "../components/admin/Footer";
 import { NavBar } from "../components/admin/NavBar"
 
@@ -14,6 +14,7 @@ const Cloud = () =>{
     const stackDir = useSelector(state=>state.files.stackDir)
     const stack = useSelector(state=>state.files.stack)
     const filesAll = useSelector(state=>state.files.filesAll)
+    const files = useSelector(state=>state.files.files)
 
     useEffect(()=>{ 
         async function getFile (){
@@ -41,10 +42,37 @@ const Cloud = () =>{
 
     const getTotalSize = (files) => files.reduce((total, file) => total + file.size, 0) / (1024 * 1024 * 1024);
 
+    /* функция для удаления всех
     const ClearCloud = async() =>{
-        if (window.confirm('Вы уверены, что хотите удалить все файлы?')) {
+        if (window.confirm('Вы уверены, что хотите удалить файлы?')) {
             const data = await deleteFileAll()
             alert(data.message)
+        }
+    }*/
+
+    const isDateOlderThan30Days = (dateString) => {
+        const currentDate = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(currentDate.getDate() - 30);
+        const date = new Date(dateString);
+        return date < thirtyDaysAgo;
+    }
+
+    const deleteFileClick = async(el) => {
+        await deleteFile(el.id)
+        dispatch(deleteFileStore(el.id))
+    }
+
+    const ClearCloud = async() =>{
+        if (window.confirm('Вы уверены, что хотите удалить папки (старше 30 дней)?')) {
+            let i = 0
+            files.forEach(el=>{
+                if(isDateOlderThan30Days(el.createdAt)){
+                    deleteFileClick(el)
+                    i++
+                }
+            })
+            alert(`Папки удален (${i}шт)`)
         }
     }
 

@@ -1,7 +1,7 @@
 import {  adminRoutes, publicRoutes, userRoutes } from '../routes'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import {whoAmI} from '../http/authApi'
+import {setLogUser, whoAmI} from '../http/authApi'
 import { setUser } from '../store/privatePageReducer'
 import { getOneUser } from '../http/dbApi'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
@@ -11,6 +11,7 @@ const AppRouter = () => {
   const location = useLocation()
   const [userRole, setUserRole]=useState('')
   const [isUserDataLoaded, setUserDataLoaded] = useState(false)  
+
 
   useEffect(()=>{
     if(localStorage.getItem('token')){
@@ -29,6 +30,12 @@ const AppRouter = () => {
       setUserDataLoaded(true)  // устанавливаем в true, если токена нет
     }
 },[dispatch, location.pathname])
+
+useEffect(()=>{
+  if(!localStorage.getItem('token')){
+    setLogUser()
+  }
+},[])
 
 const isAuth = useSelector(state=>state.auth.auth)
   

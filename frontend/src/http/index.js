@@ -2,8 +2,8 @@ import axios from "axios"
 
 const $host = axios.create({
     withCredentials: true,
-    //baseURL: 'http://localhost:8002/' //для local
-    baseURL: 'https://link1.by:8002/' // для server
+    baseURL: 'http://localhost:8002/' //для local
+    //baseURL: 'https://link1.by:8002/' // для server
 })
 
 $host.interceptors.request.use((config) => {
@@ -16,19 +16,14 @@ $host.interceptors.request.use((config) => {
 
 $host.interceptors.response.use(config => 
     {
-       
        return config
     }, async(error)=> {
-
-   
-        
         const originalRequest = error.config;
         
         if (error.response.status === 401 && error.config && !error.config._isRetry) {
-            
             originalRequest._isRetry = true;
             try {
-                const response = await axios.get('https://link1.by:8002/api/auth/refresh', {withCredentials: true})
+                const response = await axios.get('http://localhost:8002/api/auth/refresh', {withCredentials: true})
                 if(response.data==='error_refresh') localStorage.removeItem('token');
                 else localStorage.setItem('token', response.data.accessToken);
                 return $host.request(originalRequest);
@@ -36,10 +31,7 @@ $host.interceptors.response.use(config =>
                 localStorage.removeItem('token')
                 console.log('НЕ АВТОРИЗОВАН по refresh')
             }
-            
         }
-        
-        
         throw error;
       }
 )
