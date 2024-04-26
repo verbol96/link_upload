@@ -87,6 +87,12 @@ export const LeftMenu = () => {
             >
               Link Cloud
             </button>
+            <button
+              className={`menu-btn ${isActive('/apitest') ? 'active' : ''}`}
+              onClick={() => Close('/apitest')}
+            >
+              API_test
+            </button>
           </div>
           <div className="user-info">
             <div><i className="bi bi-person"></i> {user.FIO}</div>
