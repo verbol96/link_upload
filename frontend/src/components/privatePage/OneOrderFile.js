@@ -17,6 +17,7 @@ export const OneOrderFile = ({el, status, PriceList}) =>{
                   const response = await displayFileImg(item.id);
                   
                   setThumb(prev=>[...prev, response])
+                  
                 }
 
                 const ImgDownload = data.reduce((acc, current) => {

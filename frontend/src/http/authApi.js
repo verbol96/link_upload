@@ -1,4 +1,5 @@
 import {$host} from './index'
+import UAParser from 'ua-parser-js';
 
 export const login = async(phone, password)=>{
     const {data} = await $host.post('/api/auth/login', {phone, password})
@@ -48,8 +49,6 @@ export const sendSms = async(phone, code)=>{
 }
 
 
-
-
 export const users_changeData = async(id, phone, FIO, typePost, city, adress, postCode, raion, oblast, role)=>{
     
     const {data} = await $host.put('/api/auth/users_changeData', {id, phone, FIO, typePost, city, adress, postCode, raion, oblast, role})
@@ -67,5 +66,31 @@ export const users_changePW = async(id, PW)=>{
 }
 export const deleteUsersWithoutOrders = async()=>{
     const {data} = await $host.get('/api/auth/deleteUsersWithoutOrders')
+    return data
+}
+
+export const setLogUser = async() =>{
+    
+    const parser = new UAParser();
+    const result = parser.getResult();
+
+    const browserName = result.browser.name;
+    const browserVersion = result.browser.version;
+    const osName = result.os.name;
+    const osVersion = result.os.version;
+    const deviceModel = result.device.model;
+ 
+    const dataLog = {
+      device: deviceModel,
+      browser: browserName +' ('+ browserVersion+')',
+      OS: osName +' ('+ osVersion+')',
+      screen: window.screen.width+'x'+window.screen.height
+    }
+
+    await $host.post('/api/auth/setLogUser', {dataLog})
+}
+
+export const getLogUser = async() =>{
+    const {data} = await $host.get('/api/auth/getLogUser')
     return data
 }

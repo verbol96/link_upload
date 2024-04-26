@@ -22,7 +22,7 @@ export const MyOrdersUser = () => {
             {
                 sortedOrders.map((order, index)=> 
                     <div key={order.id}>
-                        <OneOrder order={order} index={orders.length - index} />
+                        <OneOrder order={order} index={index} />
                     </div>
                 )
             }

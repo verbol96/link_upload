@@ -363,6 +363,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                   </div>
                   )
                 }
+                <TableFooter filteredOrders={filteredOrders} />
                 </div>
                 </>}
               </div>

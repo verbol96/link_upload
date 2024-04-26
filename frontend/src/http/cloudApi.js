@@ -70,17 +70,20 @@ export const downloadFiles = async(file, onProgress) => {
 }
 
 export const displayFileImg = async (id) => {
+
+   
   try {
     const response = await $host.get(`/api/file/thumb?id=${id}`, {
       responseType: 'blob' // Указываем, что ожидаем ответ в формате Blob
     });
-
+    
     // Создание URL из Blob для использования, например, в элементе <img>
     const url = window.URL.createObjectURL(response.data);
 
     return url;
   } catch (error) {
-    console.error(error);
+    console.log(id)
+    //console.error(error);
     return null; // или можете выбросить ошибку, смотря что вам нужно
   }
 };

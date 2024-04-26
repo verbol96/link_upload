@@ -95,6 +95,15 @@ const File = sequelize.define('file', {
     parent:{type: DataTypes.UUID}
 })
 
+const LogUser = sequelize.define('logUser', {
+  id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
+  phone: {type: DataTypes.STRING, defaultValue: '0'},
+  device:{type: DataTypes.STRING},
+  browser:{type: DataTypes.STRING},
+  OS:{type: DataTypes.STRING},
+  screen:{type: DataTypes.STRING}
+})
+
 User.hasMany(Order)
 Order.belongsTo(User)
 
@@ -106,4 +115,4 @@ Token.belongsTo(User)
 Photo.hasMany(File)
 File.belongsTo(Photo)
 
-module.exports = {User, Order, Photo, Settings, Token, File, SettingsEditor, SettingEditor}
+module.exports = {User, Order, Photo, Settings, Token, File, SettingsEditor, SettingEditor, LogUser}

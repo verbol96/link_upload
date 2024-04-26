@@ -4,6 +4,7 @@ import OtherSettings from "../components/settings/OtherSettings";
 import { Pricing } from "../components/settings/Pricing";
 import './SettingsPage.css';
 import { NavBar } from '../components/admin/NavBar';
+import LogsUser from '../components/settings/LogsUser';
 
 const Setting = () => {
     const [activeTab, setActiveTab] = useState(0);
@@ -27,6 +28,12 @@ const Setting = () => {
                 >
                     Другие настройки
                 </button>
+                <button
+                    onClick={() => handleClick(2)}
+                    className={activeTab === 2 ? 'active' : ''}
+                >
+                    Логи
+                </button>
             </div>
         );
     };
@@ -39,6 +46,7 @@ const Setting = () => {
 
             {activeTab === 0 && <Pricing />}
             {activeTab === 1 && <OtherSettings />}
+            {activeTab === 2 && <LogsUser />}
             
             <div style={{ marginTop: 'auto' }}>
                 <Footer />

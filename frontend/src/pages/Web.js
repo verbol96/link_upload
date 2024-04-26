@@ -231,7 +231,7 @@ const Web = () =>{
             case '40x55': return '40x55'
             case '50x70': return '50x70'
             case '55x55': return '55x55'
-            case '55x80': return '55x80s'
+            case '55x80': return '55x80'
             case '<а6': return 'до 10х15'
             case '<а7': return 'до 7.5х10'
             case '<а5': return 'до 15х20'

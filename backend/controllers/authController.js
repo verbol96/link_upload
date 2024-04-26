@@ -1,10 +1,11 @@
-const {User, Token, File, Order} = require('../models/models')
+const {User, Token, File, Order, LogUser} = require('../models/models')
 const fileService = require('../services/fileService')
 const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
-const { Op } = require("sequelize");
+//const { Op } = require("sequelize");
 const axios = require('axios')
+const moment = require('moment-timezone');
 
 class authController {
 
@@ -16,13 +17,14 @@ class authController {
                 user = await User.create({phone, FIO: '', adress: '', city: '', postCode:'', typePost: 'E'})
             }
 
-            const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '48h'})
-            const refreshToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.REFRESH_KEY, {expiresIn: '72h'})
+            const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '24h'})
+            const refreshToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.REFRESH_KEY, {expiresIn: '240h'})
             
-            await Token.destroy({where: {userId: user.id}})
+            if(phone !== '+375333258247' && phone !== '+375298832168' && phone !== '+375333509124') await Token.destroy({where: {userId: user.id}})
+            
             await Token.create({refreshToken, userId: user.id})
 
-            res.cookie('refreshToken', refreshToken, {maxAge: 30*24*60*60*1000, httpOnly: true})
+            res.cookie('refreshToken', refreshToken, {maxAge: 10*24*60*60*1000, httpOnly: true})
             
             return res.json({user, accessToken} )
         } catch (error) {
@@ -44,10 +46,10 @@ class authController {
             const user = await User.findOne({where: {id: tokenDB.userId}})
 
             const accessToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.ACCESS_KEY, {expiresIn: '24h'})
-            const refreshToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.REFRESH_KEY, {expiresIn: '72h'})
+            const refreshToken = jwt.sign({ "id": user.id, "phone": user.phone}, process.env.REFRESH_KEY, {expiresIn: '240h'})
             
             await Token.update({refreshToken}, {where:{id: tokenDB.id}})
-            res.cookie('refreshToken', refreshToken, {maxAge: 30*24*60*60*1000, httpOnly: true})
+            res.cookie('refreshToken', refreshToken, {maxAge: 10*24*60*60*1000, httpOnly: true})
             return res.json({user, accessToken, refreshToken})
         } catch (error) {
             console.log(error)
@@ -126,7 +128,6 @@ class authController {
         }
     }
  
-
     async dataChange(req,res, next){
         try {
             const {phone, FIO} = req.body
@@ -234,6 +235,26 @@ class authController {
             phone: phone.replace(/[^0-9+]/g, '') 
         });
         return res.json(response.data)
+    }
+
+    async setLogUser(req, res){
+        const {dataLog} = req.body
+        await LogUser.create(dataLog)
+        return res.json('ok')
+    }
+
+    async getLogUser(req, res){
+        const data = await LogUser.findAll({})
+
+        const moscowData = data.map(data => {
+            const moscowTime = moment(data.createdAt).tz('Europe/Moscow'); // Преобразование в Московскую временную зону
+            return {
+              ...data.toJSON(),
+              createdAt: moscowTime.format() // Форматирование даты и времени в строку
+            };
+          });
+
+        return res.json(moscowData)
     }
 }
 

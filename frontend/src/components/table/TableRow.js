@@ -124,6 +124,50 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
         }
     }
 
+    const handlePrint = () =>{
+        
+        const printContent = `
+            <div style="margin: 20px 10px 0px 10px; font-size: 11px">
+                <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
+                    <div style="flex: 1;font-size: 10px; margin: auto">кому: </div>
+                    <div style="flex: 5; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.FIO}</div>
+                </div>
+
+                <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px"> </div>
+
+                <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
+                    <div style="flex: 1;font-size: 10px; margin: auto">куда: </div>
+                    <div style="flex: 5; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.adress}</div>
+                </div>
+
+                <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
+                    <div style="flex: 1; border-left: 1px solid black;border-right: 1px solid black; font-size: 16px ; text-align: center; padding-top: 3px; font-family: 'Roboto Mono', monospace; ">${order.postCode} </div>
+                    <div style="flex: 3; text-align: center;  margin: auto;  font-family: 'Roboto Mono', monospace;">${order.city}</div>
+                </div>
+
+                <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
+                    <div style=" margin: auto;  font-family: 'Roboto Mono', monospace;">${order.raion}</div>
+                </div>
+
+                <div style="display: flex; flex-direction: row; ; border-bottom: 1px solid black; height: 24px">
+                    <div style="flex: 1; text-align: center; margin: auto;   font-family: 'Roboto Mono', monospace;">${order.oblast}</div>
+                </div>
+
+                <div style="display: flex; flex-direction: row;  height: 24px">
+                    <div style="flex: 1;font-size: 10px; margin: auto">телефон: </div>
+                    <div style="flex: 1; text-align: center; font-size: 12px; margin: auto;  font-family: 'Roboto Mono', monospace;;">${order.phone}</div>
+                </div>
+            </div>`;
+
+        ;
+        const printWindow = window.open('', '', 'height=580px,width=800px');
+        printWindow.document.write(printContent);
+        printWindow.onafterprint = function() {
+            printWindow.close();
+          };
+        printWindow.print();
+    }
+
     return(
  
         <div 
@@ -138,7 +182,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                     <div className='col_origin' onClick={()=>handleDetailsClick(order.id)} >
                         {ShowOrigin()}
                     </div>
-                    <div className='col_data' > {ShowData()}</div>
+                    <div className='col_data' onClick={()=>{handlePrint()}}> {ShowData()}</div>
                     <CopyToClipboard text={order.typePost + (order.order_number%1000) +' ' + order?.user?.FIO}>
                     <div className='col_number' style={{color: 'darkgreen', fontWeight: 'bold', minWidth: 60}}>
                         {order.typePost + (order.order_number%1000) }

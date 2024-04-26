@@ -20,5 +20,7 @@ router.delete('/usersDelete/:id', authController.usersDelete);
 router.put('/users_changePW', authController.users_changePW)
 
 router.post('/sendSms', authController.sendSms)
+router.post('/setLogUser', authController.setLogUser)
+router.get('/getLogUser', authController.getLogUser)
  
 module.exports = router
