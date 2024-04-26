@@ -9,6 +9,7 @@ import Users from "./pages/Users"
 import { Auth } from "./pages/Auth"
 import Editor from "./pages/Editor"
 import History from "./pages/History"
+import APItest from "./pages/APItest"
 
 export const adminRoutes = [
     {
@@ -46,6 +47,10 @@ export const adminRoutes = [
     {
         path: '/history',
         Component: History
+    },
+    {
+        path: '/apitest',
+        Component: APItest
     }
 ]
 
