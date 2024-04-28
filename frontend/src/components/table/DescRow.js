@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './DescRow.css';
 import { OneFormat } from './OneFormat';
 import { deleteOrder, getSettings, updateOrder } from '../../http/dbApi';
@@ -10,6 +10,8 @@ import SearchBarMain from './SearchBarMain';
 import {CopyToClipboard} from 'react-copy-to-clipboard'
 import { deleteFile } from '../../http/cloudApi';
 import { sendSms } from '../../http/authApi';
+import { $host } from '../../http';
+import style from './DescRow.module.css'
 
 export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
@@ -309,6 +311,172 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     setModalVisibleMain(false);
   };
 
+  const [listOps, setListObs] = useState([])
+  useEffect(()=>{
+      const getListOps = async () => {
+          try {
+            const {data} = await $host.get('/api/ep/getListOps');
+            setListObs(data.Table)
+          } catch (error) {
+            console.error('Ошибка при получении JWT:', error);
+          }
+        };
+
+      getListOps()
+  },[])
+
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const inputRef  = useRef(null)
+  const [inputOPS, setInputOPS] = useState('')
+  const [nameOPS, setNameOPS] = useState('Выберете отделение')
+
+  useEffect(()=>{
+        if (isOpen) {
+            // Если dropdown открыт, устанавливаем фокус на input
+            inputRef.current.focus();
+          }
+    }, [isOpen])
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const filterOPS = listOps.filter(el=>{
+        
+    return el.WarehouseName.toLowerCase().includes(inputOPS.toLowerCase())
+  })
+
+  const putNameOPS =(name)=>{
+    setNameOPS(name)
+    setIsOpen(false)
+  }
+
+  const phoneWithoutPlus = () =>{
+      const newPhone = phone.replace('+', '');
+      return newPhone
+  }
+
+  const nameSplit = (i) =>{
+      const splitResalt = FIO.split(' ')
+      return splitResalt[i]
+  }
+
+  const sendOrderEp = async() =>{
+    const sendConfirmation = window.confirm('sum = '+price + '\nOPS = '+nameOPS.WarehouseId + '\nphone = '+ phoneWithoutPlus() + '\nname1 = '+nameSplit(0) + '\nname2 = '+nameSplit(1));
+    
+    if (sendConfirmation) {
+
+        const dataSend = {sum: price, OPS: nameOPS.WarehouseId, phone: phoneWithoutPlus(), name1: nameSplit(0), name2: nameSplit(1)}
+        
+        try {
+          const {data} = await $host.post('/api/ep/sendOrder', dataSend);
+          setCodeOutside(data.Table[0].Number)
+          //console.log(data.Table[0].Number)
+        } catch (error) {
+          console.error('Ошибка:', error);
+        }
+      
+
+    }
+     
+  }
+
+  const handlePrint = () =>{
+        
+    const printContent = `
+        <div style="margin: 30px -30px; margin-top:130px; font-size: 30px; transform: rotate(90deg); ">
+            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
+                <div style="flex: 1;font-size: 20px; margin: auto">кому: </div>
+                <div style="flex: 6; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.FIO}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px"> </div>
+
+            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
+                <div style="flex: 1;font-size: 20px; margin: auto">куда: </div>
+                <div style="flex: 6; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.adress}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
+                <div style="flex: 1; border-left: 1px solid black;border-right: 1px solid black; font-size: 40px ; text-align: center; padding-top: 10px; font-family: 'Roboto Mono', monospace; ">${order.postCode} </div>
+                <div style="flex: 3; text-align: center;  margin: auto;  font-family: 'Roboto Mono', monospace;">${order.city}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
+                <div style=" margin: auto;  font-family: 'Roboto Mono', monospace;">${order.raion}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: row; ; border-bottom: 1px solid black; height: 74px">
+                <div style="flex: 1; text-align: center; margin: auto;   font-family: 'Roboto Mono', monospace;">${order.oblast}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: row;  height: 74px">
+                <div style="flex: 1;font-size: 20px; margin: auto">телефон: </div>
+                <div style="flex: 1; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;;">${order.phone}</div>
+            </div>
+        </div>`;
+
+    ;
+    const printWindow = window.open('', '', 'height=800px,width=600px');
+    printWindow.document.write(printContent);
+    /*printWindow.onafterprint = function() {
+        printWindow.close();
+    };*/
+    printWindow.print();
+}
+
+const handlePrint1 = () =>{
+        
+  const printContent = `
+            <div style="margin: 20px 10px 0px 10px; font-size: 11px">
+            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
+                <div style="flex: 1;font-size: 10px; margin: auto">кому: </div>
+                <div style="flex: 5; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.FIO}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px"> </div>
+
+            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
+                <div style="flex: 1;font-size: 10px; margin: auto">куда: </div>
+                <div style="flex: 5; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.adress}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
+                <div style="flex: 1; border-left: 1px solid black;border-right: 1px solid black; font-size: 16px ; text-align: center; padding-top: 3px; font-family: 'Roboto Mono', monospace; ">${order.postCode} </div>
+                <div style="flex: 3; text-align: center;  margin: auto;  font-family: 'Roboto Mono', monospace;">${order.city}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
+                <div style=" margin: auto;  font-family: 'Roboto Mono', monospace;">${order.raion}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: row; ; border-bottom: 1px solid black; height: 24px">
+                <div style="flex: 1; text-align: center; margin: auto;   font-family: 'Roboto Mono', monospace;">${order.oblast}</div>
+            </div>
+
+            <div style="display: flex; flex-direction: row;  height: 24px">
+                <div style="flex: 1;font-size: 10px; margin: auto">телефон: </div>
+                <div style="flex: 1; text-align: center; font-size: 12px; margin: auto;  font-family: 'Roboto Mono', monospace;;">${order.phone}</div>
+            </div>
+          </div>`;
+
+  ;
+  const printWindow = window.open('', '', 'height=600px,width=800px');
+  printWindow.document.write(printContent);
+  /*printWindow.onafterprint = function() {
+      printWindow.close();
+  };*/
+  printWindow.print();
+}
 
   return (
     <div className="order_details_card">
@@ -369,6 +537,27 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
               </CopyToClipboard>
               <input value={adress} onChange={(e)=>setAdress(e.target.value)} /> 
             </div>
+
+            {typePost === 'E' && 
+                <div>
+                <div className={style.inputBlock} ref={dropdownRef}>
+                  <button onClick={() => setIsOpen(!isOpen)}>{nameOPS.WarehouseName}</button>
+                  {isOpen && (
+                      <div className={style.inputBlockDetails}>
+                      <input ref={inputRef} value={inputOPS} onChange={(e)=>setInputOPS(e.target.value)} />
+                  
+                      {filterOPS.map((el,index)=><div key={index} onClick={()=>putNameOPS(el)}>
+                          {el.WarehouseName}
+                      </div>)}
+                  
+                      </div>
+                  )}
+                </div>
+                <div>
+                  <button onClick={()=>{sendOrderEp()}}>Оформить заявку</button>
+                </div>
+                </div>
+              }
             
             {typePost === 'R' ? 
             <>
@@ -392,6 +581,12 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
             </div> 
             </>
             : null}
+              {typePost!=='E' &&
+                <div>
+                <button onClick={()=>{handlePrint()}}><i style={{color: 'darkgreen'}} className="bi bi-printer"></i> print </button>
+                <button style={{marginLeft: 10}} onClick={()=>{handlePrint1()}}><i style={{color: 'darkgreen'}} className="bi bi-printer"></i> print1 </button>
+                </div>
+              }
           </div>
 
           <div className="card_actions">
