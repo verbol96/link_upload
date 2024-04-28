@@ -393,16 +393,16 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const handlePrint = () =>{
         
     const printContent = `
-        <div style="margin: 30px -30px; margin-top:130px; font-size: 30px; transform: rotate(90deg); ">
+        <div style=" margin-top:180px; font-size: 32px; transform: rotate(90deg); ">
             <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
-                <div style="flex: 1;font-size: 20px; margin: auto">кому: </div>
+                <div style="flex: 1;font-size: 25px; margin: auto">кому: </div>
                 <div style="flex: 6; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.FIO}</div>
             </div>
 
             <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px"> </div>
 
             <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
-                <div style="flex: 1;font-size: 20px; margin: auto">куда: </div>
+                <div style="flex: 1;font-size: 25px; margin: auto">куда: </div>
                 <div style="flex: 6; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.adress}</div>
             </div>
 
@@ -420,7 +420,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
             </div>
 
             <div style="display: flex; flex-direction: row;  height: 74px">
-                <div style="flex: 1;font-size: 20px; margin: auto">телефон: </div>
+                <div style="flex: 1;font-size: 25px; margin: auto">телефон: </div>
                 <div style="flex: 1; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;;">${order.phone}</div>
             </div>
         </div>`;
@@ -428,49 +428,51 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     ;
     const printWindow = window.open('', '', 'height=800px,width=600px');
     printWindow.document.write(printContent);
-    /*printWindow.onafterprint = function() {
+    printWindow.onafterprint = function() {
         printWindow.close();
-    };*/
+    };
     printWindow.print();
 }
 
 const handlePrint1 = () =>{
         
   const printContent = `
-            <div style="margin: 20px 10px 0px 10px; font-size: 11px">
-            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
-                <div style="flex: 1;font-size: 10px; margin: auto">кому: </div>
-                <div style="flex: 5; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.FIO}</div>
-            </div>
+  <div style="height=800px; width=1200px; transform: rotate(90deg); margin: 50px; padding: 50px">
+    <div style=" height: 600px; width:800px;  font-size: 32px; ; margin: auto ">
+      <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
+          <div style="flex: 1;font-size: 25px; margin: auto">кому: </div>
+          <div style="flex: 6; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.FIO}</div>
+      </div>
 
-            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px"> </div>
+      <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px"> </div>
 
-            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
-                <div style="flex: 1;font-size: 10px; margin: auto">куда: </div>
-                <div style="flex: 5; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.adress}</div>
-            </div>
+      <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
+          <div style="flex: 1;font-size: 25px; margin: auto">куда: </div>
+          <div style="flex: 6; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.adress}</div>
+      </div>
 
-            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
-                <div style="flex: 1; border-left: 1px solid black;border-right: 1px solid black; font-size: 16px ; text-align: center; padding-top: 3px; font-family: 'Roboto Mono', monospace; ">${order.postCode} </div>
-                <div style="flex: 3; text-align: center;  margin: auto;  font-family: 'Roboto Mono', monospace;">${order.city}</div>
-            </div>
+      <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
+          <div style="flex: 1; border-left: 1px solid black;border-right: 1px solid black; font-size: 40px ; text-align: center; padding-top: 10px; font-family: 'Roboto Mono', monospace; ">${order.postCode} </div>
+          <div style="flex: 3; text-align: center;  margin: auto;  font-family: 'Roboto Mono', monospace;">${order.city}</div>
+      </div>
 
-            <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 24px">
-                <div style=" margin: auto;  font-family: 'Roboto Mono', monospace;">${order.raion}</div>
-            </div>
+      <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
+          <div style=" margin: auto;  font-family: 'Roboto Mono', monospace;">${order.raion}</div>
+      </div>
 
-            <div style="display: flex; flex-direction: row; ; border-bottom: 1px solid black; height: 24px">
-                <div style="flex: 1; text-align: center; margin: auto;   font-family: 'Roboto Mono', monospace;">${order.oblast}</div>
-            </div>
+      <div style="display: flex; flex-direction: row; ; border-bottom: 1px solid black; height: 74px">
+          <div style="flex: 1; text-align: center; margin: auto;   font-family: 'Roboto Mono', monospace;">${order.oblast}</div>
+      </div>
 
-            <div style="display: flex; flex-direction: row;  height: 24px">
-                <div style="flex: 1;font-size: 10px; margin: auto">телефон: </div>
-                <div style="flex: 1; text-align: center; font-size: 12px; margin: auto;  font-family: 'Roboto Mono', monospace;;">${order.phone}</div>
-            </div>
-          </div>`;
+      <div style="display: flex; flex-direction: row;  height: 74px">
+          <div style="flex: 1;font-size: 25px; margin: auto">телефон: </div>
+          <div style="flex: 1; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;;">${order.phone}</div>
+      </div>
+    </div>
+    </div>`;
 
   ;
-  const printWindow = window.open('', '', 'height=600px,width=800px');
+  const printWindow = window.open('', '', 'height=1200px,width=800px');
   printWindow.document.write(printContent);
   /*printWindow.onafterprint = function() {
       printWindow.close();
