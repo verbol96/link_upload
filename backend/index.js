@@ -6,8 +6,6 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload')
 const bodyParser = require('body-parser');
-const https = require('https');
-const fs = require('fs');
 
 const app = express()
 const PORT = process.env.PORT
@@ -24,6 +22,7 @@ app.use(cors(
         //origin: 'http://localhost:3000'
     }
 ))
+
 app.use('/api', router)
 
 const httpsOptions = {

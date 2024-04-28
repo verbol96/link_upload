@@ -1,7 +1,6 @@
 const {Router} = require('express')
 const router = new Router()
 const fileController = require('../controllers/fileController')
-const authMiddleware = require('../middleware/authMiddlware')
 
 router.post('', fileController.createDir)
 router.post('/upload', fileController.uploadFiles)
@@ -15,7 +14,4 @@ router.post('/getFilesPhotosId', fileController.getFilesPhotosId)
 
 router.post('/importBackup', fileController.importBackup)
 
-
-
- 
 module.exports = router

@@ -10,6 +10,18 @@ const History = () => {
             <div style={{display: 'flex', justifyContent: 'center', color: '#116466', margin: 20, fontSize: 25}}>История обновлений</div>
             
             <div style={{margin: 20}}>
+                <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.3 (28.04.2024)</div>
+                    <ul>
+                        <li>отображение полного примечания в таблице</li>
+                        <li>статистика для мобильной таблицы</li>
+                        <li>кнопка удаление с облака старых закаов</li>
+                        <li>логирования активностей пользователей(устройство, ос)</li>
+                        <li>изменена работа с токенами</li>
+                        <li>печать данных отправления из таблицы</li>
+                        <li>отправка заявки на европочту</li>
+                        
+                    </ul>
+
                 <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.2 (11.03.2024)</div>
                     <ul>
                         <li>исправлено отображение штрихкода в ЛК</li>

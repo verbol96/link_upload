@@ -1,0 +1,76 @@
+
+
+.inputBlock{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    margin-top: 20px;
+}
+
+.inputBlock button{
+    position: relative;
+    background: white;
+    border: 1px solid rgb(172, 172, 172);
+    border-radius: 3px;
+    height: 30px;
+    max-width: 26vw;
+    padding-right: 30px;
+    white-space: nowrap; /* Запрет переноса текста на новую строку */
+    overflow: hidden; /* Обрезание текста, выходящего за границы кнопки */
+    text-overflow: ellipsis;
+}
+
+.inputBlock button::before {
+    content: "\23F6"; 
+    font-size: 13px;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-65%);
+    border: 5px solid transparent;
+}
+
+.inputBlock button::after {
+    content: "\23F7"; 
+    font-size: 13px;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-35%);
+    border: 5px solid transparent;
+}
+
+.inputBlockDetails{
+    position: absolute;
+    max-width: 26vw;
+    margin-top: 30px;
+    background: white;
+    border: 1px solid rgb(172, 172, 172);
+    border-top: none;
+    border-radius: 0 0 3px 3px ;
+    max-height: 300px;
+    overflow: scroll; 
+    padding: 10px;
+}
+
+.inputBlockDetails input{
+    width: 100%;
+    border: 1px solid rgb(84, 84, 84);
+    height: 30px;
+}
+
+.input{
+    width: 50vw;
+}
+.input input{
+    width: 100%;
+    border: 1px solid rgb(84, 84, 84);
+    height: 30px;
+}
+
+
+  
+
+
+
