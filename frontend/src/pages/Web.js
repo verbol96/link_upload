@@ -240,6 +240,8 @@ const Web = () =>{
         }
     }
 
+
+
     return (
         <div className={style.wrapper}>
 
@@ -270,7 +272,10 @@ const Web = () =>{
                                     </div>
                                 </button>)
                             }  
-                            <button className={style.formatNavBtnAdd} onClick={()=>AddFormat()}>+</button>
+
+                            {
+                                (formats.length < 6) && <button className={style.formatNavBtnAdd} onClick={()=>AddFormat()}>+</button>
+                            }
                         </div>
                     
 

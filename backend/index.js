@@ -21,7 +21,7 @@ app.use(cors(
     {
         credentials: true,
         origin: 'https://link1.by'
-        //origin: 'http://localhost:3000'
+        //origin: ['http://localhost:3000', 'http://localhost:5173']
     }
 ))
 

@@ -10,6 +10,17 @@ const History = () => {
             <div style={{display: 'flex', justifyContent: 'center', color: '#116466', margin: 20, fontSize: 25}}>История обновлений</div>
             
             <div style={{margin: 20}}>
+                <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.4 (21.08.2024)</div>
+                    <ul>
+                        <li>исправить двойную загрузку фото в ЛК</li>
+                        <li>отправка СМС с оплатой</li>
+                        <li>формирование оплаты</li>
+                        <li>автоудаление папок старше 2 недель</li>
+                        <li>ограничить количество вкладок в форме до 6</li>
+                        <li>Укажите размер у примечании</li>
+                        <li>ввод номера телефона проверки</li>
+                        
+                    </ul>
                 <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.3 (28.04.2024)</div>
                     <ul>
                         <li>отображение полного примечания в таблице</li>

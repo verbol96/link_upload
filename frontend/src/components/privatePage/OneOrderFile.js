@@ -11,13 +11,10 @@ export const OneOrderFile = ({el, status, PriceList}) =>{
     useEffect(()=>{
         const getFiles =async(id)=>{
             const data = await getFilesPhotosId(id)
-           
             try {
                 for (const item of data) {
                   const response = await displayFileImg(item.id);
-                  
                   setThumb(prev=>[...prev, response])
-                  
                 }
 
                 const ImgDownload = data.reduce((acc, current) => {
@@ -33,11 +30,10 @@ export const OneOrderFile = ({el, status, PriceList}) =>{
               } catch (error) {
                 console.error(error);
               }
-            
         }
-        
         getFiles(el.id)
-    },[el])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    },[])
 
     const ShowTitle = (value) =>{
         switch(value){

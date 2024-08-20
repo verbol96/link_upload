@@ -1,5 +1,5 @@
 import Footer from "../components/admin/Footer"
-import MaskedInput from 'react-text-mask'; 
+import InputMask from 'react-input-mask';
 import { useState } from "react";
 import { login, sendSms } from "../http/authApi";
 import { useDispatch } from 'react-redux';
@@ -18,26 +18,6 @@ export const Auth = () =>{
     const [disableSms, setDisableSms] = useState(false)
     const [tik, setTik] = useState(60)
 
-    const phoneMask = [
-        '+',
-        /[0-9]/,
-        /\d/,
-        /\d/,
-        '(',
-        /\d/,
-        /\d/,
-        ')',
-        ' ',
-        /\d/,
-        /\d/,
-        /\d/,
-        '-',
-        /\d/,
-        /\d/,
-        '-',
-        /\d/,
-        /\d/
-      ];
 
     const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
 
@@ -56,7 +36,7 @@ export const Auth = () =>{
     };
 
     const SendSms = async() =>{
-        if(phone.length!==18) {
+        if(phone.length!==19) {
             setIsValid(true)
             setTimeout(()=>setIsValid(false), 500)
             return;
@@ -84,9 +64,6 @@ export const Auth = () =>{
         else setTik(60)
     }
 
-    const handleBlur = () =>{
-        if(phone==='') setPhone(+375)
-    }
 
     return(
         <div style={{display: 'flex', flexDirection: 'column',background: '#e8e8e8', minHeight: '100vh'}}>
@@ -96,20 +73,20 @@ export const Auth = () =>{
                 <div className={style.row}>
                     <label className={style.title}>Вход в личный кабинет</label>
                 </div>
-                <div className={style.row}>
-                    <MaskedInput
-                        mask={phoneMask}
-                        placeholder="номер телефона"
-                        className={style.inputForm}
-                        style={{border: isValid&&'2px solid red'}}
-                        disabled={isSend&&true}
-                        showMask
-                        guide={false}
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        onFocus={handleBlur}
-                  />
-                </div>
+                
+                    <div className={style.row}>
+                        
+                        <InputMask
+                            value={phone}
+                            mask="+375 (99) 999-99-99"
+                            placeholder="номер телефона"
+                            maskChar={''}
+                            className={style.inputForm} 
+                            style={{border: isValid&&'2px solid red'}}
+                            onChange={(e) => setPhone(e.target.value)}
+                        />
+                    </div>
+                
                {
                 isSend ? 
                     <>
@@ -124,21 +101,23 @@ export const Auth = () =>{
                             />
                         </div>
                         <div className={style.row}>
-                            <button
-                                onClick={() => SendSms()}
-                                className={style.btnSend}
-                                style={{background: 'silver', fontSize: 12}}
-                                disabled={disableSms&&true}
-                            >
-                                {disableSms?`Отправлено (${tik})`:'Повторно отправить код'}
-                                
-                            </button>
+                            
                             <button
                                 onClick={() => Auth()}
                                 className={style.btnSend}
                             >
                                 Войти
                             </button>
+                        </div>
+                        <div className={style.row}>
+                            <label
+                                onClick={() => SendSms()}
+                                className='bg-gray-100 py-1 px-3 rounded-md text-xs'
+                                disabled={disableSms&&true}
+                            >
+                                {disableSms?`Отправлено (${tik})`:'Повторно отправить код'}
+                                
+                            </label>
                         </div>
                         
                     </>

@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { Files } from "../components/privatePage/Files";
 import Footer from "../components/admin/Footer"
 import style from './PrivatePage.module.css'
 import { NavBar } from "../components/admin/NavBar";
@@ -7,10 +6,12 @@ import {useSelector} from 'react-redux'
 import { ChangeData } from "../components/privatePage/ChangeData";
 import { MyOrdersUser } from "../components/privatePage/MyOrdersUser";
 import { MyOrdersAdmin } from "../components/privatePage/MyOrdersAdmin";
+import { MyFiles } from "../components/privatePage/MyFiles";
 
 const PrivatePage = () =>{
 
-    const menu = ['Мои заказы', 'Личные данные', 'Облако']
+    //const menu = ['Мои заказы', 'Личные данные', 'Мои файлы']
+    const menu = ['Мои заказы', 'Личные данные']
     const user = useSelector(state=>state.private.user)
 
     const [item, setItem] = useState(0)
@@ -22,7 +23,7 @@ const PrivatePage = () =>{
                     return <MyOrdersAdmin />
                 }
             case(1): return <ChangeData />
-            case(2): return <Files />
+            //case(2): return <MyFiles />
             default: return <MyOrdersUser />
 
         }

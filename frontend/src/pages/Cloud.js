@@ -50,10 +50,10 @@ const Cloud = () =>{
         }
     }*/
 
-    const isDateOlderThan30Days = (dateString) => {
+    const isDateOlderThan14Days = (dateString) => {
         const currentDate = new Date();
         const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(currentDate.getDate() - 30);
+        thirtyDaysAgo.setDate(currentDate.getDate() - 14);
         const date = new Date(dateString);
         return date < thirtyDaysAgo;
     }
@@ -63,18 +63,26 @@ const Cloud = () =>{
         dispatch(deleteFileStore(el.id))
     }
 
-    const ClearCloud = async() =>{
-        if (window.confirm('Вы уверены, что хотите удалить папки (старше 30 дней)?')) {
-            let i = 0
-            files.forEach(el=>{
-                if(isDateOlderThan30Days(el.createdAt)){
-                    deleteFileClick(el)
-                    i++
+    useEffect(() => {
+        const ClearCloud = async () => {
+          if (files.length > 0) {
+            const oldFiles = files.filter(el => isDateOlderThan14Days(el.createdAt));
+      
+            if (oldFiles.length > 0) {
+                for (const el of oldFiles) {
+                  try {
+                    await deleteFileClick(el);
+                  } catch (error) {
+                    console.error(`Ошибка при удалении файла ${el.name}:`, error);
+                  }
                 }
-            })
-            alert(`Папки удален (${i}шт)`)
-        }
-    }
+            }
+          }
+        };
+      
+        ClearCloud();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
 
     return (
         <div style={{display: 'flex', flexDirection: 'column',background: '#e8e8e8', minHeight: '100vh'}}>
@@ -90,9 +98,7 @@ const Cloud = () =>{
                 </div>
                 <div className="cloud-menu-right">
                     <h6 style={{fontSize: 14}}>{`Память: ${getTotalSize(filesAll).toFixed(2)}gb / 60gb`}</h6>
-                    <button  
-                        style={{border: '1px solid #dbdbdb', borderRadius: 5, background: 'white', fontSize: 14, marginLeft: 10, padding: '0 20px'}}
-                        onClick={()=>ClearCloud()}>очистить</button>
+                    
                 </div>
             </div>
 

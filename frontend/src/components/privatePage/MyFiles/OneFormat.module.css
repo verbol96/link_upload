@@ -1,0 +1,28 @@
+
+.files{
+    margin-top: 30px;
+}
+
+.menuFiles{
+    display: flex;
+    flex-direction: row;
+    gap: 10px
+}
+
+.buttonAdd{
+    width: 150px;
+    height: 40px;
+    background: rgb(161, 168, 181);
+    color: white;
+    border: 1px solid rgb(67, 67, 67);
+    border-radius: 10px;
+}
+
+.buttonOption{
+    width: 150px;
+    height: 40px;
+    background: rgb(202, 206, 214);
+    color: white;
+    border: 1px solid rgb(202, 206, 214);
+    border-radius: 10px;
+}

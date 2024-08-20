@@ -3,3 +3,22 @@
     font-weight: 400;
     font-size: 12px;
 }
+
+.menuFormats{
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+
+}
+
+.menuFormats div{
+    border: 1px solid black;
+    border-radius: 5px;
+    padding: 0 15px;
+    min-width: 100px;
+    align-items: center;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}

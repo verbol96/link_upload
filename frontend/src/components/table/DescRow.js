@@ -12,6 +12,8 @@ import { deleteFile } from '../../http/cloudApi';
 import { sendSms } from '../../http/authApi';
 import { $host } from '../../http';
 import style from './DescRow.module.css'
+import { Button } from '../../ui/button';
+
 
 export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
 
@@ -35,9 +37,10 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const [codeOutside, setCodeOutside] = useState(order.codeOutside || '')
   const [isChanged, setIsChanged] = useState(false);
   const [origin, setOrigin] = useState(order.origin || '');
-  const [is_sms_add, setIs_sms_add] = useState(order.is_sms_add || '');
-  const [is_sms_send, setIs_sms_send] = useState(order.is_sms_send || '');
-  const [is_sms_error, setIs_sms_error] = useState(order.is_sms_error || '');
+  const [is_sms_add, setIs_sms_add] = useState(order.is_sms_add || false);
+  const [is_sms_send, setIs_sms_send] = useState(order.is_sms_send || false);
+  const [is_sms_error, setIs_sms_error] = useState(order.is_sms_error || false);
+  const [is_sms_pay, setIs_sms_pay] = useState(order.is_sms_pay || false);
   const [date_sent, setDate_sent] = useState(order.date_sent || '')
 
   const [numRows, setNumRows] = useState(2);
@@ -228,6 +231,21 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     }
   }
 
+  const SmsPay = async() =>{
+    const code = `оплата заказа. ЕРИП -> E-POS.
+                  номер счета: 27307-1-${order.order_number}.
+                  сумма: ${order.price+order.price_deliver}р`
+
+    const userConfirmation = window.confirm(`Отправить смс: ${code}`);
+    
+    if (userConfirmation) {
+      await sendSms(phone, code)
+      setIs_sms_pay(true)
+      dispatch(updateSmsSend(order.id))
+      updateOrder(order.id, {...data, is_sms_pay: true})
+    }
+  }
+
 
   const AddFormat = () =>{
     const data = {
@@ -380,7 +398,6 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
         try {
           const {data} = await $host.post('/api/ep/sendOrder', dataSend);
           setCodeOutside(data.Table[0].Number)
-          //console.log(data.Table[0].Number)
         } catch (error) {
           console.error('Ошибка:', error);
         }
@@ -479,6 +496,52 @@ const handlePrint1 = () =>{
   };*/
   printWindow.print();
 }
+
+const ShowBtnSms = (smsType, fanc, text) =>{
+  return(
+      smsType ? 
+      (
+        <Button className='flex-1' variant='outline' disabled>
+          <i style={{ color: 'gray' }} className="bi bi-check-all"></i> {text}
+        </Button>
+      ) : (
+        <Button className='flex-1' variant='secondary' onClick={fanc}>
+          <i style={{ color: 'white', marginRight: 10 }} className="bi bi-telephone-forward"></i> {text}
+        </Button>
+      )
+  )
+}
+
+const AddInvoices = async() =>{
+
+  const sendConfirmation = window.confirm(
+    `Подтвердите:\n` +
+    `Номер заказа: ${order.order_number}\n` +
+    `Цена: ${order.price + order.price_deliver}\n` +
+    `Info: Заказ ${order.FIO}`
+  );
+    
+  if (sendConfirmation) {
+
+    const dataInvoices = {
+      AccountNo: order.order_number,
+      Amount: order.price+order.price_deliver,
+      Info: `Заказ ${order.FIO}`
+    }
+
+      try {
+        const {data} = await $host.post('/api/ep/addInvoicesPay', dataInvoices);
+        
+        if(data) setOther(prev=>`Данные для оплаты: 
+          ЕРИП -> E-POS 
+          номер счета: 27307-1-${order.order_number} \n \n` + prev)
+      } catch (error) {
+        console.error('Ошибка:', error);
+      }
+
+  }
+}
+
 
   return (
     <div className="order_details_card">
@@ -675,47 +738,21 @@ const handlePrint1 = () =>{
             </div>
 
           </div>
-          <div className="card_actions">
-            {
-              order.status === 0 ? (
-                is_sms_error ? (
-                  <label>
-                    <i style={{ color: 'darkgreen' }} className="bi bi-check-all"></i> ошибка
-                  </label>
-                ) : (
-                  <button className="SendSms_button" onClick={SmsError}>
-                    <i style={{ color: 'darkgreen', marginRight: 10 }} className="bi bi-telephone-forward"></i> ошибка
-                  </button>
-                )
-              ) : (
-                is_sms_add ? (
-                  <label>
-                    <i style={{ color: 'darkgreen' }} className="bi bi-check-all"></i>принят
-                  </label>
-                ) : (
-                  <button className="SendSms_button" onClick={SmsAdd}>
-                    <i style={{ color: 'darkgreen', marginRight: 10 }} className="bi bi-telephone-forward"></i> принят
-                  </button>
-                )
-              )
-            }
+          <div className="gap-1 flex justify-start">
 
-            {
-              order.status !== 0 ? (
-              is_sms_send ? (
-                <label>
-                  <i style={{ color: 'darkgreen' }} className="bi bi-check-all"></i> отправлен
-                </label>
-              ) : (
-                <button className="SendSms_button" onClick={SmsSend}>
-                  <i style={{ color: 'darkgreen', marginRight: 10 }} className="bi bi-telephone-forward"></i> отправлен
-                </button>
-              )
-              ) : null
-            }
+            { order.status === 0 && ShowBtnSms(is_sms_error, SmsError, 'ошибка')}
+            { order.status !== 0 && ShowBtnSms(is_sms_add, SmsAdd, 'принят') }
+            { order.status !== 0 && ShowBtnSms(is_sms_send, SmsSend, 'отправлен')}
+            { order.firstClass && ShowBtnSms(is_sms_pay, SmsPay, 'оплата') }
             
-            <button className="delete_button" onClick={()=>DeleteOrder()}>удалить заказ</button>
           </div>
+
+          <div className='flex justify-end mt-3 gap-1' >
+            { order.firstClass && <Button  variant='outline' size='sm' onClick={()=>AddInvoices()}>выставить счет</Button>}
+            <Button className='w-[25%]' variant='destructive' size='sm' onClick={()=>DeleteOrder()}>удалить</Button>
+          </div>
+
+        
         </div>
       </div>
     </div>
