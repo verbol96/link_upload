@@ -1,4 +1,5 @@
 const axios = require('axios');
+require('dotenv').config()
 
 class euroPostController {
 
@@ -78,6 +79,71 @@ class euroPostController {
 
     return res.json(data);
   }
+
+  // Функция для получения списка счетов
+  getInvoicesPay = async (req, res) => {
+    const token = process.env.TOKEN_PAY; // Ваш API токен
+    const isTest = false; // true для тестового окружения, false для боевого
+
+    // Формируем URL в зависимости от окружения
+    const url = isTest
+        ? `https://sandbox-api.express-pay.by/v1/invoices/`
+        : `https://api.express-pay.by/v1/invoices/`;
+
+    try {
+        // Выполняем GET-запрос с токеном в URL
+        const { data } = await axios.get(url, {
+            params: {
+                token: token
+            }
+        });
+
+        // Отправляем данные в формате JSON
+        return res.json(data);
+    } catch (error) {
+        // Обработка ошибок
+        console.error('Ошибка при выполнении запроса:', error.response ? error.response.data : error.message);
+        return res.status(500).json({ error: 'Ошибка при выполнении запроса', details: error.message });
+    }
+};
+
+
+addInvoicesPay = async (req, res) => {
+
+  const {AccountNo, Amount, Info} = req.body
+
+  const token = process.env.TOKEN_PAY;
+  const isTest = false; // true для тестового окружения, false для боевого
+
+  // Формируем URL в зависимости от окружения
+  const url = isTest
+      ? `https://sandbox-api.express-pay.by/v1/invoices/`
+      : `https://api.express-pay.by/v1/invoices/`;
+
+  const dataInvoices = {
+    AccountNo,
+    Amount,
+    Currency: "933",
+    Info
+  }
+
+  try {
+      // Выполняем GET-запрос с токеном в URL
+      const { data } = await axios.post(url, dataInvoices, {
+          params: {
+              token: token
+          }
+      });
+
+      // Отправляем данные в формате JSON
+      return res.json(data);
+  } catch (error) {
+      // Обработка ошибок
+      console.error('Ошибка при выполнении запроса:', error.response ? error.response.data : error.message);
+      return res.status(500).json({ error: 'Ошибка при выполнении запроса', details: error.message });
+  }
+};
+
 
   
   

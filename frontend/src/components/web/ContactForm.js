@@ -67,6 +67,8 @@ export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city
                 </div>
             </div>
             
+           
+           
  
             <div className={style.rowInfo} style={{marginTop: 50}}>
                 <div className={style.containerInput}>
@@ -74,8 +76,6 @@ export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city
                     <textarea className={style.textAreaForm} rows={2} value={other} onChange={(e) => setOther(e.target.value)}></textarea>
                 </div>
             </div>
-            
-            
             </div>
             </>
     )

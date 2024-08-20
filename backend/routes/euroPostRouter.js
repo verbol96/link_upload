@@ -6,4 +6,7 @@ router.get('/getListOps', euroPostController.getListOps)
 router.get('/getInfo', euroPostController.getInfo)
 router.post('/sendOrder', euroPostController.sendOrder)
 
+router.get('/getInvoicesPay', euroPostController.getInvoicesPay)
+router.post('/addInvoicesPay', euroPostController.addInvoicesPay)
+
 module.exports = router

@@ -8,6 +8,7 @@ const SAVE_USERS = 'SAVE_USERS'
 const UPDATE_SMS_ADD = 'UPDATE_SMS_ADD'
 const UPDATE_SMS_SEND = 'UPDATE_SMS_SEND'
 const UPDATE_SMS_ERROR = 'UPDATE_SMS_ERROR'
+const UPDATE_SMS_PAY = 'UPDATE_SMS_PAY'
 
 const defaultState = {
     settings: [],
@@ -93,19 +94,34 @@ export const orderReducer = (state = defaultState, action) =>{
             };
 
         case UPDATE_SMS_ERROR:
-        return {
-            ...state,
-            order: state.order.map((el) => {
-            if (el.id === action.payload) {
+            return {
+                ...state,
+                order: state.order.map((el) => {
+                if (el.id === action.payload) {
+                    return {
+                    ...el,
+                    is_sms_error: true,
+                    };
+                } else {
+                    return el; // Вернуть элемент без изменений
+                }
+                }),
+            };
+
+            case UPDATE_SMS_PAY:
                 return {
-                ...el,
-                is_sms_error: true,
+                    ...state,
+                    order: state.order.map((el) => {
+                    if (el.id === action.payload) {
+                        return {
+                        ...el,
+                        is_sms_pay: true,
+                        };
+                    } else {
+                        return el; // Вернуть элемент без изменений
+                    }
+                    }),
                 };
-            } else {
-                return el; // Вернуть элемент без изменений
-            }
-            }),
-        };
 
         default: return state
     }
@@ -127,4 +143,5 @@ export const deleteOrderId = (id) =>({type:'DELETE_ORDER', payload: id})
 export const updateSmsAdd  = (id) =>({type: 'UPDATE_SMS_ADD', payload: id})
 export const updateSmsSend  = (id) =>({type: 'UPDATE_SMS_SEND', payload: id})
 export const updateSmsError  = (id) =>({type: 'UPDATE_SMS_ERROR', payload: id})
+export const updateSmsPay  = (id) =>({type: 'UPDATE_SMS_PAY', payload: id})
   

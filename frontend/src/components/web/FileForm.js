@@ -15,8 +15,8 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
     const dispach = useDispatch()
 
     const settings = useSelector(state=>state.order.settings)
-    //const TypePhoto = ['photo', 'holst', 'magnit']
-    const TypePhoto = ['photo', 'magnit']
+    const TypePhoto = ['photo', 'holst', 'magnit']
+    //const TypePhoto = ['photo', 'magnit']
     const FormatPhoto = settings.filter(el=>el.type==='photo')
     const FormatHolst = settings.filter(el=>el.type==='holst')
     const FormatMagnit = settings.filter(el=>el.type==='magnit')
@@ -282,7 +282,6 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
         }
     }
 
- 
 
     return(
         <div className={style.filesFormFormat}>
@@ -318,7 +317,16 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
                 :
                 null
                 }
+                {
+                  formats[item].format.includes('<') &&
+                  <div className="flex items-center gap-1 bg-gray-100 rounded-md p-1 px-2">
+                    <i className="bi bi-exclamation-circle"></i>
+                    <label style={{fontSize: 12}}>укажите размер в примечании</label>
+                  </div>
+                }
             </div>
+            
+            
             <div className={style.cards}>
                 <div className={style.cardFile} style={{border: '2px #2C3531 dashed'}}>
                     <label className={style.uploadLabel}  onClick={()=> fileInput.current.click()}>
