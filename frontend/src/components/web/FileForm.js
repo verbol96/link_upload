@@ -17,7 +17,9 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
     const settings = useSelector(state=>state.order.settings)
     const TypePhoto = ['photo', 'holst', 'magnit']
     //const TypePhoto = ['photo', 'magnit']
-    const FormatPhoto = settings.filter(el=>el.type==='photo')
+    const FormatPhoto = settings
+      .filter(el => el.type === 'photo')
+      .sort((a, b) => b.title.localeCompare(a.title));
     const FormatHolst = settings.filter(el=>el.type==='holst')
     const FormatMagnit = settings.filter(el=>el.type==='magnit')
 
@@ -261,7 +263,8 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
             case 'holst': return 'Холст'
             case 'magnit': return 'Магнит'
             case 'а6': return '10x15 стандарт'
-            case 'дд': return '10x10 квадрат'
+            case 'дд': return '10x10 (с рамкой)'
+            case 'м7x10': return '7x10 (с рамкой)'
             case 'пол': return '10х12 полароид'
             case 'мини': return '7х9 миниПолароид'
             case 'а5': return '15х20'
@@ -278,7 +281,7 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
             case '<а7': return 'другой до 7.5х10'
             case '<а5': return 'другой до 15х20'
             case '<а4': return 'другой до 20х30'
-            default: return false;
+            default: return 'неизвестно';
         }
     }
 

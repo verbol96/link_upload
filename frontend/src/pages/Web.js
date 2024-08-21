@@ -219,7 +219,8 @@ const Web = () =>{
             case 'holst': return 'Холст'
             case 'magnit': return 'Магнит'
             case 'а6': return '10x15 стандарт'
-            case 'дд': return '10x10 квадрат'
+            case 'дд': return '10x10 (с рамкой)'
+            case 'м7x10': return '7x10 (с рамкой)'
             case 'пол': return '10х12 полароид'
             case 'мини': return '7х9 миниПолароид'
             case 'а5': return '15х20'
@@ -232,11 +233,11 @@ const Web = () =>{
             case '50x70': return '50x70'
             case '55x55': return '55x55'
             case '55x80': return '55x80'
-            case '<а6': return 'до 10х15'
-            case '<а7': return 'до 7.5х10'
-            case '<а5': return 'до 15х20'
-            case '<а4': return 'до 20х30'
-            default: return 'неизвестно'
+            case '<а6': return 'другой до 10х15'
+            case '<а7': return 'другой до 7.5х10'
+            case '<а5': return 'другой до 15х20'
+            case '<а4': return 'другой до 20х30'
+            default: return 'неизвестно';
         }
     }
 

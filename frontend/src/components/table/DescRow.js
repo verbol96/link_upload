@@ -232,9 +232,10 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   }
 
   const SmsPay = async() =>{
-    const code = `оплата заказа. ЕРИП -> E-POS.
-                  номер счета: 27307-1-${order.order_number}.
-                  сумма: ${order.price+order.price_deliver}р`
+    const code = `Оплата заказа.
+    ЕРИП -> E-POS.
+    Номер счета: 27307-1-${order.order_number}.
+    Сумма: ${+order.price + +order.price_deliver}р`; 
 
     const userConfirmation = window.confirm(`Отправить смс: ${code}`);
     
@@ -517,7 +518,7 @@ const AddInvoices = async() =>{
   const sendConfirmation = window.confirm(
     `Подтвердите:\n` +
     `Номер заказа: ${order.order_number}\n` +
-    `Цена: ${order.price + order.price_deliver}\n` +
+    `Цена: ${+order.price + +order.price_deliver}\n` +
     `Info: Заказ ${order.FIO}`
   );
     
@@ -525,7 +526,7 @@ const AddInvoices = async() =>{
 
     const dataInvoices = {
       AccountNo: order.order_number,
-      Amount: order.price+order.price_deliver,
+      Amount: +order.price+ +order.price_deliver,
       Info: `Заказ ${order.FIO}`
     }
 
