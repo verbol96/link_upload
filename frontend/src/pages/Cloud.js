@@ -64,10 +64,11 @@ const Cloud = () =>{
     }
 
     useEffect(() => {
+        console.log('yes')
         const ClearCloud = async () => {
           if (files.length > 0) {
             const oldFiles = files.filter(el => isDateOlderThan14Days(el.createdAt));
-      
+            console.log('yes1')
             if (oldFiles.length > 0) {
                 for (const el of oldFiles) {
                   try {
