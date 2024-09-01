@@ -10,6 +10,16 @@ const History = () => {
             <div style={{display: 'flex', justifyContent: 'center', color: '#116466', margin: 20, fontSize: 25}}>История обновлений</div>
             
             <div style={{margin: 20}}>
+                <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.5 (01.09.2024)</div>
+                    <ul>
+                        <li>сохрание смс с отправкой оплаты</li>
+                        <li>удалить кнопку печать</li>
+                        <li>видимое примечание у клиентов</li>
+                        <li>Фильтр первый класс</li>
+                        <li>Удаление/добавление форматов ошибка</li>
+                        <li>Редактор исправлен</li>
+                        
+                    </ul>
                 <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.4 (21.08.2024)</div>
                     <ul>
                         <li>исправить двойную загрузку фото в ЛК</li>
