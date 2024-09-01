@@ -8,5 +8,6 @@ router.post('/sendOrder', euroPostController.sendOrder)
 
 router.get('/getInvoicesPay', euroPostController.getInvoicesPay)
 router.post('/addInvoicesPay', euroPostController.addInvoicesPay)
+router.post('/delInvoicesPay', euroPostController.delInvoicesPay)
 
 module.exports = router

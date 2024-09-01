@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect} from 'react';
 import EditOne from './EditOne';
-import './styleEditor.css';
+import style from './styleEditor.module.css';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { $host } from '../../http';
@@ -457,98 +457,94 @@ const EditMain = () => {
 
     return (
         <div>
-            <div className='menu-editor'>
-                <label className="file-input">
-                    Выбрать фото
-                    <input type="file" multiple accept="image/*" style={{display:'none'}}  onChange={handleImageUpload} className="file-input-field" />
-                    
-                </label>
+    <div className={style.menuEditor}>
+        <label className={style.fileInput}>
+            Выбрать фото
+            <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} className={style.fileInputField} />
+        </label>
 
-                <div className='input-menu'>
-                    <input  className='input-menu-in' placeholder='номер заказа' value={nameArchive} onChange={(e)=>setNameArchive(e.target.value)} />
-                </div>
-
-                <div className='select-menu-out'>
-                    <select className='select-menu-in' value={name} onChange={(e)=>changeSelect(e.target.value)}>
-                            {settingsDB.map((el,index)=> <option key={index} value={el.name}>{el.name}</option>)}
-                           
-                    </select>
-                </div>
-                
-                <div className='settings-container'>
-                    <button 
-                        className='button-menu' 
-                        style={{background: settings?'darkgray':'white'}}
-                        onClick={()=>setSettings(!settings)}
-                    >
-                        <i style={{color:'black'}} className="bi bi-gear"></i>
-                    </button>
-                    {settings && 
-                        <div className='settings-editor'>
-                            <span className='settings-editor-row'>
-                                <label>имя: </label>
-                                <input value={name} onChange={(e)=>setName(e.target.value)} />
-                            </span>
-                            <div></div>
-                            <span className='settings-editor-row'>
-                                <label>высота: </label>
-                                <input  value={height} onChange={(e)=>setHeight(e.target.value)}  />
-                            </span>
-                            <span className='settings-editor-row'>
-                                <label>ширина: </label>
-                                <input  value={width} onChange={(e)=>setWidth(e.target.value)}  />
-                            </span>
-                            <table className='table-editor'>
-                                <tbody>
-                                <tr>
-                                    <td></td>
-                                    <td style={{textAlign: 'center', verticalAlign: 'bottom'}}><input type='text'  value={top} onChange={(e)=>setTop(e.target.value)}  /></td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td style={{textAlign: 'right'}}><input type='text'  value={left} onChange={(e)=>setLeft(e.target.value)}  /></td>
-                                    <td style={{border: '1px solid black', textAlign:'center', height:80, width: 80}}>Image</td>
-                                    <td style={{textAlign: 'left'}}><input type='text'  value={right} onChange={(e)=>setRight(e.target.value)}  /></td>
-                                </tr>
-                                <tr>
-                                    <td></td>
-                                    <td  style={{textAlign: 'center', verticalAlign: 'top'}}><input type='text'  value={bottom} onChange={(e)=>setBottom(e.target.value)}  /></td>
-                                    <td></td>
-                                </tr>
-                                </tbody>
-                            </table>
-                            <div style={{marginTop: 20, display: 'flex', flexDirection: 'row', justifyContent: 'end', gap: 10}}>
-                                <button onClick={saveSetting}>сохранить</button>
-                                <button onClick={deleteSetting}>удалить</button>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-
-            {
-                (images.length>0) &&
-                <div className="edit-main">
-                    {images.map((image, index) => (
-                        <EditOne key={index} image={image} aspectRatioDef={aspectRatio} cropperRef={getCropperRef(index)} />
-                    ))}
-                </div>
-            }
-
-
-            {
-                (images.length>0) ? 
-                <span>
-                     <label style={{marginLeft:15}}>Количество: {images.length}шт</label>
-                     <button className='btn-save-editor' onClick={save} style={{background:progress&&'#a2a252'}}> <i style={{color: 'black', marginRight: 10}} className="bi bi-upload"></i> {progress?'Подготовка':'Скачать'}</button>
-                     <button className='btn-delete-editor' onClick={clearFrame}>  очистить</button>
-
-                </span>
-                :
-                <label style={{margin: 20}}> <i style={{color: 'black'}} className="bi bi-info-circle"></i> Выберете фото для обработки</label>
-            }
-            
+        <div className={style.inputMenu}>
+            <input className={style.inputMenuIn} placeholder="номер заказа" value={nameArchive} onChange={(e) => setNameArchive(e.target.value)} />
         </div>
+
+        <div className={style.selectMenuOut}>
+            <select className={style.selectMenuIn} value={name} onChange={(e) => changeSelect(e.target.value)}>
+                {settingsDB.map((el, index) => <option key={index} value={el.name}>{el.name}</option>)}
+            </select>
+        </div>
+
+        <div className={style.settingsContainer}>
+            <button
+                className={style.buttonMenu}
+                style={{ background: settings ? 'darkgray' : 'white' }}
+                onClick={() => setSettings(!settings)}
+            >
+                <i style={{ color: 'black' }} className="bi bi-gear"></i>
+            </button>
+            {settings &&
+                <div className={style.settingsEditor}>
+                    <span className={style.settingsEditorRow}>
+                        <label>имя: </label>
+                        <input value={name} onChange={(e) => setName(e.target.value)} />
+                    </span>
+                    <div></div>
+                    <span className={style.settingsEditorRow}>
+                        <label>высота: </label>
+                        <input value={height} onChange={(e) => setHeight(e.target.value)} />
+                    </span>
+                    <span className={style.settingsEditorRow}>
+                        <label>ширина: </label>
+                        <input value={width} onChange={(e) => setWidth(e.target.value)} />
+                    </span>
+                    <table className={style.tableEditor}>
+                        <tbody>
+                            <tr>
+                                <td></td>
+                                <td style={{ textAlign: 'center', verticalAlign: 'bottom' }}><input type='text' value={top} onChange={(e) => setTop(e.target.value)} /></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td style={{ textAlign: 'right' }}><input type='text' value={left} onChange={(e) => setLeft(e.target.value)} /></td>
+                                <td style={{ border: '1px solid black', textAlign: 'center', height: 80, width: 80 }}>Image</td>
+                                <td style={{ textAlign: 'left' }}><input type='text' value={right} onChange={(e) => setRight(e.target.value)} /></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td style={{ textAlign: 'center', verticalAlign: 'top' }}><input type='text' value={bottom} onChange={(e) => setBottom(e.target.value)} /></td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style={{ marginTop: 20, display: 'flex', flexDirection: 'row', justifyContent: 'end', gap: 10 }}>
+                        <button onClick={saveSetting}>сохранить</button>
+                        <button onClick={deleteSetting}>удалить</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    {
+        (images.length > 0) &&
+        <div className={style.editMain}>
+            {images.map((image, index) => (
+                <EditOne key={index} image={image} aspectRatioDef={aspectRatio} cropperRef={getCropperRef(index)} />
+            ))}
+        </div>
+    }
+
+    {
+        (images.length > 0) ?
+            <span>
+                <label style={{ marginLeft: 15 }}>Количество: {images.length}шт</label>
+                <button className={style.btnSaveEditor} onClick={save} style={{ background: progress && '#a2a252' }}> <i style={{ color: 'black', marginRight: 10 }} className="bi bi-upload"></i> {progress ? 'Подготовка' : 'Скачать'}</button>
+                <button className={style.btnDeleteEditor} onClick={clearFrame}>  очистить</button>
+            </span>
+            :
+            <label style={{ margin: 20 }}> <i style={{ color: 'black' }} className="bi bi-info-circle"></i> Выберете фото для обработки</label>
+    }
+
+</div>
     );
 } 
 

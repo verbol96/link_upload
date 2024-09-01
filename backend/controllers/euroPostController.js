@@ -82,13 +82,21 @@ class euroPostController {
 
   // Функция для получения списка счетов
   getInvoicesPay = async (req, res) => {
-    const token = process.env.TOKEN_PAY; // Ваш API токен
-    const isTest = false; // true для тестового окружения, false для боевого
+    const {No} = req.body
+    const token = process.env.TOKEN_PAY;
+
+    const url1 =  `https://api.express-pay.by/v1/invoices/`;
+      // Выполняем GET-запрос с токеном в URL
+      const { data } = await axios.get(url1, {
+          params: {
+              token: token,
+              AccountNo: No
+          }
+      });
+
 
     // Формируем URL в зависимости от окружения
-    const url = isTest
-        ? `https://sandbox-api.express-pay.by/v1/invoices/`
-        : `https://api.express-pay.by/v1/invoices/`;
+    const url =  `https://api.express-pay.by/v1/invoices/${data.Items[0].InvoiceNo}/status`
 
     try {
         // Выполняем GET-запрос с токеном в URL
@@ -144,6 +152,36 @@ addInvoicesPay = async (req, res) => {
   }
 };
 
+delInvoicesPay = async (req, res) => {
+  const {InvoiceNo} = req.body
+  const token = process.env.TOKEN_PAY;
+
+  const url1 =  `https://api.express-pay.by/v1/invoices/`;
+    // Выполняем GET-запрос с токеном в URL
+    const { data } = await axios.get(url1, {
+        params: {
+            token: token,
+            AccountNo: InvoiceNo
+        }
+    });
+
+
+  const url = `https://api.express-pay.by/v1/invoices/${data.Items[0].InvoiceNo}`;
+
+  try {
+      // Выполняем GET-запрос с токеном в URL
+      const { data } = await axios.delete(url, {
+        params: {
+          token: token
+      }
+      });
+
+      return res.json(data);
+  } catch (error) {
+      console.error('Ошибка при выполнении запроса:', error.response ? error.response.data : error.message);
+      return res.status(500).json({ error: 'Ошибка при выполнении запроса', details: error.message });
+  }
+};
 
   
   

@@ -229,7 +229,22 @@ export const OneOrder = ({order, index}) =>{
                             <div className={style.rowInfo}>
                                 <div style={{flex: 1, maxWidth: '25%'}}>примечания:</div>
                                 <div style={{flex: 3, fontSize: 11}}>
-                                <textarea disabled rows={order.other.split('\n').length<2?2:order.other.split('\n').length} value={order.other} onChange={()=>{}} style={{ border: '1px solid silver', borderRadius: 5, width: '100%'}}></textarea>
+                                <textarea 
+                                    disabled 
+                                    rows={order.other.split('\n').length < 2 ? 2 : order.other.split('\n').length} 
+                                    value={order.other} 
+                                    onChange={() => {}} 
+                                    style={{ 
+                                        border: '1px solid silver', 
+                                        borderRadius: 5, 
+                                        width: '100%',
+                                        color: 'black', // Цвет текста
+                                        backgroundColor: 'white', // Цвет фона, чтобы текст был контрастным
+                                        opacity: 1, // Устанавливаем полную непрозрачность
+                                        WebkitTextFillColor: 'black', // Это для Safari
+                                        cursor: 'not-allowed' // Указатель мыши для disabled элемента
+                                    }}
+                                ></textarea>                                
                                 </div>
                             </div>
                              

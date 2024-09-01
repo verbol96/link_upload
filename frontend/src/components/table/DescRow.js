@@ -3,7 +3,7 @@ import './DescRow.css';
 import { OneFormat } from './OneFormat';
 import { deleteOrder, getSettings, updateOrder } from '../../http/dbApi';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsError, updateSmsSend } from '../../store/orderReducer';
+import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsError, updateSmsPay, updateSmsSend } from '../../store/orderReducer';
 import _ from 'lodash';
 import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
@@ -242,7 +242,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     if (userConfirmation) {
       await sendSms(phone, code)
       setIs_sms_pay(true)
-      dispatch(updateSmsSend(order.id))
+      dispatch(updateSmsPay(order.id))
       updateOrder(order.id, {...data, is_sms_pay: true})
     }
   }
@@ -369,10 +369,10 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     };
   }, []);
 
-  const filterOPS = listOps.filter(el=>{
-        
-    return el.WarehouseName.toLowerCase().includes(inputOPS.toLowerCase())
-  })
+
+  const filterOPS = listOps.filter(el => {
+    return el.WarehouseName && el.WarehouseName.toLowerCase().includes(inputOPS.toLowerCase());
+    });
 
   const putNameOPS =(name)=>{
     setNameOPS(name)
@@ -452,51 +452,6 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
     printWindow.print();
 }
 
-const handlePrint1 = () =>{
-        
-  const printContent = `
-  <div style="height=800px; width=1200px; transform: rotate(90deg); margin: 50px; padding: 50px">
-    <div style=" height: 600px; width:800px;  font-size: 32px; ; margin: auto ">
-      <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
-          <div style="flex: 1;font-size: 25px; margin: auto">кому: </div>
-          <div style="flex: 6; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.FIO}</div>
-      </div>
-
-      <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px"> </div>
-
-      <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
-          <div style="flex: 1;font-size: 25px; margin: auto">куда: </div>
-          <div style="flex: 6; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;">${order.adress}</div>
-      </div>
-
-      <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
-          <div style="flex: 1; border-left: 1px solid black;border-right: 1px solid black; font-size: 40px ; text-align: center; padding-top: 10px; font-family: 'Roboto Mono', monospace; ">${order.postCode} </div>
-          <div style="flex: 3; text-align: center;  margin: auto;  font-family: 'Roboto Mono', monospace;">${order.city}</div>
-      </div>
-
-      <div style="display: flex; flex-direction: row; border-bottom: 1px solid black; height: 74px">
-          <div style=" margin: auto;  font-family: 'Roboto Mono', monospace;">${order.raion}</div>
-      </div>
-
-      <div style="display: flex; flex-direction: row; ; border-bottom: 1px solid black; height: 74px">
-          <div style="flex: 1; text-align: center; margin: auto;   font-family: 'Roboto Mono', monospace;">${order.oblast}</div>
-      </div>
-
-      <div style="display: flex; flex-direction: row;  height: 74px">
-          <div style="flex: 1;font-size: 25px; margin: auto">телефон: </div>
-          <div style="flex: 1; text-align: center; margin: auto;  font-family: 'Roboto Mono', monospace;;">${order.phone}</div>
-      </div>
-    </div>
-    </div>`;
-
-  ;
-  const printWindow = window.open('', '', 'height=1200px,width=800px');
-  printWindow.document.write(printContent);
-  /*printWindow.onafterprint = function() {
-      printWindow.close();
-  };*/
-  printWindow.print();
-}
 
 const ShowBtnSms = (smsType, fanc, text) =>{
   return(
@@ -541,6 +496,49 @@ const AddInvoices = async() =>{
       }
 
   }
+}
+
+const CancelInvoices = async() =>{
+
+  const info = window.confirm( 'Отменить счет?' );
+    
+  if (info) {
+      try {
+        const dataAPI = {
+          InvoiceNo : order.order_number 
+        }
+        const {data} = await $host.post('/api/ep/delInvoicesPay', dataAPI);
+        console.log(data)
+        if(data) window.alert( 'отменен!' )
+      } catch (error) {
+        console.error('Ошибка:', error);
+      }
+
+  }
+}
+
+const CheckInvoices = async() =>{
+
+      try {
+        const {data} = await $host.get('/api/ep/getInvoicesPay', {No: order.order_number });
+
+        const descStatus = {
+          '1':'Ожидает оплату',
+          '2':'Просрочен',
+          '3':'Оплачен',
+          '4':'Оплачен частично',
+          '5':'Отменен',
+          '6':'Оплачен с помощью банковской карты',
+          '7': 'Платеж возращен'
+        }
+
+        const status = data.Status
+
+        window.alert(descStatus[status]);
+      } catch (error) {
+        console.error('Ошибка:', error);
+      }
+
 }
 
 
@@ -605,7 +603,7 @@ const AddInvoices = async() =>{
             </div>
 
             {typePost === 'E' && 
-                <div>
+                <div className=' mt-3'>
                 <div className={style.inputBlock} ref={dropdownRef}>
                   <button onClick={() => setIsOpen(!isOpen)}>{nameOPS.WarehouseName}</button>
                   {isOpen && (
@@ -619,8 +617,8 @@ const AddInvoices = async() =>{
                       </div>
                   )}
                 </div>
-                <div>
-                  <button onClick={()=>{sendOrderEp()}}>Оформить заявку</button>
+                <div className='flex justify-end mt-1'>
+                  <Button variant='secondary' onClick={()=>{sendOrderEp()}}>Оформить заявку</Button>
                 </div>
                 </div>
               }
@@ -648,9 +646,8 @@ const AddInvoices = async() =>{
             </>
             : null}
               {typePost!=='E' &&
-                <div>
-                <button onClick={()=>{handlePrint()}}><i style={{color: 'darkgreen'}} className="bi bi-printer"></i> print </button>
-                <button style={{marginLeft: 10}} onClick={()=>{handlePrint1()}}><i style={{color: 'darkgreen'}} className="bi bi-printer"></i> print1 </button>
+                <div className='flex justify-end mt-2'>
+                <Button variant='secondary' onClick={()=>{handlePrint()}}><i style={{color: 'white', marginRight: 10}} className="bi bi-printer"></i> печать </Button>
                 </div>
               }
           </div>
@@ -749,7 +746,15 @@ const AddInvoices = async() =>{
           </div>
 
           <div className='flex justify-end mt-3 gap-1' >
-            { order.firstClass && <Button  variant='outline' size='sm' onClick={()=>AddInvoices()}>выставить счет</Button>}
+            { order.firstClass && <>
+              <Button  variant='outline' size='sm' onClick={()=>AddInvoices()}>выставить счет</Button>
+              <Button  variant='outline' size='sm' onClick={()=>CancelInvoices()}>отменить счет</Button>
+              <Button  variant='outline' size='sm' onClick={()=>CheckInvoices()}>проверить счет</Button>
+              </>
+            }
+          </div>
+
+          <div className='flex justify-end mt-3 gap-1' >
             <Button className='w-[25%]' variant='destructive' size='sm' onClick={()=>DeleteOrder()}>удалить</Button>
           </div>
 

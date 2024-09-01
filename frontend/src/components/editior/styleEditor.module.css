@@ -1,4 +1,4 @@
-.menu-editor{
+.menuEditor{
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
@@ -9,13 +9,13 @@
 }
 
 @media (max-width: 769px){
-  .menu-editor{
+  .menuEditor{
     width: 100%;
   }
   
 }
 
-.file-input {
+.fileInput {
   flex: 8 ;
   height: 30px;
   border: 1px dashed rgb(96, 117, 111);
@@ -28,7 +28,7 @@
   margin-right: 40px;
 }
 
-.input-menu{
+.inputMenu{
   flex: 4;
   height: 30px;
   border: 1px solid rgb(96, 117, 111);
@@ -36,18 +36,18 @@
   border-radius: 5px;
 }
 
-.input-menu-in{
+.inputMenuIn{
   width: 100%;
   border: none;
   border-radius: 5px;
   text-align: center;
 }
 
-.input-menu-in:focus {
+.inputMenuIn:focus {
   outline: none;
 }
 
-.select-menu-out{
+.selectMenuOut{
   flex: 4;
   height: 30px;
   border: 1px solid rgb(96, 117, 111);
@@ -59,7 +59,7 @@
   background-color: #ffffff;
 
 }
-.select-menu-out:after {
+.selectMenuOut:after {
   content: "\25BC";
   position: absolute;
   top: 0;
@@ -72,7 +72,7 @@
   z-index: 1;
 }
 
-.select-menu-in{
+.selectMenuIn{
   width: 100%;
   height: 100%;
   padding-left: 15px;
@@ -84,7 +84,7 @@
   z-index: 2;
 }
 
-.button-menu{
+.buttonMenu{
   flex: 1;
   height: 30px;
   margin: 5px;
@@ -93,13 +93,13 @@
   border-radius: 5px;
 }
 
-.settings-container {
+.settingsContainer {
   position: relative;
   z-index: 9999;
   /* другие стили */
 }
 
-.settings-editor{
+.settingsEditor{
   position: absolute;
   left:-250px;
   width: 300px;
@@ -109,39 +109,39 @@
   padding: 15px;
 }
 
-.settings-editor-row{
+.settingsEditorRow{
   display: flex;
   flex-direction: row;
 }
 
-.settings-editor-row label{
+.settingsEditorRow label{
   flex:1;
 }
 
-.settings-editor-row input{
+.settingsEditorRow input{
   flex:1;
   min-width: 0;
   max-width: 100%;
 }
 
-.table-editor {
+.tableEditor {
   border: 1px dashed black;
   margin: auto;
   margin-top: 20px;
 }
 
-.table-editor td {
+.tableEditor td {
   border: none;
   height: 40px;
   width: 40px;
 }
 
-.table-editor input {
+.tableEditor input {
   width: 35px;
 }
 
 
-.edit-main {
+.editMain {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -155,7 +155,7 @@
   padding: 10px;
 }
 
-.image-block {
+.imageBlock {
   position: relative;
   width: 100%;
   height: calc(100vw/4 + 40px);
@@ -168,14 +168,14 @@
 }
 
 @media(max-width: 769px){
-  .image-block {
+  .imageBlock {
     margin: 10px 40px;
     width: calc(100vw - 20px);
     height: calc(100vw - 90px);
   }
 }
 
-.image-info{
+.imageInfo{
   
   font-size: 12px;
   height: 30px;
@@ -187,7 +187,7 @@
   justify-content: space-between;
 }
 
-.image-info label{
+.imageInfo label{
   padding: 5px;
   text-align: center;
   flex: 3;
@@ -197,14 +197,14 @@
   text-overflow: ellipsis;
 }
 
-.image-info button{
+.imageInfo button{
   border: 0.5px solid #b1b1b1;
   border-radius: 2px;
   background: #dddddd;
   flex: 1;
 }
 
-.image-cropper{
+.imageCropper{
   position: relative;
   height: calc(100vw/4 - 42px);
   margin: 10px;
@@ -227,14 +227,14 @@
 
 
 
-.image-button-group {
+.imageButtonGroup {
   display: flex;
   justify-content: space-between;
   height: 30px;
   background: #dddddd;
 }
 
-.image-button-group button {
+.imageButtonGroup button {
   flex-grow: 1;
   text-align: center; /* Чтобы текст кнопки был по центру */
   border: 0.5px solid #b1b1b1;
@@ -243,13 +243,13 @@
   font-size: 12px;
 }
 
-.image-button-group i{
+.imageButtonGroup i{
   color: black;
 }
 
 
 
-.btn-save-editor{
+.btnSaveEditor{
   margin: 20px;
   width: 150px;
   height: 40px;
@@ -258,7 +258,7 @@
   border-radius: 5px;
 }
 
-.btn-delete-editor{
+.btnDeleteEditor{
   margin: 20px;
   margin-left: 0;
   width: 100px;
@@ -273,7 +273,7 @@
   width: 70%;
 }
 
-.zoom-range {
+.zoomRange {
   margin: auto;
   border-top: 5px solid #fff;
   border-bottom: 5px solid #fff;

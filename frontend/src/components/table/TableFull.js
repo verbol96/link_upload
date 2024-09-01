@@ -131,14 +131,14 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
 
   }
 
-
-    
-
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(new Date());
 
     const filteredOrders = orders
       .filter((order) => {
+        if (selectedType === '1' & order.firstClass) {
+          return true;
+        }
         if (selectedType === order.typePost) {
           return true;
         }
@@ -377,6 +377,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                             <option value={'All'}>Европочта и Белпочта</option>
                             <option value={"E"}>только Европочта</option>
                             <option value={"R"}>только Белпочта</option>
+                            <option value={"1"}>только 1класс</option>
                         </select>
                         <select className="menu-select" style={{marginLeft: 0}} onChange={OriginChange}>
                             <option value={'All'}>Сайт, телеграм, почта</option>
