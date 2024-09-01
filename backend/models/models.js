@@ -38,6 +38,7 @@ const Order = sequelize.define('order', {
   is_sms_add: {type: DataTypes.BOOLEAN},
   is_sms_error: {type: DataTypes.BOOLEAN},
   is_sms_send: {type: DataTypes.BOOLEAN},
+  is_sms_pay: {type: DataTypes.BOOLEAN},
   date_sent: {type: DataTypes.DATE}
 })
 

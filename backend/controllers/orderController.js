@@ -180,14 +180,14 @@ class orderController{
         const id = req.params.id
         
         const {phone, FIO, typePost, firstClass, postCode, city, adress, oblast, raion,
-           codeOutside, price, price_deliver, other, photo, userId, notes, phoneUser, main_dir_id, origin, is_sms_error, is_sms_add, is_sms_send, date_sent} = req.body
+           codeOutside, price, price_deliver, other, photo, userId, notes, phoneUser, main_dir_id, origin, is_sms_error, is_sms_add, is_sms_send, is_sms_pay, date_sent} = req.body
 
         const user = await User.findOne({where:{phone: phoneUser}})
         
         if(user){
             await Order.update(
                 {
-                    codeOutside, price, price_deliver, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, userId: user.id, main_dir_id, origin, is_sms_error, is_sms_add, is_sms_send, date_sent
+                    codeOutside, price, price_deliver, other, notes, userId, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, userId: user.id, main_dir_id, origin, is_sms_error, is_sms_add, is_sms_send, is_sms_pay, date_sent
                 },
                 {where:{id: id}}
             )
@@ -197,21 +197,55 @@ class orderController{
 
             await Order.update(
                 {
-                    codeOutside, price, price_deliver, other, notes, userId: user1.id, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, main_dir_id, origin, is_sms_error, is_sms_add, is_sms_send, date_sent
+                    codeOutside, price, price_deliver, other, notes, userId: user1.id, phone, FIO, typePost, firstClass, postCode ,city, adress, oblast, raion, main_dir_id, origin, is_sms_error, is_sms_add, is_sms_send, is_sms_pay, date_sent
                 },
                 {where:{id: id}}
             )
         }
 
-        await Promise.all(photo.map(async el => {
-          try{
-            if(el.amount === 0) await Photo.destroy({where: {id: el.id}})
-            await Photo.update({type: el.type, format: el.format, amount: el.amount, copies: el.copies, paper: el.paper, orderId: id }, {where: {id: el.id}});
+        let photoBD = await Photo.findAll({ where: { orderId: id } });
 
-          }catch{
-            await Photo.create({id: el.id, type: el.type, format: el.format, amount: el.amount, copies: el.copies, paper: el.paper, orderId: id });
+        await Promise.all(photo.map(async el => {
+          try {
+            // Выполняем обновление записи
+            const [affectedRows] = await Photo.update(
+              { type: el.type, format: el.format, amount: el.amount, copies: el.copies, paper: el.paper, orderId: id },
+              { where: { id: el.id } }
+            );
+        
+            if (affectedRows > 0) {
+              // Если запись была обновлена, удаляем ее из массива `photoBD`
+              photoBD = photoBD.filter(photo => photo.id !== el.id);
+            } else {
+              // Если запись не была найдена для обновления, создаем новую
+              await Photo.create({
+                id: el.id,
+                type: el.type,
+                format: el.format,
+                amount: el.amount,
+                copies: el.copies,
+                paper: el.paper,
+                orderId: id
+              });
+            }
+          } catch (error) {
+            // В случае ошибки при обновлении создаем новую запись
+            await Photo.create({
+              id: el.id,
+              type: el.type,
+              format: el.format,
+              amount: el.amount,
+              copies: el.copies,
+              paper: el.paper,
+              orderId: id
+            });
           }
         }));
+        
+        // Удаляем оставшиеся записи, которые не были обновлены или найдены в новом массиве
+        await Promise.all(photoBD.map(photo => photo.destroy()));
+
+        
 
 
         return res.json(id)
