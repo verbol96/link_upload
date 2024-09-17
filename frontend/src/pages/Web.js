@@ -134,7 +134,7 @@ const Web = () =>{
             return sum+ el.files.length*el.copies
         }, 0)
 
-        if(amount>499) return `скидка 20% применится после проверки заказа`
+        if(amount>499) return `скидка 15% применится после проверки заказа`
         if(amount>199) return `скидка 10% применится после проверки заказа`
         return ''
     }

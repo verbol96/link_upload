@@ -20,7 +20,7 @@ app.use(cookieParser())
 app.use(cors(
     {
         credentials: true,
-        origin: 'https://link1.by'
+        origin: ['https://link1.by', 'https://api.express-pay.by']
         //origin: ['http://localhost:3000', 'http://localhost:5173']
     }
 ))

@@ -5,8 +5,8 @@ import { useDispatch } from 'react-redux';
 import { DescRow } from './DescRow';
 import {CopyToClipboard} from 'react-copy-to-clipboard'
 
-export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId}) =>{
-
+export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, isChanged, setIsChanged}) =>{
+ 
     
     const dispatch = useDispatch();
 
@@ -173,7 +173,8 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                     {
                     selectedOrder===order.id 
                     ? 
-                    <DescRow order={order} setSelectedOrder={setSelectedOrder} handleDetailsClick={handleDetailsClick}  />
+                    <DescRow order={order} setSelectedOrder={setSelectedOrder} handleDetailsClick={handleDetailsClick}
+                    isChanged={isChanged} setIsChanged={setIsChanged}   />
                     :null
                     }
         </div>

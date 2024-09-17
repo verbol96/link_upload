@@ -41,17 +41,27 @@ export const Auth = () =>{
             setTimeout(()=>setIsValid(false), 500)
             return;
         }
-        const code = Math.floor(1000 + Math.random() * 9000);
-        setCodeSMS(code)
-        await sendSms(removeNonNumeric(phone), `${code} - код для подтверждения`)
-        //console.log(code)
-        setPassword('')
-        setIsSend(true)
-        setDisableSms(true)
-        TikTak()
-        setTimeout(()=>{
-            setDisableSms(false)
-        }, 60000)
+
+        const code1 = phone.slice(6, 8); 
+        const validCodes = ["25", "29", "33", "44"];
+
+        if (validCodes.includes(code1)) { 
+            const code = Math.floor(1000 + Math.random() * 9000);
+            setCodeSMS(code)
+            await sendSms(removeNonNumeric(phone), `${code} - код для подтверждения`)
+            //console.log(code)
+            setPassword('')
+            setIsSend(true)
+            setDisableSms(true)
+            TikTak()
+            setTimeout(()=>{
+                setDisableSms(false)
+            }, 60000)
+        } else {
+            setIsValid(true)
+            setTimeout(()=>setIsValid(false), 500)
+            return;
+        }
     }
 
     const TikTak = () =>{
