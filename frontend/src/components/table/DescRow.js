@@ -15,8 +15,8 @@ import style from './DescRow.module.css'
 import { Button } from '../../ui/button';
 
 
-export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
-
+export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged, setIsChanged }) => {
+ 
   const dispatch = useDispatch()
   const users = useSelector(state=>state.order.users)
   const [price, setPrice] = useState(order.price || '');
@@ -35,7 +35,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
   const [phoneUser, setPhoneUser] = useState(order.user?.phone || order.phoneUser || '');
   const [notes, setNotes] = useState(order.notes || '')
   const [codeOutside, setCodeOutside] = useState(order.codeOutside || '')
-  const [isChanged, setIsChanged] = useState(false);
+
   const [origin, setOrigin] = useState(order.origin || '');
   const [is_sms_add, setIs_sms_add] = useState(order.is_sms_add || false);
   const [is_sms_send, setIs_sms_send] = useState(order.is_sms_send || false);
@@ -174,10 +174,10 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick }) => {
       origin: origin,
       date_sent: date_sent
     }
-    
+
     dispatch(updateOrderAction(order.id, dataDispatch))
     setSelectedOrder(null)
-    handleDetailsClick(order.id)
+    handleDetailsClick('save')
   }
 
   const DeleteOrder = async() => {
@@ -520,8 +520,7 @@ const CancelInvoices = async() =>{
 const CheckInvoices = async() =>{
 
       try {
-        const {data} = await $host.get('/api/ep/getInvoicesPay', {No: order.order_number });
-
+        const {data} = await $host.post('/api/ep/getInvoicesPay', {No: order.order_number });
         const descStatus = {
           '1':'Ожидает оплату',
           '2':'Просрочен',
@@ -533,10 +532,10 @@ const CheckInvoices = async() =>{
         }
 
         const status = data.Status
-
         window.alert(descStatus[status]);
       } catch (error) {
         console.error('Ошибка:', error);
+        window.alert('счет не найдет');
       }
 
 }

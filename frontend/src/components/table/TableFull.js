@@ -10,7 +10,7 @@ import style from './TableFull.module.css'
 import { ModalOrder } from './ModalOrder'
 
 
-export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, handleDetailsClick}) =>{
+export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, handleDetailsClick, isChanged, setIsChanged}) =>{
 
     
     const dispach = useDispatch()
@@ -459,7 +459,8 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                 {filteredOrders.map(order => 
                   <div key={order.id} ><TableRow order={order} 
                                     handleDetailsClick={handleDetailsClick} selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
-                                    collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId} /></div>)}
+                                    collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId}
+                                    isChanged={isChanged} setIsChanged={setIsChanged}  /></div>)}
                 </div>
                 <TableFooter filteredOrders={filteredOrders} />
               </>

@@ -5,6 +5,7 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { $host } from '../../http';
 import imageCompression from 'browser-image-compression';
+import _ from 'lodash'
 
 const EditMain = () => {
     const [images, setImages] = useState([]);
@@ -43,15 +44,17 @@ const EditMain = () => {
                 await $host.put('api/settings/changeSettingEditor', data1);
             }
 
-            setSettingsDB(data)
-            setName(data[0].name)
-            setWidth(Number(data[0].width))
-            setHeight(Number(data[0].height))
-            setTop(Number(data[0].top))
-            setBottom(Number(data[0].bottom))
-            setLeft(Number(data[0].left))
-            setRight(Number(data[0].right))
-            setAspectRatio(data[0].width/data[0].height)
+            const dataSort = _.sortBy(data, 'name', 'asc')
+
+            setSettingsDB(dataSort)
+            setName(dataSort[0].name)
+            setWidth(Number(dataSort[0].width))
+            setHeight(Number(dataSort[0].height))
+            setTop(Number(dataSort[0].top))
+            setBottom(Number(dataSort[0].bottom))
+            setLeft(Number(dataSort[0].left))
+            setRight(Number(dataSort[0].right))
+            setAspectRatio(dataSort[0].width/data[0].height)
         }
         getSettingEditor();
       },[])

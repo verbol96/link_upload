@@ -9,7 +9,7 @@ const Statistic = () =>{
     const [order, setOrder] = useState([])
     const [days, setDays] = useState([])
     const [weeks, setWeeks] = useState([])
-    const [type, setType] = useState('day') //тип селекта для отображения
+    const [type, setType] = useState('month') //тип селекта для отображения
 
 
 
@@ -117,7 +117,7 @@ const Statistic = () =>{
         <NavBar />
 
         <Row>
-            <Col md={{span:2}} style={{marginLeft: '5%'}}>
+            <Col md={{span:2}} style={{marginLeft: '5%', maxWidth: '90%'}}>
                 <FormSelect className="mt-3" value={type} onChange={(e)=>setType(e.target.value)}>
                     <option value='day'>day</option>
                     <option value='month'>month</option>
@@ -166,6 +166,7 @@ const Statistic = () =>{
                         justifyContent: 'flex-start', 
                         alignItems: 'center', 
                         width: '30%', 
+                        minWidth: '300px',
                         margin: '10px auto', 
                         border: '1px solid black', 
                         borderRadius: '5px', 

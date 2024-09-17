@@ -34,18 +34,29 @@ export const SendGroup =({phone, upload, isAuth, setIsValid})=>{
     }
 
     const ClickBtn = () =>{
-        if(phone.length!==13 && phone.length!==19) {
+        if(phone.length!==19) {
+            setIsValid(true)
+            setTimeout(()=>setIsValid(false), 500)
+            return;
+        }
+
+        const code1 = phone.slice(6, 8); 
+        const validCodes = ["25", "29", "33", "44"];
+
+        if (validCodes.includes(code1)) { 
+            if(isAuth) upload()
+                else{
+                    setIsFormSms(true)
+                    sendSMS()
+                    if(codeSMS===Number(codeCheck)) upload()
+                }
+        } else {
             setIsValid(true)
             setTimeout(()=>setIsValid(false), 500)
             return;
         }
         
-        if(isAuth) upload()
-        else{
-            setIsFormSms(true)
-            sendSMS()
-            if(codeSMS===Number(codeCheck)) upload()
-        }
+       
     }
 
     return(

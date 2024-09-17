@@ -84,7 +84,6 @@ class euroPostController {
   getInvoicesPay = async (req, res) => {
     const {No} = req.body
     const token = process.env.TOKEN_PAY;
-
     const url1 =  `https://api.express-pay.by/v1/invoices/`;
       // Выполняем GET-запрос с токеном в URL
       const { data } = await axios.get(url1, {
@@ -93,6 +92,8 @@ class euroPostController {
               AccountNo: No
           }
       });
+
+    if(data.Items.length === 0 || !data) return res.status(404).json({ error: 'not found' });
 
 
     // Формируем URL в зависимости от окружения
@@ -181,6 +182,16 @@ delInvoicesPay = async (req, res) => {
       console.error('Ошибка при выполнении запроса:', error.response ? error.response.data : error.message);
       return res.status(500).json({ error: 'Ошибка при выполнении запроса', details: error.message });
   }
+};
+
+payNotice = async (req, res) => {
+  const {Data} = req.body
+
+  console.log('notice about paymant')
+
+  console.log(Data)
+  
+  return res.status(200)
 };
 
   
