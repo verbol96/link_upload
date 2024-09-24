@@ -5,6 +5,9 @@ const euroPostController = require('../controllers/euroPostController')
 router.get('/getListOps', euroPostController.getListOps)
 router.get('/getInfo', euroPostController.getInfo)
 router.post('/sendOrder', euroPostController.sendOrder)
+router.post('/checkOrder', euroPostController.checkOrder)
+router.post('/changeOrderEP', euroPostController.changeOrderEP)
+
 
 router.post('/getInvoicesPay', euroPostController.getInvoicesPay)
 router.post('/addInvoicesPay', euroPostController.addInvoicesPay)

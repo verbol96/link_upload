@@ -281,7 +281,7 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
             case '<а7': return 'другой до 7.5х10'
             case '<а5': return 'другой до 15х20'
             case '<а4': return 'другой до 20х30'
-            default: return 'неизвестно';
+            default: return null;
         }
     }
 
