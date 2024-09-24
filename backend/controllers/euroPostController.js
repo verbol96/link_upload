@@ -235,12 +235,20 @@ delInvoicesPay = async (req, res) => {
 };
 
 payNotice = async (req, res) => {
-  const {Data} = req.body 
+  const { Data } = req.body;
 
-  console.log('notice about paymant')
-  console.log(Data)
-  console.log(Data.AccountNo)
-  const AccountNo = Data.AccountNo
+  let parsedData;
+  
+  if (typeof Data === 'string') {
+    parsedData = JSON.parse(Data);
+  } else {
+    parsedData = Data;
+  }
+
+  console.log(parsedData); // Выведет весь объект Data
+  console.log(parsedData.AccountNo); // Должен вывести: 740049794
+  
+  const AccountNo = parsedData.AccountNo
 
   await Order.update(
     { other: Sequelize.fn('concat', 'оплачено!\n', Sequelize.col('other')) }, // добавляем "оплачено!" и перенос строки перед существующими данными
