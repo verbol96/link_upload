@@ -1,5 +1,6 @@
 const axios = require('axios');
 const {Order} = require('../models/models')
+const { Sequelize } = require('sequelize');
 require('dotenv').config()
 
 class euroPostController {
