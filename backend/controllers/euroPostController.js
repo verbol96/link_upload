@@ -245,18 +245,15 @@ payNotice = async (req, res) => {
     parsedData = Data;
   }
 
-  console.log(parsedData); // Выведет весь объект Data
-  console.log(parsedData.AccountNo); // Должен вывести: 740049794
-  
   const AccountNo = parsedData.AccountNo
 
-  await Order.update(
-    { other: Sequelize.fn('concat', 'оплачено!\n', Sequelize.col('other')) }, // добавляем "оплачено!" и перенос строки перед существующими данными
-    { where: { order_number: AccountNo } } // условие поиска по номеру заказа
-  );
+  if(parsedData.CmdType===1){
+    await Order.update(
+      { other: Sequelize.fn('concat', 'оплачено!\n\n', Sequelize.col('other')) }, 
+      { where: { order_number: AccountNo } } 
+    );
+  }
 
-
-  
   return res.status(200).json('ok')
 };
 
