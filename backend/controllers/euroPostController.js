@@ -247,7 +247,7 @@ payNotice = async (req, res) => {
 
   const AccountNo = parsedData.AccountNo
 
-  if(parsedData.CmdType==='1'){
+  if(parsedData.CmdType===1){
     await Order.update(
       { other: Sequelize.fn('concat', 'оплачено!\n\n', Sequelize.col('other')) }, 
       { where: { order_number: AccountNo } } 
