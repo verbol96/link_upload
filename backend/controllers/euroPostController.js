@@ -236,6 +236,12 @@ payNotice = async (req, res) => {
   const {Data} = req.body 
 
   console.log('notice about paymant')
+  const AccountNo = Data.AccountNo
+
+  await Order.update(
+    { other: Sequelize.fn('concat', 'оплачено!\n', Sequelize.col('other')) }, // добавляем "оплачено!" и перенос строки перед существующими данными
+    { where: { order_number: AccountNo } } // условие поиска по номеру заказа
+  );
 
   console.log(Data)
   
