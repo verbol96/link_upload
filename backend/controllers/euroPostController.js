@@ -238,6 +238,8 @@ payNotice = async (req, res) => {
   const {Data} = req.body 
 
   console.log('notice about paymant')
+  console.log(Data)
+  console.log(Data.AccountNo)
   const AccountNo = Data.AccountNo
 
   await Order.update(
@@ -245,7 +247,7 @@ payNotice = async (req, res) => {
     { where: { order_number: AccountNo } } // условие поиска по номеру заказа
   );
 
-  console.log(Data)
+
   
   return res.status(200).json('ok')
 };
