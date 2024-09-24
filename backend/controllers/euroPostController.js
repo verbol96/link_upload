@@ -42,8 +42,6 @@ class euroPostController {
   getInfo = async (req, res) => {
     const jwt = await this.getJWT();
 
-    
-
     return res.json(jwt);
   }
 
@@ -76,6 +74,56 @@ class euroPostController {
           }
         }
     });
+
+    return res.json(data);
+  }
+
+  checkOrder = async (req, res) => {
+    const {number} = req.body
+
+    const jwt = await this.getJWT();
+    
+    const {data} = await axios.post('https://api.eurotorg.by:10352/Json', {  
+      "CRC":"",
+      "Packet":{  
+         "JWT": jwt,
+         "MethodName": "Postal.OrderInfo",
+         "ServiceNumber": "58DDAE9D-545D-4059-9387-8E71C3BCF202",
+         "Data":  
+         {  
+            "Number":number
+         }
+      }
+   });
+
+    return res.json(data);
+  }
+
+  
+
+  changeOrderEP = async (req, res) => {
+    const {name1, name2, phone, ops, price, number} = req.body
+
+    const jwt = await this.getJWT();
+    
+    const {data} = await axios.post('https://api.eurotorg.by:10352/Json', {  
+      "CRC":"",
+      "Packet":{  
+         "JWT": jwt,
+         "MethodName": "Postal.ChangeOrder",
+         "ServiceNumber": "58DDAE9D-545D-4059-9387-8E71C3BCF202",
+         "Data":  
+         {  
+            "Number":number,
+            "CashOnDeliverySumNew":price,
+            "CashOnDeliveryDeclareValueSumNew":price,
+            "WarehouseIdFinishNew":ops,
+            "PhoneNumberRecieverNew":phone,
+            "Name1RecieverNew":name1,
+            "Name2RecieverNew":name2
+         }
+      }
+   });
 
     return res.json(data);
   }
@@ -185,13 +233,13 @@ delInvoicesPay = async (req, res) => {
 };
 
 payNotice = async (req, res) => {
-  const {Data} = req.body
+  const {Data} = req.body 
 
   console.log('notice about paymant')
 
   console.log(Data)
   
-  return res.status(200)
+  return res.status(200).json('ok')
 };
 
   

@@ -13,6 +13,7 @@ import { sendSms } from '../../http/authApi';
 import { $host } from '../../http';
 import style from './DescRow.module.css'
 import { Button } from '../../ui/button';
+import MyModalComponent from './DialogEP';
 
 
 export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged, setIsChanged }) => {
@@ -45,6 +46,18 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
 
   const [numRows, setNumRows] = useState(2);
   const [numRows1, setNumRows1] = useState(2);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Функция для открытия модального окна
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  // Функция для закрытия модального окна
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
 
 
   const defaultSale = useCallback(() => {
@@ -408,6 +421,17 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
      
   }
 
+  const checkOrderEp = async() =>{
+
+    if(!codeOutside) {
+      window.alert('нету штрихкода')
+      return;
+    }
+
+    openModal()
+      
+  }
+
   const handlePrint = () =>{
         
     const printContent = `
@@ -541,8 +565,13 @@ const CheckInvoices = async() =>{
 }
 
 
+
+
+
   return (
     <div className="order_details_card">
+      {isModalOpen && <MyModalComponent isOpen={isModalOpen} closeModal={closeModal} codeOutside={codeOutside} />}
+      
       <div className="card_container_admin">
         <div className="card_admin">
           <div>
@@ -616,9 +645,11 @@ const CheckInvoices = async() =>{
                       </div>
                   )}
                 </div>
-                <div className='flex justify-end mt-1'>
+                <div className='flex justify-around mt-1'>
+                  <Button variant='secondary' onClick={()=>{checkOrderEp()}}>проверить</Button>
                   <Button variant='secondary' onClick={()=>{sendOrderEp()}}>Оформить заявку</Button>
                 </div>
+                
                 </div>
               }
             
