@@ -4,6 +4,8 @@ import style from './ContactForm.module.css'
 
 export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city,setCity,
     adress,setAdress,postCode,setPostCode, other, setOther, isValid})=>{
+
+
      
     return(
         <>

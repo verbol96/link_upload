@@ -10,6 +10,20 @@ const History = () => {
             <div style={{display: 'flex', justifyContent: 'center', color: '#116466', margin: 20, fontSize: 25}}>История обновлений</div>
             
             <div style={{margin: 20}}>
+                <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.6 (27.09.2024)</div>
+                    <ul>
+                        <li>сортировка форматов в редакторе по имени</li>
+                        <li>проверка на код оператора</li>
+                        <li>закрытие несохраненного desc</li>
+                        <li>Обновить скидки </li>
+                        <li>Стата на телефоне</li>
+                        <li>обработка получения платежа</li>
+                        <li>Форматы в форме</li>
+                        <li>изменение европочты</li>
+                        <li>для европочты "оплачен" пачки заказов</li>
+                        <li>отменен при проверке первого класс</li>
+                        <li>номер в форме при авторизации</li>
+                    </ul>
                 <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.5 (01.09.2024)</div>
                     <ul>
                         <li>сохрание смс с отправкой оплаты</li>

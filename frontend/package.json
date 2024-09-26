@@ -27,6 +27,7 @@
     "jwt-decode": "^3.1.2",
     "lucide-react": "^0.428.0",
     "next-themes": "^0.3.0",
+    "papaparse": "^5.4.1",
     "pica": "^9.0.1",
     "react": "^18.2.0",
     "react-advanced-cropper": "^0.19.4",

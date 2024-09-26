@@ -8,6 +8,10 @@ import { addOrder, saveOrders, saveSettings, saveUsers, updateOrderStatus } from
 import { TableFooter } from './TableFooter'
 import style from './TableFull.module.css'
 import { ModalOrder } from './ModalOrder'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../ui/dialog'
+import Papa from 'papaparse';
+import { Button } from '../../ui/button'
+import { Input } from '../../ui/input'
 
 
 export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, handleDetailsClick, isChanged, setIsChanged}) =>{
@@ -297,8 +301,63 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
           setOrderModal(order)
     }
 
+    const [isOpen, setIsOpen] = useState(false);
+
+    const [listPayEP, setListPayEP] = useState([]);
+
+    const handleFileChange = (e) => {
+      const file = e.target.files[0];
+  
+      if (file) {
+        Papa.parse(file, {
+          header: true, // Указывает, что первая строка — это заголовки
+          skipEmptyLines: true, // Пропуск пустых строк
+          complete: (result) => {
+            // Фильтрация данных, сохраняя только значения из столбца "ТРЕК-НОМЕР ПЧО"
+            const filteredData = result.data.map(row => row['ТРЕК-НОМЕР ПЧО']);
+            
+            setListPayEP(filteredData); // Сохраняем в состояние только трек-номера
+          },
+          error: (error) => {
+            console.error('Ошибка при обработке CSV:', error);
+          }
+        });
+      }
+    };
+    
+    const checkPayEP = async() =>{
+      const data = {
+        list: listPayEP
+      }
+      await $host.post('/api/ep/changeStatusEP', data)
+      setIsOpen(false)
+    }
+
     return(
         <>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogContent aria-describedby={undefined}>
+                <DialogHeader>
+                  <DialogTitle className='mb-3'>Оплата европочты</DialogTitle>
+                  <div>
+                  
+                      <Input type="file" accept=".csv" onChange={handleFileChange} />
+                  
+
+                      <div className='mt-3' style={{maxHeight: 310, overflow: 'hidden', overflowY: 'scroll'}}>
+                        {listPayEP.map((trackNumber, index) => (
+                          <div key={index}>{trackNumber}</div>
+                        ))}
+                        </div>
+                    
+                        <div className="flex justify-end">
+                          <Button className="mt-5 mr-5 h-8" onClick={()=>checkPayEP()}>перенести в "оплачено"</Button>
+                        </div>
+                  </div>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+
             {isMobile ? 
               <div className={style.mobileMain}>
                 {activeModal?
@@ -405,6 +464,12 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                         <input className='menu-input' style={{textAlign: 'center'}} type="date" 
                                     value={endDate.toLocaleDateString().split('.')[2]+'-'+endDate.toLocaleDateString().split('.')[1]+'-'+endDate.toLocaleDateString().split('.')[0]}
                                     onChange={(e) => handleDateChange(startDate, e.target.value)} />
+
+                        {
+                          selectedType==='E' && 
+                          <button className="menu-button ml-2 bg-slate-500"  onClick={()=>setIsOpen(true)}><i style={{color: 'white'}} className="bi bi-wallet2"></i></button>
+
+                        }
                     
                     </div> 
 

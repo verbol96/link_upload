@@ -554,7 +554,7 @@ const CheckInvoices = async() =>{
           '6':'Оплачен с помощью банковской карты',
           '7': 'Платеж возращен'
         }
-
+        console.log(data)
         const status = data.Status
         window.alert(descStatus[status]);
       } catch (error) {
