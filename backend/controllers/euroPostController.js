@@ -147,7 +147,7 @@ class euroPostController {
 
 
     // Формируем URL в зависимости от окружения
-    const url =  `https://api.express-pay.by/v1/invoices/${data.Items[0].InvoiceNo}/status`
+    const url =  `https://api.express-pay.by/v1/invoices/${data.Items[data.Items.length-1].InvoiceNo}/status`
 
     try {
         // Выполняем GET-запрос с токеном в URL
@@ -255,6 +255,29 @@ payNotice = async (req, res) => {
   }
 
   return res.status(200).json('ok')
+};
+
+
+changeStatusEP = async (req, res) => {
+  const { list } = req.body;
+
+  if (!Array.isArray(list)) {
+    return res.status(400).json({ error: 'List must be an array' });
+  }
+
+  try {
+    for (const item of list) {
+      await Order.update(
+        { status: 6 }, 
+        { where: { codeOutside: item } } 
+      );
+    }
+
+    return res.status(200).json('ok');
+  } catch (error) {
+    console.error('Ошибка обновления статуса:', error);
+    return res.status(500).json({ error: 'Ошибка обновления статуса' });
+  }
 };
 
   

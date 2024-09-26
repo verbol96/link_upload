@@ -1,5 +1,5 @@
 .blockFile {
-    width: calc((96vw - 70px)/7);
+    width: calc((96vw - 91px)/7);
     height: calc((96vw - 70px)/7);
     margin: 5px;
     background-color: #ffffff;
@@ -12,6 +12,13 @@
     -moz-user-select: none; /* Firefox */
     -ms-user-select: none; /* Internet Explorer/Edge */
     user-select: none; /* Нестандартный Chrome и Opera, а также стандарт для будущих браузеров */
+}
+
+@media (max-width: 1500px) {
+  .blockFile {
+    width: calc((96vw - 70px)/7);
+    height: calc((96vw - 70px)/7);
+  }
 }
 
 @media (max-width: 1023px) {

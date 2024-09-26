@@ -11,16 +11,15 @@ export const SendGroup =({phone, upload, isAuth, setIsValid})=>{
     const [tik, setTik] = useState(60)
 
     const sendSMS = async() =>{
-
         const code = Math.floor(1000 + Math.random() * 9000);
         setCodeSMS(code)
         setIsSendSMS(true)
         TikTak()
         setTimeout(()=>{
             setIsSendSMS(false)
-        }, 60000)
+        }, 120000)
         await sendSms(phone, `${code} - код для подтверждения`)
-        //console.log(code)
+        
     }
 
     const TikTak = () =>{
@@ -30,34 +29,48 @@ export const SendGroup =({phone, upload, isAuth, setIsValid})=>{
                 TikTak()
             },1000)
         }
-        else setTik(60)
+        else setTik(120)
     }
 
-    const ClickBtn = () =>{
-        if(phone.length!==19) {
-            setIsValid(true)
-            setTimeout(()=>setIsValid(false), 500)
+    const ClickBtn = () => {
+        // если открыто меню с кодом и код совпадает
+        if (isFormSms && codeSMS === Number(codeCheck)) {
+            upload();
             return;
         }
-
-        const code1 = phone.slice(6, 8); 
+    
+        // Если длина телефона 13, просто загружаем
+        if (phone.length === 13) {
+            upload();
+            return;
+        }
+    
+        // Если длина телефона не равна 19, выводим ошибку
+        if (phone.length !== 19) {
+            setIsValid(true);
+            setTimeout(() => setIsValid(false), 500);
+            return;
+        }
+    
+        // Проверяем код оператора
+        const code1 = phone.slice(6, 8);
         const validCodes = ["25", "29", "33", "44"];
-
-        if (validCodes.includes(code1)) { 
-            if(isAuth) upload()
-                else{
-                    setIsFormSms(true)
-                    sendSMS()
-                    if(codeSMS===Number(codeCheck)) upload()
-                }
+    
+        if (validCodes.includes(code1)) {
+            if (isAuth) {
+                upload();
+            } else {
+                // Если не авторизован, отправляем SMS и открываем форму для ввода кода
+                sendSMS().then(() => {
+                    setIsFormSms(true); // Открываем форму для ввода кода
+                });
+            }
         } else {
-            setIsValid(true)
-            setTimeout(()=>setIsValid(false), 500)
+            setIsValid(true);
+            setTimeout(() => setIsValid(false), 500);
             return;
         }
-        
-       
-    }
+    };
 
     return(
         <div className={style.sendGroup}>
