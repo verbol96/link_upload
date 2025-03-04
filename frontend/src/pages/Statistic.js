@@ -3,6 +3,13 @@ import {useEffect, useState} from 'react'
 import './stylePages.css'
 import { $host } from "../http"
 import { NavBar } from "../components/admin/NavBar"
+import { ChartConfig,
+    ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
+    ChartTooltip,
+    ChartTooltipContent, } from "../ui/chart"
+  import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Bar, BarChart } from 'recharts';
 
 const Statistic = () =>{
     
@@ -45,6 +52,54 @@ const Statistic = () =>{
         setWeeks(week)
         console.log()
     },[])
+
+
+    const monthNames = [
+        "январь", "февраль", "март", "апрель", "май", "июнь", 
+        "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"
+      ];
+      
+      const result = order.reduce((acc, { price, createdAt }) => {
+        // Извлекаем год и месяц
+        const date = new Date(createdAt);
+        const year = String(date.getFullYear()).slice(2); // Получаем последние 2 цифры года
+        const month = date.getMonth(); // Получаем номер месяца (0-11)
+      
+        // Форматируем месяц в виде "март 24"
+        const formattedMonth = `${monthNames[month]} ${year}`;
+      
+        // Если в объекте уже есть этот месяц, добавляем цену, иначе инициализируем
+        if (!acc[formattedMonth]) {
+          acc[formattedMonth] = 0;
+        }
+      
+        // Добавляем сумму, преобразуя price в число
+        acc[formattedMonth] += parseFloat(price);
+      
+        return acc;
+      }, {});
+      
+      // Преобразуем объект обратно в массив и сортируем по дате
+      const monthlySum = order.reduce((acc, curr) => {
+        const month = new Date(curr.createdAt).toLocaleString('ru-RU', { month: 'long', year: '2-digit' });
+        
+        const price = parseFloat(curr.price);  // Преобразуем цену в число
+      
+        // Пропускаем, если значение цены не является числом
+        if (isNaN(price)) {
+          return acc;
+        }
+      
+        const existing = acc.find(item => item.month === month);
+        if (existing) {
+          existing.total += price;  // Суммируем
+        } else {
+          acc.push({ month, total: price });  // Добавляем новый месяц
+        }
+        return acc;
+      }, []).sort((a, b) => new Date(a.month) - new Date(b.month));  // Сортируем по дате
+      
+      console.log(monthlySum);
 
     const sum =(date)=>{ 
         let value
@@ -110,11 +165,69 @@ const Statistic = () =>{
           
       }
       const ordersByMonth = order ? generateMonthlySum(order) : [];
-   
+
+      const chartConfig = {
+        desktop: {
+          label: "Desktop",
+          color: "#2563eb", // Синий цвет для столбцов "Desktop"
+        },
+        mobile: {
+          label: "Mobile",
+          color: "#60a5fa", // Голубой цвет для столбцов "Mobile"
+        },
+      }
+    
+      const formatMonth = (month) => {
+        return month.slice(0, 3); // Сокращаем название месяца до 3 символов
+      };
 
     return(
         <>
         <NavBar />
+
+        <div className="flex flex-col gap-5 m-10">
+            <div className="flex-1">
+              <ResponsiveContainer height={400}>
+                <LineChart
+                  data={monthlySum}
+                  margin={{
+                    top: 5,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="10 1" />
+                  <XAxis dataKey="month" interval={0} tickFormatter={formatMonth}  />
+                  <YAxis tickCount={10}  />
+                  <Tooltip />
+                  <Legend />
+                 
+                  <Line type="monotone" dataKey="total" stroke="#82ca9d" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+
+            <div className="flex-1">
+            <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+              <BarChart accessibilityLayer data={monthlySum}>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  tickFormatter={(value) => value.slice(0, 3)}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
+                
+                <Bar dataKey="total" fill="var(--color-mobile)" radius={4} />
+              </BarChart>
+            </ChartContainer>
+            </div>
+            </div>
 
         <Row>
             <Col md={{span:2}} style={{marginLeft: '5%', maxWidth: '90%'}}>

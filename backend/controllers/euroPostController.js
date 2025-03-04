@@ -6,19 +6,20 @@ require('dotenv').config()
 class euroPostController {
 
   getJWT = async () => {
-    const { data } = await axios.post('https://api.eurotorg.by:10352/Json', {
-      "CRC": "",
-      "Packet": {
-        "JWT": "null",
-        "MethodName": "GetJWT",
-        "ServiceNumber": "58DDAE9D-545D-4059-9387-8E71C3BCF202",
-        "Data": {
-          "LoginName": "591870601_Verbol'",
-          "Password": "3IOSGZVLTD86JP4",
-          "LoginNameTypeId": "1"
+    
+      const { data } = await axios.post('https://api.eurotorg.by:10352/Json', {
+        "CRC": "",
+        "Packet": {
+          "JWT": "null",
+          "MethodName": "GetJWT",
+          "ServiceNumber": "58DDAE9D-545D-4059-9387-8E71C3BCF202",
+          "Data": {
+            "LoginName": "591870601_Verbol'",
+            "Password": "3IOSGZVLTD86JP4",
+            "LoginNameTypeId": "1"
+          }
         }
-      }
-    });
+      });
 
     return data.Table[0].JWT;
   }

@@ -64,7 +64,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
     const count = photo.reduce((sum, photo) => {
       return sum + Number(photo.amount*photo.copies);
     }, 0);
-    if(count > 499) return 0.8;
+    if(count > 499) return 0.85;
     if(count > 199) return 0.9;
     return 1;
   }, [photo]); 
