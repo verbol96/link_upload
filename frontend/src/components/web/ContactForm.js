@@ -1,10 +1,10 @@
 import InputMask from 'react-input-mask';
 import './styleWeb.css'
 import style from './ContactForm.module.css'
+import { useState } from 'react';
 
 export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city,setCity,
     adress,setAdress,postCode,setPostCode, other, setOther, isValid})=>{
-
 
      
     return(
@@ -39,9 +39,10 @@ export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city
                 <div className={style.containerSelect} style={{flex: 3}}>
                     <label className={style.labelSelect}>Тип отправки:</label>
                     <select className={style.selectForm} value={typePost} onChange={(e)=>setTypePost(e.target.value)}>
-                            <option value={'E'}>Европочта</option>
-                            <option value={'R'}>Белпочта</option>
-                            <option value={'R1'}>Белпочта(1 класс)</option>
+                            <option value={'E'}>Европочта(оплата ЕРИП) - 4р </option>
+                            <option value={'E1'}>Европочта(наложенный) - 8р</option>
+                            <option value={'R1'}>Письмо(оплата ЕРИП) - 2р</option>
+                            <option value={'R'}>Белпочта(наложенный) - 9р</option>
                     </select>
                     <span className={style.selectArrow}>▼</span>
                 </div>

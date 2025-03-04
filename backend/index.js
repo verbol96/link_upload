@@ -28,8 +28,8 @@ app.use(cors(
 app.use('/api', router)
 
 const httpsOptions = {
-    key: fs.readFileSync('/etc/nginx/ssl/link1.by.key'),
-    cert: fs.readFileSync('/etc/nginx/ssl/link1.by.crt')
+    key: fs.readFileSync('/etc/nginx/ssl/link1.by-new.key'),
+    cert: fs.readFileSync('/etc/nginx/ssl/link1.by-new.crt')
 };
   
 const server = https.createServer(httpsOptions, app);
