@@ -40,11 +40,15 @@ export const OneOrder = ({order, index}) =>{
 
     const ShowPost =() =>{
         switch(order.typePost){
-            case 'E': return 'Европочта'
+            case 'E': return 'Европочта(наложенный)'
+            case 'E1': return 'Европочта(оплата ЕРИП)'
+            case 'R1': return 'Письмо(оплата ЕРИП)'
             case 'R': {
                 if(order.firstClass) return 'Белпочта (письмо 1 класс)'
-                return 'Белпочта'
+                return 'Белпочта(наложенный)'
             }
+            
+            
             default: return 'Европочта'
         }
     }
@@ -145,7 +149,7 @@ export const OneOrder = ({order, index}) =>{
                                     <div style={{flex: 5, fontWeight: 600}}>{formatPhoneNumber(order.phone)}</div>
                                 </div>
                                 <div style={{display: 'flex', flexDirection: 'row', marginTop:15}}>
-                                    <div style={{flex: 2}}>почта:</div>
+                                    <div style={{flex: 2}}>тип отправки:</div>
                                     <div style={{flex: 5, fontWeight: 600}}>{ShowPost() }</div>
                                 </div>
                                 <div style={{display: 'flex', flexDirection: 'row'}}>

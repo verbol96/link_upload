@@ -74,6 +74,12 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
         if(order.firstClass === true){
            a.push( <i className="bi bi-1-square-fill pr-1" style={{color:'red', marginLeft: 5}}> </i>)
         }
+        if(order.typePost === "R1"){
+            a.push( <i className="bi bi-1-square-fill pr-1" style={{color:'red', marginLeft: 5}}> </i>)
+         }
+         if(order.typePost === "E1"){
+            a.push( <i className="bi bi-currency-dollar" style={{color:'red', marginLeft: 5}}> </i>)
+         }
         if(order.notes){
             a.push( <i className="bi bi-exclamation-square-fill" style={{color: 'orange', marginLeft: 5}}> </i>)
          }
@@ -143,7 +149,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                     <div className='col_data'> {ShowData()}</div>
                     <CopyToClipboard text={order.typePost + (order.order_number%1000) +' ' + order?.user?.FIO}>
                     <div className='col_number' style={{color: 'darkgreen', fontWeight: 'bold', minWidth: 60}}>
-                        {order.typePost + (order.order_number%1000) }
+                        {order.typePost.split('')[0] + (order.order_number%1000) }
                     </div>
                     </CopyToClipboard>
                     <CopyToClipboard text={order.FIO}>
