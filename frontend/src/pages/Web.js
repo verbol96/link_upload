@@ -39,8 +39,6 @@ const Web = () =>{
         getPriceList()
     }, [])
 
-   
-
     const [FIO, setFIO] = useState('')
     const [phone, setPhone] = useState('')
     const [typePost, setTypePost] = useState('E')
@@ -122,20 +120,132 @@ const Web = () =>{
     return pr.toFixed(2)
     }
 
-    const SumTeorIn =()=> {
-        const pr = formats.reduce((sum, el)=>{
-            return sum+PriceList(el.format)*el.files.length*el.copies
-        },0 )
-    return pr.toFixed(2)
-    }
+    const SumTeorIn = () => {
+        // Рассчитываем общую стоимость без скидки
+        const totalCost = formats.reduce((sum, el) => {
+          return sum + PriceList(el.format) * el.files.length * el.copies;
+        }, 0);
+      
+        // Рассчитываем общее количество файлов с учётом копий
+        const totalFiles = formats.reduce((sum, el) => {
+          return sum + el.files.length * el.copies;
+        }, 0);
+      
+        // Применяем скидку
+        let discount = 0;
+        if (totalFiles > 499) {
+          discount = 0.15; // 15% скидка
+        } else if (totalFiles > 199) {
+          discount = 0.10; // 10% скидка
+        }
+        // Итоговая стоимость с учётом скидки
+        const finalCost = totalCost * (1 - discount);
+      
+        // Возвращаем стоимость, округлённую до 2 знаков после запятой
+        return finalCost.toFixed(2);
+      };
+
+      const [filesCount, setFilesCount] = useState(0);
+
+      useEffect(() => {
+          if (formats) {
+              let count = formats.reduce((total, el) => total + el.files.length*el.copies, 0);
+              setFilesCount(count);
+          }
+      }, [formats]); // Зависимость от `formats`
+
+      const isHolst = () => {
+          return formats.some((el) => el.type === "holst");
+        };
+
+      const calcDelivery = (value) =>{
+          if(SumTeorIn() == 0  ) return 0
+          
+          const countHolsts = () => {
+          return formats.reduce((count, el) => {
+              return el.type === "holst" ? count + el.files.length*el.copies : count;
+          }, 0);
+          };
+          
+          switch(value){
+              case 'E': {
+                  const calculateCommission = () => {
+                    const commission = SumTeorIn() * 0.015; // 1.5% от суммы
+                    return Math.max(commission, 0.30); // Не менее 0,30 BYN
+                  };
+                
+                  let baseCost;
+                  if (filesCount+250*countHolsts() < 300) { baseCost = 5.15;
+                  } else {baseCost = 5.87;}
+                
+                  const additionalCost = 0.015 * SumTeorIn(); // Дополнительная стоимость
+                  const commission = calculateCommission(); // Комиссия
+                
+                  const totalCost = baseCost + additionalCost + commission;
+                
+                  return parseFloat(totalCost.toFixed(2));
+                }
+              case 'E1': {
+                  if(filesCount+250*countHolsts() <  300) return 5.15
+                  return 5.87
+              };
+              case 'R1': {
+                  if(isHolst()){
+                      const calculateCost = () => {
+                          const baseCost = 4; // Базовая стоимость пересылки
+                          const massa = filesCount * 3 + countHolsts() * 700
+                          const totalCost = baseCost + Math.max((massa - 1000) / 100, 0) * 0.09 + (massa > 1000 ? 1 : 0);
+                          return totalCost.toFixed(2); // Округляем до 2 знаков после запятой
+                        };
+  
+                        return calculateCost()
+                  }
+
+                  const baseCost = 2.04; // Базовая стоимость для первых 30 файлов
+                  const additionalCostPerGroup = 0.42; // Дополнительная стоимость за каждые 30 файлов
+                  const groupSize = 30; // Размер группы файлов
+                
+                  // Вычисляем количество полных групп сверх первых 30 файлов
+                  const additionalGroups = Math.max(0, Math.ceil((filesCount - groupSize) / groupSize));
+                
+                  // Общая стоимость
+                  const totalCost = baseCost + additionalCostPerGroup * additionalGroups;
+                
+                  return totalCost.toFixed(2); // Округляем до 2 знаков после запятой
+                }
+              case 'R': {
+                  const calculateCost = () => {
+                      const baseCost = 4; // Базовая стоимость пересылки
+                      const additionalCost = SumTeorIn() * 0.03; // 3% от базовой стоимости
+                      const calculateTransferFee = () => {
+                          const sum = SumTeorIn(); // Получаем сумму
+                          const commissionRate = sum > 200 ? 0.02 : 0.03; // 2% если сумма > 200, иначе 3%
+                          const commission = sum * commissionRate; // Рассчитываем комиссию
+                          return Math.max(commission, 1); // Не менее 1 BYN
+                        };
+                      const transferFee = calculateTransferFee();
+                      const totalCost = baseCost + additionalCost + transferFee;
+                    
+                      return totalCost.toFixed(2); // Округляем до 2 знаков после запятой
+                    };
+
+                    return calculateCost()
+              };
+              default: return 0;
+          }
+      }
 
     const ShowDiscount = () =>{
         const amount = formats.reduce((sum, el)=>{
             return sum+ el.files.length*el.copies
         }, 0)
 
-        if(amount>499) return `скидка 15% применится после проверки заказа`
-        if(amount>199) return `скидка 10% применится после проверки заказа`
+        const totalCost = formats.reduce((sum, el) => {
+            return sum + PriceList(el.format) * el.files.length * el.copies;
+          }, 0);
+
+        if(amount>499) return `применена скидка 15% (без скидки ${totalCost.toFixed(2)}р)`
+        if(amount>199) return `применена скидка 10% (без скидки ${totalCost.toFixed(2)}р)`
         return ''
     }
 
@@ -171,13 +281,18 @@ const Web = () =>{
         const data = {
             "FIO": FIO,
             "phone": removeNonNumeric(phone),
-            "typePost": typePost==='R1' ? 'R' : typePost,
-            "firstClass": typePost==='R1' ? true : false,
+            "typePost": typePost,
+            //"firstClass": typePost==='R1' ? true : false,
             "city": city,
             "adress": adress,
             "postCode": postCode,
-            "other": other,
-            "notes": '',
+            "other": (() => {
+                if (typePost === 'E1' || typePost === 'R1') {
+                    return "--Данные для оплаты появятся здесь после проверки заказа\n - " + other;
+                }
+                return other;
+                })(),
+            "notes": '---' + calcDelivery(typePost),
             "photo": photo, 
             "price": SumTeor(photo),
             "codeOutside": '',
@@ -296,7 +411,7 @@ const Web = () =>{
                             </div>
                             <div className={style.formatsInfoAll}>
                                 <label>Сумма за все: {SumTeorIn()}</label>
-                                <div style={{fontSize: 12, fontWeight: 'normal'}}>{ShowDiscount()}</div>
+                                <div style={{fontSize: 12, fontWeight: 'normal'}}>{(ShowDiscount())}</div>
                             </div>
                         </div>
                     </div>   
@@ -309,6 +424,7 @@ const Web = () =>{
                         adress={adress} setAdress={setAdress}
                         postCode={postCode} setPostCode={setPostCode}
                             adressUser={adressUser} other={other} setOther={setOther} isValid={isValid}
+                            formats = {formats} SumTeorIn={SumTeorIn} isHolst={isHolst} calcDelivery={calcDelivery}
                     />
     
                     <SendGroup phone={phone} upload={upload} isAuth={isAuth} setIsValid={setIsValid}  />

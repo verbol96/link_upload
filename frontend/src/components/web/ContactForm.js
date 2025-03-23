@@ -1,11 +1,11 @@
 import InputMask from 'react-input-mask';
 import './styleWeb.css'
 import style from './ContactForm.module.css'
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city,setCity,
-    adress,setAdress,postCode,setPostCode, other, setOther, isValid})=>{
-
+    adress,setAdress,postCode,setPostCode, other, setOther, isValid, isHolst, calcDelivery})=>{
+  
      
     return(
         <>
@@ -39,10 +39,10 @@ export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city
                 <div className={style.containerSelect} style={{flex: 3}}>
                     <label className={style.labelSelect}>Тип отправки:</label>
                     <select className={style.selectForm} value={typePost} onChange={(e)=>setTypePost(e.target.value)}>
-                            <option value={'E'}>Европочта(оплата ЕРИП) - 4р </option>
-                            <option value={'E1'}>Европочта(наложенный) - 8р</option>
-                            <option value={'R1'}>Письмо(оплата ЕРИП) - 2р</option>
-                            <option value={'R'}>Белпочта(наложенный) - 9р</option>
+                            <option value={'E1'}>Европочта(оплата ЕРИП) ~ {calcDelivery('E1')}р </option>
+                            <option value={'E'}>Европочта(наложенный) ~ {calcDelivery('E')}р</option>
+                            <option value={'R1'}>{isHolst() ? "Белпочта" : "Письмо"}(оплата ЕРИП) ~ {calcDelivery('R1')}р</option>
+                            <option value={'R'}>Белпочта(наложенный) ~ {calcDelivery('R')}р</option>
                     </select>
                     <span className={style.selectArrow}>▼</span>
                 </div>

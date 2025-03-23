@@ -138,18 +138,12 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(new Date());
 
-    const filteredOrders = orders
-      .filter((order) => {
-        if (selectedType === '1' & order.firstClass) {
-          return true;
-        }
-        if (selectedType === order.typePost) {
-          return true;
-        }
-        if (selectedType === 'All') {
-          return true;
-        }
-
+      const filteredOrders = orders.filter((order) => {
+        if (selectedType === 'All') return true;
+        if (selectedType === 'R1') return order.firstClass || order.typePost === 'R1';
+        if (selectedType === 'R') return !order.firstClass && order.typePost === 'R';
+        if (selectedType === 'E0') return order.typePost === 'E' || order.typePost === 'E1';
+        if (selectedType === 'R0') return order.typePost === 'R' || order.typePost === 'R1' || order.firstClass;
         return order.typePost === selectedType;
       })
       .filter((order) => {
@@ -433,10 +427,13 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                     <div className="menu-left">
                         <button className="menu-button"  onClick={()=>AddNewOrder()}><i style={{color: 'white'}} className="bi bi-folder-plus" ></i></button>
                         <select className="menu-select" onChange={handleSelectChange}>
-                            <option value={'All'}>Европочта и Белпочта</option>
-                            <option value={"E"}>только Европочта</option>
-                            <option value={"R"}>только Белпочта</option>
-                            <option value={"1"}>только 1класс</option>
+                            <option value={'All'}>Все</option>
+                            <option value={"E0"}>европочта</option>
+                            <option value={"E1"}>европочта(ЕРИП)</option>
+                            <option value={"E"}>европочта(налож)</option>
+                            <option value={"R0"}>белпочта</option>
+                            <option value={"R1"}>белпочта(ЕРИП)</option>
+                            <option value={"R"}>белпочта(налож)</option>
                         </select>
                         <select className="menu-select" style={{marginLeft: 0}} onChange={OriginChange}>
                             <option value={'All'}>Сайт, телеграм, почта</option>

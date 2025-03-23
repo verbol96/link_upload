@@ -77,9 +77,9 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
 
   useEffect(() => {
     const lineCount = other.split('\n').length;
-    setNumRows(lineCount < 2 ? 2 : lineCount);
+    setNumRows(lineCount < 2 ? 2 : lineCount+1);
     const lineCount1 = notes.split('\n').length;
-    setNumRows1(lineCount1 < 2 ? 2 : lineCount1);
+    setNumRows1(lineCount1 < 2 ? 2 : lineCount1+1);
   }, [other, notes]);
 
   const checkChanges = useCallback(() => {
@@ -602,11 +602,14 @@ const CheckInvoices = async() =>{
             <div className='contact_field'>
               
               <select value={typePost} onChange={(e)=>setTypePost(e.target.value)}>
-                  <option value={"E"}>Европочта</option>
-                  <option value={"R"}>Белпочта</option>
+                  <option value={"E"}>Европочта(наложенный)</option>
+                  <option value={"E1"}>Европочта(ЕРИП)</option>
+                  <option value={"R"}>Белпочта(наложенный)</option> 
+                  <option value={"R1"}>Письмо(ЕРИП)</option> 
               </select>
               <label></label>
             </div>
+            {/*
             {typePost==='R'?
               <div className='contact_field'>
                 <label>1 класс:</label>
@@ -614,6 +617,7 @@ const CheckInvoices = async() =>{
               </div>
               :null
             }
+            */}
             
             <div className='contact_field'>
               <CopyToClipboard text={city}>
@@ -624,13 +628,13 @@ const CheckInvoices = async() =>{
             <div className='contact_field'>
               <CopyToClipboard text={adress}>
               <label>
-                {typePost === 'R' ? 'Адрес:' : 'Отделение:'}
+                {typePost === 'R' || typePost === 'R1' ? 'Адрес:' : 'Отделение:'}
               </label>
               </CopyToClipboard>
               <input value={adress} onChange={(e)=>setAdress(e.target.value)} /> 
             </div>
 
-            {typePost === 'E' && 
+            {(typePost === 'E' || typePost === 'E1') && 
                 <div className=' mt-3'>
                 <div className={style.inputBlock} ref={dropdownRef}>
                   <button onClick={() => setIsOpen(!isOpen)}>{nameOPS.WarehouseName}</button>
@@ -653,7 +657,7 @@ const CheckInvoices = async() =>{
                 </div>
               }
             
-            {typePost === 'R' ? 
+            {typePost === 'R' || typePost === 'R1' ? 
             <>
             <div className='contact_field'>
               <CopyToClipboard text={postCode}>
@@ -675,7 +679,7 @@ const CheckInvoices = async() =>{
             </div> 
             </>
             : null}
-              {typePost!=='E' &&
+              {(typePost=='R' || typePost=='R1') &&
                 <div className='flex justify-end mt-2'>
                 <Button variant='secondary' onClick={()=>{handlePrint()}}><i style={{color: 'white', marginRight: 10}} className="bi bi-printer"></i> печать </Button>
                 </div>
@@ -776,7 +780,7 @@ const CheckInvoices = async() =>{
           </div>
 
           <div className='flex justify-end mt-3 gap-1' >
-            { order.firstClass && <>
+            { (order.typePost === 'R1' || order.typePost === 'E1') && <>
               <Button  variant='outline' size='sm' onClick={()=>AddInvoices()}>выставить счет</Button>
               <Button  variant='outline' size='sm' onClick={()=>CancelInvoices()}>отменить счет</Button>
               <Button  variant='outline' size='sm' onClick={()=>CheckInvoices()}>проверить счет</Button>

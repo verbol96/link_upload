@@ -19,6 +19,7 @@ export const SendGroup =({phone, upload, isAuth, setIsValid})=>{
             setIsSendSMS(false)
         }, 120000)
         await sendSms(phone, `${code} - код для подтверждения`)
+        //console.log(code)
         
     }
 
