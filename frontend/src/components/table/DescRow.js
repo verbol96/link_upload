@@ -245,10 +245,11 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
   }
 
   const SmsPay = async() =>{
+    const total = +(order.price + order.price_deliver).toFixed(2);
     const code = `Оплата заказа.
     ЕРИП -> E-POS.
     Номер счета: 27307-1-${order.order_number}.
-    Сумма: ${+order.price + +order.price_deliver}р`; 
+    Сумма: ${total}р`;
 
     const userConfirmation = window.confirm(`Отправить смс: ${code}`);
     
@@ -492,33 +493,36 @@ const ShowBtnSms = (smsType, fanc, text) =>{
   )
 }
 
-const AddInvoices = async() =>{
+const AddInvoices = async () => {
+  // Правильное вычисление суммы с округлением
+  const totalAmount = +(order.price + order.price_deliver).toFixed(2);
 
   const sendConfirmation = window.confirm(
     `Подтвердите:\n` +
     `Номер заказа: ${order.order_number}\n` +
-    `Цена: ${+order.price.toFixed(2) + +order.price_deliver.toFixed(2)}\n` +
+    `Цена: ${totalAmount}р\n` +
     `Info: Заказ ${order.FIO}`
   );
     
   if (sendConfirmation) {
-
     const dataInvoices = {
       AccountNo: order.order_number,
-      Amount: +order.price.toFixed(2)+ +order.price_deliver.toFixed(2),
+      Amount: totalAmount,  // Используем уже вычисленную сумму
       Info: `Заказ ${order.FIO}`
     }
 
-      try {
-        const {data} = await $host.post('/api/ep/addInvoicesPay', dataInvoices);
+    try {
+      const { data } = await $host.post('/api/ep/addInvoicesPay', dataInvoices);
         
-        if(data) setOther(prev=>`Данные для оплаты: 
+      if (data) {
+        setOther(prev => `Данные для оплаты: 
           ЕРИП -> E-POS 
-          номер счета: 27307-1-${order.order_number} \n \n` + prev)
-      } catch (error) {
-        console.error('Ошибка:', error);
+          номер счета: 27307-1-${order.order_number} \n \n` + prev);
       }
-
+    } catch (error) {
+      console.error('Ошибка:', error);
+      // Можно добавить уведомление пользователю об ошибке
+    }
   }
 }
 
