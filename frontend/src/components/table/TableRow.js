@@ -147,7 +147,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                         {ShowOrigin()}
                     </div>
                     <div className='col_data'> {ShowData()}</div>
-                    <CopyToClipboard text={order.typePost + (order.order_number%1000) +' ' + order?.user?.FIO}>
+                    <CopyToClipboard text={order.typePost.split('')[0] + (order.order_number%1000) +' ' + order?.user?.FIO}>
                     <div className='col_number' style={{color: 'darkgreen', fontWeight: 'bold', minWidth: 60}}>
                         {order.typePost.split('')[0] + (order.order_number%1000) }
                     </div>
