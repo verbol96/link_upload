@@ -244,22 +244,60 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
     }
   }
 
-  const SmsPay = async() =>{
-    const total = +(order.price + order.price_deliver).toFixed(2);
-    const code = `Оплата заказа.
-    ЕРИП -> E-POS.
-    Номер счета: 27307-1-${order.order_number}.
-    Сумма: ${total}р`;
-
-    const userConfirmation = window.confirm(`Отправить смс: ${code}`);
-    
-    if (userConfirmation) {
-      await sendSms(phone, code)
-      setIs_sms_pay(true)
-      dispatch(updateSmsPay(order.id))
-      updateOrder(order.id, {...data, is_sms_pay: true})
+  const SmsPay = async () => {
+    try {
+      // Проверка наличия необходимых данных
+      if (!order || typeof order !== 'object') {
+        throw new Error('Неверный формат данных заказа');
+      }
+  
+      // Проверка и преобразование цен
+      const price = Number(order.price) || 0;
+      const priceDeliver = Number(order.price_deliver) || 0;
+      
+      // Проверка номера заказа
+      if (!order.order_number) {
+        throw new Error('Отсутствует номер заказа');
+      }
+  
+      // Проверка номера телефона
+      if (!phone || typeof phone !== 'string') {
+        throw new Error('Неверный формат номера телефона');
+      }
+  
+      // Вычисление суммы с округлением
+      const total = (price + priceDeliver).toFixed(2);
+      
+      // Формирование сообщения
+      const code = `Оплата заказа.
+  ЕРИП -> E-POS.
+  Номер счета: 27307-1-${order.order_number}.
+  Сумма: ${total}р`;
+  
+      // Подтверждение отправки
+      const userConfirmation = window.confirm(`Отправить SMS:\n\n${code}`);
+      
+      if (userConfirmation) {
+        // Отправка SMS
+        await sendSms(phone, code);
+        
+        // Обновление состояния
+        setIs_sms_pay(true);
+        
+        // Обновление данных в хранилище
+        dispatch(updateSmsPay(order.id));
+        
+        // Обновление заказа
+        await updateOrder(order.id, {...data, is_sms_pay: true});
+        
+        // Уведомление об успехе
+        alert('SMS успешно отправлено');
+      }
+    } catch (error) {
+      console.error('Ошибка при отправке SMS:', error);
+      alert(`Ошибка: ${error.message}`);
     }
-  }
+  };
 
 
   const AddFormat = () =>{
@@ -494,8 +532,12 @@ const ShowBtnSms = (smsType, fanc, text) =>{
 }
 
 const AddInvoices = async () => {
-  // Правильное вычисление суммы с округлением
-  const totalAmount = +(order.price + order.price_deliver).toFixed(2);
+  // Приводим к числу и устанавливаем 0, если значение невалидно
+  const price = Number(order.price) || 0;
+  const priceDeliver = Number(order.price_deliver) || 0;
+
+  // Вычисляем сумму и округляем
+  const totalAmount = (price + priceDeliver).toFixed(2);
 
   const sendConfirmation = window.confirm(
     `Подтвердите:\n` +
@@ -507,13 +549,12 @@ const AddInvoices = async () => {
   if (sendConfirmation) {
     const dataInvoices = {
       AccountNo: order.order_number,
-      Amount: totalAmount,  // Используем уже вычисленную сумму
+      Amount: totalAmount,  // Уже строка с 2 знаками после запятой
       Info: `Заказ ${order.FIO}`
-    }
+    };
 
     try {
       const { data } = await $host.post('/api/ep/addInvoicesPay', dataInvoices);
-        
       if (data) {
         setOther(prev => `Данные для оплаты: 
           ЕРИП -> E-POS 
@@ -521,10 +562,10 @@ const AddInvoices = async () => {
       }
     } catch (error) {
       console.error('Ошибка:', error);
-      // Можно добавить уведомление пользователю об ошибке
+      alert('Не удалось создать счет. Попробуйте еще раз.'); // Уведомление пользователя
     }
   }
-}
+};
 
 const CancelInvoices = async() =>{
 
