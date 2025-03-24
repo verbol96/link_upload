@@ -497,7 +497,7 @@ const AddInvoices = async() =>{
   const sendConfirmation = window.confirm(
     `Подтвердите:\n` +
     `Номер заказа: ${order.order_number}\n` +
-    `Цена: ${+order.price + +order.price_deliver}\n` +
+    `Цена: ${+order.price.toFixed(2) + +order.price_deliver.toFixed(2)}\n` +
     `Info: Заказ ${order.FIO}`
   );
     
@@ -505,7 +505,7 @@ const AddInvoices = async() =>{
 
     const dataInvoices = {
       AccountNo: order.order_number,
-      Amount: +order.price+ +order.price_deliver,
+      Amount: +order.price.toFixed(2)+ +order.price_deliver.toFixed(2),
       Info: `Заказ ${order.FIO}`
     }
 
@@ -775,7 +775,7 @@ const CheckInvoices = async() =>{
             { order.status === 0 && ShowBtnSms(is_sms_error, SmsError, 'ошибка')}
             { order.status !== 0 && ShowBtnSms(is_sms_add, SmsAdd, 'принят') }
             { order.status !== 0 && ShowBtnSms(is_sms_send, SmsSend, 'отправлен')}
-            { order.firstClass && ShowBtnSms(is_sms_pay, SmsPay, 'оплата') }
+            { (order.typePost === 'R1' || order.typePost === 'E1') && ShowBtnSms(is_sms_pay, SmsPay, 'оплата') }
             
           </div>
 
