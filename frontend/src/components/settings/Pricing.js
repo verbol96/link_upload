@@ -23,21 +23,10 @@ export const Pricing = () =>{
         async function getPriceList (){
             let value = await getSettings()
             setSettings(_.orderBy(value, ['type', 'price']))
-
-            const Rdb = value.find(el => el.title === 'R')?.price;
-            if (!Rdb) {
-                await $host.post('/api/settings/changePriceDel', {title: 'R', price: 3})
-            }else setR(Rdb)
-
-            const Edb = value.find(el => el.title === 'E')?.price;
-            if (!Rdb) {
-                await $host.post('/api/settings/changePriceDel', {title: 'E', price: 4})
-            }else setE(Edb)
-
-            const R1db = value.find(el => el.title === 'R1')?.price;
-            if (!Rdb) {
-                await $host.post('/api/settings/changePriceDel', {title: 'R1', price: 2})
-            }else setR1(R1db)
+            
+            setR(Number(value.find(el => el.title === 'R')?.price) ?? 0);
+            setR1(Number(value.find(el => el.title === 'R1')?.price) ?? 0);
+            setE(Number(value.find(el => el.title === 'E')?.price) ?? 0);
         }
         getPriceList()
 
