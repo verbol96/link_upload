@@ -8,7 +8,7 @@ import { addOrder, saveOrders, saveSettings, saveUsers, updateOrderStatus } from
 import { TableFooter } from './TableFooter'
 import style from './TableFull.module.css'
 import { ModalOrder } from './ModalOrder'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog'
 import Papa from 'papaparse';
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
@@ -20,6 +20,8 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
     const dispach = useDispatch()
      
     const [sortKey, setSortKey] = useState('default');
+    const [onlyLustre, setOnlyLustre] = useState(false)
+    const [onlyHolst, setOnlyHolst] = useState(false)
 
     let orders =_.orderBy(_.orderBy(useSelector(state => state.order.order), 'createdAt', 'desc' ), 'status', 'asc' )
 
@@ -176,8 +178,20 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
       .filter((order) => {
         const orderDate = new Date(order.createdAt);
         return !startDate || !endDate || (orderDate >= startDate && orderDate <= endDate);
-    });
-
+      })
+      .filter((order)=>{
+        if (onlyLustre) {
+          return order.photos.some(el => el.paper === 'lustre');
+        }
+        else return true
+      })
+      .filter((order)=>{
+        if (onlyHolst) {
+          return order.photos.some(el => el.type === 'holst');
+        }
+        else return true
+      })
+      ;
 
     const startDateSet = useRef(false);
     
@@ -327,6 +341,8 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
       setIsOpen(false)
     }
 
+    
+
     return(
         <>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -461,6 +477,35 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                         <input className='menu-input' style={{textAlign: 'center'}} type="date" 
                                     value={endDate.toLocaleDateString().split('.')[2]+'-'+endDate.toLocaleDateString().split('.')[1]+'-'+endDate.toLocaleDateString().split('.')[0]}
                                     onChange={(e) => handleDateChange(startDate, e.target.value)} />
+                        <button
+                            onClick={() => setOnlyLustre(!onlyLustre)}
+                            className="menu-input"
+                            style={{
+                              background: onlyLustre ? '#2f616b' : 'white',
+                              color: onlyLustre ? 'white' : '#000000',
+                              cursor: 'pointer',
+                              width: 'auto',
+                              minWidth: '60px',
+                              marginLeft: '10px'
+                            }}
+                          >
+                            lustre
+                        </button>
+                        <button
+                            onClick={() => setOnlyHolst(!onlyHolst)}
+                            className="menu-input"
+                            style={{
+                              background: onlyHolst ? '#2f616b' : 'white',
+                              color: onlyHolst ? 'white' : '#000000',
+                              cursor: 'pointer',
+                              width: 'auto',
+                              minWidth: '60px',
+                              marginLeft: '10px'
+                            }}
+                          >
+                            holst
+                        </button>
+                        
 
                         {
                           selectedType==='E' && 
@@ -519,7 +564,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                 </div> 
                 <div className='tableFull'>
                 {filteredOrders.map(order => 
-                  <div key={order.id} ><TableRow order={order} 
+                  <div key={order.id} ><TableRow orders={orders} order={order} 
                                     handleDetailsClick={handleDetailsClick} selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
                                     collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId}
                                     isChanged={isChanged} setIsChanged={setIsChanged}  /></div>)}

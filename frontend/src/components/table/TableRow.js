@@ -4,11 +4,12 @@ import './TableRow.css'
 import { useDispatch } from 'react-redux';
 import { DescRow } from './DescRow';
 import {CopyToClipboard} from 'react-copy-to-clipboard'
+import { useMemo } from 'react';
 
-export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, isChanged, setIsChanged}) =>{
+export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, isChanged, setIsChanged}) =>{
  
     
-    const dispatch = useDispatch();
+    const dispatch = useDispatch(); 
 
     const photo = () =>{
          return order.photos.reduce((sum, el)=>{
@@ -130,7 +131,14 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
         }
     }
 
-    
+
+    const textColor = useMemo(() => {
+        const pretend = orders.filter(el=>el.status < 5)
+        const count = pretend.filter(el => el.phone === order.phone).length;
+        return count > 1 ? 'blue' : 'black';
+    }, [orders, order.phone]);
+
+        
 
     return(
  
@@ -157,7 +165,7 @@ export const TableRow = ({order, handleDetailsClick, selectedOrder, setSelectedO
                                 {order?.user?.FIO}
                         </div>
                     </CopyToClipboard>
-                    <div className='col_phone NoMobile' >
+                    <div className='col_phone NoMobile'  style={{color: textColor}}>
                         {formatPhoneNumber(order.phone)}
                     </div>
                     <div className='col_city overflow NoMobile'>{order.city}</div>

@@ -13,8 +13,8 @@ const app = express()
 const PORT = process.env.PORT
 
 app.use(fileUpload({}))
-app.use(bodyParser.json({ limit: '10mb' })); // ограничение на обьем данных в запросе, увеличил для миграциии БД
-app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+app.use(bodyParser.json({ limit: '50mb' })); // ограничение на обьем данных в запросе, увеличил для миграциии БД
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors(

@@ -20,6 +20,10 @@ const Web = () =>{
     const isAuth = useSelector(state=>state.auth.auth)
     const user = useSelector(state=>state.private.user)
 
+    const [R, setR] = useState(1)
+    const [R1, setR1] = useState(1)
+    const [E, setE] = useState(1)
+
     useEffect(() => {
         if (adressUser!==0) {
             setFIO(adressUser.FIO ?? '');
@@ -34,10 +38,15 @@ const Web = () =>{
     useEffect(()=>{
         async function getPriceList (){
             let value = await getSettings()
-            setSettings(value)
+            setSettings(value) 
+
+            setR(Number(value.find(el => el.title === 'R')?.price) ?? 0);
+            setR1(Number(value.find(el => el.title === 'R1')?.price) ?? 0);
+            setE(Number(value.find(el => el.title === 'E')?.price) ?? 0);
         }
         getPriceList()
     }, [])
+
 
     const [FIO, setFIO] = useState('')
     const [phone, setPhone] = useState('')
@@ -162,10 +171,10 @@ const Web = () =>{
           if(SumTeorIn() == 0  ) return 0
           
           const countHolsts = () => {
-          return formats.reduce((count, el) => {
-              return el.type === "holst" ? count + el.files.length*el.copies : count;
-          }, 0);
-          };
+            return formats.reduce((count, el) => {
+                return el.type === "holst" ? count + el.files.length*el.copies : count;
+            }, 0);
+            };
           
           switch(value){
               case 'E': {
@@ -175,8 +184,8 @@ const Web = () =>{
                   };
                 
                   let baseCost;
-                  if (filesCount+250*countHolsts() < 300) { baseCost = 5.15;
-                  } else {baseCost = 5.87;}
+                  if (filesCount+250*countHolsts() < 300) { baseCost = E;
+                  } else {baseCost = E+0.9;}
                 
                   const additionalCost = 0.015 * SumTeorIn(); // Дополнительная стоимость
                   const commission = calculateCommission(); // Комиссия
@@ -186,13 +195,13 @@ const Web = () =>{
                   return parseFloat(totalCost.toFixed(2));
                 }
               case 'E1': {
-                  if(filesCount+250*countHolsts() <  300) return 5.15
-                  return 5.87
+                  if(filesCount+250*countHolsts() <  300) return E
+                  return E+0.9
               };
               case 'R1': {
                   if(isHolst()){
                       const calculateCost = () => {
-                          const baseCost = 4; // Базовая стоимость пересылки
+                          const baseCost = R; // Базовая стоимость пересылки
                           const massa = filesCount * 3 + countHolsts() * 700
                           const totalCost = baseCost + Math.max((massa - 1000) / 100, 0) * 0.09 + (massa > 1000 ? 1 : 0);
                           return totalCost.toFixed(2); // Округляем до 2 знаков после запятой
@@ -201,8 +210,8 @@ const Web = () =>{
                         return calculateCost()
                   }
 
-                  const baseCost = 2.04; // Базовая стоимость для первых 30 файлов
-                  const additionalCostPerGroup = 0.42; // Дополнительная стоимость за каждые 30 файлов
+                  const baseCost = R1; // Базовая стоимость для первых 30 файлов
+                  const additionalCostPerGroup = 0.48; // Дополнительная стоимость за каждые 30 файлов
                   const groupSize = 30; // Размер группы файлов
                 
                   // Вычисляем количество полных групп сверх первых 30 файлов
@@ -215,7 +224,7 @@ const Web = () =>{
                 }
               case 'R': {
                   const calculateCost = () => {
-                      const baseCost = 4; // Базовая стоимость пересылки
+                      const baseCost = R; // Базовая стоимость пересылки
                       const additionalCost = SumTeorIn() * 0.03; // 3% от базовой стоимости
                       const calculateTransferFee = () => {
                           const sum = SumTeorIn(); // Получаем сумму
@@ -287,7 +296,7 @@ const Web = () =>{
             "adress": adress,
             "postCode": postCode,
             "other": (() => {
-                if (typePost === 'E1' || typePost === 'R1') {
+                if (typePost === 'E1' || typePost === 'R1' || typePost === 'R2') {
                     return "--Данные для оплаты появятся здесь после проверки заказа\n - " + other;
                 }
                 return other;
@@ -328,34 +337,6 @@ const Web = () =>{
         setStep(2);
     }
 
-    const ShowTitle = (value) =>{
-        switch(value){
-            case 'photo': return 'Фото'
-            case 'holst': return 'Холст'
-            case 'magnit': return 'Магнит'
-            case 'а6': return '10x15 стандарт'
-            case 'дд': return '10x10 (с рамкой)'
-            case 'м7x10': return '7x10 (с рамкой)'
-            case 'пол': return '10х12 полароид'
-            case 'мини': return '7х9 миниПолароид'
-            case 'а5': return '15х20'
-            case 'а4': return '20х30'
-            case '5x8': return '5х8'
-            case '10x10': return '10х10'
-            case '30x40': return '30x40'
-            case '40x40': return '40x40'
-            case '40x55': return '40x55'
-            case '50x70': return '50x70'
-            case '55x55': return '55x55'
-            case '55x80': return '55x80'
-            case '<а6': return 'другой до 10х15'
-            case '<а7': return 'другой до 7.5х10'
-            case '<а5': return 'другой до 15х20'
-            case '<а4': return 'другой до 20х30'
-            default: return false;
-        }
-    }
-
 
 
     return (
@@ -382,7 +363,7 @@ const Web = () =>{
                                         onClick={()=>setItem(index)} 
                                         key={index}>
                                     <div className={style.navLabel}>
-                                        <div>{ShowTitle(el.format)}</div>
+                                        <div>{settings.find(s => s.title === el.format)?.name || 'not found'}</div>
                                         <div className={style.navLabelDelete}><i onClick={()=>DeleteFormat(el)} style={{color: 'white'}} className="bi bi-x-lg"></i></div>
                                          
                                     </div>

@@ -257,30 +257,12 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
         })
     }
 
-    const ShowTitle = (value) =>{
+    const ShowType = (value) =>{
         switch(value){
             case 'photo': return 'Фото'
             case 'holst': return 'Холст'
             case 'magnit': return 'Магнит'
-            case 'а6': return '10x15 стандарт'
-            case 'дд': return '10x10 (с рамкой)'
-            case 'м7x10': return '7x10 (с рамкой)'
-            case 'пол': return '10х12 полароид'
-            case 'мини': return '7х9 миниПолароид'
-            case 'а5': return '15х20'
-            case 'а4': return '20х30'
-            case '5x8': return '5х8'
-            case '10x10': return '10х10'
-            case '30x40': return '30x40'
-            case '40x40': return '40x40'
-            case '40x55': return '40x55'
-            case '50x70': return '50x70'
-            case '55x55': return '55x55'
-            case '55x80': return '55x80'
-            case '<а6': return 'другой до 10х15'
-            case '<а7': return 'другой до 7.5х10'
-            case '<а5': return 'другой до 15х20'
-            case '<а4': return 'другой до 20х30'
+            
             default: return null;
         }
     }
@@ -292,14 +274,14 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
                 <div className={style.containerSelect}>
                     <label className={style.labelSelect}>Тип:</label>
                     <select className={style.selectForm} value={formats[item].type} onChange={(e)=>ChangeType(e)}>
-                        {TypePhoto.map((el,index)=><option value={el} key={index}>{ShowTitle(el)}</option>)}
+                        {TypePhoto.map((el,index)=><option value={el} key={index}>{ShowType(el)}</option>)}
                     </select>
                     <span className={style.selectArrow}>▼</span>
                 </div>
                 <div className={style.containerSelect}>
                     <label className={style.labelSelect}>Размер:</label>
                     <select className={style.selectForm} value={formats[item].format} onChange={(e)=>ChangeSize(e)}>
-                        {sizePhoto().map((el,index)=>ShowTitle(el.title)&&<option key={index} value={el.title}>{ShowTitle(el.title)}</option>)}
+                        {sizePhoto().map((el,index)=>el.title&&<option key={index} value={el.title}>{el.name}</option>)}
                     </select>
                     <span className={style.selectArrow}>▼</span>
                 </div>

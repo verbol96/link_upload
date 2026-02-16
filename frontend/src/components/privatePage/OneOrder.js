@@ -43,11 +43,8 @@ export const OneOrder = ({order, index}) =>{
             case 'E': return 'Европочта(наложенный)'
             case 'E1': return 'Европочта(оплата ЕРИП)'
             case 'R1': return 'Письмо(оплата ЕРИП)'
-            case 'R': {
-                if(order.firstClass) return 'Белпочта (письмо 1 класс)'
-                return 'Белпочта(наложенный)'
-            }
-            
+            case 'R2': return 'Белпочта(оплата ЕРИП)'
+            case 'R': return 'Белпочта(наложенный)'
             
             default: return 'Европочта'
         }
@@ -292,7 +289,7 @@ export const OneOrder = ({order, index}) =>{
 
                     <div className={style.files}>
                         
-                        {order.photos.map((el,index)=><OneOrderFile key={index} el={el} status={order.status} PriceList={PriceList} />)}
+                        {order.photos.map((el,index)=><OneOrderFile key={index} el={el} status={order.status} PriceList={PriceList} settings={settings} />)}
 
                     </div>
                    

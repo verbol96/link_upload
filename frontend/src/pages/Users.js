@@ -1,14 +1,17 @@
 import Footer from "../components/admin/Footer"
-import { UserList } from "../components/users/UserList"
 import { NavBar } from "../components/admin/NavBar"
+import { UserListNew } from "../components/users/UserListNew"
 
 const Users = () =>{
 
     return(
         <div style={{display: 'flex', flexDirection: 'column',background: 'rgb(243, 243, 243)', minHeight: '100vh'}}>
             <NavBar />
-
-            <UserList />
+            
+            {
+                //<UserList />
+            }
+            <UserListNew />
            
            <div style={{marginTop: 'auto'}}>
                 <Footer />

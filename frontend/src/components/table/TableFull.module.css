@@ -51,6 +51,11 @@
             max-width: 100px;
         }
 
+        .menuCheckbox{
+            height: 20px;
+            color: red;
+        }
+
 
 .mobileOrder{
     height: 50px;
@@ -133,3 +138,4 @@
             overflow: hidden; 
             text-overflow: ellipsis;
         }
+
