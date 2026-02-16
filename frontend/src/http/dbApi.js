@@ -21,11 +21,17 @@ export const updateSettings = async(title, value) =>{
     return data
 }
 
-export const addSettings = async(type, title, price) =>{
-    const {data} = await $host.post( 'api/settings/add', {'type': type, 'title': title, 'price': price} )
+export const addSettings = async(type, title, name, price) =>{
+    const {data} = await $host.post( 'api/settings/add', {'type': type, 'title': title, 'name': name, 'price': price} )
     return data
 }
 
+
+export const setCopyBD = async(file) =>{
+    const {data} = await $host.post( 'api/settings/setCopyDB', {'file': file})
+    console.log(data)
+    return data
+}
 
 export const deleteSetting = async(id) =>{
     const {data} = await $host.delete( `api/settings/delete/${id}`)

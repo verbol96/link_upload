@@ -256,6 +256,50 @@ class authController {
 
         return res.json(moscowData)
     }
+
+    async clients (req, res){
+        const { 
+            page = 1, 
+            limit = 20, 
+            search = '',
+            sortBy = 'createdAt',
+            sortOrder = 'DESC'
+        } = req.query;
+        
+        const offset = (page - 1) * limit;
+        
+        // Поиск
+        const where = {};
+        if (search) {
+            where[Op.or] = [
+            { FIO: { [Op.iLike]: `%${search}%` } },
+            { phone: { [Op.iLike]: `%${search}%` } }
+            ];
+        }
+        
+        // Сортировка
+        const order = [];
+        if (sortBy) {
+            order.push([sortBy, sortOrder]);
+        }
+        
+        const { count, rows } = await User.findAndCountAll({
+            where,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            order,
+            attributes: ['id', 'FIO', 'phone', 'createdAt']
+        });
+        
+        res.json({
+            data: rows,
+            total: count,
+            page: parseInt(page),
+            pageSize: parseInt(limit),
+            totalPages: Math.ceil(count / limit)
+        });
+    };
+    
 }
 
 module.exports = new authController()

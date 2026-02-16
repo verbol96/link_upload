@@ -30,7 +30,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
   const [oblast, setOblast] = useState(order.oblast || '')
   const [raion, setRaion] = useState(order.raion || '')
   const [postCode, setPostCode] = useState(order.postCode || '')
-  const [firstClass, setFirstClass] = useState(order.firstClass || false)
+  const [firstClass] = useState(order.firstClass || false)
   const [other, setOther] =useState(order.other || '')
   const [photo, setPhoto] = useState(order.photos || [])
   const [phoneUser, setPhoneUser] = useState(order.user?.phone || order.phoneUser || '');
@@ -607,7 +607,17 @@ const CheckInvoices = async() =>{
         window.alert('счет не найдет');
       }
 
-}
+  }
+
+const [countOrders, setCountOrders] = useState(0);
+
+useEffect(() => {
+  const fetchCount = async () => {
+    const { data } = await $host.get(`/api/order/countOrders/${order.userId}`);
+    setCountOrders(data);
+  };
+  fetchCount();
+}, []);
 
 
 
@@ -650,19 +660,12 @@ const CheckInvoices = async() =>{
                   <option value={"E"}>Европочта(наложенный)</option>
                   <option value={"E1"}>Европочта(ЕРИП)</option>
                   <option value={"R"}>Белпочта(наложенный)</option> 
+                  <option value={"R2"}>Белпочта(ЕРИП)</option> 
                   <option value={"R1"}>Письмо(ЕРИП)</option> 
               </select>
               <label></label>
             </div>
-            {/*
-            {typePost==='R'?
-              <div className='contact_field'>
-                <label>1 класс:</label>
-                <input  type='checkbox' checked={firstClass} onChange={(e)=>setFirstClass(e.target.checked)} /> 
-              </div>
-              :null
-            }
-            */}
+          
             
             <div className='contact_field'>
               <CopyToClipboard text={city}>
@@ -724,7 +727,7 @@ const CheckInvoices = async() =>{
             </div> 
             </>
             : null}
-              {(typePost=='R' || typePost=='R1') &&
+              {(typePost==='R' || typePost==='R1') &&
                 <div className='flex justify-end mt-2'>
                 <Button variant='secondary' onClick={()=>{handlePrint()}}><i style={{color: 'white', marginRight: 10}} className="bi bi-printer"></i> печать </Button>
                 </div>
@@ -795,7 +798,7 @@ const CheckInvoices = async() =>{
             </div>
 
             <div className='contact_field'>
-              <label onClick={()=>setPhoneUser(phone)}>Владелец:</label>
+              <label onClick={()=>setPhoneUser(phone)}>Владелец ({countOrders}):</label>
               <div className='search_bar'
                   onMouseEnter={handleModalMouseEnter}
                   onMouseLeave={handleModalMouseLeave}

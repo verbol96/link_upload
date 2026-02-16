@@ -21,7 +21,7 @@ const AppRouter = () => {
           async function getUser (){
             const user = await whoAmI()
             setUserRole(user.role)
-            let data = await getOneUser(user.phone)
+            let data = await getOneUser(user.phone) 
             dispatch(setUser(data))
             setUserDataLoaded(true)  // устанавливаем в true, когда данные загружены
           }

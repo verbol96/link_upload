@@ -41,7 +41,8 @@ export const ContactForm = ({FIO,setFIO,phone,setPhone,typePost,setTypePost,city
                     <select className={style.selectForm} value={typePost} onChange={(e)=>setTypePost(e.target.value)}>
                             <option value={'E1'}>Европочта(оплата ЕРИП) ~ {calcDelivery('E1')}р </option>
                             <option value={'E'}>Европочта(наложенный) ~ {calcDelivery('E')}р</option>
-                            <option value={'R1'}>{isHolst() ? "Белпочта" : "Письмо"}(оплата ЕРИП) ~ {calcDelivery('R1')}р</option>
+                            {!isHolst()&&<option value={'R1'}>Письмо(оплата ЕРИП) ~ {calcDelivery('R1')}р</option>}
+                            {isHolst()&&<option value={'R2'}>Белпочта(оплата ЕРИП) ~ {calcDelivery('R1')}р</option>}
                             <option value={'R'}>Белпочта(наложенный) ~ {calcDelivery('R')}р</option>
                     </select>
                     <span className={style.selectArrow}>▼</span>

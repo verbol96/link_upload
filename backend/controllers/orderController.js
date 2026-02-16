@@ -1,4 +1,4 @@
-const {User, Order, Photo, Settings} = require('../models/models')
+const {User, Order, Photo, Settings, LogUser, SettingsEditor, Token, File} = require('../models/models')
 const bcryptjs = require('bcryptjs')
 const { Op, where } = require("sequelize");
 const moment = require('moment-timezone');
@@ -141,22 +141,25 @@ class orderController{
       
         return res.json({orders});
       }
-
+ 
     async getOneUser(req,res){
         const {phone} = req.body
         const user = await User.findOne({
-            where: {phone: phone},
+            where: { phone: phone },
             include: [
                 {
                     model: Order,
+                    attributes: { 
+                        exclude: ['notes'] // Исключаем только notes
+                    },
                     include: [
                         {
-                          model: Photo,
+                            model: Photo,
                         },
-                      ], 
+                    ], 
                 }
-              ]
-            })
+            ]
+        });
 
             const moscowOrders = user.orders.map(order => {
               const moscowTime = moment(order.createdAt).tz('Europe/Moscow'); // Преобразование в Московскую временную зону
@@ -265,82 +268,6 @@ class orderController{
         const user = await User.destroy({where: {id: id}})
         return res.json(user)
     }
-
-    //для миграции БД
-    async setCopyDB(req, res){
-        const {user, adress, order, photo} = req.body
-        const orders = order
-        for (let i = 0; i < orders.length; i++) {
-            const el = orders[i];
-            const userEl = await user.find(user => user.id === el.userId);
-            const adressEl = await adress.find(adress => adress.id === el.adressId);
-            const photoEl = await photo.filter(photo => photo.orderId === el.id);
-
-            let order;
-            const pretendent = await User.findOne({where: {phone: userEl.phone.trim()}});
-            if (pretendent === null) {
-                const hashPassword = await bcryptjs.hash('1', 3);
-                const user = await User.create({
-                    phone: userEl.phone.trim(), 
-                    FIO: userEl.name, 
-                    password: hashPassword, 
-                    typePost: adressEl.typePost, 
-                    postCode: adressEl.postCode,
-                    city: adressEl.city, 
-                    adress: adressEl.adress, 
-                    oblast: adressEl.oblast, 
-                    raion: adressEl.raion
-                });
-                order = await Order.create({
-                    codeOutside: el.codeOutside,
-                    price: el.price,
-                    other: el.other,
-                    notes: userEl.nikname,
-                    status: el.status,
-                    typePost: adressEl.typePost,
-                    firstClass: adressEl.firstClass,
-                    postCode: adressEl.postCode,
-                    city: adressEl.city,
-                    adress: adressEl.adress,
-                    oblast: adressEl.oblast,
-                    raion: adressEl.raion,
-                    phone: userEl.phone,
-                    FIO: userEl.name,
-                    userId: user.id,
-                    createdAt: el.createdAt
-                });
-            } else {
-                order = await Order.create({
-                    codeOutside: el.codeOutside, 
-                    price: el.price, 
-                    other: el.other,
-                    notes: userEl.nikname, 
-                    status: el.status, 
-                    typePost: adressEl.typePost,
-                    firstClass: adressEl.firstClass,
-                    postCode: adressEl.postCode,
-                    city: adressEl.city,
-                    adress: adressEl.adress,
-                    oblast: adressEl.oblast,
-                    raion: adressEl.raion, 
-                    phone: userEl.phone,
-                    FIO: userEl.name, 
-                    userId: pretendent.id,
-                    createdAt: el.createdAt
-                });
-            }
-            await Promise.all(photoEl.map(el => Photo.create({
-                type: el.type, 
-                format: el.format, 
-                amount: el.amount, 
-                paper: el. paper,
-                orderId: order.id 
-            })));
-        }
-        
-        return res.json(user)
-    }
-
     //для изменения даты заказа
     async changeDataOrder(req,res){
       const id = req.params.id
@@ -348,7 +275,14 @@ class orderController{
       await Order.update({createdAt: data},
         {where: {id: id}})
       return res.json('')
-  }
+    }
+    
+    async countOrders(req,res){
+        const {userId} = req.params
+        const count = await Order.count({where: {userId: userId}})
+        console.log(count)
+        return res.json(count)
+    }
 }
 
 module.exports = new orderController()

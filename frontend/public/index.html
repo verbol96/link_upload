@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,6 +8,11 @@
       name="description"
       content="Сервис для заказа фотографий"
     />
+    <!-- ВСЕ эти мета-теги для разных браузеров отключение автоперевода -->
+    <meta name="google" content="notranslate">
+    <meta name="robots" content="no translate">
+    <meta name="slurp" content="noydir">
+    <meta http-equiv="Content-Language" content="ru">
     <!--
     <link
       rel="stylesheet"
@@ -25,10 +30,38 @@
     <link rel="icon" href="./favicon.ico">
     <title>Фотоцентр LINK</title>
   </head>
-  <body>
+  <body translate="no">
     <noscript>Table</noscript>
     
     <div id="root"></div>
-   
+    <!-- Скрипт для полной блокировки перевода -->
+    <script>
+      // Блокировка перевода при загрузке
+      document.documentElement.setAttribute('translate', 'no');
+      document.documentElement.setAttribute('lang', 'ru');
+      document.body.setAttribute('translate', 'no');
+      
+      // Блокировка для Google Chrome
+      if (window.chrome && chrome.runtime) {
+        try {
+          chrome.runtime.sendMessage({ type: 'DISABLE_TRANSLATE' });
+        } catch(e) {}
+      }
+      
+      // Блокировка через MutationObserver
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'attributes' && 
+              mutation.attributeName === 'translated') {
+            document.documentElement.removeAttribute('translated');
+          }
+        });
+      });
+      
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['translated', 'class']
+      });
+    </script>
   </body>
 </html>
