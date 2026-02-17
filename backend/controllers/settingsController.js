@@ -230,25 +230,25 @@ class settingsController{
 
 
     async getSettingEditor(req,res){
-        const settings = await SettingEditor.findAll()
+        const settings = await SettingsEditor.findAll()
         return res.json(settings)
     }
 
     async deleteSettingEditor(req,res){
         const name = req.params.name
-        const settings = await SettingEditor.destroy({where:{name}})
+        const settings = await SettingsEditor.destroy({where:{name}})
         return res.json(settings)
     }
 
     async changeSettingEditor(req, res) {
         const { name, width, height, top, bottom, left, right } = req.body;
-        let frame = await SettingEditor.findOne({ where: { name } });
+        let frame = await SettingsEditor.findOne({ where: { name } });
     
         if (frame) {
-            const response = await SettingEditor.update({ width, height, top, bottom, left, right }, { where: { name } });
+            const response = await SettingsEditor.update({ width, height, top, bottom, left, right }, { where: { name } });
             return res.json(response);
         } else {
-            const response = await SettingEditor.create({ name, width, height, top, bottom, left, right });
+            const response = await SettingsEditor.create({ name, width, height, top, bottom, left, right });
             return res.json(response);
         }
     }
