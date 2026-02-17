@@ -27,30 +27,6 @@ class settingsController{
         return res.json(responce)
     }
 
-    async getSettingsEditor(req,res){
-        const settings = await SettingEditor.findAll()
-        return res.json(settings)
-    }
-
-    async deleteSettingsEditor(req,res){
-        const size = req.params.size
-        const settings = await SettingEditor.destroy({where:{size}})
-        return res.json(settings)
-    }
-
-    async changeSettingsEditor(req, res) {
-        const { size, aspectRatio, up, down, left, right } = req.body;
-        let frame = await SettingEditor.findOne({ where: { size } });
-    
-        if (frame) {
-            const response = await SettingEditor.update({ aspectRatio, up, down, left, right }, { where: { size } });
-            return res.json(response);
-        } else {
-            const response = await SettingEditor.create({ aspectRatio, size, up, down, left, right });
-            return res.json(response);
-        }
-    }
-
         //сделать бэкап всех БД
     async getCopyBD(req, res) {
         const file = await File.findAll();
@@ -230,25 +206,25 @@ class settingsController{
 
 
     async getSettingEditor(req,res){
-        const settings = await SettingsEditor.findAll()
+        const settings = await SettingEditor.findAll()
         return res.json(settings)
     }
 
     async deleteSettingEditor(req,res){
         const name = req.params.name
-        const settings = await SettingsEditor.destroy({where:{name}})
+        const settings = await SettingEditor.destroy({where:{name}})
         return res.json(settings)
     }
 
     async changeSettingEditor(req, res) {
         const { name, width, height, top, bottom, left, right } = req.body;
-        let frame = await SettingsEditor.findOne({ where: { name } });
+        let frame = await SettingEditor.findOne({ where: { name } });
     
         if (frame) {
-            const response = await SettingsEditor.update({ width, height, top, bottom, left, right }, { where: { name } });
+            const response = await SettingEditor.update({ width, height, top, bottom, left, right }, { where: { name } });
             return res.json(response);
         } else {
-            const response = await SettingsEditor.create({ name, width, height, top, bottom, left, right });
+            const response = await SettingEditor.create({ name, width, height, top, bottom, left, right });
             return res.json(response);
         }
     }
