@@ -1,4 +1,4 @@
-const {Settings, SettingsEditor, File, Order, Photo, Token, User, LogUser} = require('../models/models')
+const {Settings, SettingEditor, File, Order, Photo, Token, User, LogUser} = require('../models/models')
 require('dotenv').config()
 const fs = require('fs');
 
@@ -28,25 +28,25 @@ class settingsController{
     }
 
     async getSettingsEditor(req,res){
-        const settings = await SettingsEditor.findAll()
+        const settings = await SettingEditor.findAll()
         return res.json(settings)
     }
 
     async deleteSettingsEditor(req,res){
         const size = req.params.size
-        const settings = await SettingsEditor.destroy({where:{size}})
+        const settings = await SettingEditor.destroy({where:{size}})
         return res.json(settings)
     }
 
     async changeSettingsEditor(req, res) {
         const { size, aspectRatio, up, down, left, right } = req.body;
-        let frame = await SettingsEditor.findOne({ where: { size } });
+        let frame = await SettingEditor.findOne({ where: { size } });
     
         if (frame) {
-            const response = await SettingsEditor.update({ aspectRatio, up, down, left, right }, { where: { size } });
+            const response = await SettingEditor.update({ aspectRatio, up, down, left, right }, { where: { size } });
             return res.json(response);
         } else {
-            const response = await SettingsEditor.create({ aspectRatio, size, up, down, left, right });
+            const response = await SettingEditor.create({ aspectRatio, size, up, down, left, right });
             return res.json(response);
         }
     }
@@ -59,7 +59,7 @@ class settingsController{
         const token = await Token.findAll();
         const user = await User.findAll();
         const settings = await Settings.findAll();
-        const settingsEditor = await SettingsEditor.findAll();
+        const settingsEditor = await SettingEditor.findAll();
         const logUsers = await LogUser.findAll()
     
         const data = {
@@ -96,7 +96,7 @@ class settingsController{
         Photo.destroy({ truncate: true, cascade: true }),
         Settings.destroy({ truncate: true, cascade: true }),
         LogUser.destroy({ truncate: true, cascade: true }),
-        SettingsEditor.destroy({ truncate: true, cascade: true }),
+        SettingEditor.destroy({ truncate: true, cascade: true }),
         Token.destroy({ truncate: true, cascade: true }),
         File.destroy({ truncate: true, cascade: true }),
       ]);
