@@ -4,6 +4,8 @@ const orderController = require('../controllers/orderController')
 
 router.post('/addOrder',  orderController.addOrder)
 router.get('/getAll', orderController.getAll)
+router.get('/getAllNewStart', orderController.getAllNewStart)
+router.get('/getAllNew', orderController.getAllNew)
 router.get('/getAllArchive', orderController.getAllArchive)
 router.get('/getAllStat', orderController.getAllStat)
 router.put('/updateStatus/:id', orderController.updateStatus)
@@ -13,6 +15,6 @@ router.delete('/deleteOrder/:id', orderController.deleteOrder)
 router.delete('/deleteUser/:id', orderController.deleteUser)
 router.post('/getOneUser', orderController.getOneUser)
 router.put('/changeDataOrder/:id', orderController.changeDataOrder)
-router.get('/countOrders/:userId',  orderController.countOrders)
+router.get('/ordersUser/:id', orderController.ordersUser)
 
 module.exports = router

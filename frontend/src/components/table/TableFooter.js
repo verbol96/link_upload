@@ -14,7 +14,7 @@ export const TableFooter = ({filteredOrders}) =>{
         const pr =  filteredOrders.reduce((sum,el)=>{
             return sum+ 
                 el.photos.reduce((sum1,el1)=>{
-                return sum1+Number(el1.amount)
+                return sum1+Number(el1.amount)*Number(el1.copies)
                 },0)
         },0)
         return pr

@@ -10,7 +10,15 @@ const History = () => {
             <div style={{display: 'flex', justifyContent: 'center', color: '#116466', margin: 20, fontSize: 25}}>История обновлений</div>
             
             <div style={{margin: 20}}>
-                <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.7 (16.02.2026)</div>
+                <div style={{fontSize: 18, marginLeft: 50, marginTop: 10, color: '#116466'}}>version 4.8 (21.03.2026)</div>
+                    <ul>
+                        <li>изменена страница клиенты(серверная обработка запросов)</li>
+                        <li>изименена структура БД(подсчет заказов, фио нижний регистр и т.д.)</li>
+                        <li>импорт/эксопрт БД</li>
+                        <li>отображение всех заказов клиента</li>
+                    </ul>
+
+                <div style={{fontSize: 18, marginLeft: 50, marginTop: 10, color: '#116466'}}>version 4.7 (16.02.2026)</div>
                     <ul>
                         <li>добавлена возможность загружать бэкап БД</li>
                         <li>расширена БД, теперь везде единые размеры и неймы</li>
@@ -21,7 +29,7 @@ const History = () => {
                         <li>возможность отображения только люстры, холстов</li>
                         <li>изменение стоимости пересылки в настройках</li>
                     </ul>
-                <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.6 (27.09.2024)</div>
+                <div style={{fontSize: 18, marginLeft: 50, marginTop: 10, color: '#116466'}}>version 4.6 (27.09.2024)</div>
                     <ul>
                         <li>сортировка форматов в редакторе по имени</li>
                         <li>проверка на код оператора</li>
@@ -35,7 +43,7 @@ const History = () => {
                         <li>отменен при проверке первого класс</li>
                         <li>номер в форме при авторизации</li>
                     </ul>
-                <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.5 (01.09.2024)</div>
+                <div style={{fontSize: 18, marginLeft: 50, marginTop: 10, color: '#116466'}}>version 4.5 (01.09.2024)</div>
                     <ul>
                         <li>сохрание смс с отправкой оплаты</li>
                         <li>удалить кнопку печать</li>
@@ -45,7 +53,7 @@ const History = () => {
                         <li>Редактор исправлен</li>
                         
                     </ul>
-                <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.4 (21.08.2024)</div>
+                <div style={{fontSize: 18, marginLeft: 50, marginTop: 10, color: '#116466'}}>version 4.4 (21.08.2024)</div>
                     <ul>
                         <li>исправить двойную загрузку фото в ЛК</li>
                         <li>отправка СМС с оплатой</li>
@@ -56,7 +64,7 @@ const History = () => {
                         <li>ввод номера телефона проверки</li>
                         
                     </ul>
-                <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.3 (28.04.2024)</div>
+                <div style={{fontSize: 18, marginLeft: 50, marginTop: 10, color: '#116466'}}>version 4.3 (28.04.2024)</div>
                     <ul>
                         <li>отображение полного примечания в таблице</li>
                         <li>статистика для мобильной таблицы</li>
@@ -68,7 +76,7 @@ const History = () => {
                         
                     </ul>
 
-                <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.2 (11.03.2024)</div>
+                <div style={{fontSize: 18, marginLeft: 50, marginTop: 10, color: '#116466'}}>version 4.2 (11.03.2024)</div>
                     <ul>
                         <li>исправлено отображение штрихкода в ЛК</li>
                         <li>добавлено "дата отправки"</li>
@@ -85,7 +93,7 @@ const History = () => {
                         <li>добавлена сумма в ЛК для каждого формата</li>
 
                     </ul>
-                <div style={{fontSize: 18, marginLeft: 50, marginBottom: 10, color: '#116466'}}>version 4.1 (12.02.2024)</div>
+                <div style={{fontSize: 18, marginLeft: 50, marginTop: 10, color: '#116466'}}>version 4.1 (12.02.2024)</div>
                 <ul>
                     <li>изменена страница "клиенты"</li>
                     <li>испавлено отображение времени заказов</li>

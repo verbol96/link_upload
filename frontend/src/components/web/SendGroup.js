@@ -1,6 +1,7 @@
 import React, {useState} from "react";
 import style from './SendGroup.module.css'
 import { sendSms } from "../../http/authApi";
+import { $host } from "../../http";
 
 export const SendGroup =({phone, upload, isAuth, setIsValid})=>{
 
@@ -18,9 +19,8 @@ export const SendGroup =({phone, upload, isAuth, setIsValid})=>{
         setTimeout(()=>{
             setIsSendSMS(false)
         }, 120000)
-        await sendSms(phone, `${code} - код для подтверждения`)
-        //console.log(code)
-        
+        if($host.defaults.baseURL === 'http://localhost:8002/') console.log(code)
+                else await sendSms(phone, `${code} - код для подтверждения`)  
     }
 
     const TikTak = () =>{

@@ -6,7 +6,8 @@ import { DescRow } from './DescRow';
 import {CopyToClipboard} from 'react-copy-to-clipboard'
 import { useMemo } from 'react';
 
-export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, isChanged, setIsChanged}) =>{
+export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setSelectedOrder,
+     collapsedOrderId, isChanged, setIsChanged}) =>{
  
     
     const dispatch = useDispatch(); 
@@ -72,7 +73,7 @@ export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setS
                 style={{marginLeft: 5}}
                 > </i></CopyToClipboard>)
          }
-        if(order.firstClass === true){
+        if(order.typePost === "R2"){
            a.push( <i className="bi bi-1-square-fill pr-1" style={{color:'red', marginLeft: 5}}> </i>)
         }
         if(order.typePost === "R1"){
@@ -188,7 +189,7 @@ export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setS
                     selectedOrder===order.id 
                     ? 
                     <DescRow order={order} setSelectedOrder={setSelectedOrder} handleDetailsClick={handleDetailsClick}
-                    isChanged={isChanged} setIsChanged={setIsChanged}   />
+                    isChanged={isChanged} setIsChanged={setIsChanged} />
                     :null
                     }
         </div>

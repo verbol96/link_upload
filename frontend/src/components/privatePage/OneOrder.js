@@ -78,7 +78,7 @@ export const OneOrder = ({order, index}) =>{
 
     const SumTeor =()=> {
         const pr = order.photos.reduce((sum, el)=>{
-            return sum+PriceList(el.format)*el.amount
+            return sum+PriceList(el.format)*el.amount*el.copies
         },0 )
 
         return pr.toFixed(2)

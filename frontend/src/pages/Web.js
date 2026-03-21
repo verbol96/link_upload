@@ -122,12 +122,6 @@ const Web = () =>{
         return price
     }
     
-    const SumTeor =(photo)=> {
-        const pr = photo.reduce((sum, el)=>{
-            return sum+PriceList(el.format)*el.amount*el.copies
-        },0 )
-    return pr.toFixed(2)
-    }
 
     const SumTeorIn = () => {
         // Рассчитываем общую стоимость без скидки
@@ -291,7 +285,6 @@ const Web = () =>{
             "FIO": FIO,
             "phone": removeNonNumeric(phone),
             "typePost": typePost,
-            //"firstClass": typePost==='R1' ? true : false,
             "city": city,
             "adress": adress,
             "postCode": postCode,
@@ -301,9 +294,13 @@ const Web = () =>{
                 }
                 return other;
                 })(),
-            "notes": '---' + calcDelivery(typePost),
+            "notes": '',
             "photo": photo, 
-            "price": SumTeor(photo),
+            "price": SumTeorIn(photo),
+            "price_deliver": (()=>{
+                if(typePost==='R1') return calcDelivery(typePost)
+                else return 0
+                })(), 
             "codeOutside": '',
             "oblast": '',
             "raion": '',
@@ -314,7 +311,10 @@ const Web = () =>{
         }
 
         const userData = await SendToDB(data)
-        const typePostName = (typePost==='R1') ? 'R' : typePost
+        const typePostName = () =>{
+            if(typePost==='R' || typePost==='R1' || typePost==='R2' ) return 'R'
+            if(typePost==='E' || typePost==='E1' ) return 'E'
+        }
         const MainDir = await createDir(typePostName+(userData.order_number%1000))
 
         let newUserData = {...userData}
