@@ -44,7 +44,7 @@ export const OneOrderFile = ({el, status, PriceList, settings}) =>{
                 {el.type==='photo' && <div className={style.typeButton}>{el.paper==='glossy'? 'глянец' : 'люстр'}</div>}
                 <div className={style.typeButton}>{el.amount}шт </div>
                 <div className={style.typeButton}>копий: {el.copies}</div>
-                <div>сумма: {(PriceList(el.format)*el.amount).toFixed(2)}</div>
+                <div>сумма: {(PriceList(el.format)*el.amount*el.copies).toFixed(2)}</div>
             </div>
 
             {status===0 &&

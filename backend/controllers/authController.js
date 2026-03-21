@@ -1,9 +1,11 @@
-const {User, Token, File, Order, LogUser} = require('../models/models')
+const {User, Token, File, Order, LogUser, sequelize} = require('../models/models')
+const { Op } = require("sequelize");
 const fileService = require('../services/fileService')
 const bcryptjs = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
-//const { Op } = require("sequelize");
+const {recalculateUserStats} = require('../services/orderService')
+
 const axios = require('axios')
 const moment = require('moment-timezone');
 
@@ -57,6 +59,7 @@ class authController {
         }
         
     }
+
     async logout(req, res, next){
         try {
             const {refreshToken} = req.cookies
@@ -107,26 +110,6 @@ class authController {
             return res.status(500).json({error: error.message});
         }
     }
-
-    async passwordChange(req,res, next){
-        try {
-            const {oldPW, newPW} = req.body
-            console.log({oldPW, newPW})
-            const token = req.headers.authorization;
-            const {phone} = jwt.verify(token.split(' ')[1], process.env.ACCESS_KEY)
-            const user = await User.findOne({where:{phone:phone}})
-           
-            const isPassword = await bcryptjs.compare(oldPW, user.password)
-            if(!isPassword) return res.json(0)
-
-            const hashPassword = await bcryptjs.hash(newPW, 3)
-            const data = await User.update({password: hashPassword}, {where: {id: user.id}})
-          
-            return res.json(data)
-        } catch (error) {
-            console.log(error)
-        }
-    }
  
     async dataChange(req,res, next){
         try {
@@ -135,18 +118,6 @@ class authController {
 
             const data = await User.update({ FIO: FIO}, {where: {id: user.id}})
           
-            return res.json(data)
-        } catch (error) {
-            console.log(error)
-        }
-    }
-    
-    async changePasswordUser(req,res, next){
-        try {
-            const {phone, password} = req.body
-            
-            const hashPassword = await bcryptjs.hash(password, 3)
-            const data = await User.update({password: hashPassword}, {where: {phone: phone}})
             return res.json(data)
         } catch (error) {
             console.log(error)
@@ -163,21 +134,11 @@ class authController {
             return res.status(500).json({error: error.message})
         }
     }
+
     async usersDelete(req, res, next){
         try {
             const { id } = req.params;
             const data = await User.destroy({where: {id: id}})
-            return res.json(data)
-        } catch (error) {
-            console.log(error)
-        }
-    }
-    async users_changePW(req,res, next){
-        try {
-            const {id, PW} = req.body
-            
-            const hashPassword = await bcryptjs.hash(PW, 3)
-            const data = await User.update({password: hashPassword}, {where: {id: id}})
             return res.json(data)
         } catch (error) {
             console.log(error)
@@ -243,52 +204,65 @@ class authController {
         return res.json('ok')
     }
 
-    async getLogUser(req, res){
-        const data = await LogUser.findAll({})
+    async getLogUser(req, res) {
+    // Вычисляем дату месяц назад
+    const oneMonthAgo = moment().subtract(1, 'month').tz('Europe/Moscow').toDate();
+    
+    const data = await LogUser.findAll({
+        where: {
+        createdAt: {
+            [Op.gte]: oneMonthAgo // createdAt >= дата месяц назад
+        }
+        },
+        order: [['createdAt', 'DESC']] // сортировка от новых к старым
+    });
 
-        const moscowData = data.map(data => {
-            const moscowTime = moment(data.createdAt).tz('Europe/Moscow'); // Преобразование в Московскую временную зону
-            return {
-              ...data.toJSON(),
-              createdAt: moscowTime.format() // Форматирование даты и времени в строку
-            };
-          });
+    const moscowData = data.map(item => {
+        const moscowTime = moment(item.createdAt).tz('Europe/Moscow');
+        return {
+        ...item.toJSON(),
+        createdAt: moscowTime.format()
+        };
+    });
 
-        return res.json(moscowData)
+    return res.json(moscowData);
     }
 
     async clients (req, res){
         const { 
-            page = 1, 
-            limit = 20, 
-            search = '',
-            sortBy = 'createdAt',
-            sortOrder = 'DESC'
+            page,
+            limit,
+            search,
+            sortBy,
+            sortDir
         } = req.query;
         
         const offset = (page - 1) * limit;
-        
-        // Поиск
+
+        // Условия поиска
         const where = {};
         if (search) {
             where[Op.or] = [
-            { FIO: { [Op.iLike]: `%${search}%` } },
-            { phone: { [Op.iLike]: `%${search}%` } }
+                { FIO: { [Op.like]: `%${search}%` } },
+                { phone: { [Op.like]: `%${search}%` } }
             ];
         }
-        
-        // Сортировка
+
         const order = [];
-        if (sortBy) {
-            order.push([sortBy, sortOrder]);
+        if (sortBy && sortDir) {
+            order.push([sortBy, sortDir.toUpperCase()]);
+        } else {
+            order.push(['createdAt', 'DESC']); // сортировка по умолчанию
         }
-        
+
         const { count, rows } = await User.findAndCountAll({
-            where,
+            where,                    // добавляем условие
             limit: parseInt(limit),
             offset: parseInt(offset),
-            order,
-            attributes: ['id', 'FIO', 'phone', 'createdAt']
+            attributes: { 
+                exclude: ['oblast', 'raion', 'updatedAt'] // поля которые НЕ нужны
+            },
+            order
         });
         
         res.json({
@@ -296,9 +270,82 @@ class authController {
             total: count,
             page: parseInt(page),
             pageSize: parseInt(limit),
-            totalPages: Math.ceil(count / limit)
+            totalPage: Math.ceil(count / limit)
         });
     };
+
+    async clientUpdate(req,res)
+    {
+        try {
+            const { id } = req.params;
+            const { FIO, phone, role, typePost, postCode, city, adress } = req.body;
+
+            const user = await User.findByPk(id);
+            
+            if (!user) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
+            }
+
+            await user.update({
+                FIO,
+                phone,
+                role,
+                typePost,
+                postCode,
+                city,
+                adress
+            });
+
+            res.json({ message: 'Данные обновлены', user });
+        } catch (error) {
+            console.error('Ошибка обновления:', error);
+            res.status(500).json({ message: 'Ошибка сервера' });
+        }
+    }
+    
+    async updateUsers(req,res)
+    {
+        try {
+           const users = await User.findAll({ attributes: ['id'] });
+  
+            for (const user of users) {
+                await recalculateUserStats(user.id); // ← ваша функция
+            }
+            res.json({ message: 'Данные обновлены' });
+        } catch (error) {
+            console.error('Ошибка обновления:', error);
+            res.status(500).json({ message: 'Ошибка сервера' });
+        }
+    }
+
+    async clientsToLowerCase(req, res) {
+        try {
+            
+            const users = await User.findAll();
+            let updatedCount = 0;
+            
+            // Обновляем каждого
+            for (let user of users) {
+                // Проверка на пустое или null значение
+                if (user.FIO && typeof user.FIO === 'string' && user.FIO.trim() !== '') {
+                    await user.update({
+                        FIO: user.FIO.toLowerCase().trim()
+                    });
+                    updatedCount++;
+                } else {
+                    console.log(`Пропущен пользователь ${user.id}: пустое поле FIO`);
+                }
+            }
+            
+            res.json({ 
+                message: `Обновлено ${updatedCount} из ${users.length} пользователей` 
+            });
+            
+        } catch (error) {
+            console.error('Ошибка:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
     
 }
 

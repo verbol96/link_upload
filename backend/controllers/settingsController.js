@@ -35,8 +35,7 @@ class settingsController{
         const token = await Token.findAll();
         const user = await User.findAll();
         const settings = await Settings.findAll();
-        const settingsEditor = await SettingEditor.findAll();
-        const logUsers = await LogUser.findAll()
+        const settingEditor = await SettingEditor.findAll();
     
         const data = {
             file,
@@ -45,8 +44,7 @@ class settingsController{
             token,
             user,
             settings,
-            settingsEditor,
-            logUsers
+            settingEditor
         };
     
         const jsonString = JSON.stringify(data);
@@ -64,7 +62,7 @@ class settingsController{
         // очистить все БД и загрузить бэкап
     async setCopyDB(req,res){
 
-      const {file, order, photo, token, user, settings, settingsEditor, logUser} = req.body.file
+      const {file, order, photo, token, user, settings, settingEditor} = req.body.file
       
       await Promise.all([
         User.destroy({ truncate: true, cascade: true }),
@@ -83,7 +81,6 @@ class settingsController{
             id: user[i].id,
             phone: user[i].phone,
             FIO: user[i].FIO,
-            password: user[i].password,
             role: user[i].role,
             typePost: user[i].typePost,
             postCode: user[i].postCode,
@@ -91,11 +88,13 @@ class settingsController{
             adress: user[i].adress,
             oblast: user[i].oblast,
             raion: user[i].raion,
+            orderCount: user[i].orderCount || 0,
+            totalOrderSum: user[i].totalOrderSum || 0,
             createdAt: user[i].createdAt,
             updatedAt: user[i].updatedAt,
         });
       }
-            for (let i = 0; i < order.length; i++) {
+    for (let i = 0; i < order.length; i++) {
         await Order.create({
             id: order[i].id,
             order_number: order[i].order_number,
@@ -105,7 +104,6 @@ class settingsController{
             notes: order[i].notes,
             status: order[i].status,
             typePost: order[i].typePost,
-            firstClass: order[i].firstClass,
             postCode: order[i].postCode,
             city: order[i].city,
             adress: order[i].adress,
@@ -127,7 +125,7 @@ class settingsController{
         });
       }
 
-            for (let i = 0; i < photo.length; i++) {
+    for (let i = 0; i < photo.length; i++) {
           await Photo.create({
               id: photo[i].id,
               type: photo[i].type,
@@ -140,41 +138,32 @@ class settingsController{
               orderId: photo[i].orderId
           });
       }
-            for (let i = 0; i < settings.length; i++) {
+
+    for (let i = 0; i < settings.length; i++) {
           await Settings.create({
               id: settings[i].id,
               type: settings[i].type,
               title: settings[i].title,
+              name: settings[i].name,
               price: settings[i].price,
               createdAt: settings[i].createdAt,
               updatedAt: settings[i].updatedAt,
           });
       }
 
-            for(let i = 0; i < (logUser || []).length; i++){
-        await LogUser.create({
-          id: logUser[i].id,
-          phone: logUser[i].phone,
-          device: logUser[i].device,
-          browser: logUser[i].browser,
-          OS: logUser[i].OS,
-          screen: logUser[i].screen,
-          createdAt: logUser[i].createdAt,
-          updatedAt: logUser[i].updatedAt,
-        })
-      }
 
-            for (let i = 0; i < settingsEditor.length; i++) {
-          await SettingsEditor.create({
-              id: settingsEditor[i].id,
-              size: settingsEditor[i].size,
-              aspectRatio: settingsEditor[i].aspectRatio,
-              up: settingsEditor[i].up,
-              down: settingsEditor[i].down,
-              left: settingsEditor[i].left,
-              right: settingsEditor[i].right,
-              createdAt: settingsEditor[i].createdAt,
-              updatedAt: settingsEditor[i].updatedAt,
+    for (let i = 0; i < settingEditor.length; i++) {
+          await SettingEditor.create({
+              id: settingEditor[i].id,
+              name: settingEditor[i].name,
+              width: settingEditor[i].width,
+              height: settingEditor[i].height,
+              up: settingEditor[i].up,
+              down: settingEditor[i].down,
+              left: settingEditor[i].left,
+              right: settingEditor[i].right,
+              createdAt: settingEditor[i].createdAt,
+              updatedAt: settingEditor[i].updatedAt,
           });
       }
 

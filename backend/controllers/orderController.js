@@ -2,17 +2,17 @@ const {User, Order, Photo, Settings, LogUser, SettingsEditor, Token, File} = req
 const bcryptjs = require('bcryptjs')
 const { Op, where } = require("sequelize");
 const moment = require('moment-timezone');
-
+const {recalculateUserStats} = require('../services/orderService')
 
 class orderController{
     async addOrder(req,res) {
         const {phone, FIO, typePost, firstClass, postCode, city, adress,
-             oblast, raion, codeOutside, price, other, notes, photo, auth, phoneUser, status, origin} = req.body
+             oblast, raion, codeOutside, price, price_deliver, other, notes, photo, auth, phoneUser, status, origin} = req.body
 
         let order
         if(auth){
             const user = await User.findOne({where: {phone: phoneUser}})
-            order = await Order.create({codeOutside,price,other,notes, status, typePost,firstClass,
+            order = await Order.create({codeOutside,price,price_deliver,other,notes, status, typePost,firstClass,
                 postCode,city,adress,oblast,raion,FIO,phone,userId: user.id, origin
             })
 
@@ -26,13 +26,13 @@ class orderController{
         }else{
             const pretendent = await User.findOne({where: {phone: phone}})
             if(pretendent===null){
-                const hashPassword = await bcryptjs.hash('rootPW', 3)
-                const user = await User.create({phone, FIO, password: hashPassword, typePost, postCode,city,adress,oblast,raion})
-                order = await Order.create({codeOutside,price,other,notes, status, typePost,firstClass,
+                
+                const user = await User.create({phone, FIO, typePost, postCode,city,adress,oblast,raion})
+                order = await Order.create({codeOutside,price,price_deliver,other,notes, status, typePost,firstClass,
                     postCode,city,adress,oblast,raion,FIO,phone,userId: user.id, origin
                 })
             }else{
-                order = await Order.create({codeOutside,price,other,notes, status, typePost,firstClass,
+                order = await Order.create({codeOutside,price,price_deliver,other,notes, status, typePost,firstClass,
                     postCode,city,adress,oblast,raion,FIO,phone, userId: pretendent.id, origin
                 })
             }
@@ -61,6 +61,8 @@ class orderController{
             createdAt: moment(response.createdAt).tz('Europe/Moscow').format()
           }
         }
+
+        await recalculateUserStats(response.userId)
           
         return res.json(response)
     }
@@ -82,17 +84,18 @@ class orderController{
             },
             include: [
               {
-                model: User
+                model: User,
+                attributes: ['id', 'FIO', 'phone', 'orderCount', 'totalOrderSum'] 
               },
               {
                 model: Photo
               }
-            ]
+            ] 
           });
         const settings = await Settings.findAll()
         const users = await User.findAll({
-            attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
-          });
+          attributes: ['id', 'FIO', 'phone', 'role', 'orderCount']
+        });
 
           const moscowOrders = orders.map(order => {
             const moscowTime = moment(order.createdAt).tz('Europe/Moscow'); // Преобразование в Московскую временную зону
@@ -103,6 +106,36 @@ class orderController{
           });
           
         return res.json({orders: moscowOrders, settings, users})
+    }
+
+    async getAllNewStart(req,res){
+       
+        const settings = await Settings.findAll()
+        const users = await User.findAll({
+          attributes: ['id', 'FIO', 'phone', 'role', 'city']
+        });
+          
+        return res.json({settings, users})
+    }
+
+    async getAllNew(req,res){
+        const orders = await Order.findAll({
+            where: {
+              status: [1,2,3,4]
+            },
+            include: [
+              {
+                model: User,
+                attributes: ['id', 'FIO', 'phone', 'orderCount'] 
+              },
+              {
+                model: Photo
+              }
+            ]
+          });
+
+          
+        return res.json(orders)
     }
 
     async getAllArchive(req,res){
@@ -120,7 +153,7 @@ class orderController{
           });
         const settings = await Settings.findAll()
         const users = await User.findAll({
-            attributes: { exclude: ['password', 'createdAt', 'updatedAt', 'role'] }
+            attributes: { exclude: ['createdAt', 'updatedAt', 'role'] }
           });
 
           const moscowOrders = orders.map(order => {
@@ -186,7 +219,7 @@ class orderController{
            codeOutside, price, price_deliver, other, photo, userId, notes, phoneUser, main_dir_id, origin, is_sms_error, is_sms_add, is_sms_send, is_sms_pay, date_sent} = req.body
 
         const user = await User.findOne({where:{phone: phoneUser}})
-        
+        const user1 ={}
         if(user){
             await Order.update(
                 {
@@ -195,8 +228,7 @@ class orderController{
                 {where:{id: id}}
             )
         }else{
-            const hashPassword = await bcryptjs.hash('1', 3)
-            const user1 = await User.create({phone: phoneUser, FIO, password: hashPassword, typePost, postCode,city,adress,oblast,raion})
+             user1 = await User.create({phone: phoneUser, FIO, typePost, postCode,city,adress,oblast,raion})
 
             await Order.update(
                 {
@@ -247,9 +279,7 @@ class orderController{
         
         // Удаляем оставшиеся записи, которые не были обновлены или найдены в новом массиве
         await Promise.all(photoBD.map(photo => photo.destroy()));
-
-        
-
+        await recalculateUserStats(user ? user.id : user1.id)
 
         return res.json(id)
     }
@@ -259,6 +289,7 @@ class orderController{
         const order = await Order.findOne({where: {id: id}})
         await Order.destroy({where: {id: id}})
         await Photo.destroy({where: {orderId: id}})
+        await recalculateUserStats(order.userId)
         return res.json(order)
     }
 
@@ -276,13 +307,17 @@ class orderController{
         {where: {id: id}})
       return res.json('')
     }
-    
-    async countOrders(req,res){
-        const {userId} = req.params
-        const count = await Order.count({where: {userId: userId}})
-        console.log(count)
-        return res.json(count)
+
+    async ordersUser(req, res) {
+      const id = req.params.id;
+      const orders = await Order.findAll({
+        where: { userId: id },
+        include: [{ model: Photo }],
+        order: [['createdAt', 'DESC']]  // сортировка по дате, новые сверху
+      });
+      return res.json(orders);
     }
+  
 }
 
 module.exports = new orderController()

@@ -5,6 +5,7 @@ import { login, sendSms } from "../http/authApi";
 import { useDispatch } from 'react-redux';
 import style from './Auth.module.css'
 import { NavBar } from "../components/admin/NavBar";
+import { $host } from "../http";
 
 export const Auth = () =>{ 
  
@@ -48,8 +49,8 @@ export const Auth = () =>{
         if (validCodes.includes(code1)) { 
             const code = Math.floor(1000 + Math.random() * 9000);
             setCodeSMS(code)
-            await sendSms(removeNonNumeric(phone), `${code} - код для подтверждения`)
-            //console.log(code)
+            if($host.defaults.baseURL === 'http://localhost:8002/') console.log(code)
+                else await sendSms(removeNonNumeric(phone), `${code} - код для подтверждения`)
             setPassword('')
             setIsSend(true)
             setDisableSms(true)

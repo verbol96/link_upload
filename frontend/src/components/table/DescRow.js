@@ -14,10 +14,11 @@ import { $host } from '../../http';
 import style from './DescRow.module.css'
 import { Button } from '../../ui/button';
 import MyModalComponent from './DialogEP';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog';
 
 
 export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged, setIsChanged }) => {
- 
+
   const dispatch = useDispatch()
   const users = useSelector(state=>state.order.users)
   const [price, setPrice] = useState(order.price || '');
@@ -48,6 +49,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
   const [numRows1, setNumRows1] = useState(2);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   // Функция для открытия модального окна
   const openModal = () => {
@@ -97,7 +99,6 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
       other: order.other || '',
       codeOutside: order.codeOutside || '',
       photo: order.photos || [],
-      firstClass: order.firstClass,
       price: order.price || '',
       price_deliver: order.price_deliver || '',
       origin: order.origin || '',
@@ -118,7 +119,6 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
       other,
       codeOutside,
       photo,
-      firstClass,
       price,
       price_deliver,
       origin,
@@ -134,7 +134,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
 
     setIsChanged(false);
   }, [FIO, phone, typePost, city, adress, oblast, raion, postCode, 
-      phoneUser, notes, other, codeOutside, setIsChanged, order, photo, firstClass, price, price_deliver, origin, date_sent]);
+      phoneUser, notes, other, codeOutside, setIsChanged, order, photo, price, price_deliver, origin, date_sent]);
 
   useEffect(() => {
     checkChanges();
@@ -599,7 +599,6 @@ const CheckInvoices = async() =>{
           '6':'Оплачен с помощью банковской карты',
           '7': 'Платеж возращен'
         }
-        console.log(data)
         const status = data.Status
         window.alert(descStatus[status]);
       } catch (error) {
@@ -609,21 +608,108 @@ const CheckInvoices = async() =>{
 
   }
 
-const [countOrders, setCountOrders] = useState(0);
+const [isOpen1, setIsOpen1] = useState(false)
+const [ordersModal, setOrdersModal] = useState([])
 
-useEffect(() => {
-  const fetchCount = async () => {
-    const { data } = await $host.get(`/api/order/countOrders/${order.userId}`);
-    setCountOrders(data);
-  };
-  fetchCount();
-}, []);
+const openModalOrders = async() =>{
+  
+  const {data} = await $host.get(`/api/order/ordersUser/${order.userId}`)
+  setOrdersModal(data)
+  setIsOpen1(true)
+}
 
-
+const photoLine = (data) =>{
+  console.log(data)
+      return data.reduce((sum, el)=>{
+        if(el.paper==='lustre'){
+            return sum+el.amount*el.copies+"шт("+el.format+")ЛЮСТР "
+        }else{
+            return sum+el.amount*el.copies+"шт("+el.format+") "
+        }
+    }, '')
+}
 
 
 
   return (
+    <>
+    <Dialog open={isOpen1} onOpenChange={setIsOpen1}>
+      <DialogContent 
+       onOpenAutoFocus={(e) => e.preventDefault()}
+        aria-describedby={undefined} 
+        className="max-w-[80vw] max-h-[90vh] w-[80vw] h-[90vh] p-3"
+        style={{ maxWidth: '90vw', maxHeight: '90vh' }}
+      >
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="text-base">
+            Все заказы от{' '}
+            <span className="text-teal-700 font-bold text-xl">
+              {order.user.FIO}
+            </span>
+          </DialogTitle>
+        </DialogHeader>
+        
+        {/* Прокручиваемая область */}
+        <div className="flex-1 overflow-auto mt-4">
+          <table className="w-full text-sm ">
+            <thead className="sticky top-0 bg-gray-50 ">
+              <tr className="border-b">
+                <th className="text-left py-2">Дата</th>
+                <th className="text-left py-2">ФИО</th>
+                <th className="text-left py-2">Город</th>
+                <th className="text-left py-2">Адрес</th>
+                <th className="text-left py-2">Тип</th>
+                <th className="text-left py-2">Заказ</th>
+                <th className="text-left py-2">Сумма</th>
+                <th className="text-left py-2">Источник</th>
+              </tr>
+            </thead>
+            <tbody >
+              {ordersModal.map((el) => (
+                <tr key={el.order_number} className="border-b hover:bg-gray-50 ">
+                  <td className="py-2 ">
+                    {new Date(el.createdAt).toLocaleDateString('ru-RU')}
+                  </td>
+                  <td className="py-2 px-2">
+                    <div 
+                      className="truncate block max-w-[200px]" 
+                      title={el.FIO}
+                    >
+                      {el.FIO}
+                    </div>
+                  </td>
+                  <td className="py-2">{el.city}</td>
+                  <td className="py-2  px-2">
+                    <div 
+                      className="truncate block max-w-[200px]" 
+                      title={el.adress}
+                    >
+                      {el.adress}
+                    </div>
+                  </td>
+                  <td className="py-2">{el.typePost}</td>
+                  <td className="py-2  px-2">
+                    <div 
+                      className="truncate block max-w-[200px]" 
+                      title={photoLine(el.photos)}
+                    >
+                      {photoLine(el.photos)}
+                    </div>
+                  </td>
+                  <td className="py-2">{el.price} </td>
+                  <td className="py-2  pl-2">{el.origin}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className='flex flex-row justify-end gap-3 m-3 text-teal-800'>
+              <label className=''> Всего заказов: {order.user.orderCount} шт</label>
+              <label className=''>Сумма заказов: {order.user.totalOrderSum} р</label>
+            </div>
+       
+      </DialogContent>
+    </Dialog>
     <div className="order_details_card">
       {isModalOpen && <MyModalComponent isOpen={isModalOpen} closeModal={closeModal} codeOutside={codeOutside} />}
       
@@ -676,7 +762,7 @@ useEffect(() => {
             <div className='contact_field'>
               <CopyToClipboard text={adress}>
               <label>
-                {typePost === 'R' || typePost === 'R1' ? 'Адрес:' : 'Отделение:'}
+                {typePost === 'R' || typePost === 'R1' || typePost === 'R2' ? 'Адрес:' : 'Отделение:'}
               </label>
               </CopyToClipboard>
               <input value={adress} onChange={(e)=>setAdress(e.target.value)} /> 
@@ -705,7 +791,7 @@ useEffect(() => {
                 </div>
               }
             
-            {typePost === 'R' || typePost === 'R1' ? 
+            {typePost === 'R' || typePost === 'R1' || typePost === 'R2'? 
             <>
             <div className='contact_field'>
               <CopyToClipboard text={postCode}>
@@ -727,7 +813,7 @@ useEffect(() => {
             </div> 
             </>
             : null}
-              {(typePost==='R' || typePost==='R1') &&
+              {(typePost==='R' || typePost==='R1' || typePost==='R2') &&
                 <div className='flex justify-end mt-2'>
                 <Button variant='secondary' onClick={()=>{handlePrint()}}><i style={{color: 'white', marginRight: 10}} className="bi bi-printer"></i> печать </Button>
                 </div>
@@ -797,8 +883,10 @@ useEffect(() => {
               <textarea rows={numRows} value={other} onChange={(e)=>setOther(e.target.value)} />
             </div>
 
-            <div className='contact_field'>
-              <label onClick={()=>setPhoneUser(phone)}>Владелец ({countOrders}):</label>
+            
+
+            <div className='contact_field mt-2'>
+              <label onClick={()=>setPhoneUser(phone)}>Владелец:</label>
               <div className='search_bar'
                   onMouseEnter={handleModalMouseEnter}
                   onMouseLeave={handleModalMouseLeave}
@@ -812,10 +900,20 @@ useEffect(() => {
               <label></label>
               <label style={{fontSize: 12, flex: 2, color: !isUser() && 'red'}}>{showFIO()}</label>
             </div>
+
             <div className='contact_field'>
               <label>Штрихкод:</label>
               <input style={{marginLeft: 5}} value={codeOutside} onChange={e=>setCodeOutside(e.target.value)} /> 
             </div>
+           
+            <div className='flex flex-row justify-center gap-3 text-xs font-thin mt-3'>
+              <label className=''> Всего заказов: {order.user.orderCount} шт</label>
+              <label className=''>Сумма заказов: {order.user.totalOrderSum} р</label>
+              <button onClick={()=>openModalOrders()} className='px-3 py-0 bg-gray-200 text-gray-800 rounded hover:bg-gray-300'>открыть</button>
+            </div>
+              
+           
+            
 
           </div>
           <div className="gap-1 flex justify-start">
@@ -828,7 +926,7 @@ useEffect(() => {
           </div>
 
           <div className='flex justify-end mt-3 gap-1' >
-            { (order.typePost === 'R1' || order.typePost === 'E1') && <>
+            { (order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') && <>
               <Button  variant='outline' size='sm' onClick={()=>AddInvoices()}>выставить счет</Button>
               <Button  variant='outline' size='sm' onClick={()=>CancelInvoices()}>отменить счет</Button>
               <Button  variant='outline' size='sm' onClick={()=>CheckInvoices()}>проверить счет</Button>
@@ -844,5 +942,6 @@ useEffect(() => {
         </div>
       </div>
     </div>
+    </>
   );
 };

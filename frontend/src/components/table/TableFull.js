@@ -563,11 +563,11 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                     
                 </div> 
                 <div className='tableFull'>
-                {filteredOrders.map(order => 
+                {filteredOrders.map(order =>  
                   <div key={order.id} ><TableRow orders={orders} order={order} 
                                     handleDetailsClick={handleDetailsClick} selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
                                     collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId}
-                                    isChanged={isChanged} setIsChanged={setIsChanged}  /></div>)}
+                                    isChanged={isChanged} setIsChanged={setIsChanged} /></div>)}
                 </div>
                 <TableFooter filteredOrders={filteredOrders} />
               </>

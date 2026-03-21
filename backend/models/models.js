@@ -5,7 +5,6 @@ const User = sequelize.define('user', {
   id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
   phone: { type: DataTypes.STRING, unique: true },
   FIO: { type: DataTypes.STRING },
-  password: { type: DataTypes.STRING },
   role: { type: DataTypes.STRING, defaultValue: 'USER' },
   typePost: {type: DataTypes.STRING},
   postCode: {type: DataTypes.STRING},
@@ -13,18 +12,19 @@ const User = sequelize.define('user', {
   adress: {type: DataTypes.STRING},
   oblast: {type: DataTypes.STRING},
   raion: {type: DataTypes.STRING},
+  orderCount: {type: DataTypes.INTEGER},
+  totalOrderSum: { type: DataTypes.FLOAT }
 });
 
 const Order = sequelize.define('order', {
   id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
-  order_number: { type: DataTypes.INTEGER,autoIncrement: true},
+  order_number: { type: DataTypes.INTEGER, autoIncrement: true},
   codeOutside: {type: DataTypes.STRING },
   price: {type: DataTypes.STRING},
   other: {type: DataTypes.STRING }, 
   notes: {type: DataTypes.STRING }, 
   status: {type: DataTypes.INTEGER},
   typePost: {type: DataTypes.STRING},
-  firstClass: {type: DataTypes.BOOLEAN, defaultValue: false},
   postCode: {type: DataTypes.STRING},
   city: {type: DataTypes.STRING},
   adress: {type: DataTypes.STRING},
@@ -107,4 +107,4 @@ Token.belongsTo(User)
 Photo.hasMany(File)
 File.belongsTo(Photo)
 
-module.exports = {User, Order, Photo, Settings, Token, File, SettingEditor, LogUser}
+module.exports = {User, Order, Photo, Settings, Token, File, SettingEditor, LogUser, sequelize}

@@ -13,8 +13,8 @@ const app = express()
 const PORT = process.env.PORT
 
 app.use(fileUpload({}))
-app.use(bodyParser.json({ limit: '50mb' })); // ограничение на обьем данных в запросе, увеличил для миграциии БД
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(bodyParser.json({ limit: '70mb' })); // ограничение на обьем данных в запросе, увеличил для миграциии БД
+app.use(bodyParser.urlencoded({ limit: '70mb', extended: true }));
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors(
@@ -26,6 +26,7 @@ app.use(cors(
 ))
 
 app.use('/api', router)
+
 
 const httpsOptions = {
     key: fs.readFileSync('/etc/nginx/ssl/link1.by-new.key'),
