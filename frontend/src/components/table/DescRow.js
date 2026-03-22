@@ -619,7 +619,6 @@ const openModalOrders = async() =>{
 }
 
 const photoLine = (data) =>{
-  console.log(data)
       return data.reduce((sum, el)=>{
         if(el.paper==='lustre'){
             return sum+el.amount*el.copies+"шт("+el.format+")ЛЮСТР "
