@@ -162,7 +162,7 @@ const Web = () =>{
         };
 
       const calcDelivery = (value) =>{
-          if(SumTeorIn() == 0  ) return 0
+          if(SumTeorIn() === 0  ) return 0
           
           const countHolsts = () => {
             return formats.reduce((count, el) => {
@@ -188,10 +188,9 @@ const Web = () =>{
                 
                   return parseFloat(totalCost.toFixed(2));
                 }
-              case 'E1': {
-                  if(filesCount+250*countHolsts() <  300) return E
-                  return E+0.9
-              };
+              case 'E1':
+                if(filesCount + 250 * countHolsts() < 300) return E;
+                return E + 0.9;
               case 'R1': {
                   if(isHolst()){
                       const calculateCost = () => {
@@ -296,7 +295,7 @@ const Web = () =>{
                 })(),
             "notes": '',
             "photo": photo, 
-            "price": SumTeorIn(photo),
+            "price": other?.toLowerCase().includes('переделать') ? 0 : SumTeorIn(photo),
             "price_deliver": (()=>{
                 if(typePost==='R1') return calcDelivery(typePost)
                 else return 0
@@ -315,7 +314,7 @@ const Web = () =>{
             if(typePost==='R' || typePost==='R1' || typePost==='R2' ) return 'R'
             if(typePost==='E' || typePost==='E1' ) return 'E'
         }
-        const MainDir = await createDir(typePostName+(userData.order_number%1000))
+        const MainDir = await createDir(typePostName()+(userData.order_number%1000))
 
         let newUserData = {...userData}
         newUserData.main_dir_id = MainDir.id
@@ -391,9 +390,14 @@ const Web = () =>{
                             }
                             </div>
                             <div className={style.formatsInfoAll}>
-                                <label>Сумма за все: {SumTeorIn()}</label>
+                                <label>Сумма за все: {other?.toLowerCase().includes('переделать') ? 0 : SumTeorIn()}</label>
                                 <div style={{fontSize: 12, fontWeight: 'normal'}}>{(ShowDiscount())}</div>
                             </div>
+                            {formats[0]?.files?.length > 0 && SumTeorIn() < 10 &&
+                            <div>
+                                <label style={{fontSize: 12, color: "Coral"}} className="ml-8">(Минимальный заказ 10р)</label>
+                            </div>
+                            }
                         </div>
                     </div>   
 

@@ -1,8 +1,9 @@
 import './DescRow.css';
-import React from 'react';
+import React, { useState } from 'react';
+import { Button } from 'react-bootstrap';
 import { useSelector } from 'react-redux'
 
-export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
+export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat, getFiles}) =>{
 
   const settings = useSelector(state=>state.order.settings)
   const typePhoto = ['photo', 'holst', 'magnit']
@@ -22,10 +23,28 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
     }
     setPhoto([...photo.slice(0, index), {...photo[index], [prop]: e.target.value}, ...photo.slice(index + 1)])
     
-}
+  }
+
+  const [check, setCheck] = useState('1')
+
+  const CheckNow = async() =>{
+      setCheck('2')
+      const res = await getFiles(el.id)
+      setCheck(res)
+  }
+
+  const showFlag = (check) =>{
+    switch(check){
+      case '1': return <i className="bi bi-search"></i>  
+      case '2': return <i className="bi bi-arrow-repeat animate-spin"></i>
+      default: return check
+    }
+  }
   
   return(
       <div className='format_group'>
+            <button style={{background:'#f2f2f2', flex: 1, padding: '0px 5px', textAlign: 'center', width: 0, height: '30px', margin: '5px', color: 'lightgray'}}
+               title="Проверить фото" onClick={()=>CheckNow()}> {showFlag(check)} </button>
             <input type="text" value={el.amount} onChange={(e)=>Update(e, 'amount')}/>
 
             <select value={el.type} onChange={(e)=>Update(e, 'type')}>

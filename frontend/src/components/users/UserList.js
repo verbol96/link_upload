@@ -8,6 +8,7 @@ import {
 } from "../../ui/dialog";
 import {Input} from "../../ui/input"
 import {Button} from "../../ui/button"
+import { Textarea } from "../../ui/textarea";
 
 export const UserList = () => {
 
@@ -19,7 +20,7 @@ export const UserList = () => {
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [limit, setLimit] = useState(100)
     const [loading, setLoading] = useState(false);
-    const [sort, setSort] = useState('FIO-asc')
+    const [sort, setSort] = useState('createdAt-desc')
  
     const fetchData = async() =>{
         setLoading(true);
@@ -71,6 +72,7 @@ export const UserList = () => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+    
 
     const handleSave = async () => {
         try {
@@ -309,6 +311,15 @@ export const UserList = () => {
             </div>
           </div>
 
+          <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium">О клиенте</label>
+              <Textarea
+                 name="aboutUser"
+                 value={formData.aboutUser || ''}
+                 onChange={handleInputChange}
+              />         
+          </div>
+
           <div className="flex flex-row justify-between">
             <div>
                 <Button  variant="outline" onClick={()=>openModalOrders()}>
@@ -316,8 +327,8 @@ export const UserList = () => {
                 </Button>
             </div>
             <div className="flex  gap-2">
-                <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-                Отмена
+                <Button variant="destructive" onClick={() => setIsModalOpen(false)}>
+                удалить
                 </Button>
                 <Button onClick={handleSave}>
                 Сохранить

@@ -7,7 +7,8 @@ const DELETE_FILE = 'DELETE_FILE'
 const CHANGE_PROGRESS = 'CHANGE_PROGRESS'
 const ADD_STACK = 'ADD_STACK'
 const DEL_STACK = 'DEL_STACK'
-
+const DOWNLOAD_DIR = 'DOWNLOAD_DIR'
+ 
 const defaultState = {
     files: [],
     filesAll: [],
@@ -50,6 +51,7 @@ export default function fileReducer(state = defaultState, action) {
         case PUSH_STACK: return {...state, stackDir: [...state.stackDir, action.payload]}
         case DELETE_FILE: return {...state, files: [...state.files.filter(file=>file.id!==action.payload)]}
         case CHANGE_PROGRESS: return {...state, progress: action.payload}
+        case DOWNLOAD_DIR: return {...state, files: [...state.files.map(file=>file.id===action.payload ? { ...file, isDownload: true }: file)]}
 
         case ADD_STACK: return {...state, stack: [...state.stack, action.payload]}
         case DEL_STACK: return {...state, stack: state.stack.slice(0, -1)}
@@ -65,6 +67,7 @@ export const addFile = (file)=>({type: ADD_FILE, payload: file})
 export const pushStack = (dir)=>({type: PUSH_STACK, payload: dir})
 export const deleteFileStore = (fileId)=>({type: DELETE_FILE, payload: fileId})
 export const changeProgress = (value) =>({type: CHANGE_PROGRESS, payload: value})
+export const downloadDir = (fileId) => ({type: DOWNLOAD_DIR, payload: fileId})
 
 export const addStack = (file)=>({type: ADD_STACK, payload: file})
 export const delStack = ()=>({type: DEL_STACK})

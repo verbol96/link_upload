@@ -1,7 +1,7 @@
 import {useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { deleteFile, downloadFiles, displayFileImg } from '../../http/cloudApi'
-import { deleteFileStore, pushStack, setCurrentDir, addStack } from '../../store/fileReducer'
+import { deleteFileStore, pushStack, setCurrentDir, addStack, downloadDir } from '../../store/fileReducer'
 import style from './ListRow.module.css'
 
 export const ListRow = ({el}) =>{
@@ -58,7 +58,7 @@ export const ListRow = ({el}) =>{
         });
         setLoadingCount(0)
         setisDownload(false)
-        
+        dispatch(downloadDir(el.id))
     }
 
     const files = useSelector(state=>state.files.filesAll)
@@ -73,13 +73,15 @@ export const ListRow = ({el}) =>{
     }
 
     const ShowData = () =>{
-        const [data, time] = el.createdAt.split('T')
-        return `${data.split('-')[2]}.${data.split('-')[1]} (${time.split(':')[0]}:${time.split(':')[1]})`
+        //const [data, time] = el.createdAt.split('T')
+        //return `${data.split('-')[2]}.${data.split('-')[1]} (${time.split(':')[0]}:${time.split(':')[1]})`
+        const time = el.createdAt.split('T')[1]
+        return `${time.split(':')[0]}:${time.split(':')[1]}`
     }
     
     return(
         <div className={style.blockFile} onClick ={(el.type==='dir')?()=>openFile():null}>
-            <div className={style.fileName}>
+            <div className={style.fileName} style={{color: el.isDownload ? 'lightgray' : 'darkgreen'}}>
                 <div>{el.name}</div>
                 {el.type==='dir'&&<div>{ShowData()}</div> }
             </div>
@@ -89,7 +91,7 @@ export const ListRow = ({el}) =>{
                     isDownload? <div style={{fontSize: 20, textAlign: 'center'}}><i className="bi bi-cloud-download icon-menu"></i> {loadingCount}%</div>:
                     el.type==='dir'?
                         <div className={style.iconMenu} >
-                            <span className="bi bi-folder"></span> 
+                            <span className="bi bi-folder" style={{color: el.isDownload ? 'lightgray' : 'darkgreen'}}></span> 
                         </div>
                     :
                     <>

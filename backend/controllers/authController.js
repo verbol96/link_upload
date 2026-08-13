@@ -244,7 +244,8 @@ class authController {
         if (search) {
             where[Op.or] = [
                 { FIO: { [Op.like]: `%${search}%` } },
-                { phone: { [Op.like]: `%${search}%` } }
+                { phone: { [Op.like]: `%${search}%` } },
+                { aboutUser: { [Op.like]: `%${search}%` } }
             ];
         }
 
@@ -278,7 +279,7 @@ class authController {
     {
         try {
             const { id } = req.params;
-            const { FIO, phone, role, typePost, postCode, city, adress } = req.body;
+            const { FIO, phone, role, typePost, postCode, city, adress, aboutUser } = req.body;
 
             const user = await User.findByPk(id);
             
@@ -293,7 +294,8 @@ class authController {
                 typePost,
                 postCode,
                 city,
-                adress
+                adress, 
+                aboutUser
             });
 
             res.json({ message: 'Данные обновлены', user });

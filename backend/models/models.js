@@ -13,7 +13,8 @@ const User = sequelize.define('user', {
   oblast: {type: DataTypes.STRING},
   raion: {type: DataTypes.STRING},
   orderCount: {type: DataTypes.INTEGER},
-  totalOrderSum: { type: DataTypes.FLOAT }
+  totalOrderSum: { type: DataTypes.FLOAT },
+  aboutUser: {type: DataTypes.STRING},
 });
 
 const Order = sequelize.define('order', {
@@ -84,7 +85,8 @@ const File = sequelize.define('file', {
     type:{type: DataTypes.STRING},
     size:{type: DataTypes.INTEGER, defaultValue: 0},
     path:{type: DataTypes.STRING, defaultValue: ''},
-    parent:{type: DataTypes.UUID}
+    parent:{type: DataTypes.UUID},
+    isDownload:{type: DataTypes.BOOLEAN, defaultValue: false}
 })
 
 const LogUser = sequelize.define('logUser', {

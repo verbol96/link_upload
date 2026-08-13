@@ -1,17 +1,19 @@
+import { getOneUser } from '../../http/dbApi';
 import './SearchBarMain.css'
 
 const SearchBarMain = ({ users, phone, setPhone, modalVisibleMain, setModalVisibleMain, setFIO, setTypePost, setCity,setAdress,setPostCode,setRaion,setOblast }) => {
 
 
-  const handleItemClick = (user) => {
+  const handleItemClick = async(user) => { 
+    const data = await getOneUser(user.phone) 
     setPhone(user.phone)
     setFIO(user.FIO)
-    setTypePost(user.typePost)
-    setCity(user.city)
-    setAdress(user.adress)
-    setPostCode(user.postCode)
-    setRaion(user.raion)
-    setOblast(user.oblast)
+    setTypePost(data.user.typePost)
+    setCity(data.user.city)
+    setAdress(data.user.adress)
+    setPostCode(data.user.postCode)
+    setRaion(data.user.raion)
+    setOblast(data.user.oblast)
     setModalVisibleMain(false);
   };
  
@@ -31,7 +33,6 @@ const SearchBarMain = ({ users, phone, setPhone, modalVisibleMain, setModalVisib
                     <li  className='li_style' key={user.phone} onClick={() => handleItemClick(user)}>
                         <div><i className="bi bi-telephone"></i> {user.phone}</div>
                         <div><i className="bi bi-person"></i> {user.FIO}</div>
-                        <div><i className="bi bi-house"></i> {user.city}</div>
                     </li>
                 ))}
                 </ul>

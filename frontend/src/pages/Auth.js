@@ -47,11 +47,16 @@ export const Auth = () =>{
         const validCodes = ["25", "29", "33", "44"];
 
         if (validCodes.includes(code1)) { 
+            setPassword('')
             const code = Math.floor(1000 + Math.random() * 9000);
             setCodeSMS(code)
-            if($host.defaults.baseURL === 'http://localhost:8002/') console.log(code)
-                else await sendSms(removeNonNumeric(phone), `${code} - код для подтверждения`)
-            setPassword('')
+            if($host.defaults.baseURL === 'http://localhost:8002/') 
+                {
+                    //console.log(code)
+                    setPassword(code)
+                }
+            else await sendSms(removeNonNumeric(phone), `${code} - код для подтверждения`)
+            //setPassword('')
             setIsSend(true)
             setDisableSms(true)
             TikTak()
