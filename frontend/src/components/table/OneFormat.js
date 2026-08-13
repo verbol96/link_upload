@@ -1,6 +1,7 @@
 import './DescRow.css';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux'
+import { getFilesPhotosId } from '../../http/cloudApi';
 
 export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
 
