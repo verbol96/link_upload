@@ -1,5 +1,5 @@
 import './DescRow.css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux'
 import { getFilesPhotosId } from '../../http/cloudApi';
 
@@ -25,31 +25,26 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
     
   }
 
+    const [check, setCheck] = useState(0)
+
+  useEffect(()=>{
     const getFiles = async () => {
-      try {
-          const data = await getFilesPhotosId(el.id); // получаем список файлов с метаданными
-          
-          // Считаем сколько файлов с размером > 0
-          const ImgDownload = data.filter(item => item.size > 0).length;
+          try {
+              const data = await getFilesPhotosId(el.id); // получаем список файлов с метаданными
+              
+              const ImgDownload = data.filter(item => item.size > 0).length;
 
-          return ImgDownload;
-      } catch (error) {
-          console.error(error);
-      }
-    };
-
-  const [check, setCheck] = useState('1')
-
-  const CheckNow = async() =>{
-      setCheck('2')
-      const res = await getFiles()
-      setCheck(res)
-  }
+              setCheck(ImgDownload)
+          } catch (error) {
+              console.error(error);
+          }
+        };
+        getFiles()
+  }, [])
 
   const showFlag = (check) =>{
     switch(check){
-      case '1': return <i className="bi bi-search"></i>  
-      case '2': return <i className="bi bi-arrow-repeat animate-spin"></i>
+      case 0: return <i className="bi bi-arrow-repeat animate-spin"></i>
       default: return check
     }
   }
@@ -57,7 +52,7 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
   return(
       <div className='format_group'>
             <button style={{background:'#f2f2f2', flex: 1, padding: '0px 5px', textAlign: 'center', width: 0, height: '30px', margin: '5px', color: 'lightgray'}}
-               title="Проверить фото" onClick={()=>CheckNow()}> {showFlag(check)} </button>
+               title="Проверить фото" disabled> {showFlag(check)} </button>
             <input type="text" value={el.amount} onChange={(e)=>Update(e, 'amount')}/>
 
             <select value={el.type} onChange={(e)=>Update(e, 'type')}>

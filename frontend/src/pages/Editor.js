@@ -6,8 +6,8 @@ const Editor = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <NavBar />
-      <Redactor /> 
-      {/*<EditMain />*/}
+      {/*<Redactor /> */}
+      <EditMain />
     </div>
   );
 }
