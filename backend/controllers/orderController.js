@@ -179,6 +179,7 @@ class orderController{
         const {phone} = req.body
         const user = await User.findOne({
             where: { phone: phone },
+            attributes: {exclude: ['aboutUser']},
             include: [
                 {
                     model: Order,
