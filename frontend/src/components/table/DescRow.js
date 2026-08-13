@@ -8,7 +8,7 @@ import _, { reduceRight } from 'lodash';
 import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
 import {CopyToClipboard} from 'react-copy-to-clipboard'
-import { deleteFile, displayFileImg, getFilesPhotosId } from '../../http/cloudApi';
+import { deleteFile} from '../../http/cloudApi';
 import { sendSms } from '../../http/authApi';
 import { $host } from '../../http';
 import style from './DescRow.module.css'
@@ -637,33 +637,8 @@ const regions = [
   'Гродненская область', 'Минская область', 'Могилёвская область'
 ];
 
- const [imgDownload, setImgDownload] = useState(0)
- const [thumb, setThumb] = useState([])
-const getFiles =async(id)=>{
-            const data = await getFilesPhotosId(id)
-            try {
-                for (const item of data) {
-                  const response = await displayFileImg(item.id);
-                  setThumb(prev=>[...prev, response])
-                }
 
-                const ImgDownload = data.reduce((acc, current) => {
-                    if (current.size > 0) {
-                      return acc + 1;
-                    }
-                    return acc; // Добавлен возврат значения вне условного оператора
-                  }, 0);
 
-                setImgDownload(ImgDownload)
-                //setIsShow(true)
-                return(ImgDownload)
-                
-
-              } catch (error) {
-                console.error(error);
-              }
-        }
-        
 
 
   return (
@@ -868,7 +843,7 @@ const getFiles =async(id)=>{
         <div className="card_admin">
           <div>
           {photo.map((el, index) => <OneFormat index={index} setPhoto={setPhoto} photo={photo} 
-                            el={el} key={index} DeleteFormat={DeleteFormat} getFiles={getFiles}  />) }
+                            el={el} key={index} DeleteFormat={DeleteFormat}  />) }
               <button style={{marginLeft: '50px', marginTop: '10px'}} type="button" onClick={()=>{AddFormat()}}>добавить</button>
             </div> 
           <div className="card_actions">

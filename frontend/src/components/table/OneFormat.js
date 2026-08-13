@@ -1,9 +1,8 @@
 import './DescRow.css';
 import React, { useState } from 'react';
-import { Button } from 'react-bootstrap';
 import { useSelector } from 'react-redux'
 
-export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat, getFiles}) =>{
+export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
 
   const settings = useSelector(state=>state.order.settings)
   const typePhoto = ['photo', 'holst', 'magnit']
@@ -25,11 +24,24 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat, getFiles}) 
     
   }
 
+    const getFiles = async () => {
+      try {
+          const data = await getFilesPhotosId(el.id); // получаем список файлов с метаданными
+          
+          // Считаем сколько файлов с размером > 0
+          const ImgDownload = data.filter(item => item.size > 0).length;
+
+          return ImgDownload;
+      } catch (error) {
+          console.error(error);
+      }
+    };
+
   const [check, setCheck] = useState('1')
 
   const CheckNow = async() =>{
       setCheck('2')
-      const res = await getFiles(el.id)
+      const res = await getFiles()
       setCheck(res)
   }
 
