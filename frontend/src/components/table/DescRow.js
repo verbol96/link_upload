@@ -4,11 +4,11 @@ import { OneFormat } from './OneFormat';
 import { deleteOrder, getSettings, updateOrder } from '../../http/dbApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsError, updateSmsPay, updateSmsSend } from '../../store/orderReducer';
-import _ from 'lodash';
+import _, { reduceRight } from 'lodash';
 import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
 import {CopyToClipboard} from 'react-copy-to-clipboard'
-import { deleteFile } from '../../http/cloudApi';
+import { deleteFile, displayFileImg, getFilesPhotosId } from '../../http/cloudApi';
 import { sendSms } from '../../http/authApi';
 import { $host } from '../../http';
 import style from './DescRow.module.css'
@@ -200,10 +200,13 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
       await deleteOrder(order.id);
       dispatch(deleteOrderId(order.id));
 
-      const userConfirmation1 = window.confirm("Удалить файлы заказа с сервера?");
-      if (userConfirmation1) {
-        await deleteFile(order.main_dir_id)
+      if(order.origin === 'website'){
+        const userConfirmation1 = window.confirm("Удалить файлы заказа с сервера?");
+        if (userConfirmation1) {
+          await deleteFile(order.main_dir_id)
+        }
       }
+      
       
     }
   };
@@ -214,6 +217,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
     if (userConfirmation) {
       const code = `Ошибка в заказе. Подробнее в личном кабинете: www.link1.by`
       await sendSms(phone, code)
+      setPrice(0)
       setIs_sms_error(true)
       dispatch(updateSmsError(order.id))
       updateOrder(order.id, {...data, is_sms_error: true})
@@ -628,6 +632,38 @@ const photoLine = (data) =>{
     }, '')
 }
 
+const regions = [
+  'Брестская область', 'Витебская область', 'Гомельская область', 
+  'Гродненская область', 'Минская область', 'Могилёвская область'
+];
+
+ const [imgDownload, setImgDownload] = useState(0)
+ const [thumb, setThumb] = useState([])
+const getFiles =async(id)=>{
+            const data = await getFilesPhotosId(id)
+            try {
+                for (const item of data) {
+                  const response = await displayFileImg(item.id);
+                  setThumb(prev=>[...prev, response])
+                }
+
+                const ImgDownload = data.reduce((acc, current) => {
+                    if (current.size > 0) {
+                      return acc + 1;
+                    }
+                    return acc; // Добавлен возврат значения вне условного оператора
+                  }, 0);
+
+                setImgDownload(ImgDownload)
+                //setIsShow(true)
+                return(ImgDownload)
+                
+
+              } catch (error) {
+                console.error(error);
+              }
+        }
+        
 
 
   return (
@@ -799,17 +835,22 @@ const photoLine = (data) =>{
               <input value={postCode} onChange={(e)=>setPostCode(e.target.value)} /> 
             </div> 
             <div className='contact_field'>
-              <CopyToClipboard text={raion}>
               <label>Район:</label>
-              </CopyToClipboard>
               <input value={raion} onChange={(e)=>setRaion(e.target.value)} /> 
             </div> 
             <div className='contact_field'>
-              <CopyToClipboard text={oblast}>
-              <label>Область:</label>
-              </CopyToClipboard>
-              <input value={oblast} onChange={(e)=>setOblast(e.target.value)} /> 
-            </div> 
+              <label style={{flex:1}}>Область:</label>
+              <select 
+                style={{appearance: 'none', padding: '0px 10px', margin: '0px', flex: 2}}
+                value={oblast} 
+                onChange={(e) => setOblast(e.target.value)}
+                >
+                <option value=""></option>
+                {regions.map(region => (
+                  <option key={region} value={region}>{region}</option>
+                ))}
+              </select>
+            </div>
             </>
             : null}
               {(typePost==='R' || typePost==='R1' || typePost==='R2') &&
@@ -826,9 +867,10 @@ const photoLine = (data) =>{
 
         <div className="card_admin">
           <div>
-          {photo.map((el, index) => <OneFormat index={index} setPhoto={setPhoto} photo={photo} el={el} key={index} DeleteFormat={DeleteFormat} />) }
-              <button type="button" onClick={()=>{AddFormat()}}>добавить</button>
-            </div>
+          {photo.map((el, index) => <OneFormat index={index} setPhoto={setPhoto} photo={photo} 
+                            el={el} key={index} DeleteFormat={DeleteFormat} getFiles={getFiles}  />) }
+              <button style={{marginLeft: '50px', marginTop: '10px'}} type="button" onClick={()=>{AddFormat()}}>добавить</button>
+            </div> 
           <div className="card_actions">
             <button className='copy_button'  onClick={()=>{setPrice((SumTeor()*sale).toFixed(2))}}>{SumTeor()}р</button>
             <div  style={{transform: 'scale(0.85)'}}>
@@ -899,7 +941,15 @@ const photoLine = (data) =>{
               <label></label>
               <label style={{fontSize: 12, flex: 2, color: !isUser() && 'red'}}>{showFIO()}</label>
             </div>
-
+            <div  style={{fontSize: 10}} className='contact_field mt-2'>
+              <label>О клиенте:</label>
+              <label 
+                className="flex-3 whitespace-pre-wrap text-left"
+                style={{flex: 2}}
+              >
+                {users.find(user => user.phone === phoneUser)?.aboutUser || "Нет заметок"}
+              </label>
+            </div>
             <div className='contact_field'>
               <label>Штрихкод:</label>
               <input style={{marginLeft: 5}} value={codeOutside} onChange={e=>setCodeOutside(e.target.value)} /> 
@@ -915,23 +965,30 @@ const photoLine = (data) =>{
             
 
           </div>
-          <div className="gap-1 flex justify-start">
+          
+          {
+          users.find(user => user.phone === phoneUser)?.role === 'USER' && 
+          
+            (<>
+            <div className="gap-1 flex justify-start">
 
-            { order.status === 0 && ShowBtnSms(is_sms_error, SmsError, 'ошибка')}
-            { order.status !== 0 && ShowBtnSms(is_sms_add, SmsAdd, 'принят') }
-            { order.status !== 0 && ShowBtnSms(is_sms_send, SmsSend, 'отправлен')}
-            { (order.typePost === 'R1' || order.typePost === 'E1') && ShowBtnSms(is_sms_pay, SmsPay, 'оплата') }
-            
-          </div>
+              { order.status === 0 && ShowBtnSms(is_sms_error, SmsError, 'ошибка')}
+              { order.status !== 0 && ShowBtnSms(is_sms_add, SmsAdd, 'принят') }
+              { order.status !== 0 && ShowBtnSms(is_sms_send, SmsSend, 'отправлен')}
+              { (order.typePost === 'R1' || order.typePost === 'E1') && ShowBtnSms(is_sms_pay, SmsPay, 'оплата') }
+              
+            </div>
 
-          <div className='flex justify-end mt-3 gap-1' >
-            { (order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') && <>
-              <Button  variant='outline' size='sm' onClick={()=>AddInvoices()}>выставить счет</Button>
-              <Button  variant='outline' size='sm' onClick={()=>CancelInvoices()}>отменить счет</Button>
-              <Button  variant='outline' size='sm' onClick={()=>CheckInvoices()}>проверить счет</Button>
-              </>
-            }
-          </div>
+            <div className='flex justify-end mt-3 gap-1' >
+              { (order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') && <>
+                <Button  variant='outline' size='sm' onClick={()=>AddInvoices()}>выставить счет</Button>
+                <Button  variant='outline' size='sm' onClick={()=>CancelInvoices()}>отменить счет</Button>
+                <Button  variant='outline' size='sm' onClick={()=>CheckInvoices()}>проверить счет</Button>
+                </>
+              }
+            </div>
+            </>)
+          }
 
           <div className='flex justify-end mt-3 gap-1' >
             <Button className='w-[25%]' variant='destructive' size='sm' onClick={()=>DeleteOrder()}>удалить</Button>

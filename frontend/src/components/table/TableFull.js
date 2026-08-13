@@ -22,6 +22,8 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
     const [sortKey, setSortKey] = useState('default');
     const [onlyLustre, setOnlyLustre] = useState(false)
     const [onlyHolst, setOnlyHolst] = useState(false)
+    const [onlyMagnit, setOnlyMagnit] = useState(false)
+    const [onlyA4, setOnlyA4] = useState(false)
 
     let orders =_.orderBy(_.orderBy(useSelector(state => state.order.order), 'createdAt', 'desc' ), 'status', 'asc' )
 
@@ -73,9 +75,9 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
     }
 
     const AddNewOrder = async() =>{
-      const userConfirmation = window.confirm("Добавить новый заказ?");
+      //const userConfirmation = window.confirm("Добавить новый заказ?");
 
-      const getRandomPhoneNumber = () => {
+      /*const getRandomPhoneNumber = () => {
         const getRandomInt = (min, max) => {
             min = Math.ceil(min);
             max = Math.floor(max);
@@ -88,12 +90,12 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
         }
         phoneNumber +="000";
         return phoneNumber;
-    }
+    }*/
     
-      if (userConfirmation) {
+   
         const data = {
-          name: '',
-          phone: getRandomPhoneNumber(),
+          FIO: 'неизвестно',
+          phone: '+375000000000',
           typePost: 'E',
           city: '',
           adress: '',
@@ -112,7 +114,9 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
       dispach(addOrder(response.data))
       const newOrderDate = new Date(response.data.createdAt);
       setEndDate(prevEndDate => newOrderDate > prevEndDate ? newOrderDate : prevEndDate);
-      }
+      
+
+      handleDetailsClick(response.data.id)
     }
 
     const [statusFilterVisible, setStatusFilterVisible] = useState(false);
@@ -125,7 +129,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
       setStatusFilterVisible(false);
     };
 
-    const [filterCheck, setFilterCheck] = useState([0,1,2,3,4])
+    const [filterCheck, setFilterCheck] = useState([0,1,2,3,4,7,8])
     const Check = (e, id) =>{
       if(e){
           setFilterCheck(filterCheck.concat(id))
@@ -142,10 +146,9 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
 
       const filteredOrders = orders.filter((order) => {
         if (selectedType === 'All') return true;
-        if (selectedType === 'R1') return order.firstClass || order.typePost === 'R1';
-        if (selectedType === 'R') return !order.firstClass && order.typePost === 'R';
+        if (selectedType === 'R0') return order.typePost === 'R' || order.typePost === 'R1' || order.typePost === 'R2';
+        if (selectedType === 'R1') return order.typePost === 'R1'|| order.typePost === 'R2';
         if (selectedType === 'E0') return order.typePost === 'E' || order.typePost === 'E1';
-        if (selectedType === 'R0') return order.typePost === 'R' || order.typePost === 'R1' || order.firstClass;
         return order.typePost === selectedType;
       })
       .filter((order) => {
@@ -191,6 +194,18 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
         }
         else return true
       })
+      .filter((order)=>{
+        if (onlyMagnit) {
+          return order.photos.some(el => el.type === 'magnit');
+        }
+        else return true
+      })
+      .filter((order)=>{
+        if (onlyA4) {
+          return order.photos.some(el => el.format === 'а4' || el.format === '<а4');
+        }
+        else return true
+      })
       ;
 
     const startDateSet = useRef(false);
@@ -203,10 +218,10 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
       }
     }, [orders]);
     
-    const handleDateChange = (start, end) => {
+    /*const handleDateChange = (start, end) => {
         setStartDate(new Date(start));
         setEndDate(new Date(end));
-    }
+    }*/
 
     const DownloadArchive = () =>{
       $host.get('api/order/getAllArchive').then(
@@ -293,18 +308,18 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
 
     const handleProcess = (e) =>{
       switch(e){
-        case '1': return setFilterCheck([0, 1, 2, 3, 4])
+        case '1': return setFilterCheck([0, 1, 2, 3, 4, 7, 8])
         case '2': return setFilterCheck([5])
         case '3': return setFilterCheck([6])
-        default: return setFilterCheck([0, 1, 2, 3, 4])
+        default: return setFilterCheck([0, 1, 2, 3, 4, 7, 8])
       }
       
     }
 
-    const [activeModal, setActiveModal] = useState(false)
+    const [activeModal, setActiveModal] = useState(true)
     const [orderModal, setOrderModal] = useState({})
 
-    const ClickOrder = (order) =>{
+    const ClickOrderMobile = (order) =>{
           setActiveModal(true)
           setOrderModal(order)
     }
@@ -333,13 +348,26 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
       }
     };
     
-    const checkPayEP = async() =>{
-      const data = {
-        list: listPayEP
+    const checkPayEP = async () => {
+      try {
+        const data = {
+          list: listPayEP
+        };
+        setIsOpen(false);
+        await $host.post('/api/ep/changeStatusEP', data);
+        
+        // Очищаем список
+        setListPayEP([]);
+        
+        // Алерт об успехе
+        alert(`${listPayEP.length} заказов перенесены в оплаченные!`);
+        
+        
+      } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при обновлении статусов');
       }
-      await $host.post('/api/ep/changeStatusEP', data)
-      setIsOpen(false)
-    }
+    };
 
     
 
@@ -402,7 +430,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                 {filteredOrders.map(order => 
                   <div key={order.id} onClick={(event)=>event.stopPropagation()}>
 
-                      <div className={selectedOrder===order.id ? style.mobileOrderSelected: style.mobileOrder} onClick={()=>ClickOrder(order)}>
+                      <div className={selectedOrder===order.id ? style.mobileOrderSelected: style.mobileOrder} onClick={()=>ClickOrderMobile(order)}>
                         <div className={style.origin}>
                           <div className={style.circle}>{ShowOrigin(order)} &nbsp; {order.typePost + (order.order_number%1000) }</div>
                           <div>{ShowData(order)}</div>
@@ -452,10 +480,9 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                             <option value={"R"}>белпочта(налож)</option>
                         </select>
                         <select className="menu-select" style={{marginLeft: 0}} onChange={OriginChange}>
-                            <option value={'All'}>Сайт, телеграм, почта</option>
+                            <option value={'All'}>Сайт и телеграм</option>
                             <option value={'website'}>только сайт</option>
                             <option value={'telegram'}>только телеграм</option>
-                            <option value={'email'}>только почта</option>
                         </select>
                         <input
                           className="menu-input"
@@ -472,11 +499,13 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                             <option value={'FIO'}>по имени</option>
                         </select>
                         
+                        {/*
                         <input className='menu-input' style={{textAlign: 'center'}} type="date" value={startDate ? startDate.toISOString().substr(0, 10) : ''} onChange={(e) => handleDateChange(e.target.value, endDate)} />
                         <i style={{color: '#2f616b'}} className="bi bi-chevron-right"></i>
                         <input className='menu-input' style={{textAlign: 'center'}} type="date" 
                                     value={endDate.toLocaleDateString().split('.')[2]+'-'+endDate.toLocaleDateString().split('.')[1]+'-'+endDate.toLocaleDateString().split('.')[0]}
                                     onChange={(e) => handleDateChange(startDate, e.target.value)} />
+                                    */}
                         <button
                             onClick={() => setOnlyLustre(!onlyLustre)}
                             className="menu-input"
@@ -486,7 +515,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                               cursor: 'pointer',
                               width: 'auto',
                               minWidth: '60px',
-                              marginLeft: '10px'
+                              marginLeft: '50px'
                             }}
                           >
                             lustre
@@ -504,6 +533,34 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                             }}
                           >
                             holst
+                        </button>
+                        <button
+                            onClick={() => setOnlyMagnit(!onlyMagnit)}
+                            className="menu-input"
+                            style={{
+                              background: onlyMagnit ? '#2f616b' : 'white',
+                              color: onlyMagnit ? 'white' : '#000000',
+                              cursor: 'pointer',
+                              width: 'auto',
+                              minWidth: '60px',
+                              marginLeft: '10px'
+                            }}
+                          >
+                            magnit
+                        </button>
+                        <button
+                            onClick={() => setOnlyA4(!onlyA4)}
+                            className="menu-input"
+                            style={{
+                              background: onlyA4 ? '#2f616b' : 'white',
+                              color: onlyA4 ? 'white' : '#000000',
+                              cursor: 'pointer',
+                              width: 'auto',
+                              minWidth: '60px',
+                              marginLeft: '10px'
+                            }}
+                          >
+                            A4
                         </button>
                         
 
@@ -529,8 +586,8 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                           <label>
                             <input
                               type="checkbox"
-                              checked={filterCheck.includes(1) && filterCheck.includes(2) && filterCheck.includes(3) && filterCheck.includes(4)}
-                              onChange={(e) => Check(e.target.checked, [0, 1, 2, 3, 4])}
+                              checked={filterCheck.includes(0) && filterCheck.includes(1) && filterCheck.includes(2) && filterCheck.includes(3) && filterCheck.includes(4) && filterCheck.includes(7) && filterCheck.includes(8)}
+                              onChange={(e) => Check(e.target.checked, [0, 1, 2, 3, 4, 7, 8])}
                             />
                             В работе
                           </label>

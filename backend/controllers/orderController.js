@@ -94,7 +94,7 @@ class orderController{
           });
         const settings = await Settings.findAll()
         const users = await User.findAll({
-          attributes: ['id', 'FIO', 'phone', 'role', 'orderCount']
+          attributes: ['id', 'FIO', 'phone', 'role', 'orderCount', 'aboutUser']
         });
 
           const moscowOrders = orders.map(order => {
@@ -219,7 +219,7 @@ class orderController{
            codeOutside, price, price_deliver, other, photo, userId, notes, phoneUser, main_dir_id, origin, is_sms_error, is_sms_add, is_sms_send, is_sms_pay, date_sent} = req.body
 
         const user = await User.findOne({where:{phone: phoneUser}})
-        const user1 ={}
+        let user1 ={}
         if(user){
             await Order.update(
                 {

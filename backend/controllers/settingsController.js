@@ -153,13 +153,13 @@ class settingsController{
 
 
     for (let i = 0; i < settingEditor.length; i++) {
-          await SettingEditor.create({
+          await SettingEditor.create({ 
               id: settingEditor[i].id,
               name: settingEditor[i].name,
               width: settingEditor[i].width,
               height: settingEditor[i].height,
-              up: settingEditor[i].up,
-              down: settingEditor[i].down,
+              top: settingEditor[i].top,
+              bottom: settingEditor[i].bottom,
               left: settingEditor[i].left,
               right: settingEditor[i].right,
               createdAt: settingEditor[i].createdAt,

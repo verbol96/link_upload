@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import Cropper from "react-easy-crop";
-import style from './styleEditor.module.css'
+import style from './styleEditor.module.css' 
 import 'react-easy-crop/react-easy-crop.css'
 
 const EditorOne = ({ image, aspectRatioDef, cropperRef }) => {
@@ -131,7 +131,6 @@ const EditorOne = ({ image, aspectRatioDef, cropperRef }) => {
       </div>
   
       <div className={style.imageButtonGroup}>
-        {/*<button onClick={()=>setAspectRatio(1/aspectRatio)}><i className="bi bi-arrow-counterclockwise"></i><i className="bi bi-aspect-ratio"></i></button>*/}
         <button onClick={() => setRotation(rotation - 90)}><i className="bi bi-arrow-counterclockwise"></i><i className="bi bi-image"></i></button>
         {/*<button onClick={()=>zooming(-0.05)}><i className="bi bi-zoom-out"></i></button>
         <button onClick={()=>zooming(0.05)}><i className="bi bi-zoom-in"></i></button>*/}

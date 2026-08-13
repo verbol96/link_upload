@@ -7,6 +7,7 @@ const path = require('path');
 const mime = require('mime-types');
 const sharp = require('sharp');
 const moment = require('moment-timezone');
+const { where } = require('sequelize')
 
 class fileController {
     async createDir(req, res){
@@ -20,7 +21,7 @@ class fileController {
                 file = await File.create({name: newName.name, type, parent, path})
             }else{
                 await FileService.createdDir(name)
-                file = await File.create({name, type, parent: '00000000-0000-0000-0000-000000000000'})
+                file = await File.create({name, type, parent: '00000000-0000-0000-0000-000000000000', isDownload: false})
             } 
             return res.json(file)
         } catch (error) {
@@ -206,7 +207,11 @@ class fileController {
                 }
                 
                 await AddToZip(file.id)
-                console.log('here')
+
+                await File.update({
+                   isDownload: true  
+                }, {where: {id: file.id}}
+                )
 
                 const content = await zip.generateAsync({type: 'nodebuffer'})
                 const downloadPath = `${process.env.FILEPATH}/download.zip`

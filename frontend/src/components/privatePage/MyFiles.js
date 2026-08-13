@@ -1,9 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import style from './Files.module.css'
 import { v4 as uuidv4 } from 'uuid'
-import { useDispatch, useSelector } from 'react-redux'
-import { getSettings } from '../../http/dbApi'
-import { saveSettings } from '../../store/orderReducer'
 import { OneFormat } from './MyFiles/OneFormat'
 import { createDir, uploadFiles } from '../../http/cloudApi'
 
@@ -61,7 +58,6 @@ export const MyFiles = () =>{
             await Promise.all(uploadPromises);
         }
     }
-console.log(formats)
     return(
         <div className={style.container}>
             

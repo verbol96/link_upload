@@ -98,7 +98,9 @@ export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setS
         '#FDFD96',// в печати -3
         '#98FF98',// упакован -4
         'DarkGrey',// отправлено -5
-        'white'// оплачено -6
+        'white',// оплачено -6
+        'rgb(243, 243, 243)',// в ожидании -7
+        'rgb(243, 243, 243)'// ошибка -8
     ]
 
     const ChangeStatus = (event) =>{
@@ -144,7 +146,12 @@ export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setS
     return(
  
         <div 
-            style={order.id === collapsedOrderId ? {backgroundColor: '#c5dce0'} : {}}
+            style={{
+            ...(order.id === collapsedOrderId ? { backgroundColor: '#c5dce0' } : {}),
+            ...((order.status === 7 || order.status === 8) && order.id !== selectedOrder 
+                ? { opacity: 0.3 } 
+                : {})
+            }}
             className={`order_card_t${selectedOrder===order.id ? ' order_card_t_expanded' : ''}`}
             onClick={(e)=>handleClick(e)}
         >
@@ -183,6 +190,8 @@ export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setS
                         <option value="4">упакован</option>
                         <option value="5">отправлен</option>
                         <option value="6">оплачен</option>
+                        <option value="7">в ожидании</option>
+                        <option value="8">ошибка</option>
                     </select>
                     </div>
                     {

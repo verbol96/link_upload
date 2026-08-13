@@ -1,18 +1,13 @@
-import Footer from "../components/admin/Footer";
 import { NavBar } from "../components/admin/NavBar";
 import EditMain from "../components/editior/EditMain";
+import Redactor from "../components/photoRedactor/Redactor";
 
 const Editor = () => {
- 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', minHeight: '100vh'}}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <NavBar />
-
-      <EditMain /> 
-
-      <div style={{marginTop: 'auto'}}>
-        <Footer />
-      </div>
+      <Redactor /> 
+      {/*<EditMain />*/}
     </div>
   );
 }
