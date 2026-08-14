@@ -1,6 +1,6 @@
 import { NavBar } from "../components/admin/NavBar";
 import EditMain from "../components/editior/EditMain";
-import Redactor from "../components/photoRedactor/Redactor";
+//import Redactor from "../components/photoRedactor/Redactor";
 
 const Editor = () => {
   return (

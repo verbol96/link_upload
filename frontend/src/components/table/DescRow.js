@@ -4,7 +4,7 @@ import { OneFormat } from './OneFormat';
 import { deleteOrder, getSettings, updateOrder } from '../../http/dbApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsError, updateSmsPay, updateSmsSend } from '../../store/orderReducer';
-import _, { reduceRight } from 'lodash';
+import _ from 'lodash';
 import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
 import {CopyToClipboard} from 'react-copy-to-clipboard'

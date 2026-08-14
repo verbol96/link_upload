@@ -59,6 +59,12 @@
             height: 25px;
             flex: 3;
         }
+        .contactField select{
+            margin-top: 10px;
+            border: 1px solid #116466;
+            border-radius: 5px;
+            background: rgb(255, 255, 255);
+        }
 
         .buttons{
             display: flex;
