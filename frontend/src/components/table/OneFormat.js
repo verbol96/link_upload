@@ -25,7 +25,7 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
     
   }
 
-    const [check, setCheck] = useState(0)
+    const [checkAmount, setCheckAmount] = useState(-1)
 
   useEffect(()=>{
     const getFiles = async () => {
@@ -34,25 +34,24 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
               
               const ImgDownload = data.filter(item => item.size > 0).length;
 
-              setCheck(ImgDownload)
+              setCheckAmount(ImgDownload)
           } catch (error) {
               console.error(error);
           }
         };
         getFiles()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const showFlag = (check) =>{
-    switch(check){
-      case 0: return <i className="bi bi-arrow-repeat animate-spin"></i>
-      default: return check
-    }
+  const showAmount = () =>{
+    if(checkAmount === -1)return <i className="bi bi-arrow-repeat animate-spin"></i>
+    else return checkAmount
   }
   
   return(
       <div className='format_group'>
             <button style={{background:'#f2f2f2', flex: 1, padding: '0px 5px', textAlign: 'center', width: 0, height: '30px', margin: '5px', color: 'lightgray'}}
-               title="Проверить фото" disabled> {showFlag(check)} </button>
+               title="Проверить фото" disabled> {showAmount()} </button>
             <input type="text" value={el.amount} onChange={(e)=>Update(e, 'amount')}/>
 
             <select value={el.type} onChange={(e)=>Update(e, 'type')}>

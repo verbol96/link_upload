@@ -3,7 +3,7 @@ import style from './ModalOrder.module.css'
 import {useDispatch,useSelector} from 'react-redux'
 import { useState, useCallback, useEffect} from 'react'
 import { deleteOrder, getSettings, updateOrder } from '../../http/dbApi';
-import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsError, updateSmsSend } from '../../store/orderReducer';
+import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsError, updateSmsPay, updateSmsSend } from '../../store/orderReducer';
 import _ from 'lodash';
 import {CopyToClipboard} from 'react-copy-to-clipboard'
 import { deleteFile } from '../../http/cloudApi';
@@ -11,6 +11,8 @@ import { sendSms } from '../../http/authApi';
 import SearchBarMain from './SearchBarMain'
 import { OneFormat } from './OneFormat'
 import SearchBar from './SearchBar'
+import { Button } from '../../ui/button';
+import { $host } from '../../http';
 
 export const ModalOrder = ({order, activeModal, setActiveModal, ChangeStatus}) =>{
 
@@ -34,7 +36,7 @@ export const ModalOrder = ({order, activeModal, setActiveModal, ChangeStatus}) =
     const [oblast, setOblast] = useState(order.oblast || '')
     const [raion, setRaion] = useState(order.raion || '')
     const [postCode, setPostCode] = useState(order.postCode || '')
-    const [firstClass, setFirstClass] = useState(order.firstClass || false)
+    const [firstClass] = useState(order.firstClass || false)
     const [other, setOther] =useState(order.other || '')
     const [photo, setPhoto] = useState(order.photos || [])
     const [phoneUser, setPhoneUser] = useState(order.user?.phone || order.phoneUser || '');
@@ -45,6 +47,7 @@ export const ModalOrder = ({order, activeModal, setActiveModal, ChangeStatus}) =
     const [is_sms_add, setIs_sms_add] = useState(order.is_sms_add || '');
     const [is_sms_send, setIs_sms_send] = useState(order.is_sms_send || '');
     const [is_sms_error, setIs_sms_error] = useState(order.is_sms_error || '');
+    const [is_sms_pay, setIs_sms_pay] = useState(order.is_sms_pay || false);
     const [date_sent, setDate_sent] = useState(order.date_sent || '')
 
     const [numRows, setNumRows] = useState(2);
@@ -88,13 +91,12 @@ export const ModalOrder = ({order, activeModal, setActiveModal, ChangeStatus}) =
         other: order.other || '',
         codeOutside: order.codeOutside || '',
         photo: order.photos || [],
-        firstClass: order.firstClass,
         price: order.price || '',
         price_deliver: order.price_deliver || '',
         origin: order.origin || '',
         date_sent: order.date_sent || ''
       };
-      
+       
       const currentValues = {
         FIO,
         phone,
@@ -109,7 +111,6 @@ export const ModalOrder = ({order, activeModal, setActiveModal, ChangeStatus}) =
         other,
         codeOutside,
         photo,
-        firstClass,
         price,
         price_deliver,
         origin,
@@ -125,7 +126,7 @@ export const ModalOrder = ({order, activeModal, setActiveModal, ChangeStatus}) =
   
       setIsChanged(false);
     }, [FIO, phone, typePost, city, adress, oblast, raion, postCode, 
-        phoneUser, notes, other, codeOutside, setIsChanged, order, photo, firstClass, price, price_deliver, origin, date_sent]);
+        phoneUser, notes, other, codeOutside, setIsChanged, order, photo, price, price_deliver, origin, date_sent]);
   
     useEffect(() => {
       checkChanges();
@@ -332,12 +333,14 @@ export const ModalOrder = ({order, activeModal, setActiveModal, ChangeStatus}) =
       }
 
       const ColorBG = [
-        '#97d0d6',// принят -1
+         '#97d0d6',// принят -1
         '#D8BFD8',//обработан -2
         '#FDFD96',// в печати -3
         '#98FF98',// упакован -4
         'DarkGrey',// отправлено -5
-        'white'// оплачено -6
+        'white',// оплачено -6
+        'rgb(243, 243, 243)',// в ожидании -7
+        'rgb(243, 243, 243)'// ошибка -8
       ]
 
       const ShowOrigin = (order) =>{
@@ -348,6 +351,158 @@ export const ModalOrder = ({order, activeModal, setActiveModal, ChangeStatus}) =
             default:  return <i style={{color: 'darkgreen'}} className="bi bi-send"></i>
         }
     }
+
+
+
+
+  const SmsPay = async () => {
+    try {
+      // Проверка наличия необходимых данных
+      if (!order || typeof order !== 'object') {
+        throw new Error('Неверный формат данных заказа');
+      }
+  
+      // Проверка и преобразование цен
+      const price = Number(order.price) || 0;
+      const priceDeliver = Number(order.price_deliver) || 0;
+      
+      // Проверка номера заказа
+      if (!order.order_number) {
+        throw new Error('Отсутствует номер заказа');
+      }
+  
+      // Проверка номера телефона
+      if (!phone || typeof phone !== 'string') {
+        throw new Error('Неверный формат номера телефона');
+      }
+  
+      // Вычисление суммы с округлением
+      const total = (price + priceDeliver).toFixed(2);
+      
+      // Формирование сообщения
+      const code = `Оплата заказа.
+  ЕРИП -> E-POS.
+  Номер счета: 27307-1-${order.order_number}.
+  Сумма: ${total}р`;
+  
+      // Подтверждение отправки
+      const userConfirmation = window.confirm(`Отправить SMS:\n\n${code}`);
+      
+      if (userConfirmation) {
+        // Отправка SMS
+        await sendSms(phone, code);
+        
+        // Обновление состояния
+        setIs_sms_pay(true);
+        
+        // Обновление данных в хранилище
+        dispatch(updateSmsPay(order.id));
+        
+        // Обновление заказа
+        await updateOrder(order.id, {...data, is_sms_pay: true});
+        
+        // Уведомление об успехе
+        alert('SMS успешно отправлено');
+      }
+    } catch (error) {
+      console.error('Ошибка при отправке SMS:', error);
+      alert(`Ошибка: ${error.message}`);
+    }
+  };
+
+
+const ShowBtnSms = (smsType, fanc, text) =>{
+  return(
+      smsType ? 
+      (
+        <Button className='flex-1' variant='outline' disabled>
+          <i style={{ color: 'gray' }} className="bi bi-check-all"></i> {text}
+        </Button>
+      ) : (
+        <Button className='flex-1' variant='secondary' onClick={fanc}>
+          <i style={{ color: 'white' }} className="bi bi-telephone-forward"></i> {text}
+        </Button>
+      )
+  )
+}
+
+const AddInvoices = async () => {
+  // Приводим к числу и устанавливаем 0, если значение невалидно
+  const price = Number(order.price) || 0;
+  const priceDeliver = Number(order.price_deliver) || 0;
+
+  // Вычисляем сумму и округляем
+  const totalAmount = (price + priceDeliver).toFixed(2);
+
+  const sendConfirmation = window.confirm(
+    `Подтвердите:\n` +
+    `Номер заказа: ${order.order_number}\n` +
+    `Цена: ${totalAmount}р\n` +
+    `Info: Заказ ${order.FIO}`
+  );
+    
+  if (sendConfirmation) {
+    const dataInvoices = {
+      AccountNo: order.order_number,
+      Amount: totalAmount,  // Уже строка с 2 знаками после запятой
+      Info: `Заказ ${order.FIO}`
+    };
+
+    try {
+      const { data } = await $host.post('/api/ep/addInvoicesPay', dataInvoices);
+      if (data) {
+        setOther(prev => `Данные для оплаты: 
+          ЕРИП -> E-POS 
+          номер счета: 27307-1-${order.order_number} \n \n` + prev);
+      }
+    } catch (error) {
+      console.error('Ошибка:', error);
+      alert('Не удалось создать счет. Попробуйте еще раз.'); // Уведомление пользователя
+    }
+  }
+};
+
+const CancelInvoices = async() =>{
+
+  const info = window.confirm( 'Отменить счет?' );
+    
+  if (info) {
+      try {
+        const dataAPI = {
+          InvoiceNo : order.order_number 
+        }
+        const {data} = await $host.post('/api/ep/delInvoicesPay', dataAPI);
+        console.log(data)
+        if(data) window.alert( 'отменен!' )
+      } catch (error) {
+        console.error('Ошибка:', error);
+      }
+
+  }
+}
+
+const CheckInvoices = async() =>{
+
+      try {
+        const {data} = await $host.post('/api/ep/getInvoicesPay', {No: order.order_number });
+        const descStatus = {
+          '1':'Ожидает оплату',
+          '2':'Просрочен',
+          '3':'Оплачен',
+          '4':'Оплачен частично',
+          '5':'Отменен',
+          '6':'Оплачен с помощью банковской карты',
+          '7': 'Платеж возращен'
+        }
+        const status = data.Status
+        window.alert(descStatus[status]);
+      } catch (error) {
+        console.error('Ошибка:', error);
+        window.alert('счет не найдет');
+      }
+
+  }
+
 
   
 
@@ -367,53 +522,45 @@ export const ModalOrder = ({order, activeModal, setActiveModal, ChangeStatus}) =
                         <option value="4">упакован</option>
                         <option value="5">отправлен</option>
                         <option value="6">оплачен</option>
+                        <option value="7">в ожидании</option>
+                        <option value="8">ошибка</option>
                     </select>
                 </div>
             </div>
 
             <div className={style.cardContact}>
                     <div className={style.contactField}>
-                        <CopyToClipboard text={FIO}>
                         <label>ФИО:</label>
-                        </CopyToClipboard>
                         <input  style={{marginLeft: 5}} value={FIO} onChange={(e) => setFIO(e.target.value)} />
                     </div>
 
                     <div className={style.contactField}>
-                    <CopyToClipboard text={phone}>
-                    <label>Телефон:</label>
-                    </CopyToClipboard>
-                    <div className='search_bar'
-                        onMouseEnter={handleModalMouseEnterMain}
-                        onMouseLeave={handleModalMouseLeaveMain}
-                    >
-                        <input
-                        style={{}}
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        />
-                        <SearchBarMain phone={phone} modalVisibleMain={modalVisibleMain} setModalVisibleMain={setModalVisibleMain} users={users}
-                                setFIO={setFIO} setTypePost={setTypePost} setCity={setCity} setPhone={setPhone}
-                                setAdress={setAdress} setPostCode={setPostCode} setRaion={setRaion} setOblast={setOblast} />
+                      <label>Телефон:</label>
+                      <div className='search_bar'
+                          onMouseEnter={handleModalMouseEnterMain}
+                          onMouseLeave={handleModalMouseLeaveMain}
+                      >
+                          <input
+                          style={{}}
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          />
+                          <SearchBarMain phone={phone} modalVisibleMain={modalVisibleMain} setModalVisibleMain={setModalVisibleMain} users={users}
+                                  setFIO={setFIO} setTypePost={setTypePost} setCity={setCity} setPhone={setPhone}
+                                  setAdress={setAdress} setPostCode={setPostCode} setRaion={setRaion} setOblast={setOblast} />
+                      </div>
                     </div>
-                    </div>
-                    <div className={style.contactField}>
                     
-                    <select value={typePost} onChange={(e)=>setTypePost(e.target.value)}>
-                        <option value={"E"}>Европочта</option>
-                        <option value={"R"}>Белпочта</option>
-                    </select>
-                    <label></label>
+                    <div className={style.contactField}>
+                      <select value={typePost} onChange={(e)=>setTypePost(e.target.value)}>
+                          <option value={"E"}>Европочта(наложенный)</option>
+                          <option value={"E1"}>Европочта(ЕРИП)</option>
+                          <option value={"R"}>Белпочта(наложенный)</option> 
+                          <option value={"R2"}>Белпочта(ЕРИП)</option> 
+                          <option value={"R1"}>Письмо(ЕРИП)</option> 
+                      </select>
+                      <label></label>
                     </div>
-                    {typePost==='R'?
-                    <div className={style.contactField} style={{justifyContent:'space-between'}}>
-                        <label>1 клacc:</label>
-                        <div style={{flex: 3}}>
-                        <input  type='checkbox' checked={firstClass} onChange={(e)=>setFirstClass(e.target.checked)} /> 
-                        </div>
-                    </div>
-                    :null
-                    }
                     
                     <div className={style.contactField}>
                     <CopyToClipboard text={city}>
@@ -532,47 +679,37 @@ export const ModalOrder = ({order, activeModal, setActiveModal, ChangeStatus}) =
                     <input style={{marginLeft: 5}} value={codeOutside} onChange={e=>setCodeOutside(e.target.value)} /> 
                     </div>
 
-                    <div className="card_actions">
-                        {
-                        Number(order.status) === 0 ? (
-                            is_sms_error ? (
-                            <label>
-                                <i style={{ color: 'darkgreen' }} className="bi bi-check-all"></i> ошибка
-                            </label>
-                            ) : (
-                            <button className="SendSms_button" onClick={SmsError}>
-                                <i style={{ color: 'darkgreen', marginRight: 10 }} className="bi bi-telephone-forward"></i> ошибка
-                            </button>
-                            )
-                        ) : (
-                            is_sms_add ? (
-                            <label>
-                                <i style={{ color: 'darkgreen' }} className="bi bi-check-all"></i>принят
-                            </label>
-                            ) : (
-                            <button className="SendSms_button" onClick={SmsAdd}>
-                                <i style={{ color: 'darkgreen', marginRight: 10 }} className="bi bi-telephone-forward"></i> принят
-                            </button>
-                            )
-                        )
-                        }
-
-                        {
-                        Number(order.status) !== 0 ? (
-                        is_sms_send ? (
-                            <label>
-                            <i style={{ color: 'darkgreen' }} className="bi bi-check-all"></i> отправлен
-                            </label>
-                        ) : (
-                            <button className="SendSms_button" onClick={SmsSend}>
-                            <i style={{ color: 'darkgreen', marginRight: 10 }} className="bi bi-telephone-forward"></i> отправлен
-                            </button>
-                        )
-                        ) : null
-                        }
-                        
-                        
+                    <div className='flex flex-row justify-center gap-3 text-xs font-thin my-3'>
+                      <label className=''> Всего заказов: {order.user.orderCount} шт</label>
+                      <label className=''>Сумма заказов: {order.user.totalOrderSum} р</label>
                     </div>
+
+                    
+                        {
+                          users.find(user => user.phone === phoneUser)?.role === 'USER' && 
+                          
+                            <div className="flex flex-col w-full gap-2">
+                            {/* Первая строка — СМС кнопки */}
+                            <div className="flex justify-between w-full gap-1">
+                              {order.status === 0 && ShowBtnSms(is_sms_error, SmsError, 'ошибка')}
+                              {order.status !== 0 && ShowBtnSms(is_sms_add, SmsAdd, 'принят')}
+                              {order.status !== 0 && ShowBtnSms(is_sms_send, SmsSend, 'отправлен')}
+                              {(order.typePost === 'R1' || order.typePost === 'E1') && ShowBtnSms(is_sms_pay, SmsPay, 'оплата')}
+                            </div>
+
+                            {/* Вторая строка — кнопки счетов */}
+                            <div className="flex justify-between w-full gap-1">
+                              {(order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') && (
+                                <>
+                                  <Button className="px-3" variant='outline' size='sm' onClick={AddInvoices}>выставить</Button>
+                                  <Button className="px-3"  variant='outline' size='sm' onClick={CancelInvoices}>отменить</Button>
+                                  <Button className="px-3"  variant='outline' size='sm' onClick={CheckInvoices}>проверить</Button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          }
+                       
                     <div className={style.buttons}>
                         <button className="save_button" onClick={()=>SaveData()}  style={{ backgroundColor: isChanged ? '#dbcc00' : '' }}>Сохранить</button>
                         <button className="delete_button" onClick={()=>DeleteOrder()}>удалить заказ</button>

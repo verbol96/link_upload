@@ -263,7 +263,6 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
     }
 
     const ShowData = (order) =>{
-
       const data = `${order.createdAt.split("T")[0].split("-")[2]}.${order.createdAt.split("T")[0].split("-")[1]}`
       const time = `${order.createdAt.split("T")[1].split(":")[0]}:${order.createdAt.split("T")[1].split(":")[1]}`
       return `${data} (${time})`
@@ -316,7 +315,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
       
     }
 
-    const [activeModal, setActiveModal] = useState(true)
+    const [activeModal, setActiveModal] = useState(false)
     const [orderModal, setOrderModal] = useState({})
 
     const ClickOrderMobile = (order) =>{
@@ -404,15 +403,18 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                 <>
                 <div className={style.menu}>
                     <select onChange={handleSelectChange}>
-                            <option value={'All'}>all</option>
-                            <option value={"E"}>E</option>
-                            <option value={"R"}>R</option>
+                            <option value={'All'}>Все</option>
+                            <option value={"E0"}>европочта</option>
+                            <option value={"E1"}>европочта(ЕРИП)</option>
+                            <option value={"E"}>европочта(налож)</option>
+                            <option value={"R0"}>белпочта</option>
+                            <option value={"R1"}>белпочта(ЕРИП)</option>
+                            <option value={"R"}>белпочта(налож)</option>
                     </select>
                     <select onChange={OriginChange}>
-                            <option value={'All'}>all</option>
-                            <option value={'website'}>Web</option>
-                            <option value={'telegram'}>Telegram</option>
-                            <option value={'email'}>eMail</option>
+                            <option value={'All'}>Сайт и телеграм</option>
+                            <option value={'website'}>только сайт</option>
+                            <option value={'telegram'}>только телеграм</option>
                     </select>
                     <input
                           type="text"
@@ -436,7 +438,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                           <div>{ShowData(order)}</div>
                         </div>
                         <div className={style.contact}>
-                          <div>{order.FIO}</div>
+                          <div> {order?.user?.FIO}</div>
                           <div className={style.contact2}> 
                             <div className={style.dataPhoto}>{photo(order)}</div>
                             <div>{Warning(order)} </div>
@@ -446,13 +448,15 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                             <div>{(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р</div>
                             <div  onClick={(event)=>event.stopPropagation()}>
                               <select style={{backgroundColor: ColorBG[order.status-1]}} value={order.status} onChange={(e)=>ChangeStatus(e, order)} >
-                                <option value="0">новый</option>
-                                <option value="1">принят</option>
-                                <option value="2">обработан</option>
-                                <option value="3">в печати</option>
-                                <option value="4">упакован</option>
-                                <option value="5">отправлен</option>
-                                <option value="6">оплачен</option>
+                                 <option value="0">новый</option>
+                                  <option value="1">принят</option>
+                                  <option value="2">обработан</option>
+                                  <option value="3">в печати</option>
+                                  <option value="4">упакован</option>
+                                  <option value="5">отправлен</option>
+                                  <option value="6">оплачен</option>
+                                  <option value="7">в ожидании</option>
+                                  <option value="8">ошибка</option>
                               </select>
                             </div>
                         </div>
