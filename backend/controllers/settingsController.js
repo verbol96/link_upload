@@ -90,6 +90,7 @@ class settingsController{
             raion: user[i].raion,
             orderCount: user[i].orderCount || 0,
             totalOrderSum: user[i].totalOrderSum || 0,
+            aboutUser: user[i].aboutUser,
             createdAt: user[i].createdAt,
             updatedAt: user[i].updatedAt,
         });

@@ -223,8 +223,13 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
         setEndDate(new Date(end));
     }*/
 
+    const [startArchive, setStartArchive] = useState(0)
+    const [endArchive, setEndArchive] = useState(0)
+
+
     const DownloadArchive = () =>{
-      $host.get('api/order/getAllArchive').then(
+      const data = {startArchive, endArchive}
+      $host.get('api/order/getAllArchive', { params: data }).then(
         res=> {
             dispach(saveOrders(res.data.orders))
             dispach(saveSettings(res.data.settings))
@@ -368,7 +373,6 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
       }
     };
 
-    
 
     return(
         <>
@@ -611,9 +615,14 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                             />
                             Оплаченные
                           </label>
-                          <label>
-                            <button onClick={() => DownloadArchive()}>загрузить архив</button>
-                              
+                          <label className='flex flex-col gap-2'>
+                            <button  onClick={() => DownloadArchive()}>загрузить архив</button>
+
+                            <div className='flex flex-row w-full gap-5'>
+                              <input className='flex-1 w-[20px]' value={startArchive} onChange={(e)=>setStartArchive(e.target.value)} />
+                              <input className='flex-1 w-[20px]' value={endArchive} onChange={(e)=>setEndArchive(e.target.value)} />
+                            </div>
+                            
                           </label>
                         </div>
                         )}  

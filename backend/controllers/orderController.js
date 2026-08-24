@@ -85,7 +85,7 @@ class orderController{
             include: [
               {
                 model: User,
-                attributes: ['id', 'FIO', 'phone', 'orderCount', 'totalOrderSum'] 
+                attributes: ['id', 'FIO', 'phone', 'orderCount', 'totalOrderSum', 'aboutUser'] 
               },
               {
                 model: Photo
@@ -138,38 +138,43 @@ class orderController{
         return res.json(orders)
     }
 
-    async getAllArchive(req,res){
-        
-        const orders = await Order.findAll({
-            
-            include: [
-              {
-                model: User
-              },
-              {
-                model: Photo
-              }
-            ]
-          });
-        const settings = await Settings.findAll()
-        const users = await User.findAll({
-            attributes: { exclude: ['createdAt', 'updatedAt', 'role'] }
-          });
+   async getAllArchive(req, res) {
+      const {startArchive, endArchive} = req.query
+      const now = moment().tz('Europe/Moscow');
+      const startDate = now.clone().subtract(startArchive, 'months').startOf('month');
+      const endDate = now.clone().subtract(endArchive, 'months').endOf('month');
 
-          const moscowOrders = orders.map(order => {
-            const moscowTime = moment(order.createdAt).tz('Europe/Moscow'); // Преобразование в Московскую временную зону
-            return {
-              ...order.toJSON(),
-              createdAt: moscowTime.format() // Форматирование даты и времени в строку
-            };
-          });
+      const orders = await Order.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [startDate.toDate(), endDate.toDate()]
+          }
+        },
+        include: [
+          { model: User },
+          { model: Photo }
+        ]
+      });
 
-        return res.json({orders: moscowOrders, settings, users})
+      const settings = await Settings.findAll();
+      const users = await User.findAll({
+        attributes: { exclude: ['createdAt', 'updatedAt', 'role'] }
+      });
+
+      const moscowOrders = orders.map(order => {
+        const moscowTime = moment(order.createdAt).tz('Europe/Moscow');
+        return {
+          ...order.toJSON(),
+          createdAt: moscowTime.format()
+        };
+      });
+
+      return res.json({ orders: moscowOrders, settings, users });
     }
 
     async getAllStat(req, res) {
         const orders = await Order.findAll({
-          attributes: ['price', 'createdAt']
+          attributes: ['price', 'createdAt', 'phone']
         });
       
         return res.json({orders});
@@ -318,6 +323,28 @@ class orderController{
       });
       return res.json(orders);
     }
+
+
+    async changeAboutUser(req, res) {
+      try {
+        
+        const id = req.params.id;
+        const {aboutUser}  = req.body;
+        const [updated] = await User.update(
+          { aboutUser },
+          { where: { id: id } }
+        );
+
+        if (updated === 0) {
+          return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+
+        return res.json({ success: true });
+      } catch (error) {
+        return res.status(500).json({ error: error.message });
+      }
+    }
+    
   
 }
 
