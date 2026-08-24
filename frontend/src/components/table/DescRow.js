@@ -14,7 +14,7 @@ import { $host } from '../../http';
 import style from './DescRow.module.css'
 import { Button } from '../../ui/button';
 import MyModalComponent from './DialogEP';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../ui/dialog';
 
 
 export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged, setIsChanged }) => {
@@ -637,7 +637,37 @@ const regions = [
   'Гродненская область', 'Минская область', 'Могилёвская область'
 ];
 
+const [aboutUser, setAboutUser] = useState(order.user.aboutUser || '');
+const [smsText, setSmsText] = useState('');
 
+const saveAboutUser = async () => {
+  try {
+    await $host.put(`/api/order/changeAboutUser/${order.userId}`, { aboutUser });
+    alert('Сохранено'); 
+  } catch (error) {
+    console.error(error);
+    alert('Ошибка сохранения');
+  }
+};
+
+const sendSmsNew = async () => {
+  if (!smsText.trim()) {
+    alert('Введите текст SMS');
+    return;
+  }
+  try {
+    const userConfirmation = window.confirm(`Отправить смс?`);
+    
+    if (userConfirmation) {
+      await sendSms(order.user.phone, smsText)
+      alert('смс успешно отправлено');
+    }
+    setSmsText('');
+  } catch (error) {
+    console.error(error);
+    alert('Ошибка отправки');
+  }
+};
 
 
 
@@ -654,69 +684,112 @@ const regions = [
           <DialogTitle className="text-base">
             Все заказы от{' '}
             <span className="text-teal-700 font-bold text-xl">
-              {order.user.FIO}
+              {order.user.FIO} {' '}
             </span>
+            ({order.user.phone})
           </DialogTitle>
+         <DialogDescription className='h-full overflow-hidden' asChild>
+          <div>
+              <div className='flex h-[calc(100%-50px)] flex-col justify-between gap-10'>
+                <div className="flex-[3] max-h-[400px] overflow-auto mt-4 ">
+                                <table className="w-full text-sm">
+                                  <thead className="sticky top-0 bg-gray-50">
+                                    <tr className="border-b">
+                                      <th className="text-left py-2">Дата</th>
+                                      <th className="text-left py-2">ФИО</th>
+                                      <th className="text-left py-2">Город</th>
+                                      <th className="text-left py-2">Адрес</th>
+                                      <th className="text-left py-2">Тип</th>
+                                      <th className="text-left py-2">Заказ</th>
+                                      <th className="text-left py-2">Сумма</th>
+                                      <th className="text-left py-2">Источник</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {ordersModal.map((el) => (
+                                      <tr key={el.order_number} className="border-b hover:bg-gray-50">
+                                        <td className="py-2">
+                                          {new Date(el.createdAt).toLocaleDateString('ru-RU')}
+                                        </td>
+                                        <td className="py-2 px-2">
+                                          <div className="truncate block max-w-[200px]" title={el.FIO}>
+                                            {el.FIO}
+                                          </div>
+                                        </td>
+                                        <td className="py-2">{el.city}</td>
+                                        <td className="py-2 px-2">
+                                          <div className="truncate block max-w-[200px]" title={el.adress}>
+                                            {el.adress}
+                                          </div>
+                                        </td>
+                                        <td className="py-2">{el.typePost}</td>
+                                        <td className="py-2 px-2">
+                                          <div className="truncate block max-w-[200px]" title={photoLine(el.photos)}>
+                                            {photoLine(el.photos)}
+                                          </div>
+                                        </td>
+                                        <td className="py-2">{el.price}</td>
+                                        <td className="py-2 pl-2">{el.origin}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                </div>
+
+                <div className='flex-[2] flex flex-row justify-between gap-10 '>
+                  {/* Поле "О клиенте" */}
+                  <div className="flex-1 flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">О клиенте</label>
+                    <textarea
+                      value={aboutUser}
+                      onChange={(e) => setAboutUser(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+                      rows={3}
+                      placeholder="Дополнительная информация о клиенте..."
+                    />
+                    <div className="flex justify-center">
+                      <button
+                        onClick={saveAboutUser}
+                        className={`px-4 py-2 ${order.user.aboutUser === aboutUser ? 'bg-gray-500' : 'bg-green-700'} text-white rounded-lg text-sm transition`}
+                      >
+                        Сохранить
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Поле для SMS */}
+                  <div className="flex-1 flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Текст SMS</label>
+                    <textarea
+                      value={smsText}
+                      onChange={(e) => setSmsText(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none"
+                      rows={2}
+                      placeholder="Введите текст SMS..."
+                    />
+                    <div className="flex justify-center">
+                      <button
+                        onClick={sendSmsNew}
+                        className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm  transition"
+                      >
+                        Отправить SMS
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+
+              {/* Нижняя часть — фиксирована */}
+              <div className='h-[50px] mt-4 flex flex-row justify-end gap-3 text-teal-800 '>
+                <label>Всего заказов: {order.user.orderCount} шт</label>
+                <label>Сумма заказов: {order.user.totalOrderSum} р</label>
+              </div>
+           </div>
+          </DialogDescription>
         </DialogHeader>
         
-        {/* Прокручиваемая область */}
-        <div className="flex-1 overflow-auto mt-4">
-          <table className="w-full text-sm ">
-            <thead className="sticky top-0 bg-gray-50 ">
-              <tr className="border-b">
-                <th className="text-left py-2">Дата</th>
-                <th className="text-left py-2">ФИО</th>
-                <th className="text-left py-2">Город</th>
-                <th className="text-left py-2">Адрес</th>
-                <th className="text-left py-2">Тип</th>
-                <th className="text-left py-2">Заказ</th>
-                <th className="text-left py-2">Сумма</th>
-                <th className="text-left py-2">Источник</th>
-              </tr>
-            </thead>
-            <tbody >
-              {ordersModal.map((el) => (
-                <tr key={el.order_number} className="border-b hover:bg-gray-50 ">
-                  <td className="py-2 ">
-                    {new Date(el.createdAt).toLocaleDateString('ru-RU')}
-                  </td>
-                  <td className="py-2 px-2">
-                    <div 
-                      className="truncate block max-w-[200px]" 
-                      title={el.FIO}
-                    >
-                      {el.FIO}
-                    </div>
-                  </td>
-                  <td className="py-2">{el.city}</td>
-                  <td className="py-2  px-2">
-                    <div 
-                      className="truncate block max-w-[200px]" 
-                      title={el.adress}
-                    >
-                      {el.adress}
-                    </div>
-                  </td>
-                  <td className="py-2">{el.typePost}</td>
-                  <td className="py-2  px-2">
-                    <div 
-                      className="truncate block max-w-[200px]" 
-                      title={photoLine(el.photos)}
-                    >
-                      {photoLine(el.photos)}
-                    </div>
-                  </td>
-                  <td className="py-2">{el.price} </td>
-                  <td className="py-2  pl-2">{el.origin}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className='flex flex-row justify-end gap-3 m-3 text-teal-800'>
-              <label className=''> Всего заказов: {order.user.orderCount} шт</label>
-              <label className=''>Сумма заказов: {order.user.totalOrderSum} р</label>
-            </div>
+        
        
       </DialogContent>
     </Dialog>

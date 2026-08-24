@@ -16,5 +16,7 @@ router.delete('/deleteUser/:id', orderController.deleteUser)
 router.post('/getOneUser', orderController.getOneUser)
 router.put('/changeDataOrder/:id', orderController.changeDataOrder)
 router.get('/ordersUser/:id', orderController.ordersUser)
+router.put('/changeAboutUser/:id', orderController.changeAboutUser)
+
 
 module.exports = router

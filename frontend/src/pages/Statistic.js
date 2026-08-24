@@ -3,20 +3,14 @@ import {useEffect, useState} from 'react'
 import './stylePages.css'
 import { $host } from "../http"
 import { NavBar } from "../components/admin/NavBar"
-import { ChartConfig,
-    ChartContainer,
-    ChartLegend,
-    ChartLegendContent,
-    ChartTooltip,
-    ChartTooltipContent, } from "../ui/chart"
-  import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Bar, BarChart } from 'recharts';
+  import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Statistic = () =>{
     
     const [order, setOrder] = useState([])
     const [days, setDays] = useState([])
     const [weeks, setWeeks] = useState([])
-    const [type, setType] = useState('month') //тип селекта для отображения
+    const [type, setType] = useState('newClientsMonth') //тип селекта для отображения
 
     useEffect(()=>{
 
@@ -50,12 +44,6 @@ const Statistic = () =>{
         setWeeks(week)
         console.log()
     },[])
-
-
-    const monthNames = [
-        "январь", "февраль", "март", "апрель", "май", "июнь", 
-        "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"
-      ];
       
       
       // Преобразуем объект обратно в массив и сортируем по дате
@@ -154,9 +142,208 @@ const Statistic = () =>{
           
       }
 
-      const ordersByMonth = order ? generateMonthlySum(order) : [];
+    const ordersByMonth = order ? generateMonthlySum(order) : [];
 
 
+function generateNewClientsByMonth(orders) {
+  const clientsWithOrders = new Set();
+
+  const sortedOrders = [...orders].sort(
+    (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+  );
+
+  const groupedClients = sortedOrders.reduce((acc, order) => {
+    const clientId = order.phone; // укажите ваше уникальное поле клиента
+
+    const date = new Date(order.createdAt);
+    const year = date.getFullYear();
+    const monthNumber = String(date.getMonth() + 1).padStart(2, '0');
+    const key = `${year}-${monthNumber}`;
+
+    if (!acc[key]) {
+      acc[key] = {
+        key,
+        month: `${monthNumber}.${year}`,
+        total: 0,       // новые клиенты
+        ordersCount: 0  // все заказы за месяц
+      };
+    }
+
+    // Каждый заказ учитываем в общем числе заказов месяца
+    acc[key].ordersCount += 1;
+
+    // Если у заказа нет id клиента — не включаем его в новых клиентов
+    if (!clientId) return acc;
+
+    // Первый заказ клиента — это новый клиент
+    if (!clientsWithOrders.has(clientId)) {
+      acc[key].total += 1;
+      clientsWithOrders.add(clientId);
+    }
+
+    return acc;
+  }, {});
+
+  return Object.values(groupedClients).sort((a, b) =>
+    b.key.localeCompare(a.key)
+  );
+}
+
+    const newClientsByMonth = order
+      ? generateNewClientsByMonth(order)
+      : [];
+
+   function NewClientsTable({ newClientsByMonth }) {
+  // Превращаем массив в структуру:
+  // { 2025: { 1: 12, 2: 8, ... }, 2024: {...} }
+const clientsByYear = newClientsByMonth.reduce((acc, item) => {
+  const [year, month] = item.key.split('-');
+
+  if (!acc[year]) {
+    acc[year] = {};
+  }
+
+  acc[year][Number(month)] = {
+    newClients: item.total,
+    ordersCount: item.ordersCount
+  };
+
+  return acc;
+}, {});
+
+  const years = Object.keys(clientsByYear).sort((a, b) => b - a);
+
+  const monthNames = [
+    'Янв', 'Фев', 'Мар', 'Апр',
+    'Май', 'Июн', 'Июл', 'Авг',
+    'Сен', 'Окт', 'Ноя', 'Дек'
+  ];
+
+  return (
+    <div style={{ overflowX: 'auto', margin: '20px auto', maxWidth: '1200px' }}>
+      <div style={{ fontWeight: 'bolder', marginBottom: '10px' }}>
+        Новые клиенты
+      </div>
+
+      <table
+        style={{
+          width: '100%',
+          minWidth: '800px',
+          borderCollapse: 'collapse',
+          backgroundColor: '#f0f0f0'
+        }}
+      >
+        <thead>
+          <tr>
+            <th
+              style={{
+                padding: '10px',
+                textAlign: 'left',
+                borderBottom: '2px solid black'
+              }}
+            >
+              Год
+            </th>
+
+            {monthNames.map(month => (
+              <th
+                key={month}
+                style={{
+                  padding: '10px',
+                  textAlign: 'center',
+                  borderBottom: '2px solid black'
+                }}
+              >
+                {month}
+              </th>
+            ))}
+
+            <th
+              style={{
+                padding: '10px',
+                textAlign: 'center',
+                borderBottom: '2px solid black'
+              }}
+            >
+              Всего
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {years.map(year => {
+            const yearTotal = Object.values(clientsByYear[year]).reduce(
+  (sum, monthData) => {
+    sum.newClients += monthData.newClients;
+    sum.ordersCount += monthData.ordersCount;
+
+    return sum;
+  },
+  {
+    newClients: 0,
+    ordersCount: 0
+  }
+);
+
+            return (
+              <tr key={year}>
+                <td
+                  style={{
+                    padding: '10px',
+                    fontWeight: 'bolder',
+                    borderBottom: '1px solid black'
+                  }}
+                >
+                  {year}
+                </td>
+
+                {Array.from({ length: 12 }, (_, index) => {
+  const monthNumber = index + 1;
+
+  // Если в месяце не было заказов — ставим нули
+  const monthData = clientsByYear[year][monthNumber] || {
+    newClients: 0,
+    ordersCount: 0
+  };
+
+  return (
+    <td
+      key={monthNumber}
+      style={{
+        padding: '10px',
+        textAlign: 'center',
+        borderBottom: '1px solid black'
+      }}
+    >
+      {monthData.newClients.toLocaleString('ru-RU')}
+      <span style={{ color: '#777', fontSize: '12px' }}>
+        {' '}({monthData.ordersCount.toLocaleString('ru-RU')})
+      </span>
+    </td>
+  );
+})}
+
+                <td
+  style={{
+    padding: '10px',
+    textAlign: 'center',
+    fontWeight: 'bolder',
+    borderBottom: '1px solid black'
+  }}
+>
+  {yearTotal.newClients.toLocaleString('ru-RU')}
+  <span style={{ color: '#777', fontSize: '12px' }}>
+    {' '}({yearTotal.ordersCount.toLocaleString('ru-RU')})
+  </span>
+</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
     return(
         <>
@@ -168,6 +355,7 @@ const Statistic = () =>{
                     <option value='day'>day</option>
                     <option value='month'>month</option>
                     <option value='graphic'>graphic</option>
+                    <option value='newClientsMonth'>newClientsMonth</option>
                 </FormSelect>
             </Col>
         </Row>
@@ -258,7 +446,7 @@ const Statistic = () =>{
                     bottom: 5,
                   }}
                 >
-                  <CartesianGrid strokeDasharray="10 5" /> //10px линия, 1px пробел (пунктирная сетка)
+                  <CartesianGrid strokeDasharray="10 5" /> {/*10px линия, 1px пробел (пунктирная сетка)*/}
                   <XAxis 
                     dataKey="month" // например "2023-02"
                     tickFormatter={(dateKey) => {
@@ -278,6 +466,11 @@ const Statistic = () =>{
             </div>
 
         }
+
+        {type === 'newClientsMonth' && (
+         <NewClientsTable newClientsByMonth={newClientsByMonth} />
+        )}
+        
         
         </>
     )

@@ -120,7 +120,7 @@ export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setS
 
     const ShowData = () =>{
 
-        const data = `${order.createdAt.split("T")[0].split("-")[2]}.${order.createdAt.split("T")[0].split("-")[1]}`
+        const data = `${order.createdAt.split("T")[0].split("-")[2]}.${order.createdAt.split("T")[0].split("-")[1]}.${order.createdAt.slice(2, 4)}`
         const time = `${order.createdAt.split("T")[1].split(":")[0]}:${order.createdAt.split("T")[1].split(":")[1]}`
         return `${data} (${time})`
     }
