@@ -228,53 +228,73 @@ class authController {
     return res.json(moscowData);
     }
 
-    async clients (req, res){
-        const { 
-            page,
-            limit,
-            search,
-            sortBy,
-            sortDir
-        } = req.query;
-        
-        const offset = (page - 1) * limit;
+   async clients (req, res){
+            const { 
+                page,
+                limit,
+                search,
+                sortBy,
+                sortDir
+            } = req.query;
+            
+            const offset = (page - 1) * limit;
 
-        // Условия поиска
-        const where = {};
-        if (search) {
-            where[Op.or] = [
-                { FIO: { [Op.like]: `%${search}%` } },
-                { phone: { [Op.like]: `%${search}%` } },
-                { aboutUser: { [Op.like]: `%${search}%` } }
-            ];
-        }
+            // Условия поиска
+            const where = {};
+            if (search) {
+                where[Op.or] = [
+                    { FIO: { [Op.like]: `%${search}%` } },
+                    { phone: { [Op.like]: `%${search}%` } },
+                    { aboutUser: { [Op.like]: `%${search}%` } }
+                ];
+            }
 
-        const order = [];
-        if (sortBy && sortDir) {
-            order.push([sortBy, sortDir.toUpperCase()]);
-        } else {
-            order.push(['createdAt', 'DESC']); // сортировка по умолчанию
-        }
+            const order = [];
+            if (sortBy && sortDir) {
+                order.push([sortBy, sortDir.toUpperCase()]);
+            } else {
+                order.push(['createdAt', 'DESC']);
+            }
 
-        const { count, rows } = await User.findAndCountAll({
-            where,                    // добавляем условие
-            limit: parseInt(limit),
-            offset: parseInt(offset),
-            attributes: { 
-                exclude: ['oblast', 'raion', 'updatedAt'] // поля которые НЕ нужны
-            },
-            order
-        });
-        
-        res.json({
-            data: rows,
-            total: count,
-            page: parseInt(page),
-            pageSize: parseInt(limit),
-            totalPage: Math.ceil(count / limit)
-        });
-    };
-
+            const { count, rows } = await User.findAndCountAll({
+                where,
+                limit: parseInt(limit),
+                offset: parseInt(offset),
+                attributes: {
+                    exclude: ['oblast', 'raion', 'updatedAt'],
+                    include: [
+                        // Дата последнего заказа
+                        [
+                            sequelize.literal(`(
+                                SELECT MAX("createdAt") 
+                                FROM "orders"
+                                WHERE "orders"."userId" = "user"."id"
+                            )`),
+                            'lastOrderDate'
+                        ]
+                    ]
+                },
+                order,
+                logging: false
+            });
+            
+            // Форматируем дату для каждого клиента
+            const formattedRows = rows.map(user => {
+                const data = user.toJSON();
+                if (data.lastOrderDate) {
+                    data.lastOrderDate = new Date(data.lastOrderDate).toLocaleDateString('ru-RU');
+                }
+                return data;
+            });
+            
+            res.json({
+                data: formattedRows,
+                total: count,
+                page: parseInt(page),
+                pageSize: parseInt(limit),
+                totalPage: Math.ceil(count / limit)
+            });
+        };
     async clientUpdate(req,res)
     {
         try {

@@ -26,52 +26,12 @@ export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setS
         event.stopPropagation();
       };
       
-      const copyCode = () =>{
-        let text = ''
-        
-        if(order.typePost === 'E'){
-            text = 
-        `
-        Здравствуйте. Заказ отправили. 
-    Сумма наложенного платежа: ${(Number(order.price)+Number(order.price_deliver)).toFixed(2)}р 
-    Код для отслеживания: ${order.codeOutside}
-        `
-        }
-    
-        if(order.typePost === 'R' && !order.firstClass){
-            text = 
-        `
-        Здравствуйте. Заказ отправили. 
-    Сумма наложенного платежа: ${order.price}р
-    Код для отслеживания: ${order.codeOutside}
-        `
-        }
-    
-        if(order.typePost === 'R' && order.firstClass){
-            text = 
-        `
-        Здравствуйте. Письмо отправили. Вот данные для оплаты:
-    
-    4255 1901 3053 1026
-    12/26
-    
-    сумма ${order.price}р за заказ +2р пересылка. Итого ${(Number(order.price)+2).toFixed(2)}р
-    ${order.codeOutside} - код для отслеживания
-        `
-        }
-        
-    
-        return text
-    }
+
 
     const Warning = () =>{
         let a = []
         if(order.codeOutside){
-            a.push(<CopyToClipboard text={order.codeOutside}>
-                <i 
-                className="bi bi-qr-code" 
-                style={{marginLeft: 5}}
-                > </i></CopyToClipboard>)
+            a.push(<i className="bi bi-qr-code" style={{marginLeft: 5}}> </i>)
          }
         if(order.typePost === "R2"){
            a.push( <i className="bi bi-1-square-fill pr-1" style={{color:'red', marginLeft: 5}}> </i>)
@@ -163,25 +123,21 @@ export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setS
                         {ShowOrigin()}
                     </div>
                     <div className='col_data'> {ShowData()}</div>
-                    <CopyToClipboard text={order.typePost.split('')[0] + (order.order_number%1000) +' ' + order?.user?.FIO}>
+                    <CopyToClipboard text={order.typePost.split('')[0] + (order.order_number%1000) +' ' + order?.user?.FIO.split(' ')[0]}>
                     <div className='col_number' style={{color: 'darkgreen', fontWeight: 'bold', minWidth: 60}}>
                         {order.typePost.split('')[0] + (order.order_number%1000) }
                     </div>
                     </CopyToClipboard>
-                    <CopyToClipboard text={order.FIO}>
-                        <div className='col_fio overflow NoMobile' >
-                                {order?.user?.FIO}
-                        </div>
-                    </CopyToClipboard>
+                    <div className='col_fio overflow NoMobile' >
+                            {order?.user?.FIO}
+                    </div>
                     <div className='col_phone NoMobile'  style={{color: textColor}}>
                         {formatPhoneNumber(order.phone)}
                     </div>
                     <div className='col_city overflow NoMobile'>{order.city}</div>
                     <div className='col_photo overflow '>{photo()}</div>
                     <div className='col_warn'>{Warning()}</div>
-                    <CopyToClipboard text={copyCode()}>
                     <div className='col_price' >{(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р</div>
-                    </CopyToClipboard>
                     <select className="select_col" style={{backgroundColor: ColorBG[order.status-1]}} value={order.status} onChange={(e)=>ChangeStatus(e)} >
                         <option value="0">новый</option>
                         <option value="1">принят</option>

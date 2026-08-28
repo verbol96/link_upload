@@ -70,22 +70,23 @@ export const downloadFiles = async(file, onProgress) => {
 }
 
 export const displayFileImg = async (id) => {
+  if (!id) return null;
 
-   
   try {
     const response = await $host.get(`/api/file/thumb?id=${id}`, {
-      responseType: 'blob' // Указываем, что ожидаем ответ в формате Blob
+      responseType: 'blob'
     });
-    
-    // Создание URL из Blob для использования, например, в элементе <img>
-    const url = window.URL.createObjectURL(response.data);
 
-    return url;
+    // Если ответ пустой или статус не 200
+    if (!response?.data || response.data.size === 0) {
+      return null;
+    }
+
+    return window.URL.createObjectURL(response.data);
+
   } catch (error) {
-    console.log(id)
-    //console.error(error);
-    return null; // или можете выбросить ошибку, смотря что вам нужно
+    // 404 или любая другая ошибка — просто возвращаем null
+    //console.warn(`Файл ${id} не загружен:`, error.response?.status || error.message);
+    return null;
   }
-};
-
-
+}

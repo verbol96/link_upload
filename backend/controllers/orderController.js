@@ -158,7 +158,7 @@ class orderController{
 
       const settings = await Settings.findAll();
       const users = await User.findAll({
-        attributes: { exclude: ['createdAt', 'updatedAt', 'role'] }
+        attributes: { exclude: ['createdAt', 'updatedAt'] }
       });
 
       const moscowOrders = orders.map(order => {

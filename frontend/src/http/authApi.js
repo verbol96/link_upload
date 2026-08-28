@@ -69,26 +69,46 @@ export const deleteUsersWithoutOrders = async()=>{
     return data
 }
 
-export const setLogUser = async() =>{
-    
-    const parser = new UAParser();
-    const result = parser.getResult();
+export const setLogUser = async () => {
+  try {
+    let browserName = 'unknown';
+    let browserVersion = 'unknown';
+    let osName = 'unknown';
+    let osVersion = 'unknown';
+    let deviceModel = 'unknown';
 
-    const browserName = result.browser.name;
-    const browserVersion = result.browser.version;
-    const osName = result.os.name;
-    const osVersion = result.os.version;
-    const deviceModel = result.device.model;
- 
-    const dataLog = {
-      device: deviceModel,
-      browser: browserName +' ('+ browserVersion+')',
-      OS: osName +' ('+ osVersion+')',
-      screen: window.screen.width+'x'+window.screen.height
+    try {
+      const parser = new UAParser();
+      const result = parser.getResult();
+      
+      browserName = result.browser?.name || 'unknown';
+      browserVersion = result.browser?.version || 'unknown';
+      osName = result.os?.name || 'unknown';
+      osVersion = result.os?.version || 'unknown';
+      deviceModel = result.device?.model || 'unknown';
+    } catch (uaError) {
+      console.warn('UA Parser error:', uaError.message);
+      // fallback — значения уже unknown
     }
 
-    await $host.post('/api/auth/setLogUser', {dataLog})
-}
+    const screenWidth = window?.screen?.width || 0;
+    const screenHeight = window?.screen?.height || 0;
+
+    const dataLog = {
+      device: deviceModel,
+      browser: `${browserName} (${browserVersion})`,
+      OS: `${osName} (${osVersion})`,
+      screen: `${screenWidth}x${screenHeight}`
+    };
+
+    const data = await $host.post('/api/auth/setLogUser', { dataLog });
+    return data
+    
+  } catch (error) {
+    console.error('setLogUser error:', error.message);
+    // Не прерываем выполнение приложения
+  }
+};
 
 export const getLogUser = async() =>{
     const {data} = await $host.get('/api/auth/getLogUser')

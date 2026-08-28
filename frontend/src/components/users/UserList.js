@@ -61,8 +61,12 @@ export const UserList = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({});
+    const [ordersModal, setOrdersModal] = useState([]);
+    
 
-    const handleRowDoubleClick = (user) => {
+    const handleRowDoubleClick = async(user) => {
+        const {data} = await $host.get(`/api/order/ordersUser/${user.id}`)
+        setOrdersModal(data)
         setSelectedUser(user);
         setFormData(user);
         setIsModalOpen(true);
@@ -104,15 +108,6 @@ export const UserList = () => {
         }
     }
 
-    const [isOpen1, setIsOpen1] = useState(false)
-    const [ordersModal, setOrdersModal] = useState([])
-    
-    const openModalOrders = async() =>{
-      
-      const {data} = await $host.get(`/api/order/ordersUser/${selectedUser.id}`)
-      setOrdersModal(data)
-      setIsOpen1(true)
-    }
     
     const photoLine = (data) =>{
           return data.reduce((sum, el)=>{
@@ -123,8 +118,14 @@ export const UserList = () => {
             }
         }, '')
     }
+
     
-    
+const [expandedOrder, setExpandedOrder] = useState(null);
+
+const toggleOrder = (orderNumber) => {
+  setExpandedOrder(expandedOrder === orderNumber ? null : orderNumber);
+  //console.log(ordersModal)
+};
 
     return(
         <>
@@ -194,16 +195,19 @@ export const UserList = () => {
                             ) : (
                             data.map(client => (
                                 <tr key={client.id} className="hover:bg-gray-50" onDoubleClick={() => handleRowDoubleClick(client)}>
-                                <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.FIO}</td>
-                                <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.phone}</td>
-                                <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.role}</td>
-                                <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.orderCount}</td>
-                                <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.totalOrderSum}</td>
-                                <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.city}</td>
-                                <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.adress}</td>
-                                <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px] text-gray-600">
-                                    {new Date(client.createdAt).toLocaleDateString('ru-RU')}
-                                </td>
+                                  <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.FIO}</td>
+                                  <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.phone}</td>
+                                  <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.role}</td>
+                                  <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.orderCount}</td>
+                                  <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.totalOrderSum}</td>
+                                  <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.city}</td>
+                                  <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">{client.adress}</td>
+                                  <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px] text-gray-600">
+                                      {new Date(client.createdAt).toLocaleDateString('ru-RU')}
+                                  </td>
+                                  <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px] text-gray-600">
+                                      {client.lastOrderDate}
+                                  </td>
                                 </tr>
                             ))
                             )}
@@ -238,183 +242,162 @@ export const UserList = () => {
         </div>
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-2xl" onOpenAutoFocus={(e) => e.preventDefault()} >
+        <DialogContent className="max-w-[90%] h-[90vh] " onOpenAutoFocus={(e) => e.preventDefault()} >
           <DialogHeader>
-            <DialogTitle>Редактирование клиента</DialogTitle>
+            <DialogTitle className='h-[20px]'>Редактирование клиента</DialogTitle>
             <DialogDescription className="sr-only">
                 Форма редактирования данных клиента
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">ФИО</label>
-              <Input
-                name="FIO"
-                value={formData.FIO || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Телефон</label>
-              <Input
-                name="phone"
-                value={formData.phone || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Роль</label>
-              <Input
-                name="role"
-                value={formData.role || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Тип почты</label>
-              <Input
-                name="typePost"
-                value={formData.typePost || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Индекс</label>
-              <Input
-                name="postCode"
-                value={formData.postCode || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Город</label>
-              <Input
-                name="city"
-                value={formData.city || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="col-span-2 space-y-2">
-              <label className="text-sm font-medium">Адрес</label>
-              <Input
-                name="adress"
-                value={formData.adress || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">О клиенте</label>
-              <Textarea
-                 name="aboutUser"
-                 value={formData.aboutUser || ''}
-                 onChange={handleInputChange}
-              />         
-          </div>
-
-          <div className="flex flex-row justify-between">
-            <div>
-                <Button  variant="outline" onClick={()=>openModalOrders()}>
-                    Показать все заказы
-                </Button>
-            </div>
-            <div className="flex  gap-2">
-                <Button variant="destructive" onClick={() => setIsModalOpen(false)}>
-                удалить
-                </Button>
-                <Button onClick={handleSave}>
+          <div className="flex flex-row gap-5 overflow-auto">
+            <div className=" flex flex-col flex-[30%] bg-gray-100 p-3 rounded-md">
+              <div className="">
+                <label className="text-sm font-medium">ФИО</label>
+                <Input
+                  name="FIO"
+                  value={formData.FIO || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="">
+                <label className="text-sm font-medium">Телефон</label>
+                <Input
+                  name="phone"
+                  value={formData.phone || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="">
+                <label className="text-sm font-medium">Роль</label>
+                <Input
+                  name="role"
+                  value={formData.role || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="">
+                <label className="text-sm font-medium">Тип почты</label>
+                <Input
+                  name="typePost"
+                  value={formData.typePost || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="">
+                <label className="text-sm font-medium">Индекс</label>
+                <Input
+                  name="postCode"
+                  value={formData.postCode || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="s">
+                <label className="text-sm font-medium">Город</label>
+                <Input
+                  name="city"
+                  value={formData.city || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="">
+                <label className="text-sm font-medium">Адрес</label>
+                <Input
+                  name="adress"
+                  value={formData.adress || ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium">О клиенте</label>
+                <Textarea
+                  name="aboutUser"
+                  value={formData.aboutUser || ''}
+                  onChange={handleInputChange}
+                />         
+              </div>
+              <div>
+                <Button className='mt-4' onClick={handleSave}>
                 Сохранить
                 </Button>
+              </div>
+               
+            </div>
+            
+            <div className="flex flex-[70%]  h-full ">
+                  <div className="flex flex-col w-full h-full">
+                    
+                    <div className="flex-1 overflow-auto">
+                        <div className="w-full text-sm">
+                        {/* Заголовки */}
+                        <div className="sticky bg-white top-0 border-b flex font-semibold  z-10">
+                          <div className="flex-1 py-2 px-2">Дата</div>
+                          <div className="flex-1 py-2 px-2">ФИО</div>
+                          <div className="flex-1 py-2 px-2">Город</div>
+                          <div className="flex-1 py-2 px-2">Тип</div>
+                          <div className="flex-1 py-2 px-2">Заказ</div>
+                          <div className="flex-1 py-2 px-2">Сумма</div>
+                          <div className="flex-1 py-2 px-2">Источник</div>
+                        </div>
+
+                        {ordersModal.map((el) => (
+                          <div key={el.order_number}>
+                            {/* Строка */}
+                            <div 
+                             className={`flex border-b hover:bg-gray-200 cursor-pointer ${expandedOrder === el.order_number ? 'bg-gray-200' : ''}`}
+                              onClick={() => toggleOrder(el.order_number)}
+                            >
+                              <div className="flex-1 py-2 px-2">{new Date(el.createdAt).toLocaleDateString('ru-RU')}</div>
+                              <div className="flex-1 py-2 px-2 truncate">{el.FIO}</div>
+                              <div className="flex-1 py-2 px-2 truncate">{el.city}</div>
+                              <div className="flex-1 py-2 px-2">{el.typePost}</div>
+                              <div className="flex-1 py-2 px-2 truncate">{photoLine(el.photos)}</div>
+                              <div className="flex-1 py-2 px-2">{el.price}</div>
+                              <div className="flex-1 py-2 px-2">{el.origin}</div>
+                            </div>
+
+                            {/* Раскрывающийся блок */}
+                            {expandedOrder === el.order_number && (
+                              <div className="bg-gray-200 p-4 border-b">
+                                  <div><strong>ФИО:</strong> {el.FIO}</div>
+                                  <div><strong>телефон:</strong> {el.phone}</div>
+
+                                  <div><strong>Город:</strong> {el.city}</div>
+                                  <div><strong>Адрес:</strong> {el.adress}</div>
+                                  <div><strong>Код:</strong> {el.codeOutside}</div>
+                                  <div><strong>заметки:</strong> {el.notes}</div>
+                                  <div><strong>причениания:</strong> {el.other}</div>
+                                  <div><strong>фото:</strong> {photoLine(el.photos)}</div>
+                                  <div><strong>цена:</strong> {el.price}р + {el.price_deliver}р</div>
+                                  
+                                  
+                                
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                      
+                    <div className='flex flex-row justify-end gap-5 mt-3 text-sm bg-gray-100 w-full py-1 px-5'>
+                      <label className=''> Всего заказов: {selectedUser?.orderCount  || ''} шт</label>
+                      <label className=''>Сумма заказов: {selectedUser?.totalOrderSum || ''} р</label>
+                    </div>
+
+
+                  </div>
+            </div>
           </div>
-          </div>
+
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isOpen1} onOpenChange={setIsOpen1}>
-            <DialogContent 
-            onOpenAutoFocus={(e) => e.preventDefault()}
-              aria-describedby={undefined} 
-              className="max-w-[80vw] max-h-[90vh] w-[80vw] h-[90vh] p-3"
-              style={{ maxWidth: '90vw', maxHeight: '90vh' }}
-            >
-              <DialogHeader className="flex-shrink-0">
-                <DialogTitle className="text-base">
-                  Все заказы от{' '}
-                  <span className="text-teal-700 font-bold text-xl">
-                    {selectedUser?.FIO || ''}
-                  </span>
-                </DialogTitle>
-              </DialogHeader>
-              
-              {/* Прокручиваемая область */}
-              <div className="flex-1 overflow-auto mt-4">
-                <table className="w-full text-sm ">
-                  <thead className="sticky top-0 bg-gray-50 ">
-                    <tr className="border-b">
-                      <th className="text-left py-2">Дата</th>
-                      <th className="text-left py-2">ФИО</th>
-                      <th className="text-left py-2">Город</th>
-                      <th className="text-left py-2">Адрес</th>
-                      <th className="text-left py-2">Тип</th>
-                      <th className="text-left py-2">Заказ</th>
-                      <th className="text-left py-2">Сумма</th>
-                      <th className="text-left py-2">Источник</th>
-                    </tr>
-                  </thead>
-                  <tbody >
-                    {ordersModal.map((el) => (
-                      <tr key={el.order_number} className="border-b hover:bg-gray-50 ">
-                        <td className="py-2 ">
-                          {new Date(el.createdAt).toLocaleDateString('ru-RU')}
-                        </td>
-                        <td className="py-2 px-2">
-                          <div 
-                            className="truncate block max-w-[200px]" 
-                            title={el.FIO}
-                          >
-                            {el.FIO}
-                          </div>
-                        </td>
-                        <td className="py-2">{el.city}</td>
-                        <td className="py-2  px-2">
-                          <div 
-                            className="truncate block max-w-[200px]" 
-                            title={el.adress}
-                          >
-                            {el.adress}
-                          </div>
-                        </td>
-                        <td className="py-2">{el.typePost}</td>
-                        <td className="py-2  px-2">
-                          <div 
-                            className="truncate max-w-[200px]" 
-                            title={photoLine(el.photos)}
-                          >
-                            {photoLine(el.photos)}
-                          </div>
-                        </td>
-                        <td className="py-2">{el.price} </td>
-                        <td className="py-2  pl-2">{el.origin}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className='flex flex-row justify-end gap-3 m-3 text-teal-800'>
-                <label className=''> Всего заказов: {selectedUser?.orderCount  || ''} шт</label>
-                <label className=''>Сумма заказов: {selectedUser?.totalOrderSum || ''} р</label>
-                </div>
-             
-            </DialogContent>
-          </Dialog>
 
 
       </>
