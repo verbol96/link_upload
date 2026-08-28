@@ -187,7 +187,8 @@ class settingsController{
               parent: file[i].parent,
               createdAt: file[i].createdAt,
               updatedAt: file[i].updatedAt,
-              photoId: file[i].photoId
+              photoId: file[i].photoId,
+              isDownload: file[i].isDownload
           });
       }
 

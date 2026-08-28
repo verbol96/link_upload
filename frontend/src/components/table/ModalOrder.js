@@ -674,6 +674,15 @@ const CheckInvoices = async() =>{
                     <label></label>
                     <label style={{fontSize: 12, flex: 2, color: !isUser() && 'red'}}>{showFIO()}</label>
                     </div>
+                    <div  style={{fontSize: 10}} className='contact_field mt-2'>
+                                  <label>О клиенте:</label>
+                                  <label 
+                                    className="flex-3 whitespace-pre-wrap text-left"
+                                    style={{flex: 2}}
+                                  >
+                                    {users.find(user => user.phone === phoneUser)?.aboutUser || "Нет заметок"}
+                                  </label>
+                                </div>
                     <div className='contact_field'>
                     <label>Штрихкод:</label>
                     <input style={{marginLeft: 5}} value={codeOutside} onChange={e=>setCodeOutside(e.target.value)} /> 

@@ -7,7 +7,6 @@ import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsError, updateS
 import _ from 'lodash';
 import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
-import {CopyToClipboard} from 'react-copy-to-clipboard'
 import { deleteFile} from '../../http/cloudApi';
 import { sendSms } from '../../http/authApi';
 import { $host } from '../../http';
@@ -800,15 +799,11 @@ const sendSmsNew = async () => {
         <div className="card_admin">
           <div>
             <div className='contact_field'>
-              <CopyToClipboard text={FIO}>
               <label>ФИО:</label>
-              </CopyToClipboard>
               <input  style={{marginLeft: 5}} value={FIO} onChange={(e) => setFIO(e.target.value)} />
             </div>
             <div className='contact_field'>
-              <CopyToClipboard text={phone}>
               <label>Телефон:</label>
-              </CopyToClipboard>
               <div className='search_bar'
                 onMouseEnter={handleModalMouseEnterMain}
                 onMouseLeave={handleModalMouseLeaveMain}
@@ -837,17 +832,13 @@ const sendSmsNew = async () => {
           
             
             <div className='contact_field'>
-              <CopyToClipboard text={city}>
               <label>Город:</label>
-              </CopyToClipboard>
               <input value={city} onChange={(e)=>setCity(e.target.value)} /> 
             </div>
             <div className='contact_field'>
-              <CopyToClipboard text={adress}>
               <label>
                 {typePost === 'R' || typePost === 'R1' || typePost === 'R2' ? 'Адрес:' : 'Отделение:'}
               </label>
-              </CopyToClipboard>
               <input value={adress} onChange={(e)=>setAdress(e.target.value)} /> 
             </div>
 
@@ -877,9 +868,7 @@ const sendSmsNew = async () => {
             {typePost === 'R' || typePost === 'R1' || typePost === 'R2'? 
             <>
             <div className='contact_field'>
-              <CopyToClipboard text={postCode}>
               <label>Индекс:</label>
-              </CopyToClipboard>
               <input value={postCode} onChange={(e)=>setPostCode(e.target.value)} /> 
             </div> 
             <div className='contact_field'>

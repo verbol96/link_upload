@@ -281,7 +281,7 @@ const Web = () =>{
         setAmountPhoto(amount)
         
         const data = {
-            "FIO": FIO,
+            "FIO": FIO.toLowerCase(),
             "phone": removeNonNumeric(phone),
             "typePost": typePost,
             "city": city,
