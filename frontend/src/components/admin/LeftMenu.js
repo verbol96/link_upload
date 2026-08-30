@@ -57,12 +57,15 @@ export const LeftMenu = () => {
             >
               Личный кабинет
             </button>
-            <button
-              className={`menu-btn ${isActive('/statistic') ? 'active' : ''}`}
-              onClick={() => Close('/statistic')}
-            >
-              Статистика
-            </button>
+            {user.phone==='+375333258247' && 
+              <button
+                className={`menu-btn ${isActive('/statistic') ? 'active' : ''}`}
+                onClick={() => Close('/statistic')}
+              >
+                Статистика
+              </button>
+            }
+            
             <button
               className={`menu-btn ${isActive('/web') ? 'active' : ''}`}
               onClick={() => Close('/web')}
