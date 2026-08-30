@@ -123,7 +123,7 @@ export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setS
                         {ShowOrigin()}
                     </div>
                     <div className='col_data'> {ShowData()}</div>
-                    <CopyToClipboard text={order.typePost.split('')[0] + (order.order_number%1000) +' ' + order?.user?.FIO.split(' ')[0]}>
+                    <CopyToClipboard text={`${order.typePost?.[0] || ''}${order.order_number % 1000} ${order?.user?.FIO?.split(' ')?.[0] || ''}`.trim()}>
                     <div className='col_number' style={{color: 'darkgreen', fontWeight: 'bold', minWidth: 60}}>
                         {order.typePost.split('')[0] + (order.order_number%1000) }
                     </div>
