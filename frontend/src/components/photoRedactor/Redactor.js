@@ -123,7 +123,6 @@ const savePhotos = async () => {
         photos.map(photo =>
             new Promise((resolve, reject) => {
                 const el = new Image();
-                el.crossOrigin = 'anonymous';
                 el.onload = () => resolve(el);
                 el.onerror = reject;
                 el.src = photo.url;
