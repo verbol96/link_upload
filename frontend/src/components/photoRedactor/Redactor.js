@@ -148,7 +148,7 @@ const savePhotos = async () => {
 
     // =====================================================
     // РЕЖИМ A: perPage === 1 — 1 фото на лист, без сжатия
-    // =====================================================
+    // ===================================================== 
     if (perPage === 1) {
         for (let i = 0; i < photos.length; i++) {
             const photo = photos[i];
@@ -157,7 +157,7 @@ const savePhotos = async () => {
 
             const pixels = pixelsRef.current[photo.id]
                 || computePixelsFromCropData(photo.cropData);
-            //console.log(pixels)
+            console.log(img)
             if (!pixels) continue;
 
             setLoadingCount(prev => prev + 1);
@@ -299,7 +299,13 @@ const savePhotos = async () => {
             const blob = await new Promise(resolve =>
                 canvas.toBlob(resolve, mimeType, quality)
             );
+
             console.log('=== DEBUG SAVE ===');
+            console.log('finalSheetW:', finalSheetW, 'finalSheetH:', finalSheetH);
+            console.log('pxPerCm:', pxPerCm);
+            console.log('pixels:', pixels);
+            console.log('activeSettings:', activeSettings);
+            
             console.log('canvas:', canvas.width, 'x', canvas.height);
             console.log('blob.size:', blob?.size);
             console.log('blob.type:', blob?.type);
