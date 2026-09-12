@@ -1,13 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Cropper from 'react-easy-crop';
-import _ from 'lodash'
-import { $host } from '../../http';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../ui/dialog";
 import ModalSettings from './ModalSettings';
 import ListPhoto from './ListPhoto';
 
-const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActivePhoto, activePhoto, savePhotos, nameOrder, setNameOrder, setNameFormat}) => {
+const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActivePhoto, activePhoto, savePhotos, nameOrder, setNameOrder, setNameFormat,
+    settingsDB, setSettingsDB, activeSettings, setActiveSettings, pixelsRef, outputFormat, setOutputFormat }) => {
     
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
@@ -16,69 +15,66 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
     const [rotation, setRotation] = useState(0)
     const [fieldsWhite, setFieldsWhite] = useState(false)
     const [media, setMedia] = useState()
-    const [pixels, setPixels] = useState()
     
-    const [settingsDB, setSettingsDB] = useState([]) 
-    const [activeSettings, setActiveSettings] = useState()
     const [withFrame, setWithFrame] = useState(false)
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const cropRef = useRef()
-    
+    const isSwitchingRef = useRef(false)
 
-    //загрузка настроек из бд
-    useEffect(()=>{
-        async function getSettingEditor() {
-          const { data } = await $host.get('api/settings/getSettingEditor');
+    const clearPhotos = useCallback(() => {
+        setPhotos([])
+        setCrop({ x: 0, y: 0 })
+        setZoom(1)
+        setZoomDef(1)
+        setCropSize({width: 400, height: 400})
+        setRotation(0)
+        setFieldsWhite(false)
+        setNameOrder('')
+        pixelsRef.current = {}
+    }, [setPhotos, setNameOrder, pixelsRef])
 
-            if(data.length<1){
-                const data1 = {
-                    name: '10x15',
-                    width: 10,
-                    height: 15,
-                    top: 0,
-                    bottom: 0,
-                    left: 0,
-                    right:0
-                }
-                await $host.put('api/settings/changeSettingEditor', data1);
-            }
+    // функция вычисления pixels из crop, cropSize, zoom, media
+    const computePixels = (cropValue) => {
+        if (!media || !cropSize) return null;
 
-            const dataSort = _.sortBy(data, 'name', 'asc')
-            setSettingsDB(dataSort)
-            setActiveSettings(dataSort[0])
-            setNameFormat(dataSort[0].name)
-        }
-        getSettingEditor();
-    },[])
+        const displayW = media.width * zoom;
+        const displayH = media.height * zoom;
 
-    useEffect(() => {
-        //console.log('effect')
-        if (!photos[activePhoto]?.cropData) return;
-        
-        const data = photos[activePhoto].cropData;
-        setCropSize(data.cropSize);
-        setCrop(data.crop);
-        setZoom(data.zoom);
-        setZoomDef(data.zoomDef);
-        setRotation(data.rotation);
-        setFieldsWhite(data.fieldsWhite);
-        setMedia(data.media);
-    }, [activePhoto]); 
+        const kX = media.naturalWidth / displayW;
+        const kY = media.naturalHeight / displayH;
 
-    //при открытии фото адаптируем положение кропа(каждый раз срабатывает)
-    const onMediaLoaded = (mediaSize) => {
+        const pixelsW = cropSize.width * kX;
+        const pixelsH = cropSize.height * kY;
+
+        const x = (media.naturalWidth  - pixelsW) / 2 - cropValue.x * kX;
+        const y = (media.naturalHeight - pixelsH) / 2 - cropValue.y * kY;
+
+        return { x, y, width: pixelsW, height: pixelsH };
+    };
+
+    // При загрузке изображения — инициализация
+    const onMediaLoaded = useCallback((mediaSize) => {
         setMedia(mediaSize)
 
         if (photos[activePhoto]?.cropData?.cropSize !== undefined ){
-        //перенес логику в useEffect
+            // уже инициализировано
+        } else {
+            setRotation(0);
+            if (!cropRef.current?.containerRect) return
             
-        }else{
-        // дальше проходит только при первом открытии
-            const indexDown = 0.8
-            const k = Math.max(activeSettings.top, activeSettings.bottom)
-            const kef = activeSettings.height/(Number(activeSettings.height)+2*k)
-            const sizeFrame = cropRef.current.containerRect.height * kef *indexDown
+            const indexDown = 0.85
+            let k,kef,sizeFrame
+            if((activeSettings.top + activeSettings.bottom)>(activeSettings.left + activeSettings.right)){
+                k = (Math.max(activeSettings.top, activeSettings.bottom))
+                kef = activeSettings.height/(Number(activeSettings.height)+2*k)
+                sizeFrame = cropRef.current.containerRect.height * kef * indexDown
+            }else{
+                k = (Math.max(activeSettings.left, activeSettings.right))
+                kef = activeSettings.width/(Number(activeSettings.width)+2*k)
+                sizeFrame = cropRef.current.containerRect.width * kef * indexDown
+            }
+            
 
             let x, y
             if(mediaSize.width>mediaSize.height){
@@ -97,9 +93,12 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
             const newCropData = {width: x, height: y}
 
             setCropSize(newCropData);
-            setTimeout(()=>{
-                setCrop({ x: 0, y: 0 })
-                setZoom(valueZoom);
+            requestAnimationFrame(()=>{
+                setTimeout(()=>{
+                    setCrop({ x: 0, y: 0 })
+                    setZoom(valueZoom);
+                },30)
+                
                 setZoomDef(valueZoom)
                 setMedia(mediaSize)
                 setFieldsWhite(false)
@@ -113,39 +112,102 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                     rotation: 0,
                     fieldsWhite: false
                 });
-            },150) 
+            }) 
+        }
+    }, [photos, activePhoto, activeSettings, onSaveCrop]);
+
+    const changePhoto = useCallback((index) => {
+        if (index < 0 || index >= photos.length) return;
+        if (index === activePhoto) return;
+
+        isSwitchingRef.current = true;
+
+        // Сохраняем текущее состояние в cropData (pixels уже в ref)
+        const currentData = {
+            cropSize,
+            crop,
+            zoom,
+            zoomDef,
+            rotation,
+            fieldsWhite,
+            media,
+            pixels: pixelsRef.current[photos[activePhoto]?.id]
+        };
+
+        const newPhoto = photos[index];
+        const data = newPhoto?.cropData;
+
+        setPhotos(prev => prev.map((photo, idx) =>
+            idx === activePhoto ? { ...photo, cropData: currentData } : photo
+        ));
+
+        if (data) {
+            setCropSize(data.cropSize);
+            setTimeout(() => {
+                setZoom(data.zoom);
+                setCrop(data.crop);
+            }, 30);
+            setZoomDef(data.zoomDef);
+            setRotation(data.rotation);
+            setFieldsWhite(data.fieldsWhite);
+            setMedia(data.media);
         }
 
-        
-        
-    };
+        setActivePhoto(index);
 
-    // Сохраняем при каждом изменении
-    const onCropComplete = (croppedArea, croppedAreaPixels) => {
-        //console.log('onCropComplete')
-        //console.log(croppedAreaPixels)
-        setPixels(croppedAreaPixels)
-        onSaveCrop(photos[activePhoto].id, { crop, cropSize, zoom, rotation, fieldsWhite, pixels: croppedAreaPixels});
+        setTimeout(() => {
+            isSwitchingRef.current = false;
+        }, 200);
+        
+    }, [photos, activePhoto, cropSize, crop, zoom, zoomDef, rotation, fieldsWhite, media, setPhotos, setActivePhoto, pixelsRef]);
 
-    };
-    
+    // onCropChange — вызывается сразу, вычисляем pixels здесь
     const onCropChange = (newCrop) => {
-        //console.log('onCropChange')
         setCrop(newCrop);
-        onSaveCrop(photos[activePhoto].id, { 
-            crop: newCrop
-        });
+
+        if (!photos[activePhoto]) return;
+
+        // ФИКС: вычисляем pixels из нового crop
+        const computed = computePixels(newCrop);
+        if (computed) {
+            pixelsRef.current[photos[activePhoto].id] = computed;
+        }
     };
 
     const onZoomChange = (newZoom) => {
-        console.log('onZoomChange')
         setZoom(newZoom);
-        onSaveCrop(photos[activePhoto].id, { 
-            zoom: newZoom
-        });
     };
 
-    //выбор другого формата в селекте 
+    // onCropComplete — сохраняем остальные настройки в cropData
+    const onCropComplete = useCallback(
+        (_croppedArea, croppedAreaPixels) => {
+            if (!photos[activePhoto]) return;
+
+            // ФИКС: pixels из croppedAreaPixels (всегда точнее) — обновляем ref
+            pixelsRef.current[photos[activePhoto].id] = croppedAreaPixels;
+
+            // Сохраняем настройки в cropData
+            onSaveCrop(photos[activePhoto].id, {
+                crop,
+                cropSize,
+                zoom,
+                zoomDef,
+                rotation,
+                fieldsWhite,
+                media,
+                width: activeSettings?.width,
+                height: activeSettings?.height,
+                top: activeSettings?.top,
+                bottom: activeSettings?.bottom,
+                left: activeSettings?.left,
+                right: activeSettings?.right,
+                widthList: activeSettings?.widthList,
+                heightList: activeSettings?.heightList,
+            });
+        },
+        [photos, activePhoto, crop, cropSize, zoom, zoomDef, rotation, fieldsWhite, media, onSaveCrop, activeSettings, pixelsRef]
+    );
+
     const changeSelect = (value) => {  
         const selectedSettings = settingsDB.find(el => el.name === value);
         if(selectedSettings) {
@@ -158,6 +220,8 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                 cropData: null
             })));
 
+            pixelsRef.current = {};
+
             if(photos.length===1){
                 clearPhotos()
                 return;
@@ -168,72 +232,138 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                 setActivePhoto(1);
                 setTimeout(()=>{
                     setActivePhoto(0);
-                },10)
+                },150)
             }
+
+            
 
         }
     };
 
-    //добавление белых полей
-    const addField = () =>{
+    const addField = () => {
+        if (!media || !cropSize) return;
 
-        if(!fieldsWhite){
+        // Учитываем поворот
+        const isRotated90 = rotation === 90 || rotation === 270;
+        const effectiveMediaW = isRotated90 ? media.height : media.width;
+        const effectiveMediaH = isRotated90 ? media.width  : media.height;
+
+        if (!fieldsWhite) {
             const value = Math.min(
-                cropSize.width / media.width,
-                cropSize.height / media.height,
+                cropSize.width  / effectiveMediaW,
+                cropSize.height / effectiveMediaH,
             );
             
-            setTimeout(()=>{setCrop({ x: 0, y: 0 });},5)
+            setTimeout(() => { setCrop({ x: 0, y: 0 }); }, 5);
             setZoom(value);
 
-            onSaveCrop(photos[activePhoto].id, { crop:{ x: 0, y: 0 }, zoom: value, fieldsWhite: true});
-           
-        }else{
+            onSaveCrop(photos[activePhoto].id, { crop: { x: 0, y: 0 }, zoom: value, fieldsWhite: true });
+        } else {
             const value = Math.max(
-                cropSize.width / media.width,
-                cropSize.height / media.height,
+                cropSize.width  / effectiveMediaW,
+                cropSize.height / effectiveMediaH,
             );
             setZoom(value);
-            setCrop({ x: 0, y: 0 })
-            onSaveCrop(photos[activePhoto].id, { crop:{ x: 0, y: 0 }, zoom: value, fieldsWhite: false});
+            setCrop({ x: 0, y: 0 });
+            onSaveCrop(photos[activePhoto].id, { crop: { x: 0, y: 0 }, zoom: value, fieldsWhite: false });
         }
 
-        setFieldsWhite(!fieldsWhite)
-       
-    }
+        setFieldsWhite(!fieldsWhite);
+    };
 
-    const minZoom = () =>{
-        if(fieldsWhite===true){
-            const value = Math.min(
-                cropSize.height/media.height,
-                cropSize.width/media.width,
+    const minZoom = (currentFieldsWhite) => {
+        if (!media || !cropSize) return 0.1;
+
+        // Учитываем поворот: при 90/270 ширина и высота меняются местами
+        const isRotated90 = rotation === 90 || rotation === 270;
+        const effectiveMediaW = isRotated90 ? media.height : media.width;
+        const effectiveMediaH = isRotated90 ? media.width  : media.height;
+
+        if (currentFieldsWhite) {
+            return Math.min(
+                cropSize.width  / effectiveMediaW,
+                cropSize.height / effectiveMediaH,
             );
-            return value
+        } else {
+            return Math.max(
+                cropSize.width  / effectiveMediaW,
+                cropSize.height / effectiveMediaH,
+            );
         }
-        if(fieldsWhite===false){
-            
-            return zoomDef
-        } 
-    }
+    };
 
     const maxZoom = () =>{
         if(fieldsWhite) return zoomDef
         else return 3*zoomDef
     }
 
-    const RotationImg = (value) =>{
-        setRotation(rotation + 90*value)
-    }
+    const RotationImg = (value) => {
+        console.log('поворот')
+        // ФИКС: нормализуем в 0-359 (в т.ч. для -90)
+        let newRotation = (rotation + 90 * value) % 360;
+        if (newRotation < 0) newRotation += 360;
+        
+        setRotation(newRotation);
 
-    const RotationAspect = () =>{
-        const x = cropSize.width
-        const y = cropSize.height
+        if (media && cropSize) {
+            const isRotating90 = (newRotation === 90 || newRotation === 270);
+            
+            const effectiveMediaW = isRotating90 ? media.height : media.width;
+            const effectiveMediaH = isRotating90 ? media.width  : media.height;
 
-        const newCropSize = {width: y, height: x}
+            const newZoom = Math.max(
+                cropSize.width  / effectiveMediaW,
+                cropSize.height / effectiveMediaH
+            );
 
-        setCropSize(newCropSize)
-        onSaveCrop(photos[activePhoto].id, {cropSize: newCropSize})
-    }
+            setCrop({ x: 0, y: 0 });
+            
+            setTimeout(() => {
+                setZoom(newZoom);
+                setZoomDef(newZoom);
+            }, 30);
+
+            if (photos[activePhoto]) {
+                onSaveCrop(photos[activePhoto].id, {
+                    rotation: newRotation,
+                    crop: { x: 0, y: 0 },
+                    zoom: newZoom,
+                    zoomDef: newZoom
+                });
+            }
+        } else {
+            if (photos[activePhoto]) {
+                onSaveCrop(photos[activePhoto].id, { rotation: newRotation });
+            }
+        }
+    };
+
+    const RotationAspect = () => {
+        const x = cropSize.width;
+        const y = cropSize.height;
+
+        const newCropSize = { width: y, height: x };
+        const resetCrop = { x: 0, y: 0 };
+
+        const newZoom = media
+            ? Math.max(newCropSize.width / media.width, newCropSize.height / media.height)
+            : zoom;
+
+        setCropSize(newCropSize);
+        setCrop(resetCrop);
+
+        setTimeout(() => {
+            setZoom(newZoom);
+            setZoomDef(newZoom);
+        }, 30);
+
+        onSaveCrop(photos[activePhoto].id, {
+            cropSize: newCropSize,
+            crop: resetCrop,
+            zoom: newZoom,
+            zoomDef: newZoom
+        });
+    };
 
     const cropCenter = (value) => {
         const position = { ...crop };
@@ -248,70 +378,43 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
         onSaveCrop(photos[activePhoto].id, { crop: position });
     }
 
-    const clearPhotos = () =>{
-        setPhotos([])
-        setCrop({ x: 0, y: 0 })
-        setZoom(1)
-        setZoomDef(1)
-        setCropSize({width: 400, height: 400})
-        setRotation(0)
-        setFieldsWhite(false)
-        setNameOrder('')
-    }
+    //переключение клавишами
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (photos.length === 0) return;
 
-    const changePhoto = (index) => {
-        // 1. Мгновенно сохраняем текущее фото (без задержки)
-        const currentData = {
-            cropSize,
-            crop,
-            zoom,
-            zoomDef,
-            rotation,
-            fieldsWhite,
-            media,
-            pixels
+            if (e.key === 'ArrowLeft' && activePhoto > 0) {
+                e.preventDefault();
+                changePhoto(activePhoto - 1);
+            } else if (e.key === 'ArrowRight' && activePhoto < photos.length - 1) {
+                e.preventDefault();
+                changePhoto(activePhoto + 1);
+            } else if (e.key === 'ArrowDown' && activePhoto < photos.length - 1) {
+                e.preventDefault();
+                changePhoto(activePhoto + 1);
+            } else if (e.key === 'ArrowUp' && activePhoto > 0) {
+                e.preventDefault();
+                changePhoto(activePhoto - 1);
+            }
         };
-        
-        setPhotos(prev => prev.map((photo, idx) => 
-            idx === activePhoto ? { ...photo, cropData: currentData } : photo
-        ));
-        
-        // 2. Переключаем фото
-        
-        if (index >= 0 && index < photos.length) {
-            setActivePhoto(index);
-            
-        // 3. Загружаем настройки нового фото
-        const newPhoto = photos[index];
-        if (newPhoto?.cropData) {
-        const data = newPhoto.cropData;
-        setCropSize(data.cropSize);
-        setCrop(data.crop);
-        setZoom(data.zoom);
-        setZoomDef(data.zoomDef);
-        setRotation(data.rotation);
-        setFieldsWhite(data.fieldsWhite);
-        setMedia(data.media);
-        }
-        }
-    };
 
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [activePhoto, photos.length, changePhoto]);
 
     return (
         <>
         <div className="h-full bg-white flex flex-row">
 
-            {/* список миниатюр */}
-            <div>
+            {/* СПИСОК ПРЕВЬЮ */}
+            <div  className="w-[10%] shrink-0 h-full overflow-auto">
                 <ListPhoto photos={photos} activePhoto={activePhoto} changePhoto={changePhoto} />
             </div>
-        
-            {/* основной кроппер и кнопки редактирования */}
-            <div className="flex-[7] flex flex-col items-center justify-start ">
+            
+            {/* ЦЕНТРАЛЬНЫЙ КРОП*/}
+            <div className="w-[70%] shrink-0 h-full flex flex-col items-center justify-start">
                     
                 {photos[activePhoto] === undefined ? 
-
-                    /* когда не выбрано фото */      
                     <div className="relative h-full ">
                         <div className='flex items-center justify-center h-full'>
                             <label className="cursor-pointer">
@@ -330,18 +433,9 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                         </div>
                     </div>
                  : 
-                    /* основной блок с кроппером */  
                     <div className='w-[100%] flex flex-col justify-between h-full  my-4'>
-                        {/* имя файла*/}
-                        <div className='flex flex-row gap-20 justify-center text-sm items-center'>
-                            <label className='text-md'>Формат: {activeSettings.name}</label>
-                            <label className="block truncate max-w-[40%] cursor-help" title={photos[activePhoto]?.name} >
-                                Имя файла: {photos[activePhoto]?.name}
-                            </label>
-                        </div>
 
-                        {/* кроппер */}
-                        <div className='flex flex-row gap-10 items-center justify-center w-[100%] h-[38vw]'>
+                        <div className='flex flex-row gap-10 items-center justify-center w-[100%] h-[90%] '>
                             <button 
                                 onClick={() => changePhoto(activePhoto-1)}
                                 className=" left-8 top-1/2 -translate-y-1/2 w-16 h-16 
@@ -357,7 +451,6 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                             </button>
                             <div className="relative w-[38vw] h-[38vw] border-[0px] border-gray-300">
                                 <Cropper
-
                                     className='border-2 border-gray-300'
                                     image={photos[activePhoto].url}
                                     ref={cropRef}
@@ -375,7 +468,6 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                                     zoomWithScroll={false}
                                     restrictPosition={fieldsWhite ? false : true}
                                     showGrid={false}
-                                    //objectFit="horizontal-cover"
                                     style={{
                                         cropAreaStyle: 
                                             cropSize.width<cropSize.height ?
@@ -415,7 +507,6 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                                                     color: 'rgba(255, 255, 255, 0.8)'
                                                 }
                                     }}
-                                    
                                 />
                             </div>
                             <button 
@@ -433,8 +524,7 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                             </button>
                         </div>
 
-                        {/* кнопки редактирования */}
-                        <div className='flex justify-center'>
+                        <div className='flex justify-center '>
                             <div className=" bg-white/90 backdrop-blur-sm rounded-full shadow-lg p-2 flex gap-2 z-10  items-center">
                                     <button  onClick={() => RotationImg(-1)} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700">
                                         <i className="bi bi-arrow-counterclockwise"></i>
@@ -443,9 +533,9 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                                         <i className="bi bi-arrow-clockwise"></i>
                                     </button>
                                     <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                                    <button  onClick={() => RotationAspect()} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700">
-                                        <i className="bi bi-repeat"></i>
-                                    </button>
+                                        <button  onClick={() => RotationAspect()} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700">
+                                            <i className="bi bi-repeat"></i>
+                                        </button>
                                     <div className="w-px h-6 bg-gray-300 mx-1"></div>
                                     <button 
                                         onClick={() => addField()} 
@@ -468,14 +558,13 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                                         <input
                                             type="range"
                                             value={zoom}
-                                            min={minZoom()}
+                                            min={minZoom(fieldsWhite)}
                                             max={maxZoom()}
                                             step={0.01}
                                             aria-labelledby="Zoom"
                                             onChange={(e) => {
-                                                setZoom(e.target.value)
+                                                setZoom(parseFloat(e.target.value))
                                             }}
-                                            
                                         />
                                     </div>
                                 </div>
@@ -484,76 +573,141 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                     </div>
                 }
             </div>
-
-            {/* меню справа */}
-            <div className='flex-[2] flex flex-col justify-between bg-gray-100 border-l border-gray-200'>
+            
+            {/* НАСТРОЙКИ СПРАВА*/}
+            <div className='w-[20%] shrink-0 h-full flex flex-col justify-between bg-gray-100 border-l border-gray-200'>
                
-                <div className="overflow-auto p-4 flex flex-col">
-                    {/* Номер заказа */}
+                <div className="overflow-auto p-4 flex flex-col gap-12 h-full">
                     <div className="space-y-1">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                        <i className="bi bi-hash text-gray-400"></i>
-                        Номер заказа
-                    </label>
-                    <input 
-                        type="text" 
-                        placeholder="Введите номер заказа"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm 
-                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                                transition-all"
-                        value={nameOrder} onChange={(e)=>setNameOrder(e.target.value)}
-                    />
+                        <input 
+                            type="text" 
+                            placeholder="Введите номер заказа"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm 
+                                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                    transition-all"
+                            value={nameOrder} onChange={(e)=>setNameOrder(e.target.value)}
+                        />
                     </div>
                     
-                    {/* Размер */}
-                    <div className="mt-12">
-                        <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                            <i className="bi bi-aspect-ratio text-gray-400"></i>
-                            Размер
-                        </label>
-                        <select 
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm "
-                            onChange={(e) => changeSelect(e.target.value)}
-                        >
-                            {settingsDB.map((el, index) => (
-                            <option key={index} value={el.name}>{el.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    
-                    <div className="flex flex-col gap-2 text-sm items-center my-4">
-                        <label className='text-left w-full'><i className="bi bi-back"></i> Отображать:</label>
-                        <select 
-                            value={withFrame ? 'true' : 'false'} 
-                            onChange={(e) => setWithFrame(e.target.value === 'true')} 
-                            className='w-full px-3 py-2 border border-gray-300 rounded-lg text-sm '
-                        >
-                            <option value="false">только кадр</option>
-                            <option value="true">кадр с рамкой</option>
-                        </select>
+                    <div>
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 flex items-center">
+                                <i className="bi bi-aspect-ratio text-gray-400"></i>
+                                Размер
+                            </label>
+                            <select 
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm "
+                                onChange={(e) => changeSelect(e.target.value)}
+                            >
+                                {settingsDB
+                                    .filter(el => el.isShow)
+                                    .map((el, index) => (
+                                        <option key={index} value={el.name}>{el.name}</option>
+                                    ))
+                                }
+                            </select>
+                        </div>
+                        <button onClick={()=>{setIsModalOpen(true)}}
+                                        className="w-full mt-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 
+                                        rounded-lg text-xs font-medium text-gray-700 
+                                        transition-colors flex items-center justify-center gap-2
+                                        border border-gray-200">
+                            <i className="bi bi-gear-fill"></i>
+                            настройки
+                        </button>
                     </div>
 
-                    {/* Настройки */}
-                    <button onClick={()=>{setIsModalOpen(true)}}
-                                    className="w-full mt-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 
-                                    rounded-lg text-xs font-medium text-gray-700 
-                                    transition-colors flex items-center justify-center gap-2
-                                    border border-gray-200">
-                        <i className="bi bi-gear-fill"></i>
-                         настройки
-                    </button>
+                    <div className="flex flex-col gap-2 text-sm items-center mb-2">
+                        <div className="flex w-full rounded-md border border-gray-300 overflow-hidden text-xs">
+                            <button
+                                type="button"
+                                onClick={() => setWithFrame(false)}
+                                className={`flex-1 py-1 transition-colors ${
+                                    !withFrame
+                                        ? 'bg-teal-800 text-white font-light'
+                                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                только кадр
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setWithFrame(true)}
+                                className={`flex-1 py-1 border-l border-gray-300 transition-colors ${
+                                    withFrame
+                                        ? 'bg-teal-800 text-white font-light'
+                                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                                }`}
+                            >
+                                кадр с рамкой
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="mt-auto pt-1 ">
+                        
+                        
+                    </div>
+
+                    {   photos.length>0 &&
+                        <div className="mt-auto pt-1 space-y-1.5">
+                        
+                        <div className="flex justify-between items-center text-xs text-gray-400 gap-2">
+                            <span 
+                                className="truncate cursor-help" 
+                                title={photos[activePhoto]?.name}
+                            >
+                                Текущее: {photos[activePhoto]?.name}
+                            </span>
+                            <span className="shrink-0">{activePhoto+1} / {photos.length}</span>
+                        </div>
+                        <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                                className="h-1 bg-teal-700 rounded-full transition-all duration-500"
+                                style={{ width: `${((activePhoto+1) / photos.length) * 100}%` }}
+                            />
+                        </div>
+
+                        <div className="flex justify-between text-xs text-gray-400">
+                            <span>Обработано </span>
+                            <span>{photos.filter(p => p.cropData).length} / {photos.length}</span>
+                        </div>
+                        <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                                className="h-1 bg-teal-700 rounded-full transition-all duration-500"
+                                style={{ width: `${(photos.filter(p => p.cropData).length / photos.length) * 100}%` }}
+                            />
+                        </div>
+                        </div>
+                    }
+                    
+                    
                 </div>
                 
-                {/* Кнопки внизу */}
                 <div className="p-4 border-t border-gray-200 space-y-2">
+                    <div className="flex justify-end items-center gap-1 text-[10px] text-gray-400">
+                        <button
+                            onClick={() => setOutputFormat('jpeg')}
+                            className={outputFormat === 'jpeg' ? 'text-teal-800 font-medium' : 'hover:text-gray-600'}
+                        >
+                            JPEG
+                        </button>
+                        <span className="text-gray-300">·</span>
+                        <button
+                            onClick={() => setOutputFormat('png')}
+                            className={outputFormat === 'png' ? 'text-teal-800 font-medium' : 'hover:text-gray-600'}
+                        >
+                            PNG
+                        </button>
+                    </div>
                     <button 
-                        className="w-full px-4 py-2.5 bg-green-500 hover:bg-green-600 
+                        className="w-full px-4 py-2.5 bg-teal-700 hover:bg-teal-900 
                                     text-white rounded-lg text-sm font-medium 
                                     transition-colors flex items-center justify-center gap-2
                                     shadow-sm"
                         onClick={savePhotos}
                         >
-                        <i className="bi bi-download"></i>
+                        <i className="bi bi-download text-white"></i>
                         Скачать все
                     </button>
                     
@@ -575,7 +729,7 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogContent className="max-w-[80%] max-h-[80vh] flex flex-col" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
-                <DialogTitle className='text-green-900'>Настройки форматов для печати</DialogTitle>
+                <DialogTitle className='text-green-900'></DialogTitle>
                 <DialogDescription className="sr-only">
                 </DialogDescription>
                 </DialogHeader>

@@ -205,8 +205,10 @@ const toggleOrder = (orderNumber) => {
                                   <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px] text-gray-600">
                                       {new Date(client.createdAt).toLocaleDateString('ru-RU')}
                                   </td>
-                                  <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px] text-gray-600">
-                                      {client.lastOrderDate}
+                                  <td className={`px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px] ${
+                                    client.lastOrderDate?.split('.')[2] === '2026' ? 'text-blue-600' : 'text-gray-600'
+                                  }`}>
+                                    {client.lastOrderDate}
                                   </td>
                                 </tr>
                             ))

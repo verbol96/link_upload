@@ -52,6 +52,12 @@ export const LeftMenu = () => {
               Редактор фото
             </button>
             <button
+              className={`menu-btn ${isActive('/redactor') ? 'active' : ''}`}
+              onClick={() => Close('/redactor')}
+            >
+              Редактор фото (new)
+            </button>
+            <button
               className={`menu-btn ${isActive('/PrivatePage') ? 'active' : ''}`}
               onClick={() => Close('/private')}
             >
@@ -95,7 +101,7 @@ export const LeftMenu = () => {
           <div className="user-info">
             <div><i className="bi bi-person"></i> {user.FIO}</div>
             <div><i className="bi bi-telephone"></i>  {user.phone}</div>
-            <div style={{marginTop: 5, cursor: 'pointer'}} onClick={()=>Close('/history')}><i className="bi bi-info-circle"></i> версия сайта 4.9</div>
+            <div style={{marginTop: 5, cursor: 'pointer'}} onClick={()=>Close('/history')}><i className="bi bi-info-circle"></i> версия сайта 5.0</div>
           </div>
         </div>
       </div>

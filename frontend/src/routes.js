@@ -10,6 +10,7 @@ import { Auth } from "./pages/Auth"
 import Editor from "./pages/Editor"
 import History from "./pages/History"
 import Test from "./pages/Test"
+import RedactorPhoto from "./pages/RedactorPhoto"
 
 export const adminRoutes = [
     {
@@ -19,6 +20,11 @@ export const adminRoutes = [
     {
         path: '/editor',
         Component: Editor
+    },
+    
+    {
+        path: '/redactor',
+        Component: RedactorPhoto
     },
     {
         path: '/statistic',
