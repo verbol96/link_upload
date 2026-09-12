@@ -299,6 +299,15 @@ const savePhotos = async () => {
             const blob = await new Promise(resolve =>
                 canvas.toBlob(resolve, mimeType, quality)
             );
+            console.log('=== DEBUG SAVE ===');
+            console.log('canvas:', canvas.width, 'x', canvas.height);
+            console.log('blob.size:', blob?.size);
+            console.log('blob.type:', blob?.type);
+
+            // Проверь, что canvas реально имеет содержимое
+            const testDataUrl = canvas.toDataURL('image/png');
+            console.log('dataURL length:', testDataUrl.length);
+            console.log('dataURL first 100:', testDataUrl.substring(0, 100));
 
             const ext = outputFormat === 'png' ? 'png' : 'jpg';
             const fileName = photos.length > 1
