@@ -76,8 +76,12 @@ const SettingEditor = sequelize.define('settingEditor', {
   top:{type: DataTypes.STRING},
   bottom:{type: DataTypes.STRING},
   left:{type: DataTypes.STRING},
-  right:{type: DataTypes.STRING}
+  right:{type: DataTypes.STRING},
+  widthList:{type: DataTypes.STRING},
+  heightList:{type: DataTypes.STRING},
+  isShow: {type: DataTypes.BOOLEAN}
 })
+
 
 const File = sequelize.define('file', {
     id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },

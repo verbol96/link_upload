@@ -11,6 +11,13 @@ const History = () => {
             
             <div style={{margin: 20}}>
 
+                <div style={{fontSize: 18, marginLeft: 50, marginTop: 10, color: '#116466'}}>version 5 (12.09.2026)</div>
+                    <ul>
+                        <li>новый редактор</li>
+                        <li>мелкие правки</li>
+                        
+                    </ul>
+
                 <div style={{fontSize: 18, marginLeft: 50, marginTop: 10, color: '#116466'}}>version 4.9 (13.08.2026)</div>
                     <ul>
                         <li>добавлено поле "о клиенте"</li>

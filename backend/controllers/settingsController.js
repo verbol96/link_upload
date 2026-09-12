@@ -220,6 +220,21 @@ class settingsController{
         }
     }
 
+    async saveFormat(req, res) {
+        const { name, width, height, top, bottom, left, right, widthList, heightList, isShow  } = req.body;
+        console.log(isShow)
+        let frame = await SettingEditor.findOne({ where: { name } });
+    
+        if (frame) {
+            const response = await SettingEditor.update({ width, height, top, bottom, left, right, widthList, heightList, isShow }, { where: { name } });
+            return res.json(response);
+        } else {
+            const response = await SettingEditor.create({ name, width, height, top, bottom, left, right, widthList, heightList, isShow });
+            return res.json(response);
+        }
+    }
+    
+
     async changePriceDel(req,res){
         const {title, price} = req.body
         await Settings.update(

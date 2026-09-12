@@ -1,16 +1,19 @@
 import { useEffect, useRef } from "react";
 
 const ListPhoto = ({ photos, activePhoto, changePhoto }) => {
-  const itemRefs = useRef([]);
+ 
+
+const itemRefs = useRef({});
 
 useEffect(() => {
-  if (activePhoto !== undefined && itemRefs.current[activePhoto]) {
-    itemRefs.current[activePhoto].scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'  // ← center вместо nearest
-    });
-  }
-}, [activePhoto]);
+    const activeId = photos[activePhoto]?.id;
+    if (activeId && itemRefs.current[activeId]) {
+        itemRefs.current[activeId].scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'  // ← center вместо nearest
+        });
+    }
+}, [activePhoto, photos]);
 
   if (photos.length < 1) {
     return (
@@ -32,7 +35,10 @@ useEffect(() => {
         {photos.map((el, index) => (
           <div
             key={el.id}
-            ref={el => itemRefs.current[index] = el}
+            ref={(node) => {
+                if (node) itemRefs.current[el.id] = node;
+                else delete itemRefs.current[el.id];
+            }}
             className={`group relative flex justify-center w-full cursor-pointer transition-all duration-200 ${
               activePhoto === index ? 'scale-105' : 'hover:scale-102'
             }`}
