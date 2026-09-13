@@ -581,7 +581,7 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                     <div className="space-y-1">
                         <input 
                             type="text" 
-                            placeholder="Введите номер заказа"
+                            placeholder="номер заказа"
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm 
                                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                                     transition-all"
@@ -591,28 +591,37 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                     
                     <div>
                         <div>
-                            <label className="text-sm font-medium text-gray-700 flex items-center">
-                                <i className="bi bi-aspect-ratio text-gray-400"></i>
-                                Размер
-                            </label>
-                            <select 
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm "
-                                onChange={(e) => changeSelect(e.target.value)}
-                            >
-                                {settingsDB
-                                    .filter(el => el.isShow)
-                                    .map((el, index) => (
-                                        <option key={index} value={el.name}>{el.name}</option>
-                                    ))
-                                }
-                            </select>
-                        </div>
+                        <label className="text-sm font-medium text-teal-900 flex items-center gap-1 ml-1">
+                            <i className="bi bi-aspect-ratio text-teal-900"></i>
+                            Выбор размера:
+                        </label>
+                        <select 
+                            className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg text-sm 
+                                    bg-white cursor-pointer appearance-none pr-8
+                                    focus:outline-none focus:ring-1 focus:ring-teal-700 focus:border-transparent 
+                                    transition-all"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
+                                backgroundPosition: 'right 0.5rem center',
+                                backgroundRepeat: 'no-repeat',
+                                backgroundSize: '1.5em 1.5em'
+                            }}
+                            onChange={(e) => changeSelect(e.target.value)}
+                        >
+                            {settingsDB
+                                .filter(el => el.isShow)
+                                .map((el, index) => (
+                                    <option key={index} value={el.name}>{el.name}</option>
+                                ))
+                            }
+                        </select>
+                    </div>
                         <button onClick={()=>{setIsModalOpen(true)}}
                                         className="w-full mt-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 
                                         rounded-lg text-xs font-medium text-gray-700 
                                         transition-colors flex items-center justify-center gap-2
-                                        border border-gray-200">
-                            <i className="bi bi-gear-fill"></i>
+                                        border-[1px] border-gray-200 text-teal-900">
+                            <i className="bi bi-gear-fill text-teal-900"></i>
                             настройки
                         </button>
                     </div>
@@ -727,7 +736,7 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
         </div>
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            <DialogContent className="max-w-[80%] max-h-[80vh] flex flex-col" onOpenAutoFocus={(e) => e.preventDefault()}>
+            <DialogContent className="max-w-[80%] h-[80vh] flex flex-col px-4 pb-4 pt-1" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                 <DialogTitle className='text-green-900'></DialogTitle>
                 <DialogDescription className="sr-only">

@@ -14,5 +14,6 @@ router.delete('/deleteSettingEditor/:name', settingsController.deleteSettingEdit
 router.post('/changePriceDel',  settingsController.changePriceDel)
 
 router.put('/saveFormat', settingsController.saveFormat)
+router.delete('/deleteFormat/:id', settingsController.deleteFormat)
 
 module.exports = router

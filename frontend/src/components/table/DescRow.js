@@ -1006,26 +1006,33 @@ const sendSmsNew = async () => {
           {
           users.find(user => user.phone === phoneUser)?.role === 'USER' && 
           
-            (<>
-            <div className="gap-1 flex justify-start">
+            (
+            [0,8].includes(order.status) ? 
+              <div className="gap-1 flex justify-start">
 
-              { order.status === 0 && ShowBtnSms(is_sms_error, SmsError, 'ошибка')}
-              { order.status !== 0 && ShowBtnSms(is_sms_add, SmsAdd, 'принят') }
-              { order.status !== 0 && ShowBtnSms(is_sms_send, SmsSend, 'отправлен')}
-              { (order.typePost === 'R1' || order.typePost === 'E1') && ShowBtnSms(is_sms_pay, SmsPay, 'оплата') }
-              
-            </div>
+                {ShowBtnSms(is_sms_error, SmsError, 'ошибка')}
+                
+              </div>
+            :
+              <>
+              <div className="gap-1 flex justify-start">
 
-            <div className='flex justify-end mt-3 gap-1' >
-              { (order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') && <>
-                <Button  variant='outline' size='sm' onClick={()=>AddInvoices()}>выставить счет</Button>
-                <Button  variant='outline' size='sm' onClick={()=>CancelInvoices()}>отменить счет</Button>
-                <Button  variant='outline' size='sm' onClick={()=>CheckInvoices()}>проверить счет</Button>
-                </>
-              }
-            </div>
-            </>)
-          }
+                { ShowBtnSms(is_sms_add, SmsAdd, 'принят') }
+                { ShowBtnSms(is_sms_send, SmsSend, 'отправлен')}
+                { (order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') && ShowBtnSms(is_sms_pay, SmsPay, 'оплата') }
+                
+              </div>
+
+              <div className='flex justify-end mt-3 gap-1' >
+                { (order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') && <>
+                  <Button  variant='outline' size='sm' onClick={()=>AddInvoices()}>выставить счет</Button>
+                  <Button  variant='outline' size='sm' onClick={()=>CancelInvoices()}>отменить счет</Button>
+                  <Button  variant='outline' size='sm' onClick={()=>CheckInvoices()}>проверить счет</Button>
+                  </>
+                }
+              </div>
+              </>)
+            }
 
           <div className='flex justify-end mt-3 gap-1' >
             <Button className='w-[25%]' variant='destructive' size='sm' onClick={()=>DeleteOrder()}>удалить</Button>
