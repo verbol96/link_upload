@@ -221,17 +221,29 @@ class settingsController{
     }
 
     async saveFormat(req, res) {
-        const { name, width, height, top, bottom, left, right, widthList, heightList, isShow  } = req.body;
-        console.log(isShow)
-        let frame = await SettingEditor.findOne({ where: { name } });
-    
-        if (frame) {
-            const response = await SettingEditor.update({ width, height, top, bottom, left, right, widthList, heightList, isShow }, { where: { name } });
-            return res.json(response);
+        const { id, name, width, height, top, bottom, left, right, widthList, heightList, isShow } = req.body;
+
+        if (id) {
+            // Обновление
+            await SettingEditor.update(
+                { name, width, height, top, bottom, left, right, widthList, heightList, isShow },
+                { where: { id } }
+            );
+            const updated = await SettingEditor.findByPk(id);
+            return res.json(updated);
         } else {
-            const response = await SettingEditor.create({ name, width, height, top, bottom, left, right, widthList, heightList, isShow });
-            return res.json(response);
+            // Создание — БД сама поставит id
+            const created = await SettingEditor.create({
+                name, width, height, top, bottom, left, right, widthList, heightList, isShow
+            });
+            return res.json(created);
         }
+    }
+
+    async deleteFormat(req, res) {
+        const id = req.params.id
+        const settings = await SettingEditor.destroy({where:{id}})
+        return res.json(settings)
     }
     
 

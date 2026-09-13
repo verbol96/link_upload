@@ -32,15 +32,25 @@ const AppRouter = () => {
 },[dispatch, location.pathname])
 
 useEffect(() => {
-  const checkToken = async () => {
-    if (!localStorage.getItem('token')) {
-      const data = await setLogUser();
-      //console.log(data.status===200);
-      if(data.status!==200) window.confirm('ошибка загрузки данных с сервера. Можете попробовать через другой браузер. Либо напишите нам в телеграм либо инстаграм')
-    }
-  };
-  
-  checkToken();
+    const checkToken = async () => {
+        if (!localStorage.getItem('token')) {
+            try {
+                const data = await setLogUser();
+                if (data?.status !== 200) {
+                    showError();
+                }
+            } catch (error) {
+                console.error('setLogUser error:', error);
+                showError();
+            }
+        }
+    };
+
+    const showError = () => {
+        window.confirm('Ошибка загрузки данных с сервера. Можете попробовать через другой браузер. Либо напишите нам в телеграм или инстаграм.');
+    };
+
+    checkToken();
 }, []);
 
 const isAuth = useSelector(state=>state.auth.auth)
