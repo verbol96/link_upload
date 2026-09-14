@@ -130,7 +130,7 @@ const Redactor = () => {
                 if (isHeic && !isSafari) {
                     try {
                         const blob = await convertHeic(file);
-                        const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+                        const newName = file.name.replace(/\.(heic|heif)$/i, '.jpeg');
                         result = new File([blob], newName, { type: 'image/jpeg' });
                     } catch (err) {
                         console.error('Ошибка конвертации HEIC:', err);
@@ -403,7 +403,7 @@ const Redactor = () => {
                 console.log('dataURL length:', testDataUrl.length);
                 console.log('dataURL first 100:', testDataUrl.substring(0, 100));
 
-                const ext = outputFormat === 'png' ? 'png' : 'jpg';
+                const ext = outputFormat === 'png' ? 'png' : 'jpeg';
                 const fileName = photos.length > 1
                     ? `${photo.name.split('.')[0]}.${ext}`
                     : `${nameOrder}_${nameFormat}.${ext}`;
@@ -537,7 +537,7 @@ const Redactor = () => {
                 );
 
                 // И расширение файла
-                const ext = outputFormat === 'png' ? 'png' : 'jpg';
+                const ext = outputFormat === 'png' ? 'png' : 'jpeg';
                 const fileName = pages.length > 1
                     ? `sheet_${pageIndex + 1}.${ext}`
                     : `${nameOrder}_${nameFormat}.${ext}`;
