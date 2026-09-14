@@ -24,7 +24,6 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "file-saver": "^2.0.5",
-    "heic-decode": "^2.1.0",
     "heic2any": "^0.0.4",
     "jszip": "^3.10.1",
     "jwt-decode": "^3.1.2",
@@ -58,10 +57,10 @@
     "ua-parser-js": "^1.0.37",
     "web-vitals": "^2.1.4"
   },
-  "scripts": {
-    "start": "react-scripts start",
+ "scripts": {
+    "start": "react-app-rewired start",
     "startServer": "node server.js",
-    "build": "react-scripts build",
+    "build": "react-app-rewired build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -84,6 +83,7 @@
     ]
   },
   "devDependencies": {
+    "react-app-rewired": "^2.2.1",
     "tailwindcss": "^3.4.10"
   }
 }

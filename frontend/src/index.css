@@ -19,5 +19,16 @@
       --chart-5: 340 75% 55%;
     }
   }
+
+  /* Скрыть скроллбар в Webkit (Chrome/Safari) */
+
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
   
   
