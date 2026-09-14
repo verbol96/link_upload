@@ -22,7 +22,13 @@ app.use(cookieParser())
 app.use(cors({
   credentials: true,
   origin: status === 'release' 
-    ? ['https://link1.by', 'https://api.express-pay.by'] 
+    ? [
+        'https://link1.by',
+        'https://www.link1.by',
+        'https://api.express-pay.by',
+        'http://link1.by',        // HTTP → редиректит на HTTPS
+        'http://www.link1.by',    // HTTP → редиректит на HTTPS
+      ]
     : ['http://localhost:3000', 'http://localhost:5173', 'http://192.168.1.4:3000']
 }));
 
