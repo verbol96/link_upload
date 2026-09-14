@@ -4,7 +4,6 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { $host } from '../../http';
 import _ from 'lodash';
-import heic2any from 'heic2any';
 
 const Redactor = () => {
 
@@ -57,36 +56,85 @@ const Redactor = () => {
     // загрузка фото
     const [convertingCount, setConvertingCount] = useState(0);
 
+    // надо для convertHeic
+    const getLibheif = async () => {
+    const mod = await import('libheif-js/wasm-bundle');
+    return mod.default || mod;
+    };
+
+    const convertHeic = async (file) => {
+        const libheif = await getLibheif();
+
+        const buffer = await file.arrayBuffer();
+        const decoder = new libheif.HeifDecoder();
+        const images = decoder.decode(new Uint8Array(buffer));
+
+        if (!images || images.length === 0) {
+            throw new Error('Не удалось декодировать HEIC');
+        }
+
+        const image = images[0];
+        const width = image.get_width();
+        const height = image.get_height();
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        // ФИКС: пытаемся использовать display-p3
+        let ctx;
+        try {
+            ctx = canvas.getContext('2d', { colorSpace: 'display-p3' });
+            if (!ctx) {
+                ctx = canvas.getContext('2d');
+            }
+        } catch {
+            ctx = canvas.getContext('2d');
+        }
+
+        const imageData = ctx.createImageData(width, height);
+
+        await new Promise((resolve, reject) => {
+            image.display(imageData, (result) => {
+                if (!result) {
+                    reject(new Error('Ошибка отображения HEIC'));
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+
+        ctx.putImageData(imageData, 0, 0);
+
+        // ФИКС: сохраняем с правильным цветовым профилем
+        return new Promise(resolve => {
+            canvas.toBlob(resolve, 'image/jpeg', 1);
+        });
+    };
+
     const handleAddPhotos = async (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
 
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
         setConvertingCount(files.length);
 
         const processedFiles = await Promise.all(
             files.map(async (file) => {
-                const isHeic = /\.(heic|heif)$/i.test(file.name) 
-                            || file.type === 'image/heic' 
+                const isHeic = /\.(heic|heif)$/i.test(file.name)
+                            || file.type === 'image/heic'
                             || file.type === 'image/heif';
 
                 let result = file;
 
                 if (isHeic && !isSafari) {
                     try {
-                        const blob = await heic2any({
-                            blob: file,
-                            toType: 'image/jpeg',
-                            quality: 0.92
-                        });
-
-                        const resultBlob = Array.isArray(blob) ? blob[0] : blob;
+                        const blob = await convertHeic(file);
                         const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
-
-                        result = new File([resultBlob], newName, { type: 'image/jpeg' });
+                        result = new File([blob], newName, { type: 'image/jpeg' });
                     } catch (err) {
                         console.error('Ошибка конвертации HEIC:', err);
+                        // Файл останется как есть — не загрузится, но не сломает всё
                     }
                 }
 
@@ -104,7 +152,6 @@ const Redactor = () => {
 
         setPhotos((prev) => [...prev, ...newPhotos]);
         setActivePhoto(0);
-
         e.target.value = '';
     };
 
