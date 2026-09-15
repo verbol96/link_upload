@@ -33,7 +33,7 @@ const PhotoCarousel = ({ photos, activePhoto, changePhoto }) => {
                     className="shrink-0 cursor-pointer"
                 >
                     <img
-                        src={photo.url}
+                        src={photo.thumb}
                         alt={photo.name}
                         className={`w-16 h-16 object-cover rounded-lg transition-all ${
                             activePhoto === index

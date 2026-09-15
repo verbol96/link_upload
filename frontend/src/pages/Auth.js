@@ -50,7 +50,7 @@ export const Auth = () =>{
             setPassword('')
             const code = Math.floor(1000 + Math.random() * 9000);
             setCodeSMS(code)
-            if($host.defaults.baseURL === 'http://localhost:8002/') 
+            if($host.defaults.baseURL === `http://${window.location.hostname}:8002/`) 
                 {
                     //console.log(code)
                     setPassword(code)

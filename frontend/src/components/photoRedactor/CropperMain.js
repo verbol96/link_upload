@@ -439,7 +439,7 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                 {/* ЦЕНТРАЛЬНЫЙ КРОППЕР */}
                 <div className="flex-1 min-h-0 md:w-[70%] flex flex-col items-center justify-between">
                     {photos.length > 0 && (
-                        <div className="md:hidden w-full px-2 py-2 border-b border-gray-200 bg-white">
+                        <div className="md:hidden w-full px-2 pt-4 border-b border-gray-200 bg-white">
                             <PhotoCarousel 
                                 photos={photos}
                                 activePhoto={activePhoto}
@@ -483,8 +483,8 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                                     <i className="bi bi-chevron-left text-xl md:text-3xl text-gray-700"></i>
                                 </button>
 
-                                <div className="relative w-[80vw] h-[80vw] md:w-[38vw] md:h-[38vw] 
-                                                max-w-[500px] max-h-[500px] border-0 border-gray-300">
+                                <div className=" relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] 
+                                                 border-0 border-gray-300">
                                     <Cropper
                                         className='border-2 border-gray-300'
                                         image={photos[activePhoto].url}
@@ -723,7 +723,7 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                                 <i className="bi bi-aspect-ratio text-teal-900"></i>
                                 Выбор размера:
                             </label>
-                            <select 
+                            <select
                                 className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg text-sm 
                                         bg-white cursor-pointer appearance-none pr-8
                                         focus:outline-none focus:ring-1 focus:ring-teal-700 focus:border-transparent 
@@ -734,7 +734,10 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                                     backgroundRepeat: 'no-repeat',
                                     backgroundSize: '1.5em 1.5em'
                                 }}
-                                onChange={(e) => changeSelect(e.target.value)}
+                                onChange={(e) => {
+                                    changeSelect(e.target.value);
+                                    e.target.blur();
+                                }}
                             >
                                 {settingsDB
                                     .filter(el => el.isShow)
@@ -862,24 +865,36 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                 </div>
 
                 {/* МОБИЛЬНАЯ ПАНЕЛЬ КНОПОК ВНИЗУ */}
-                <div className="md:hidden shrink-0 border-t border-gray-200 bg-white p-2 flex gap-2">
-                    <button
-                        onClick={() => setShowPhotoList(true)}
-                        className="flex-1 py-1.5 bg-gray-100 rounded-lg text-sm font-light text-gray-700 flex items-center justify-center gap-2"
-                    >
-                        <i className="bi bi-images"></i>
-                        Список
-                        {photos.length > 0 && (
-                            <span className="text-xs text-gray-500">{activePhoto+1}/{photos.length}</span>
-                        )}
-                    </button>
+                <div className="md:hidden shrink-0 border-t border-gray-200 bg-white py-3 px-2 flex flex-row gap-2">
+                    
                     <button
                         onClick={() => setShowSettings(true)}
                         className="flex-1 py-1.5 bg-gray-100 rounded-lg text-sm font-light text-gray-700 flex items-center justify-center gap-2"
                     >
                         <i className="bi bi-gear-fill text-teal-900"></i>
-                        Настройки
+                        
                     </button>
+                    <button
+                        onClick={() => setShowPhotoList(true)}
+                        className="flex-[3] py-1.5 bg-gray-100 rounded-lg text-sm font-light text-gray-700 
+                                flex items-center justify-center gap-2 
+                                hover:bg-gray-200 transition-colors relative"
+                        >
+                            <i className="bi bi-images"></i>
+                            Фото
+                            {photos.length > 0 && (
+                                <span className="text-xs text-gray-500">{activePhoto+1}/{photos.length}</span>
+                            )}
+                            {/* Иконка-подсказка, что это открывает меню */}
+                            <i className="bi bi-chevron-up text-md  absolute right-2 text-teal-800 "></i>
+                    </button>
+                    <button
+                        onClick={() => setShowSettings()}
+                        className="flex-[3] py-1.5 bg-gray-100 rounded-lg text-sm font-light text-gray-700 flex items-center justify-center gap-2"
+                    >
+                        Сохранить
+                    </button>
+                    
                 </div>
 
                 {/* МОДАЛКА: СПИСОК ПРЕВЬЮ (только мобилка) */}
@@ -892,9 +907,9 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                             className="w-full bg-white rounded-t-2xl max-h-[70vh] flex flex-col"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="flex justify-between items-center p-4 border-b">
+                            <div className="flex justify-between items-center p-3 border-b">
                                 <h3 className="font-semibold">Фото ({photos.length})</h3>
-                                <button onClick={() => setShowPhotoList(false)} className="text-gray-500 text-2xl">×</button>
+                                <button onClick={() => setShowPhotoList(false)} ><i className="bi bi-chevron-down text-md text-teal-800 "></i></button>
                             </div>
                             <div className="flex-1 overflow-auto p-2">
                                 <ListPhoto 

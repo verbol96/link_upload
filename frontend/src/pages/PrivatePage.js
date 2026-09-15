@@ -1,66 +1,177 @@
-import { useState } from "react"
-import Footer from "../components/admin/Footer"
-import style from './PrivatePage.module.css'
+import { useState } from "react";
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+
+import Footer from "../components/admin/Footer";
 import { NavBar } from "../components/admin/NavBar";
-import {useSelector} from 'react-redux'
 import { ChangeData } from "../components/privatePage/ChangeData";
 import { MyOrdersUser } from "../components/privatePage/MyOrdersUser";
 import { MyOrdersAdmin } from "../components/privatePage/MyOrdersAdmin";
 import { MyFiles } from "../components/privatePage/MyFiles";
 
-const PrivatePage = () =>{
+const PrivatePage = () => {
+    const user = useSelector(state => state.private.user);
+    const navigate = useNavigate();
 
-    //const menu = ['Мои заказы', 'Личные данные', 'Мои файлы']
-    const menu = ['Мои заказы', 'Личные данные']
-    const user = useSelector(state=>state.private.user)
+    // Меню — зависит от роли
+    const menu = user?.role === 'USER'
+        ? [
+            { label: 'Мои заказы', key: 'orders', icon: 'bi-bag' },
+            { label: 'Профиль', key: 'profile', icon: 'bi-person' },
+            { label: 'Файлы', key: 'files', icon: 'bi-folder' },
+          ]
+        : [
+            { label: 'Заказы', key: 'orders', icon: 'bi-bag' },
+            { label: 'Личные данные', key: 'profile', icon: 'bi-person' },
+            { label: 'Мои файлы', key: 'files', icon: 'bi-folder' },
+          ];
 
-    const [item, setItem] = useState(0)
+    const [activeKey, setActiveKey] = useState('orders');
 
-    const ShowMenuItem = () =>{
-        switch(item){
-            case(0): 
-                {   if(user.role==='USER') return <MyOrdersUser />
-                    return <MyOrdersAdmin />
-                }
-            case(1): return <ChangeData />
-            //case(2): return <MyFiles />
-            default: return <MyOrdersUser />
-
+    const ShowMenuItem = () => {
+        switch (activeKey) {
+            case 'orders':
+                 return <MyOrdersUser user={user} />;
+            case 'orders1': //убрад пока для админов в разработке
+                if (user?.role === 'USER') return <MyOrdersUser user={user} />;
+                return <MyOrdersAdmin />;
+            case 'profile':
+                return <ChangeData />;
+            case 'files':
+                return <MyFiles />;
+            default:
+                return <MyOrdersUser />;
         }
-    }
+    };
 
-    const ShowUser = () =>{
-        if(!user.FIO) return user.phone
-        const splitUser = user.FIO.split(' ')
-        if(splitUser.length>1) return splitUser[0]+' '+splitUser[1]
-        if(splitUser.length===1) return splitUser[0]
-        
-    }
- 
+    const ShowUser = () => {
+        if (!user?.FIO) return user?.phone || '';
+        const parts = user.FIO.split(' ');
+        if (parts.length > 1) return `${parts[0]} ${parts[1]}`;
+        return parts[0];
+    };
+
     return (
-        <div style={{display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f6f6fa'}}>
+        <div className="flex flex-col min-h-screen bg-gray-50">
             <NavBar />
-            <div className={style.container}> 
-                <div className={style.menuList}>
-                    <div className={style.menuListPhone}>{ShowUser()}</div>
-                    <div className={style.menuListItem}>
-                        {menu.map((el,index)=><div className={style.menuItem} style={{background: item===index && '#116466',color: item===index && 'white'}} key={index} onClick={()=>{setItem(index)}}>{el}</div>)}
-                     </div>
+
+            <div className="flex-1 w-full max-w-7xl mx-auto px-3 md:px-6 py-4 md:py-8">
+
+                {/* Заголовок + приветствие (только мобилка) */}
+                <div className="md:hidden mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-teal-700 text-white flex items-center justify-center text-lg font-medium shrink-0">
+                            {user?.FIO?.[0]?.toUpperCase()+user?.FIO?.split(' ')[1][0]?.toUpperCase() || '?'}
+                        </div>
+                        <div>
+                            <div className="text-xs text-gray-500">Личный кабинет</div>
+                            <div className="text-lg font-semibold text-gray-800">
+                                {ShowUser()}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className={style.menuContent}>
-                    {ShowMenuItem()}
+
+                {/* Контейнер: на мобилке — колонка, на десктопе — 2 колонки */}
+                <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+
+                    {/* === МЕНЮ === */}
+                    <aside className="md:w-64 shrink-0">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden w-full">
+
+                            {/* Заголовок меню (только десктоп) */}
+                            <div className="hidden md:block p-4 border-b border-gray-100">
+                                <div className="text-xs text-gray-500 uppercase tracking-wide">
+                                    Личный кабинет
+                                </div>
+                                <div className="text-lg font-semibold text-gray-800 mt-1">
+                                    {ShowUser()}
+                                </div>
+                            </div>
+
+                            {/* Пункты меню — на мобилке горизонтально */}
+                            <nav className="md:hidden flex flex-row md:flex-col w-full overflow-hidden">
+                                {menu.map((item) => {
+                                    const isActive = activeKey === item.key;
+                                    return (
+                                        <button
+                                            key={item.key}
+                                            onClick={() => setActiveKey(item.key)}
+                                            className={`flex-1 md:flex-none flex items-center justify-center md:justify-start 
+                                                    gap-1.5 md:gap-2
+                                                    px-2 md:px-4 py-3 
+                                                    text-xs md:text-sm font-medium 
+                                                    transition-colors whitespace-nowrap
+                                                    md:border-l-2 md:border-l-transparent
+                                                    border-b-2 md:border-b-0
+                                                    ${isActive
+                                                        ? 'text-teal-900 md:bg-teal-50 md:border-l-teal-700 border-b-teal-700 bg-teal-900/5'
+                                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-b-transparent'
+                                                    }`}
+                                        >
+                                            <i className={`bi ${item.icon} text-sm md:text-base text-teal-900`}></i>
+                                            {item.label}
+                                        </button>
+                                    );
+                                })}
+                            </nav>
+
+                            {/* Пункты меню  на десктопе вертикально */}
+                            <nav className="hidden md:flex flex-col ">
+                                {menu.map((item) => {
+                                    const isActive = activeKey === item.key;
+                                    return (
+                                        <button
+                                            key={item.key}
+                                            onClick={() => setActiveKey(item.key)}
+                                            className={`flex-1 md:flex-none flex items-center justify-center md:justify-start 
+                                                    gap-1.5 md:gap-2
+                                                    px-2 md:px-4 py-3 
+                                                    text-xs md:text-sm font-medium 
+                                                    transition-colors whitespace-nowrap
+                                                    md:border-l-2 md:border-l-transparent
+                                                    border-b-2 md:border-b-0
+                                                    ${isActive
+                                                        ? 'text-teal-900 md:bg-teal-800/10 md:border-l-teal-700 border-b-teal-700 bg-teal-900/5'
+                                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-b-transparent'
+                                                    }`}
+                                        >
+                                            <i className={`bi ${item.icon} text-sm md:text-base text-teal-900`}></i>
+                                            {item.label}
+                                        </button>
+                                    );
+                                })}
+                            </nav>
+                        </div>
+
+                        {/* Кнопка "Новый заказ" — только для клиента */}
+                        {user?.role === 'USER' && (
+                            <button
+                                onClick={() => navigate('/Web')}
+                                className="hidden md:flex w-full mt-4 px-4 py-3 
+                                        bg-white hover:bg-teal-900 
+                                        text-teal-900 border-[1px] border-teal-900 rounded-xl text-sm font-medium 
+                                        items-center justify-center gap-2 
+                                        transition-colors shadow-sm"
+                            >
+                                <i className="bi bi-plus-lg text-teal-900"></i>
+                                Новый заказ
+                            </button>
+                        )}
+                    </aside>
+
+                    {/* === КОНТЕНТ === */}
+                    <main className="flex-1 min-w-0">
+                        {ShowMenuItem()}
+                    </main>
+
+                    
                 </div>
             </div>
-        
-           
-        
-            <div style={{marginTop: 'auto'}}>
-                <Footer />
-            </div>
-        
+
+            <Footer />
         </div>
-    )
-}
+    );
+};
 
-export default PrivatePage
-
+export default PrivatePage;

@@ -68,11 +68,16 @@ class orderController{
     }
 
     async updateUserAdress(req,res){
-        const id = req.params.id
-        const {FIO, typePost, postCode, city, adress} = req.body
-        const adressMain = await User.update({FIO, typePost, postCode, city, adress}
-            ,{where: {id:id}})
-        return res.json(adressMain)
+       const id = req.params.id;
+      const { FIO, typePost, postCode, city, adress } = req.body;
+
+      await User.update(
+          { FIO, typePost, postCode, city, adress },
+          { where: { id } }
+      );
+
+      const updatedUser = await User.findByPk(id);
+      return res.json(updatedUser.dataValues);
     }
 
     async getAll(req,res){
