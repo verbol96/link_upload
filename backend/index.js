@@ -29,7 +29,7 @@ app.use(cors({
         'http://link1.by',        // HTTP → редиректит на HTTPS
         'http://www.link1.by',    // HTTP → редиректит на HTTPS
       ]
-    : ['http://localhost:3000', 'http://localhost:5173', 'http://192.168.1.4:3000']
+    : ['http://localhost:3000', 'http://localhost:5173', 'http://192.168.1.4:3000', 'http://192.168.8.167:3000']
 }));
 
 app.use('/api', router)

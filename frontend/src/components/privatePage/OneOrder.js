@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import style from './OneOrder.module.css'
 import { OneOrderFile } from './OneOrderFile';
 import {CopyToClipboard} from 'react-copy-to-clipboard'
 import { deleteOrder, getSettings } from '../../http/dbApi';
@@ -10,7 +9,7 @@ import { deleteFile } from '../../http/cloudApi';
 
 export const OneOrder = ({order, index}) =>{
 
-    const [selectedOrder, setSelectedOrder] = useState(index === 0 ? true : false);
+    const [selectedOrder, setSelectedOrder] = useState(false);
     const user = useSelector(state=>state.private.user)
     const [isCopy, setIsCopy] = useState(false)
     const dispatch = useDispatch()
@@ -69,7 +68,7 @@ export const OneOrder = ({order, index}) =>{
         'Заказ сейчас находится на стадии печати.',// в печати
         'Печать заказа завершена, и он был аккуратно упакован для безопасной пересылки.',// упакован
         'Ваш заказ был передан на отправку. По штрихкоду можете его отслеживать.',// отправлен
-        '', //оплачен 
+        'Спасибо за заказ. Будем рады помочь снова', //оплачен 
         'Особый статус, обычно заказ готов, а вероятные причины: ожидание оплаты, либо дня отправки, либо добавления фото. Для уточнения можете написать нам в телеграм/инстаграм ',// в ожидании
         <label>Ошибка в заказе. Вероятно не загрузились фото.
             Можете загрузить заново, а этот <span style={{color:'red', cursor: 'pointer'}} onClick={()=>{DeleteOrder()}}>удалить заказ</span>. Либо напишите нам в Телеграм/Инстаграм</label>,// ошибка
@@ -126,195 +125,377 @@ export const OneOrder = ({order, index}) =>{
         return text
     }
 
+    const [showDetails, setShowDetails] = useState(false);
+
     return(
         <>
         {
             selectedOrder ?
-                <div className={style.desc}>
-                    <div onClick={()=>handleDetailsClick()}>
-                        <div> <i style={{fontSize: 25, color: '#116466'}} className="bi bi-caret-up-fill"></i></div>
+            <div className="mt-2 w-full bg-white rounded-xl shadow-sm border-[1px] border-teal-700 overflow-hidden">
+
+                {/* Шапка — клик для сворачивания */}
+                <div
+                    onClick={handleDetailsClick}
+                    className="flex items-center justify-between px-4 md:px-5 py-3 
+                            border-b border-gray-100 cursor-pointer hover:bg-gray-50
+                            transition-colors"
+                >
+                    <div className="flex items-center gap-6">
+                        <i className="bi bi-caret-up-fill text-teal-700 text-lg md:text-xl"></i>
+                        <span className="text-sm md:text-base font-semibold text-gray-800">
+                            Заказ от {order.createdAt.split("T")[0].split("-")[2]}.
+                            {order.createdAt.split("T")[0].split("-")[1]}.
+                            {order.createdAt.split("T")[0].split("-")[0]}
+                        </span>
                     </div>
 
-                    <div className={style.contact}>
-                        <div style={{flex: 2, display: 'flex', flexDirection: 'row', border: '1px solid silver', borderRadius:5, padding: '10px 10px' ,gap: 10}}>
+                    
+                </div>
 
-                            <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: 5}}>
-                                <div style={{display: 'flex', flexDirection: 'row'}}>
-                                    <div style={{flex: 2}}>дата:</div>
-                                    <div style={{flex: 5, fontWeight: 600}}>{order.createdAt.split("T")[0].split("-")[2]}.{order.createdAt.split("T")[0].split("-")[1]}</div>
-                                </div>
-                                <div style={{display: 'flex', flexDirection: 'row', marginTop:15}}>
-                                    <div style={{flex: 2}}>имя:</div>
-                                    <div style={{flex: 5, fontWeight: 600}}>{order.FIO}</div>
-                                </div>
-                                <div style={{display: 'flex', flexDirection: 'row'}}>
-                                    <div style={{flex: 2}}>номер:</div>
-                                    <div style={{flex: 5, fontWeight: 600}}>{formatPhoneNumber(order.phone)}</div>
-                                </div>
-                                <div style={{display: 'flex', flexDirection: 'row', marginTop:15}}>
-                                    <div style={{flex: 2}}>тип отправки:</div>
-                                    <div style={{flex: 5, fontWeight: 600}}>{ShowPost() }</div>
-                                </div>
-                                <div style={{display: 'flex', flexDirection: 'row'}}>
-                                    <div style={{flex: 2}}>город:</div>
-                                    <div style={{flex: 5, fontWeight: 600}}>{order.city}</div>
-                                </div>
-                                
-                                {order.typePost==='R' && 
-                                <div style={{display: 'flex', flexDirection: 'row'}}>
-                                    <div style={{flex: 2}}>индекс:</div>
-                                    <div style={{flex: 5, fontWeight: 600}}>{order.postCode}</div>
-                                </div>
-                                }
-                                <div style={{display: 'flex', flexDirection: 'row'}}>
-                                    <div style={{flex: 2}}>адрес:</div>
-                                    <div style={{flex: 5, fontWeight: 600}}>{order.adress}</div>
+                {/* Контент — 2 колонки на десктопе, 1 на мобилке */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-5">
+
+                
+                {/* === БЛОК: Данные отправления === */}
+                <div className=" overflow-hidden">
+
+                {/* === ШАПКА (всегда видна) === */}
+                <div
+                    onClick={() => setShowDetails(prev => !prev)}
+                    className="w-full flex items-center gap-3 
+                            px-3 md:px-4 py-3
+                            bg-gray-50/80
+                            border-[1px] border-teal-900/50  rounded-xl   text-left
+                            overflow-hidden"
+                >
+                    {/* Иконка */}
+                    <div className="w-8 h-8 rounded-full bg-gray-300/50 flex items-center justify-center shrink-0">
+                        <i className="bi bi-truck text-black text-sm"></i>
+                    </div>
+
+                    {/* Текст */}
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                        <div className="text-sm font-semibold text-gray-800 truncate">
+                            Данные отправления
+                        </div>
+                        <div className="text-xs text-gray-500 truncate mt-0.5">
+                            {order.FIO}
+                        </div>
+                    </div>
+
+                    {/* Треугольник справа */}
+                    <i className={`bi bi-caret-${showDetails ? 'up' : 'down'}-fill 
+                                text-teal-700 text-lg shrink-0`}></i>
+                </div>
+
+                {/* === КОНТЕНТ (только при раскрытии) === */}
+                {showDetails && (
+                    <div className="p-3 md:p-4 space-y-3 bg-white ">
+
+                        {/* Дата */}
+                        <div className="flex items-start gap-3">
+                            <i className="bi bi-calendar text-gray-400 mt-0.5 shrink-0"></i>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-xs text-gray-400">Дата заказа</div>
+                                <div className="font-semibold text-gray-800 text-sm">
+                                    {order.createdAt.split("T")[0].split("-")[2]}.
+                                    {order.createdAt.split("T")[0].split("-")[1]}.
+                                    {order.createdAt.split("T")[0].split("-")[0]}
                                 </div>
                             </div>
                         </div>
 
-                        <div style={{flex: 3, display: 'flex', flexDirection:'column', justifyContent:'space-between', border: '1px solid silver', padding: 10, borderRadius:5, gap: 10}}>
-                            <div className={style.rowInfo}>
-                                <div style={{flex: 1}}>статус заказа:</div>
-                                <div style={{flex: 3}}>
-                                    <button style={{backgroundColor: order.status === 6 || order.status === 5 ? 'grey' : '#3AAFA9', 
-                                                    border: 'none', borderRadius: 5,  width:'100%', color: 'white', fontWeight:600,}}>
-                                        {StatusOrder[order.status]}
-                                    </button>
-                                    <label style={{fontSize: 11}}>
-                                        {MessageStatus[order.status]}
-                                    </label>
-                                </div>
+                        {/* Имя */}
+                        <div className="flex items-start gap-3">
+                            <i className="bi bi-person text-gray-400 mt-0.5 shrink-0"></i>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-xs text-gray-400">Имя получателя</div>
+                                <div className="font-semibold text-gray-800 text-sm">{order.FIO}</div>
                             </div>
-                            {(order.status > 0 && order.status <= 4 ) &&
-                            <div className={style.rowInfo}>
-                                <div style={{flex: 1}}>отправка ожидается:</div>
-                                <div style={{flex: 3}}>
-                                    <input className={style.inputData} value={order.date_sent.split('-')[2] +'.'+ order.date_sent.split('-')[1] +'.'+  order.date_sent.split('-')[0]} readOnly />
-                                </div>
-                                
-                            </div>
-                            }
+                        </div>
 
-                            {order.status > 4 &&
-                            <div className={style.rowInfo}>
-                                <div style={{flex: 1}}>штрихкод: </div>
-                                <div style={{display: "flex", flex: 3, fontSize: 11, gap:1, maxWidth: 'calc(75% - 7px)'}}>
-                                    <input className={style.inputData} value={order.codeOutside? order.codeOutside: '-'} readOnly />
-                                    {order.typePost==='R' &&
-                                    <button className={style.btnInfo}
+                        {/* Телефон */}
+                        <div className="flex items-start gap-3">
+                            <i className="bi bi-telephone text-gray-400 mt-0.5 shrink-0"></i>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-xs text-gray-400">Телефон</div>
+                                <div className="font-semibold text-gray-800 text-sm">
+                                    {formatPhoneNumber(order.phone)}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Тип отправки */}
+                        <div className="flex items-start gap-3">
+                            <i className="bi bi-box-seam text-gray-400 mt-0.5 shrink-0"></i>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-xs text-gray-400">Способ отправки</div>
+                                <div className="font-semibold text-gray-800 text-sm">{ShowPost()}</div>
+                            </div>
+                        </div>
+
+                        {/* Город + индекс */}
+                        <div className="flex items-start gap-3">
+                            <i className="bi bi-building text-gray-400 mt-0.5 shrink-0"></i>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-xs text-gray-400">Город</div>
+                                <div className="font-semibold text-gray-800 text-sm">
+                                    {order.city}
+                                    {order.typePost === 'R' && order.postCode && `, ${order.postCode}`}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Адрес */}
+                        <div className="flex items-start gap-3">
+                            <i className="bi bi-geo-alt text-gray-400 mt-0.5 shrink-0"></i>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-xs text-gray-400">Адрес доставки</div>
+                                <div className="font-semibold text-gray-800 text-sm">
+                                    {order.adress}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                </div>
+
+                {/* === ПРАВАЯ КОЛОНКА: статус и сумма === */}
+                <div className="space-y-3">
+
+                    {/* Сумма заказа */}
+                    <div className="bg-teal-50 rounded-lg p-3 border border-teal-100">
+                        <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-600">Сумма заказа</span>
+                            <span className="text-base md:text-lg font-bold text-teal-900">
+                                {Number(order.price).toFixed(2)} ₽
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center mt-1 text-xs text-gray-500">
+                            <span>Пересылка</span>
+                            <span className="font-medium">
+                                {order.price_deliver === '0' ? 'нет данных' : `+${order.price_deliver} р`}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Дата отправки */}
+                    {(order.status > 0 && order.status <= 4 && order.date_sent) && (
+                        <div className="bg-gray-50 rounded-lg p-3 flex flex-row justify-between">
+                            <div className="text-xs text-gray-400 mb-1">Отправка ожидается</div>
+                            <div className="font-semibold text-gray-800 text-sm">
+                                {order.date_sent.split('-')[2]}.{order.date_sent.split('-')[1]}.{order.date_sent.split('-')[0]}
+                            </div>
+                        </div>
+                    )}
+
+                    
+
+                    <div className="bg-gray-50 rounded-lg p-3 space-y-3">
+
+                        {/* Строка статуса + этап */}
+                        <div className="flex items-center justify-between gap-2">
+                            <span className='font-light text-xs  text-black-900'>Статус:</span> 
+                            <span className={`text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full ${order.status === 6 || order.status === 5
+                                    ? 'bg-gray-200 text-gray-700'
+                                    : order.status === 8
+                                        ? 'bg-red-100 text-red-700'
+                                        : 'bg-teal-100 text-teal-800'
+                                }`}>
+                                {StatusOrder[order.status]}
+                            </span>
+
+                            {/* Этап — только для статусов 0-5 (не для ошибки/ожидания) */}
+                            {order.status >= 0 && order.status <= 5 && (
+                                <span className="text-xs text-gray-500 font-medium">
+                                    Этап <span className="text-teal-700 font-bold">{order.status + 1}</span> из 6
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Прогресс-бар — только для статусов 0-6 */}
+                        {order.status >= 0 && order.status <= 5 && (
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-teal-700 rounded-full transition-all duration-500"
+                                    style={{ width: `${((order.status + 1) / 6) * 100}%` }}
+                                />
+                            </div>
+                        )}
+
+                        {/* Описание статуса */}
+                        <div className="text-xs md:text-sm text-gray-700 leading-relaxed">
+                            {MessageStatus[order.status]}
+                        </div>
+                    </div>
+
+
+
+                    {/* Штрихкод */}
+                    {order.status === 5 && (
+                        <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                            <div className="text-xs text-gray-400">Штрихкод</div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <input
+                                    className="flex-1 min-w-0 px-3 py-1.5 border border-gray-300 rounded-lg 
+                                            text-xs font-mono text-gray-800 bg-white"
+                                    value={order.codeOutside || '-'}
+                                    readOnly
+                                />
+                                
+                                {order.typePost === 'R' && (
+                                    <button
                                         onClick={() => {
-                                            if (order.codeOutside) window.open(`https://belpost.by/Otsleditotpravleniye?number=${order.codeOutside}`, '_blank')
+                                            if (order.codeOutside) {
+                                                window.open(
+                                                    `https://belpost.by/Otsleditotpravleniye?number=${order.codeOutside}`,
+                                                    '_blank'
+                                                );
+                                            }
                                         }}
-                                        >   
-                                            отследить
+                                        className="px-3 py-1.5 bg-teal-700 hover:bg-teal-900 
+                                                text-white rounded-lg text-xs font-medium 
+                                                transition-colors whitespace-nowrap"
+                                    >
+                                        Отследить
                                     </button>
-                                    }
-                                    {
-                                        user.role !== 'USER' ?
-                                            <CopyToClipboard text={textMessage()}>
-                                            <button className={style.btnInfo}
-                                                onClick={()=>CopyCode()}
-                                            >
-                                                    копировать SMS {isCopy && <i style={{color: 'green'}} className="bi bi-clipboard-check"></i>}
-                                            </button>
-                                            </CopyToClipboard>
-                                        :
-                                            <CopyToClipboard text={order.codeOutside || ' '}>
-                                            <button className={style.btnInfo}
-                                                onClick={()=>CopyCode()}
-                                            >
-                                                    копировать {isCopy && <i style={{color: 'green'}} className="bi bi-clipboard-check"></i>}
-                                            </button>
-                                            </CopyToClipboard>
-                                    }
-                                    
-                                </div>
-                            </div>
-                            }
-
-                            <div className={style.rowInfo}>
-                                <div style={{flex: 1, maxWidth: '25%'}}>примечания:</div>
-                                <div style={{flex: 3, fontSize: 11}}>
-                                <textarea 
-                                    disabled 
-                                    rows={order.other.split('\n').length < 2 ? 2 : order.other.split('\n').length} 
-                                    value={order.other} 
-                                    onChange={() => {}} 
-                                    style={{ 
-                                        border: '1px solid silver', 
-                                        borderRadius: 5, 
-                                        width: '100%',
-                                        color: 'black', // Цвет текста
-                                        backgroundColor: 'white', // Цвет фона, чтобы текст был контрастным
-                                        opacity: 1, // Устанавливаем полную непрозрачность
-                                        WebkitTextFillColor: 'black', // Это для Safari
-                                        cursor: 'not-allowed' // Указатель мыши для disabled элемента
-                                    }}
-                                ></textarea>                                
-                                </div>
-                            </div>
-                             
-                            <div className={style.rowInfo}>
-                                <div style={{flex: 1}}>сумма заказа:</div>
-                                <div style={{flex: 3, fontWeight: 600}}>
-                                {(Number(order.price)).toFixed(2)}р 
-                                {order.price_deliver==='0' ? 
-                                    <span style={{fontWeight: 400}}> + пересылка  <i style={{color: 'black'}} className="bi bi-question-lg"></i>р </span>
-                                :
-                                    <span style={{fontWeight: 400}}> +{order.price_deliver}р пересылка</span>
-                                }
-                                </div>
+                                )}
+                                {user.role !== 'USER' && (
+                                    <CopyToClipboard text={textMessage()}>
+                                        <button
+                                            onClick={CopyCode}
+                                            className="px-3 py-1.5 bg-white border border-gray-300 
+                                                    hover:bg-gray-100 rounded-lg text-xs font-medium 
+                                                    transition-colors whitespace-nowrap"
+                                        >
+                                            SMS {isCopy && <i className="bi bi-clipboard-check text-green-600"></i>}
+                                        </button>
+                                    </CopyToClipboard>
+                                ) 
                                 
+                                }
                             </div>
-                            {user.role !== 'USER' &&
-                                <div style={{ display: 'flex', justifyContent: 'flex-start', fontSize: 12,  gap: 10 }}>
-                                    <div style={{flex: 1}}>
-                                    </div>
-                                    
-                                    <div style={{flex: 3, display: 'flex', flexDirection: 'row', gap: 20}}>
-                                        <div>
-                                            <label style={{fontSize: 15, color: 'black'}}>LINK =</label>
-                                            <label>{(SumTeor()*0.8).toFixed(2)}р</label>
-                                        </div>
-                                        <div>
-                                            <label><i style={{fontSize: 15, color: 'black'}} className="bi bi-currency-dollar"></i>=</label>
-                                            <label>
-                                                {order.firstClass?
-                                                (-Number(order.price)-Number(order.price_deliver)).toFixed(2)
-                                                :
-                                                (Number(order.price)-SumTeor()*0.8).toFixed(2)
-                                                }р
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
                         </div>
-                    </div>
+                    )}
 
-                    <div className={style.files}>
-                        
-                        {order.photos.map((el,index)=><OneOrderFile key={index} el={el} status={order.status} PriceList={PriceList} settings={settings} />)}
+                    {/* Примечания */}
+                    {order.other && (
+                        <div className="space-y-1">
+                            <div className="text-xs text-gray-400">Примечания</div>
+                            <textarea
+                                disabled
+                                value={order.other}
+                                rows={order.other.split('\n').length < 2 ? 2 : Math.min(order.other.split('\n').length, 6)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg 
+                                        text-xs text-gray-700 bg-gray-50 resize-none cursor-not-allowed"
+                            />
+                        </div>
+                    )}
 
-                    </div>
-                   
+
+
+                    {/* Для админа — расчёт LINK/прибыль */}
+                    {user.role !== 'USER' && (
+                        <div className="flex flex-wrap gap-4 pt-2 border-t border-gray-100 text-xs">
+                            <div>
+                                <span className="text-gray-500">LINK = </span>
+                                <span className="font-semibold text-gray-800">{(SumTeor() * 0.8).toFixed(2)} ₽</span>
+                            </div>
+                            <div>
+                                <span className="text-gray-500">💵 = </span>
+                                <span className="font-semibold text-gray-800">
+                                    {order.firstClass
+                                        ? (-Number(order.price) - Number(order.price_deliver)).toFixed(2)
+                                        : (Number(order.price) - SumTeor() * 0.8).toFixed(2)
+                                    } ₽
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
+                </div>
+
+                {/* === ФАЙЛЫ === */}
+                <div className="border-t border-gray-100 p-4 md:p-5 space-y-2">
+                    <div className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">
+                        Файлы 
+                    </div>
+                    <div className="space-y-2">
+                        {order.photos.map((el, index) => (
+                            <OneOrderFile
+                                key={index}
+                                el={el}
+                                status={order.status}
+                                PriceList={PriceList}
+                                settings={settings}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
             :
-                <div onClick={()=>handleDetailsClick()} className={style.row}>
-                    <div style={{flex: 1}}> <i style={{fontSize: 20, color: '#116466'}} className="bi bi-caret-down-fill"></i></div>
-                    <div style={{flex: 1}}> {order.createdAt.split("T")[0].split("-")[2]}.{order.createdAt.split("T")[0].split("-")[1]}</div>
-                    <div className={style.mobileNone}>  {order.FIO}</div>
-                    <div className={style.laptopNone}>  {order.FIO.split(' ')[0] && order.FIO.split(' ')[0]}</div>
-                    <div className={style.mobileNone}> {formatPhoneNumber(order.phone)}</div>
-                    <div className={style.mobileNone}> {order.city}</div>
-                    <div style={{flex: 1, minWidth: 50}}> {(Number(order.price)+Number(order.price_deliver)).toFixed(2)}р</div>
-                    <div style={{flex: 3, maxWidth: '25%'}}><button style={{backgroundColor: order.status === 6 ||order.status === 5 ? 'grey' : '#3AAFA9',  
-                                        border: 'none', borderRadius: 5, width:'100%', color: 'white'}}>{StatusOrder[order.status]}</button></div>
-               
-                </div>
-        }
-       
+<div
+    onClick={handleDetailsClick}
+    className="mb-2 w-full bg-white rounded-lg shadow-sm border border-gray-100
+            hover:border-teal-200 hover:shadow-md cursor-pointer
+            transition-all px-3 md:px-4 py-3
+            grid items-center gap-2 md:gap-4
+            grid-cols-[16px_minmax(0,1fr)_auto_auto]
+            md:grid-cols-[20px_minmax(130px,1fr)_minmax(140px,1.4fr)_minmax(120px,1fr)_minmax(100px,0.9fr)_110px]
+            text-xs md:text-sm font-semibold"
+>
+    {/* Стрелка */}
+    <div className="shrink-0 flex justify-center">
+        <i className="bi bi-caret-down-fill text-teal-700 text-base md:text-lg"></i>
+    </div>
+
+    {/* Дата заказа */}
+    <div className="text-gray-600 font-medium whitespace-nowrap truncate">
+        Заказ от{" "}
+        {order.createdAt.split("T")[0].split("-")[2]}.
+        {order.createdAt.split("T")[0].split("-")[1]}.
+        {order.createdAt.split("T")[0].split("-")[0]}
+    </div>
+
+    {/* ФИО — только на десктопе */}
+    <div className="hidden md:block min-w-0 truncate text-gray-800">
+        {order.FIO}
+    </div>
+
+    {/* Город — только на десктопе */}
+    <div className="hidden md:block min-w-0 truncate text-gray-500">
+        {order.city}
+    </div>
+
+    {/* Сумма — только на десктопе */}
+    <div className="hidden md:block font-semibold text-gray-800 whitespace-nowrap text-right">
+        {(Number(order.price) + Number(order.price_deliver)).toFixed(2)} ₽
+    </div>
+
+    {/* Сумма для мобилки — показывается только на маленьком экране */}
+    <div className="md:hidden font-semibold text-gray-800 whitespace-nowrap text-right">
+        {(Number(order.price) + Number(order.price_deliver)).toFixed(2)} ₽
+    </div>
+
+    {/* Статус */}
+    <div className="shrink-0 flex justify-end">
+        <span
+            className={`text-[10px] md:text-xs inline-flex items-center justify-center text-center font-medium 
+                        px-2 py-1 rounded-full whitespace-nowrap min-w-[70px]
+                        ${order.status === 6 || order.status === 5
+                            ? 'bg-gray-200 text-gray-700'
+                            : order.status === 8
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-teal-100 text-teal-800'
+                        }`}
+        >
+            {StatusOrder[order.status]}
+        </span>
+    </div>
+</div>
+
+            }
+    
         </>
     )
 }

@@ -56,6 +56,42 @@ const Redactor = () => {
     // загрузка фото
     const [convertingCount, setConvertingCount] = useState(0);
 
+    const createThumbnail = (file, maxSize = 800) => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                // Сохраняем пропорции
+                if (width > height) {
+                    if (width > maxSize) {
+                        height *= maxSize / width;
+                        width = maxSize;
+                    }
+                } else {
+                    if (height > maxSize) {
+                        width *= maxSize / height;
+                        height = maxSize;
+                    }
+                }
+
+                canvas.width = Math.round(width);
+                canvas.height = Math.round(height);
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                // Возвращаем как blob URL
+                canvas.toBlob((blob) => {
+                    resolve(URL.createObjectURL(blob));
+                }, 'image/jpeg', 1);
+            };
+            img.onerror = () => resolve(null);
+            img.src = URL.createObjectURL(file);
+        });
+    };
+
     // надо для convertHeic
     const getLibheif = async () => {
     const mod = await import('libheif-js/wasm-bundle');
@@ -112,48 +148,56 @@ const Redactor = () => {
         });
     };
 
-    const handleAddPhotos = async (e) => {
-        const files = Array.from(e.target.files);
-        if (!files.length) return;
+   const handleAddPhotos = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
-        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        setConvertingCount(files.length);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    setConvertingCount(files.length);
 
-        const processedFiles = await Promise.all(
-            files.map(async (file) => {
-                const isHeic = /\.(heic|heif)$/i.test(file.name)
-                            || file.type === 'image/heic'
-                            || file.type === 'image/heif';
+    const processedFiles = await Promise.all(
+        files.map(async (file) => {
+            const isHeic = /\.(heic|heif)$/i.test(file.name)
+                        || file.type === 'image/heic'
+                        || file.type === 'image/heif';
 
-                let result = file;
+            let result = file;
 
-                if (isHeic && !isSafari) {
-                    try {
-                        const blob = await convertHeic(file);
-                        const newName = file.name.replace(/\.(heic|heif)$/i, '.jpeg');
-                        result = new File([blob], newName, { type: 'image/jpeg' });
-                    } catch (err) {
-                        console.error('Ошибка конвертации HEIC:', err);
-                        // Файл останется как есть — не загрузится, но не сломает всё
-                    }
+            if (isHeic && !isSafari) {
+                try {
+                    const blob = await convertHeic(file);
+                    const newName = file.name.replace(/\.(heic|heif)$/i, '.jpeg');
+                    result = new File([blob], newName, { type: 'image/jpeg' });
+                } catch (err) {
+                    console.error('Ошибка конвертации HEIC:', err);
                 }
+            }
 
-                setConvertingCount(prev => Math.max(0, prev - 1));
-                return result;
-            })
-        );
+            setConvertingCount(prev => Math.max(0, prev - 1));
+            return result;
+        })
+    );
 
-        const newPhotos = processedFiles.map((file, i) => ({
-            id: Date.now() + i,
-            url: URL.createObjectURL(file),
-            name: file.name,
-            cropData: null
-        }));
+    // ← НОВОЕ: создаём миниатюры
+    const newPhotos = await Promise.all(
+        processedFiles.map(async (file, i) => {
+            const thumb = await createThumbnail(file, 200);
 
-        setPhotos((prev) => [...prev, ...newPhotos]);
-        setActivePhoto(0);
-        e.target.value = '';
-    };
+            return {
+                id: Date.now() + i,
+                url: URL.createObjectURL(file), // ← оригинал (для Cropper)
+                thumb: thumb,                    // ← сжатая (для карусели и списка)
+                name: file.name,
+                size: file.size,
+                cropData: null
+            };
+        })
+    );
+
+    setPhotos((prev) => [...prev, ...newPhotos]);
+    setActivePhoto(0);
+    e.target.value = '';
+};
 
     // сохранение изменений кропа
     const onSaveCrop = (photoId, newData) => {

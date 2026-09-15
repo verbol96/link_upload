@@ -174,6 +174,7 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
                      order.phone+
                      order.notes+
                      order.user?.FIO+
+                     order.user?.aboutUser+
                      order.user?.phone
         return data.toLowerCase().includes(searchQuery.toLowerCase());
       })
