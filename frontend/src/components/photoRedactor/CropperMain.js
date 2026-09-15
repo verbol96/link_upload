@@ -387,11 +387,8 @@ const CropperMain = ({ photos, setPhotos, onSaveCrop, handleAddPhotos, setActive
                 changePhoto(activePhoto + 1);
             } else if (e.key === 'ArrowDown' && activePhoto < photos.length - 1) {
                 e.preventDefault();
-                changePhoto(activePhoto + 1);
-            } else if (e.key === 'ArrowUp' && activePhoto > 0) {
-                e.preventDefault();
-                changePhoto(activePhoto - 1);
-            }
+                RotationImg(-1);
+            } 
         };
 
         window.addEventListener('keydown', handleKeyDown);

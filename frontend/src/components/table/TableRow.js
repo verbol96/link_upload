@@ -96,7 +96,8 @@ export const TableRow = ({orders, order, handleDetailsClick, selectedOrder, setS
 
 
     const textColor = useMemo(() => {
-        const pretend = orders.filter(el=>el.status < 5)
+        const ACTIVE_STATUSES = [0, 1, 2, 3, 4, 7, 8];
+        const pretend = orders.filter(el => ACTIVE_STATUSES.includes(el.status));
         const count = pretend.filter(el => el.phone === order.phone).length;
         return count > 1 ? 'blue' : 'black';
     }, [orders, order.phone]);
