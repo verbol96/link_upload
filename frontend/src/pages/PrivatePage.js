@@ -51,6 +51,15 @@ const PrivatePage = () => {
         return parts[0];
     };
 
+    const getInitials = (fio) => {
+        if (!fio || typeof fio !== 'string') return '?';
+        const parts = fio.trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return '?';
+        const first = parts[0]?.[0] ?? '';
+        const second = parts[1]?.[0] ?? '';
+        return (first + second).toUpperCase() || '?';
+    };
+
     return (
         <div className="flex flex-col min-h-screen bg-gray-50">
             <NavBar />
@@ -61,7 +70,7 @@ const PrivatePage = () => {
                 <div className="md:hidden mb-4">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-teal-700 text-white flex items-center justify-center text-lg font-medium shrink-0">
-                            {user?.FIO?.[0]?.toUpperCase()+user?.FIO?.split(' ')[1][0]?.toUpperCase() || '?'}
+                           {getInitials(user?.FIO)}
                         </div>
                         <div>
                             <div className="text-xs text-gray-500">Личный кабинет</div>
