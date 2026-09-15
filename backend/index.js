@@ -12,7 +12,7 @@ const fs = require('fs');
 const app = express()
 const PORT = process.env.PORT
 
-const status = 'release'// release, local
+const status = 'local'// release, local
 
 app.use(fileUpload({}))
 app.use(bodyParser.json({ limit: '70mb' })); // ограничение на обьем данных в запросе, увеличил для миграциии БД

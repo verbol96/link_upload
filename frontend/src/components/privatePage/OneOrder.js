@@ -395,7 +395,8 @@ export const OneOrder = ({order, index}) =>{
 
 
                     {/* Для админа — расчёт LINK/прибыль */}
-                    {user.role !== 'USER' && (
+                    {/*
+                    user.role !== 'USER' && (
                         <div className="flex flex-wrap gap-4 pt-2 border-t border-gray-100 text-xs">
                             <div>
                                 <span className="text-gray-500">LINK = </span>
@@ -411,7 +412,7 @@ export const OneOrder = ({order, index}) =>{
                                 </span>
                             </div>
                         </div>
-                    )}
+                    ) */}
                 </div>
                 </div>
 
