@@ -57,6 +57,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "ua-parser-js": "^1.0.37",
+    "uuid": "^14.0.2",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
