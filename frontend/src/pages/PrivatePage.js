@@ -44,12 +44,16 @@ const PrivatePage = () => {
         }
     };
 
-    const ShowUser = () => {
-        if (!user?.FIO) return user?.phone || '';
-        const parts = user.FIO.split(' ');
-        if (parts.length > 1) return `${parts[0]} ${parts[1]}`;
-        return parts[0];
-    };
+        const ShowUser = () => {
+            const fio = user?.FIO;
+            if (!fio || typeof fio !== 'string') return 'Имя не указано';
+
+            const parts = fio.trim().split(/\s+/).filter(Boolean);
+            if (!parts.length) return 'Имя не указано';
+
+            if (parts.length > 1) return `${parts[0]} ${parts[1]}`;
+            return parts[0];
+        };
 
     const getInitials = (fio) => {
         if (!fio || typeof fio !== 'string') return '?';
