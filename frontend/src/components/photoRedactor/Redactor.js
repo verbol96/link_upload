@@ -4,6 +4,7 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { $host } from '../../http';
 import _ from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 import jpeg from 'jpeg-js';
 
 const Redactor = () => {
@@ -56,6 +57,8 @@ const Redactor = () => {
 
     // загрузка фото
     const [convertingCount, setConvertingCount] = useState(0);
+    const [processingCount, setProcessingCount] = useState(0);
+    const [processingTotal, setProcessingTotal] = useState(0);
 
     const createThumbnail = (file, maxSize = 800) => {
         return new Promise((resolve) => {
@@ -83,10 +86,10 @@ const Redactor = () => {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                // Возвращаем как blob URL
+                // Нативный toBlob — шкала 0..1. 0.85 достаточно для превью.
                 canvas.toBlob((blob) => {
                     resolve(URL.createObjectURL(blob));
-                }, 'image/jpeg', 1);
+                }, 'image/jpeg', 0.85);
             };
             img.onerror = () => resolve(null);
             img.src = URL.createObjectURL(file);
@@ -95,8 +98,8 @@ const Redactor = () => {
 
     // надо для convertHeic
     const getLibheif = async () => {
-    const mod = await import('libheif-js/wasm-bundle');
-    return mod.default || mod;
+        const mod = await import('libheif-js/wasm-bundle');
+        return mod.default || mod;
     };
 
     const convertHeic = async (file) => {
@@ -143,62 +146,81 @@ const Redactor = () => {
 
         ctx.putImageData(imageData, 0, 0);
 
-        // ФИКС: сохраняем с правильным цветовым профилем
+        // Нативный toBlob — шкала 0..1. 0.95 почти без потерь для промежуточного JPEG.
         return new Promise(resolve => {
-            canvas.toBlob(resolve, 'image/jpeg', 1);
+            canvas.toBlob(resolve, 'image/jpeg', 0.95);
         });
     };
 
-   const handleAddPhotos = async (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
+    const handleAddPhotos = async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
 
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    setConvertingCount(files.length);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        setConvertingCount(files.length);
 
-    const processedFiles = await Promise.all(
-        files.map(async (file) => {
-            const isHeic = /\.(heic|heif)$/i.test(file.name)
-                        || file.type === 'image/heic'
-                        || file.type === 'image/heif';
+        // ⏳ Даём React отрисовать модалку HEIC-конвертации
+        await new Promise(requestAnimationFrame);
 
-            let result = file;
+        const processedFiles = await Promise.all(
+            files.map(async (file) => {
+                const isHeic = /\.(heic|heif)$/i.test(file.name)
+                            || file.type === 'image/heic'
+                            || file.type === 'image/heif';
 
-            if (isHeic && !isSafari) {
-                try {
-                    const blob = await convertHeic(file);
-                    const newName = file.name.replace(/\.(heic|heif)$/i, '.jpeg');
-                    result = new File([blob], newName, { type: 'image/jpeg' });
-                } catch (err) {
-                    console.error('Ошибка конвертации HEIC:', err);
+                let result = file;
+
+                if (isHeic && !isSafari) {
+                    try {
+                        const blob = await convertHeic(file);
+                        const newName = file.name.replace(/\.(heic|heif)$/i, '.jpeg');
+                        result = new File([blob], newName, { type: 'image/jpeg' });
+                    } catch (err) {
+                        console.error('Ошибка конвертации HEIC:', err);
+                    }
                 }
-            }
 
-            setConvertingCount(prev => Math.max(0, prev - 1));
-            return result;
-        })
-    );
+                setConvertingCount(prev => Math.max(0, prev - 1));
+                return result;
+            })
+        );
 
-    // ← НОВОЕ: создаём миниатюры
-    const newPhotos = await Promise.all(
-        processedFiles.map(async (file, i) => {
+        // ⏳ Переключаемся на модалку "обработка фото"
+        setProcessingTotal(processedFiles.length);
+        setProcessingCount(processedFiles.length);
+
+        // Даём React отрисовать модалку с прогрессом
+        await new Promise(requestAnimationFrame);
+
+        // ← Обрабатываем файлы с обновлением прогресса
+        const newPhotos = [];
+        for (let i = 0; i < processedFiles.length; i++) {
+            const file = processedFiles[i];
             const thumb = await createThumbnail(file, 200);
 
-            return {
-                id: Date.now() + i,
-                url: URL.createObjectURL(file), // ← оригинал (для Cropper)
-                thumb: thumb,                    // ← сжатая (для карусели и списка)
+            newPhotos.push({
+                id: uuidv4(),
+                url: URL.createObjectURL(file),
+                thumb: thumb,
                 name: file.name,
                 size: file.size,
                 cropData: null
-            };
-        })
-    );
+            });
 
-    setPhotos((prev) => [...prev, ...newPhotos]);
-    setActivePhoto(0);
-    e.target.value = '';
-};
+            setProcessingCount(prev => Math.max(0, prev - 1));
+
+            // ⏳ Дать браузеру отрисовать обновление прогресса
+            await new Promise(requestAnimationFrame);
+        }
+
+        setPhotos((prev) => [...prev, ...newPhotos]);
+        setActivePhoto(0);
+        e.target.value = '';
+
+        // Сброс состояния прелоадера
+        setProcessingCount(0);
+        setProcessingTotal(0);
+    };
 
     // сохранение изменений кропа
     const onSaveCrop = (photoId, newData) => {
@@ -236,13 +258,7 @@ const Redactor = () => {
         return { x, y, width: pixelsW, height: pixelsH };
     };
 
-    /**
-     * Кодирует canvas в JPEG через jpeg-js.
-     * Всегда baseline, всегда sRGB, одинаково на всех платформах.
-     * @param {HTMLCanvasElement} canvas
-     * @param {number} quality 1..100 (по умолчанию 92)
-     * @returns {Blob}
-     */
+    // jpeg-js: quality 1..100. 92 — оптимум для фотопечати.
     const canvasToJpegBlob = (canvas, quality = 92) => {
         const ctx = canvas.getContext('2d');
         const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -250,11 +266,7 @@ const Redactor = () => {
         return new Blob([encoded.data], { type: 'image/jpeg' });
     };
 
-    /**
-     * Универсальный экспорт canvas в blob по outputFormat.
-     * PNG — нативный toBlob (одинаков везде).
-     * JPEG — через jpeg-js (baseline sRGB, одинаков везде).
-     */
+    // jpeg-js: quality 1..100. PNG через нативный toBlob.
     const canvasToBlob = async (canvas, outputFormat, quality = 92) => {
         if (outputFormat === 'png') {
             return await new Promise(resolve =>
@@ -264,330 +276,334 @@ const Redactor = () => {
         return canvasToJpegBlob(canvas, quality);
     };
 
-const savePhotos = async () => {
-    const unprocessed = photos
-        .map((p, i) => (!p.cropData ? i + 1 : null))
-        .filter(Boolean);
-    if (unprocessed.length) {
-        setUnprocessedAlert(unprocessed);
-        setTimeout(() => setUnprocessedAlert([]), 2000);
-        return;
-    }
-
-    setIsDownloading(true);
-    setDownloadDone(false);
-    setLoadingCount(0);
-
-    const zip = new JSZip();
-
-    const images = await Promise.all(
-        photos.map(photo =>
-            new Promise((resolve, reject) => {
-                const el = new Image();
-                // ⚠️ Нужно для getImageData, если фото с другого домена
-                el.crossOrigin = 'anonymous';
-                el.onload = () => resolve(el);
-                el.onerror = reject;
-                el.src = photo.url;
-            })
-        )
-    );
-
-    const PX_PER_CM = 300;
-
-    const cardW = Math.round(
-        (Number(activeSettings.width) + Number(activeSettings.left) + Number(activeSettings.right)) * PX_PER_CM
-    );
-    const cardH = Math.round(
-        (Number(activeSettings.height) + Number(activeSettings.top) + Number(activeSettings.bottom)) * PX_PER_CM
-    );
-
-    const sheetW = Math.round(Number(activeSettings.widthList)  * PX_PER_CM);
-    const sheetH = Math.round(Number(activeSettings.heightList) * PX_PER_CM);
-
-    const cols = Math.max(1, Math.floor(sheetW / cardW));
-    const rows = Math.max(1, Math.floor(sheetH / cardH));
-    const perPage = cols * rows;
-
-    // =====================================================
-    // РЕЖИМ A: perPage === 1 — 1 фото на лист, без сжатия
-    // =====================================================
-    if (perPage === 1) {
-        for (let i = 0; i < photos.length; i++) {
-            const photo = photos[i];
-            const img = images[i];
-            const { rotation } = photo.cropData;
-
-            const pixels = pixelsRef.current[photo.id]
-                || computePixelsFromCropData(photo.cropData);
-
-            if (!pixels) continue;
-
-            setLoadingCount(prev => prev + 1);
-
-            // Поворот оригинала
-            const rotatedCanvasOrigPhoto = document.createElement('canvas');
-            const rotatedOrigPhoto = rotatedCanvasOrigPhoto.getContext('2d');
-            const isRotated90 = rotation === 90 || rotation === 270;
-
-            rotatedCanvasOrigPhoto.width  = isRotated90 ? img.height : img.width;
-            rotatedCanvasOrigPhoto.height = isRotated90 ? img.width  : img.height;
-
-            rotatedOrigPhoto.translate(rotatedCanvasOrigPhoto.width / 2, rotatedCanvasOrigPhoto.height / 2);
-            rotatedOrigPhoto.rotate(((rotation || 0) * Math.PI) / 180);
-            rotatedOrigPhoto.drawImage(img, -img.width / 2, -img.height / 2);
-
-            // Ориентация кропа
-            const isPhotoHorizontal = pixels.width > pixels.height;
-
-            const cardWidthCm  = isPhotoHorizontal ? Math.max(Number(activeSettings.height), Number(activeSettings.width)) : Math.min(Number(activeSettings.height), Number(activeSettings.width));
-            const cardHeightCm = isPhotoHorizontal ? Math.min(Number(activeSettings.height), Number(activeSettings.width)) : Math.max(Number(activeSettings.height), Number(activeSettings.width));
-
-            const photoIsHorizontal = pixels.width > pixels.height;
-            const cardIsHorizontal = cardWidthCm > cardHeightCm;
-            const needSwap = photoIsHorizontal !== cardIsHorizontal;
-
-            let pxPerCmX, pxPerCmY;
-
-            if (needSwap) {
-                pxPerCmX = pixels.height / cardHeightCm;
-                pxPerCmY = pixels.width  / cardWidthCm;
-            } else {
-                pxPerCmX = pixels.width  / cardWidthCm;
-                pxPerCmY = pixels.height / cardHeightCm;
-            }
-
-            const leftPx   = Math.round(Number(activeSettings.left)   * pxPerCmX);
-            const rightPx  = Math.round(Number(activeSettings.right)  * pxPerCmX);
-            const topPx    = Math.round(Number(activeSettings.top)    * pxPerCmY);
-            const bottomPx = Math.round(Number(activeSettings.bottom) * pxPerCmY);
-
-            const cardContentW = pixels.width  + leftPx + rightPx;
-            const cardContentH = pixels.height + topPx  + bottomPx;
-
-            let pxPerCm;
-            if (pixels.width > pixels.height) {
-                pxPerCm = Math.max(
-                    pixels.height / Number(activeSettings.width),
-                    pixels.width  / Number(activeSettings.height)
-                );
-            } else {
-                pxPerCm = Math.max(
-                    pixels.width  / Number(activeSettings.width),
-                    pixels.height / Number(activeSettings.height)
-                );
-            }
-
-            let finalSheetW = Math.round(Number(activeSettings.widthList)  * pxPerCm);
-            let finalSheetH = Math.round(Number(activeSettings.heightList) * pxPerCm);
-
-            const EPS = 0.02;
-            const isSquare = Math.abs(cardContentW - cardContentH) / Math.max(cardContentW, cardContentH) < EPS;
-            const isCardPortrait = cardContentH > cardContentW;
-            const isSheetPortrait = finalSheetH > finalSheetW;
-
-            if (!isSquare && isCardPortrait !== isSheetPortrait) {
-                [finalSheetW, finalSheetH] = [finalSheetH, finalSheetW];
-            }
-
-            const canvas = document.createElement('canvas');
-            canvas.width  = finalSheetW;
-            canvas.height = finalSheetH;
-            // Явно просим sRGB-контекст
-            const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
-
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, finalSheetW, finalSheetH);
-
-            const offsetX = leftPx;
-            const offsetY = topPx;
-
-            const srcX = Math.max(0, pixels.x);
-            const srcY = Math.max(0, pixels.y);
-
-            const drawX = offsetX + (pixels.x < 0 ? -pixels.x : 0);
-            const drawY = offsetY + (pixels.y < 0 ? -pixels.y : 0);
-
-            const maxPhotoW = pixels.width  - (pixels.x < 0 ? -pixels.x : 0);
-            const maxPhotoH = pixels.height - (pixels.y < 0 ? -pixels.y : 0);
-
-            const srcW = Math.min(pixels.width,  maxPhotoW);
-            const srcH = Math.min(pixels.height, maxPhotoH);
-
-            ctx.drawImage(
-                rotatedCanvasOrigPhoto,
-                srcX, srcY, srcW, srcH,
-                drawX, drawY, srcW, srcH
-            );
-
-            // Линии реза
-            ctx.strokeStyle = '#aaa';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([8, 6]);
-
-            ctx.beginPath();
-            ctx.moveTo(cardContentW, 0);
-            ctx.lineTo(cardContentW, finalSheetH);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(0, cardContentH);
-            ctx.lineTo(finalSheetW, cardContentH);
-            ctx.stroke();
-
-            ctx.setLineDash([]);
-
-            // === Экспорт: PNG нативно, JPEG через jpeg-js ===
-            const blob = await canvasToBlob(canvas, outputFormat, 92);
-
-            console.log('=== DEBUG SAVE ===');
-            console.log('finalSheetW:', finalSheetW, 'finalSheetH:', finalSheetH);
-            console.log('canvas:', canvas.width, 'x', canvas.height);
-            console.log('blob.size:', blob?.size);
-            console.log('blob.type:', blob?.type);
-
-            const ext = outputFormat === 'png' ? 'png' : 'jpeg';
-            const fileName = photos.length > 1
-                ? `${photo.name.split('.')[0]}.${ext}`
-                : `${nameOrder}_${nameFormat}.${ext}`;
-
-            zip.file(fileName, blob);
+    const savePhotos = async () => {
+        const unprocessed = photos
+            .map((p, i) => (!p.cropData ? i + 1 : null))
+            .filter(Boolean);
+        if (unprocessed.length) {
+            setUnprocessedAlert(unprocessed);
+            setTimeout(() => setUnprocessedAlert([]), 2000);
+            return;
         }
-    } else {
+
+        setIsDownloading(true);
+        setDownloadDone(false);
+        setLoadingCount(0);
+
+        // ⏳ Даём React отрендерить модалку
+        await new Promise(requestAnimationFrame);
+
+        // 📸 Снимок состояния
+        const photosSnapshot = [...photos];
+        const settingsSnapshot = { ...activeSettings };
+
+        const zip = new JSZip();
+
+        const images = await Promise.all(
+            photosSnapshot.map(photo =>
+                new Promise((resolve, reject) => {
+                    const el = new Image();
+                    el.crossOrigin = 'anonymous';
+                    el.onload = () => resolve(el);
+                    el.onerror = reject;
+                    el.src = photo.url;
+                })
+            )
+        );
+
+        const PX_PER_CM = 300;
+
+        const cardW = Math.round(
+            (Number(settingsSnapshot.width) + Number(settingsSnapshot.left) + Number(settingsSnapshot.right)) * PX_PER_CM
+        );
+        const cardH = Math.round(
+            (Number(settingsSnapshot.height) + Number(settingsSnapshot.top) + Number(settingsSnapshot.bottom)) * PX_PER_CM
+        );
+
+        const sheetW = Math.round(Number(settingsSnapshot.widthList)  * PX_PER_CM);
+        const sheetH = Math.round(Number(settingsSnapshot.heightList) * PX_PER_CM);
+
+        const cols = Math.max(1, Math.floor(sheetW / cardW));
+        const rows = Math.max(1, Math.floor(sheetH / cardH));
+        const perPage = cols * rows;
+
         // =====================================================
-        // РЕЖИМ B: perPage >= 2 — несколько фото на лист
+        // РЕЖИМ A: perPage === 1 — 1 фото на лист
         // =====================================================
-        const pages = [];
-        for (let i = 0; i < photos.length; i += perPage) {
-            pages.push(photos.slice(i, i + perPage));
-        }
+        if (perPage === 1) {
+            for (let i = 0; i < photosSnapshot.length; i++) {
+                const photo = photosSnapshot[i];
+                const img = images[i];
+                const { rotation } = photo.cropData;
 
-        const cards = [];
+                const pixels = pixelsRef.current[photo.id]
+                    || computePixelsFromCropData(photo.cropData);
 
-        for (let i = 0; i < photos.length; i++) {
-            const photo = photos[i];
-            const img = images[i];
-            const { rotation } = photo.cropData;
+                if (!pixels) continue;
 
-            const pixels = pixelsRef.current[photo.id]
-                || computePixelsFromCropData(photo.cropData);
+                setLoadingCount(prev => prev + 1);
+                await new Promise(requestAnimationFrame);
 
-            if (!pixels) continue;
+                // Поворот оригинала
+                const rotatedCanvasOrigPhoto = document.createElement('canvas');
+                const rotatedOrigPhoto = rotatedCanvasOrigPhoto.getContext('2d');
+                const isRotated90 = rotation === 90 || rotation === 270;
 
-            setLoadingCount(prev => prev + 1);
+                rotatedCanvasOrigPhoto.width  = isRotated90 ? img.height : img.width;
+                rotatedCanvasOrigPhoto.height = isRotated90 ? img.width  : img.height;
 
-            const rotatedCanvasOrigPhoto = document.createElement('canvas');
-            const rotatedOrigPhoto = rotatedCanvasOrigPhoto.getContext('2d');
-            const isRotated90 = rotation === 90 || rotation === 270;
+                rotatedOrigPhoto.translate(rotatedCanvasOrigPhoto.width / 2, rotatedCanvasOrigPhoto.height / 2);
+                rotatedOrigPhoto.rotate(((rotation || 0) * Math.PI) / 180);
+                rotatedOrigPhoto.drawImage(img, -img.width / 2, -img.height / 2);
 
-            rotatedCanvasOrigPhoto.width  = isRotated90 ? img.height : img.width;
-            rotatedCanvasOrigPhoto.height = isRotated90 ? img.width  : img.height;
+                const isPhotoHorizontal = pixels.width > pixels.height;
 
-            rotatedOrigPhoto.translate(rotatedCanvasOrigPhoto.width / 2, rotatedCanvasOrigPhoto.height / 2);
-            rotatedOrigPhoto.rotate(((rotation || 0) * Math.PI) / 180);
-            rotatedOrigPhoto.drawImage(img, -img.width / 2, -img.height / 2);
+                const cardWidthCm  = isPhotoHorizontal
+                    ? Math.max(Number(settingsSnapshot.height), Number(settingsSnapshot.width))
+                    : Math.min(Number(settingsSnapshot.height), Number(settingsSnapshot.width));
+                const cardHeightCm = isPhotoHorizontal
+                    ? Math.min(Number(settingsSnapshot.height), Number(settingsSnapshot.width))
+                    : Math.max(Number(settingsSnapshot.height), Number(settingsSnapshot.width));
 
-            const cardCanvas = document.createElement('canvas');
-            cardCanvas.width  = cardW;
-            cardCanvas.height = cardH;
-            const cardCtx = cardCanvas.getContext('2d', { colorSpace: 'srgb' });
+                const photoIsHorizontal = pixels.width > pixels.height;
+                const cardIsHorizontal = cardWidthCm > cardHeightCm;
+                const needSwap = photoIsHorizontal !== cardIsHorizontal;
 
-            cardCtx.fillStyle = 'white';
-            cardCtx.fillRect(0, 0, cardW, cardH);
+                let pxPerCmX, pxPerCmY;
+                if (needSwap) {
+                    pxPerCmX = pixels.height / cardHeightCm;
+                    pxPerCmY = pixels.width  / cardWidthCm;
+                } else {
+                    pxPerCmX = pixels.width  / cardWidthCm;
+                    pxPerCmY = pixels.height / cardHeightCm;
+                }
 
-            const leftPx = Math.round(Number(activeSettings.left) * PX_PER_CM);
-            const topPx  = Math.round(Number(activeSettings.top)  * PX_PER_CM);
-            const photoW = Math.round(Number(activeSettings.width)  * PX_PER_CM);
-            const photoH = Math.round(Number(activeSettings.height) * PX_PER_CM);
+                const leftPx   = Math.round(Number(settingsSnapshot.left)   * pxPerCmX);
+                const rightPx  = Math.round(Number(settingsSnapshot.right)  * pxPerCmX);
+                const topPx    = Math.round(Number(settingsSnapshot.top)    * pxPerCmY);
+                const bottomPx = Math.round(Number(settingsSnapshot.bottom) * pxPerCmY);
 
-            const scaleX = photoW / pixels.width;
-            const scaleY = photoH / pixels.height;
+                const cardContentW = pixels.width  + leftPx + rightPx;
+                const cardContentH = pixels.height + topPx  + bottomPx;
 
-            const drawX = leftPx + (pixels.x < 0 ? -pixels.x * scaleX : 0);
-            const drawY = topPx  + (pixels.y < 0 ? -pixels.y * scaleY : 0);
+                let pxPerCm;
+                if (pixels.width > pixels.height) {
+                    pxPerCm = Math.max(
+                        pixels.height / Number(settingsSnapshot.width),
+                        pixels.width  / Number(settingsSnapshot.height)
+                    );
+                } else {
+                    pxPerCm = Math.max(
+                        pixels.width  / Number(settingsSnapshot.width),
+                        pixels.height / Number(settingsSnapshot.height)
+                    );
+                }
 
-            const srcX = Math.max(0, pixels.x);
-            const srcY = Math.max(0, pixels.y);
+                let finalSheetW = Math.round(Number(settingsSnapshot.widthList)  * pxPerCm);
+                let finalSheetH = Math.round(Number(settingsSnapshot.heightList) * pxPerCm);
 
-            const maxPhotoW = photoW - (pixels.x < 0 ? -pixels.x * scaleX : 0);
-            const maxPhotoH = photoH - (pixels.y < 0 ? -pixels.y * scaleY : 0);
+                const EPS = 0.02;
+                const isSquare = Math.abs(cardContentW - cardContentH) / Math.max(cardContentW, cardContentH) < EPS;
+                const isCardPortrait = cardContentH > cardContentW;
+                const isSheetPortrait = finalSheetH > finalSheetW;
 
-            const srcW = Math.min(pixels.width,  maxPhotoW / scaleX);
-            const srcH = Math.min(pixels.height, maxPhotoH / scaleY);
+                if (!isSquare && isCardPortrait !== isSheetPortrait) {
+                    [finalSheetW, finalSheetH] = [finalSheetH, finalSheetW];
+                }
 
-            cardCtx.drawImage(
-                rotatedCanvasOrigPhoto,
-                srcX, srcY, srcW, srcH,
-                drawX, drawY, srcW * scaleX, srcH * scaleY
-            );
+                const canvas = document.createElement('canvas');
+                canvas.width  = finalSheetW;
+                canvas.height = finalSheetH;
+                const ctx = canvas.getContext('2d');
 
-            cards.push(cardCanvas);
-        }
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, finalSheetW, finalSheetH);
 
-        for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-            const pagePhotos = pages[pageIndex];
-            const pageStart = pageIndex * perPage;
+                const offsetX = leftPx;
+                const offsetY = topPx;
 
-            const canvas = document.createElement('canvas');
-            canvas.width  = sheetW;
-            canvas.height = sheetH;
-            const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
+                const srcX = Math.max(0, pixels.x);
+                const srcY = Math.max(0, pixels.y);
 
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, sheetW, sheetH);
+                const drawX = offsetX + (pixels.x < 0 ? -pixels.x : 0);
+                const drawY = offsetY + (pixels.y < 0 ? -pixels.y : 0);
 
-            for (let slot = 0; slot < pagePhotos.length; slot++) {
-                const card = cards[pageStart + slot];
-                if (!card) continue;
+                const maxPhotoW = pixels.width  - (pixels.x < 0 ? -pixels.x : 0);
+                const maxPhotoH = pixels.height - (pixels.y < 0 ? -pixels.y : 0);
 
-                const col = Math.floor(slot / rows);
-                const row = slot % rows;
+                const srcW = Math.min(pixels.width,  maxPhotoW);
+                const srcH = Math.min(pixels.height, maxPhotoH);
 
-                ctx.drawImage(card, col * cardW, row * cardH);
-            }
+                ctx.drawImage(
+                    rotatedCanvasOrigPhoto,
+                    srcX, srcY, srcW, srcH,
+                    drawX, drawY, srcW, srcH
+                );
 
-            // Линии реза
-            ctx.strokeStyle = '#aaa';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([8, 6]);
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([8, 6]);
 
-            for (let c = 0; c <= cols; c++) {
-                const x = c * cardW;
-                if (x > sheetW) break;
                 ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, sheetH);
+                ctx.moveTo(cardContentW, 0);
+                ctx.lineTo(cardContentW, finalSheetH);
                 ctx.stroke();
-            }
 
-            for (let r = 0; r <= rows; r++) {
-                const y = r * cardH;
-                if (y > sheetH) break;
                 ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(sheetW, y);
+                ctx.moveTo(0, cardContentH);
+                ctx.lineTo(finalSheetW, cardContentH);
                 ctx.stroke();
+
+                ctx.setLineDash([]);
+
+                // ✅ jpeg-js: 92 — оптимум для печати
+                const blob = await canvasToBlob(canvas, outputFormat, 92);
+
+                const ext = outputFormat === 'png' ? 'png' : 'jpeg';
+                const fileName = photosSnapshot.length > 1
+                    ? `${photo.name.split('.')[0]}.${ext}`
+                    : `${nameOrder}_${nameFormat}.${ext}`;
+
+                zip.file(fileName, blob);
+            }
+        } else {
+            // =====================================================
+            // РЕЖИМ B: perPage >= 2 — несколько фото на лист
+            // =====================================================
+            const pages = [];
+            for (let i = 0; i < photosSnapshot.length; i += perPage) {
+                pages.push(photosSnapshot.slice(i, i + perPage));
             }
 
-            ctx.setLineDash([]);
+            const cards = [];
 
-            // === Экспорт: PNG нативно, JPEG через jpeg-js ===
-            const blob = await canvasToBlob(canvas, outputFormat, 92);
+            for (let i = 0; i < photosSnapshot.length; i++) {
+                const photo = photosSnapshot[i];
+                const img = images[i];
+                const { rotation } = photo.cropData;
 
-            const ext = outputFormat === 'png' ? 'png' : 'jpeg';
-            const fileName = pages.length > 1
-                ? `sheet_${pageIndex + 1}.${ext}`
-                : `${nameOrder}_${nameFormat}.${ext}`;
-            zip.file(fileName, blob);
+                const pixels = pixelsRef.current[photo.id]
+                    || computePixelsFromCropData(photo.cropData);
+
+                if (!pixels) continue;
+
+                setLoadingCount(prev => prev + 1);
+                await new Promise(requestAnimationFrame);
+
+                const rotatedCanvasOrigPhoto = document.createElement('canvas');
+                const rotatedOrigPhoto = rotatedCanvasOrigPhoto.getContext('2d');
+                const isRotated90 = rotation === 90 || rotation === 270;
+
+                rotatedCanvasOrigPhoto.width  = isRotated90 ? img.height : img.width;
+                rotatedCanvasOrigPhoto.height = isRotated90 ? img.width  : img.height;
+
+                rotatedOrigPhoto.translate(rotatedCanvasOrigPhoto.width / 2, rotatedCanvasOrigPhoto.height / 2);
+                rotatedOrigPhoto.rotate(((rotation || 0) * Math.PI) / 180);
+                rotatedOrigPhoto.drawImage(img, -img.width / 2, -img.height / 2);
+
+                const cardCanvas = document.createElement('canvas');
+                cardCanvas.width  = cardW;
+                cardCanvas.height = cardH;
+                const cardCtx = cardCanvas.getContext('2d');
+
+                cardCtx.fillStyle = 'white';
+                cardCtx.fillRect(0, 0, cardW, cardH);
+
+                const leftPx = Math.round(Number(settingsSnapshot.left) * PX_PER_CM);
+                const topPx  = Math.round(Number(settingsSnapshot.top)  * PX_PER_CM);
+                const photoW = Math.round(Number(settingsSnapshot.width)  * PX_PER_CM);
+                const photoH = Math.round(Number(settingsSnapshot.height) * PX_PER_CM);
+
+                const scaleX = photoW / pixels.width;
+                const scaleY = photoH / pixels.height;
+
+                const drawX = leftPx + (pixels.x < 0 ? -pixels.x * scaleX : 0);
+                const drawY = topPx  + (pixels.y < 0 ? -pixels.y * scaleY : 0);
+
+                const srcX = Math.max(0, pixels.x);
+                const srcY = Math.max(0, pixels.y);
+
+                const maxPhotoW = photoW - (pixels.x < 0 ? -pixels.x * scaleX : 0);
+                const maxPhotoH = photoH - (pixels.y < 0 ? -pixels.y * scaleY : 0);
+
+                const srcW = Math.min(pixels.width,  maxPhotoW / scaleX);
+                const srcH = Math.min(pixels.height, maxPhotoH / scaleY);
+
+                cardCtx.drawImage(
+                    rotatedCanvasOrigPhoto,
+                    srcX, srcY, srcW, srcH,
+                    drawX, drawY, srcW * scaleX, srcH * scaleY
+                );
+
+                cards.push(cardCanvas);
+            }
+
+            for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+                const pagePhotos = pages[pageIndex];
+                const pageStart = pageIndex * perPage;
+
+                const canvas = document.createElement('canvas');
+                canvas.width  = sheetW;
+                canvas.height = sheetH;
+                const ctx = canvas.getContext('2d');
+
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, sheetW, sheetH);
+
+                for (let slot = 0; slot < pagePhotos.length; slot++) {
+                    const card = cards[pageStart + slot];
+                    if (!card) continue;
+
+                    const col = Math.floor(slot / rows);
+                    const row = slot % rows;
+
+                    ctx.drawImage(card, col * cardW, row * cardH);
+                }
+
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([8, 6]);
+
+                for (let c = 0; c <= cols; c++) {
+                    const x = c * cardW;
+                    if (x > sheetW) break;
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, sheetH);
+                    ctx.stroke();
+                }
+
+                for (let r = 0; r <= rows; r++) {
+                    const y = r * cardH;
+                    if (y > sheetH) break;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(sheetW, y);
+                    ctx.stroke();
+                }
+
+                ctx.setLineDash([]);
+
+                setLoadingCount(prev => prev + 1);
+                await new Promise(requestAnimationFrame);
+
+                // ✅ jpeg-js: 92 — оптимум для печати
+                const blob = await canvasToBlob(canvas, outputFormat, 92);
+
+                const ext = outputFormat === 'png' ? 'png' : 'jpeg';
+                const fileName = pages.length > 1
+                    ? `sheet_${pageIndex + 1}.${ext}`
+                    : `${nameOrder}_${nameFormat}.${ext}`;
+                zip.file(fileName, blob);
+            }
         }
-    }
 
-    zip.generateAsync({ type: 'blob' }).then(content => {
-        saveAs(content, `${nameOrder}_${nameFormat}.zip`);
-        setNameOrder('');
-        setTimeout(() => setDownloadDone(true), 500);
-    });
-};
+        zip.generateAsync({ type: 'blob' }).then(content => {
+            saveAs(content, `${nameOrder}_${nameFormat}.zip`);
+            setNameOrder('');
+            setTimeout(() => setDownloadDone(true), 500);
+        });
+    };
 
     const handleDoneClose = () => {
         setIsDownloading(false);
@@ -599,15 +615,42 @@ const savePhotos = async () => {
         ? Math.min(100, Math.round((loadingCount / photos.length) * 100))
         : 0;
 
+    // Прогресс обработки добавленных фото
+    const processingPercent = processingTotal > 0
+        ? Math.round(((processingTotal - processingCount) / processingTotal) * 100)
+        : 0;
+
     return (
         <div className="flex flex-col h-screen w-screen overflow-hidden">
+
+            {/* Модалка конвертации HEIC */}
             {convertingCount > 0 && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-lg flex flex-col items-center gap-4">
                         <div className="text-lg font-medium">Упс, heic попался. Конвертирую...</div>
-                        
+
                         <div className="flex items-center gap-2 text-gray-500">
                             <i className="bi bi-arrow-repeat animate-spin text-teal-700 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Модалка обработки (превью) добавленных фото */}
+            {processingTotal > 0 && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-2 min-w-[300px]">
+                        <div className="text-base font-medium text-gray-700">
+                            Добавление фото в редактор...
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                            <div
+                                className="bg-teal-600 h-2.5 rounded-full transition-all duration-300"
+                                style={{ width: `${processingPercent}%` }}
+                            />
+                        </div>
+                        <div className="text-sm text-gray-400">
+                            {processingTotal - processingCount} / {processingTotal} фото
                         </div>
                     </div>
                 </div>

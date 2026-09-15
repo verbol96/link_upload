@@ -94,6 +94,7 @@ const ListPhoto = ({ photos, activePhoto, changePhoto }) => {
                     {photos.map((el, index) => (
                         <div
                             key={el.id}
+                            
                             ref={(node) => {
                                 if (node) itemRefs.current[el.id] = node;
                                 else delete itemRefs.current[el.id];
