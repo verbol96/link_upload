@@ -40,7 +40,8 @@ const Order = sequelize.define('order', {
   is_sms_error: {type: DataTypes.BOOLEAN},
   is_sms_send: {type: DataTypes.BOOLEAN},
   is_sms_pay: {type: DataTypes.BOOLEAN},
-  date_sent: {type: DataTypes.DATE}
+  date_sent: {type: DataTypes.DATEONLY},
+  isPayment: { type: DataTypes.STRING, defaultValue: 'none'}
 })
 
 
@@ -102,6 +103,13 @@ const LogUser = sequelize.define('logUser', {
   screen:{type: DataTypes.STRING}
 })
 
+const Expense = sequelize.define('expense', {
+    id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
+    category: { type: DataTypes.STRING, allowNull: false },
+    amount: { type: DataTypes.FLOAT, allowNull: false },
+    title: { type: DataTypes.STRING, allowNull: true },
+});
+
 User.hasMany(Order)
 Order.belongsTo(User)
 
@@ -113,4 +121,4 @@ Token.belongsTo(User)
 Photo.hasMany(File)
 File.belongsTo(Photo)
 
-module.exports = {User, Order, Photo, Settings, Token, File, SettingEditor, LogUser, sequelize}
+module.exports = {User, Order, Photo, Settings, Token, File, SettingEditor, LogUser, Expense, sequelize}

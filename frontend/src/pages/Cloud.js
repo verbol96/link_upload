@@ -42,13 +42,6 @@ const Cloud = () =>{
 
     const getTotalSize = (files) => files.reduce((total, file) => total + file.size, 0) / (1024 * 1024 * 1024);
 
-    /* функция для удаления всех
-    const ClearCloud = async() =>{
-        if (window.confirm('Вы уверены, что хотите удалить файлы?')) {
-            const data = await deleteFileAll()
-            alert(data.message)
-        }
-    }*/
 
     const isDateOlderThan14Days = (dateString) => {
         const currentDate = new Date();

@@ -7,6 +7,18 @@ import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import jpeg from 'jpeg-js';
 
+// Форматирование времени: 12 с / 1 мин 5 с
+const formatElapsed = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    if (m === 0) return `${s} с`;
+    return `${m} мин ${s} с`;
+};
+
+// Пауза, гарантирующая перерисовку UI перед тяжёлой синхронной работой
+const yieldToUI = (ms = 40) =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
 const Redactor = () => {
 
     const [photos, setPhotos] = useState([]);
@@ -23,6 +35,14 @@ const Redactor = () => {
 
     const [unprocessedAlert, setUnprocessedAlert] = useState([]);
     const [outputFormat, setOutputFormat] = useState('jpeg');
+
+    // Прогресс: общее число шагов и метка ("фото" или "листов")
+    const [totalSteps, setTotalSteps] = useState(0);
+    const [progressUnit, setProgressUnit] = useState('фото');
+
+    // Секундомер
+    const [downloadStartTime, setDownloadStartTime] = useState(null);
+    const [downloadElapsed, setDownloadElapsed] = useState(0);
 
     // pixels по id фото
     const pixelsRef = useRef({});
@@ -55,6 +75,17 @@ const Redactor = () => {
         getSettingEditor();
     }, []);
 
+    // Тик секундомера
+    useEffect(() => {
+        if (!isDownloading || downloadDone || !downloadStartTime) return;
+
+        const interval = setInterval(() => {
+            setDownloadElapsed(Math.floor((Date.now() - downloadStartTime) / 1000));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [isDownloading, downloadDone, downloadStartTime]);
+
     // загрузка фото
     const [convertingCount, setConvertingCount] = useState(0);
     const [processingCount, setProcessingCount] = useState(0);
@@ -68,7 +99,6 @@ const Redactor = () => {
                 let width = img.width;
                 let height = img.height;
 
-                // Сохраняем пропорции
                 if (width > height) {
                     if (width > maxSize) {
                         height *= maxSize / width;
@@ -86,7 +116,6 @@ const Redactor = () => {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                // Нативный toBlob — шкала 0..1. 0.85 достаточно для превью.
                 canvas.toBlob((blob) => {
                     resolve(URL.createObjectURL(blob));
                 }, 'image/jpeg', 0.85);
@@ -96,7 +125,6 @@ const Redactor = () => {
         });
     };
 
-    // надо для convertHeic
     const getLibheif = async () => {
         const mod = await import('libheif-js/wasm-bundle');
         return mod.default || mod;
@@ -121,7 +149,6 @@ const Redactor = () => {
         canvas.width = width;
         canvas.height = height;
 
-        // ФИКС: пытаемся использовать display-p3
         let ctx;
         try {
             ctx = canvas.getContext('2d', { colorSpace: 'display-p3' });
@@ -146,7 +173,6 @@ const Redactor = () => {
 
         ctx.putImageData(imageData, 0, 0);
 
-        // Нативный toBlob — шкала 0..1. 0.95 почти без потерь для промежуточного JPEG.
         return new Promise(resolve => {
             canvas.toBlob(resolve, 'image/jpeg', 0.95);
         });
@@ -159,7 +185,6 @@ const Redactor = () => {
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         setConvertingCount(files.length);
 
-        // ⏳ Даём React отрисовать модалку HEIC-конвертации
         await new Promise(requestAnimationFrame);
 
         const processedFiles = await Promise.all(
@@ -185,14 +210,12 @@ const Redactor = () => {
             })
         );
 
-        // ⏳ Переключаемся на модалку "обработка фото"
         setProcessingTotal(processedFiles.length);
         setProcessingCount(processedFiles.length);
 
-        // Даём React отрисовать модалку с прогрессом
+        // Здесь операция лёгкая (превью 200×200) — rAF достаточно
         await new Promise(requestAnimationFrame);
 
-        // ← Обрабатываем файлы с обновлением прогресса
         const newPhotos = [];
         for (let i = 0; i < processedFiles.length; i++) {
             const file = processedFiles[i];
@@ -208,8 +231,6 @@ const Redactor = () => {
             });
 
             setProcessingCount(prev => Math.max(0, prev - 1));
-
-            // ⏳ Дать браузеру отрисовать обновление прогресса
             await new Promise(requestAnimationFrame);
         }
 
@@ -217,12 +238,10 @@ const Redactor = () => {
         setActivePhoto(0);
         e.target.value = '';
 
-        // Сброс состояния прелоадера
         setProcessingCount(0);
         setProcessingTotal(0);
     };
 
-    // сохранение изменений кропа
     const onSaveCrop = (photoId, newData) => {
         setPhotos(prev => prev.map(photo =>
             photo.id === photoId
@@ -237,7 +256,6 @@ const Redactor = () => {
         ));
     };
 
-    // ФИКС: вычисление pixels из cropData (fallback, если ref пуст)
     const computePixelsFromCropData = (cropData) => {
         if (!cropData) return null;
         const { crop, cropSize, zoom, media } = cropData;
@@ -258,7 +276,6 @@ const Redactor = () => {
         return { x, y, width: pixelsW, height: pixelsH };
     };
 
-    // jpeg-js: quality 1..100. 92 — оптимум для фотопечати.
     const canvasToJpegBlob = (canvas, quality = 92) => {
         const ctx = canvas.getContext('2d');
         const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -266,7 +283,6 @@ const Redactor = () => {
         return new Blob([encoded.data], { type: 'image/jpeg' });
     };
 
-    // jpeg-js: quality 1..100. PNG через нативный toBlob.
     const canvasToBlob = async (canvas, outputFormat, quality = 92) => {
         if (outputFormat === 'png') {
             return await new Promise(resolve =>
@@ -290,10 +306,13 @@ const Redactor = () => {
         setDownloadDone(false);
         setLoadingCount(0);
 
-        // ⏳ Даём React отрендерить модалку
-        await new Promise(requestAnimationFrame);
+        // Старт секундомера
+        setDownloadStartTime(Date.now());
+        setDownloadElapsed(0);
 
-        // 📸 Снимок состояния
+        // Даём модалке отрисоваться перед тяжёлой работой
+        await yieldToUI(40);
+
         const photosSnapshot = [...photos];
         const settingsSnapshot = { ...activeSettings };
 
@@ -327,6 +346,14 @@ const Redactor = () => {
         const rows = Math.max(1, Math.floor(sheetH / cardH));
         const perPage = cols * rows;
 
+        const pagesCount = Math.ceil(photosSnapshot.length / perPage);
+
+        // Прогресс:
+        // - режим A: 1 шаг = 1 фото → totalSteps = photos
+        // - режим B: 1 шаг = 1 лист → totalSteps = pagesCount
+        setTotalSteps(perPage === 1 ? photosSnapshot.length : pagesCount);
+        setProgressUnit('фото');
+
         // =====================================================
         // РЕЖИМ A: perPage === 1 — 1 фото на лист
         // =====================================================
@@ -342,9 +369,9 @@ const Redactor = () => {
                 if (!pixels) continue;
 
                 setLoadingCount(prev => prev + 1);
-                await new Promise(requestAnimationFrame);
+                // Гарантируем перерисовку прогресса перед тяжёлой работой
+                await yieldToUI(40);
 
-                // Поворот оригинала
                 const rotatedCanvasOrigPhoto = document.createElement('canvas');
                 const rotatedOrigPhoto = rotatedCanvasOrigPhoto.getContext('2d');
                 const isRotated90 = rotation === 90 || rotation === 270;
@@ -456,7 +483,6 @@ const Redactor = () => {
 
                 ctx.setLineDash([]);
 
-                // ✅ jpeg-js: 92 — оптимум для печати
                 const blob = await canvasToBlob(canvas, outputFormat, 92);
 
                 const ext = outputFormat === 'png' ? 'png' : 'jpeg';
@@ -487,7 +513,7 @@ const Redactor = () => {
 
                 if (!pixels) continue;
 
-                setLoadingCount(prev => prev + 1);
+                // Подготовка карточек — операция лёгкая, rAF достаточно
                 await new Promise(requestAnimationFrame);
 
                 const rotatedCanvasOrigPhoto = document.createElement('canvas');
@@ -584,10 +610,10 @@ const Redactor = () => {
 
                 ctx.setLineDash([]);
 
+                // Увеличиваем loadingCount за лист и даём UI перерисоваться
                 setLoadingCount(prev => prev + 1);
-                await new Promise(requestAnimationFrame);
+                await yieldToUI(40);
 
-                // ✅ jpeg-js: 92 — оптимум для печати
                 const blob = await canvasToBlob(canvas, outputFormat, 92);
 
                 const ext = outputFormat === 'png' ? 'png' : 'jpeg';
@@ -605,17 +631,190 @@ const Redactor = () => {
         });
     };
 
+    const saveCurrentPhoto = async () => {
+        const photo = photos[activePhoto];
+        if (!photo) return;
+
+        if (!photo.cropData) {
+            setUnprocessedAlert([activePhoto + 1]);
+            setTimeout(() => setUnprocessedAlert([]), 2000);
+            return;
+        }
+
+        setIsDownloading(true);
+        setDownloadDone(false);
+
+        setDownloadStartTime(Date.now());
+        setDownloadElapsed(0);
+        setTotalSteps(1);
+        setProgressUnit('фото');
+
+        // Даём модалке отрисоваться
+        await yieldToUI(40);
+
+        try {
+            const settingsSnapshot = { ...activeSettings };
+
+            const img = await new Promise((resolve, reject) => {
+                const el = new Image();
+                el.crossOrigin = 'anonymous';
+                el.onload = () => resolve(el);
+                el.onerror = reject;
+                el.src = photo.url;
+            });
+
+            const { rotation } = photo.cropData;
+
+            const pixels = pixelsRef.current[photo.id]
+                || computePixelsFromCropData(photo.cropData);
+
+            if (!pixels) {
+                setIsDownloading(false);
+                return;
+            }
+
+            const rotatedCanvasOrigPhoto = document.createElement('canvas');
+            const rotatedOrigPhoto = rotatedCanvasOrigPhoto.getContext('2d');
+            const isRotated90 = rotation === 90 || rotation === 270;
+
+            rotatedCanvasOrigPhoto.width  = isRotated90 ? img.height : img.width;
+            rotatedCanvasOrigPhoto.height = isRotated90 ? img.width  : img.height;
+
+            rotatedOrigPhoto.translate(rotatedCanvasOrigPhoto.width / 2, rotatedCanvasOrigPhoto.height / 2);
+            rotatedOrigPhoto.rotate(((rotation || 0) * Math.PI) / 180);
+            rotatedOrigPhoto.drawImage(img, -img.width / 2, -img.height / 2);
+
+            const isPhotoHorizontal = pixels.width > pixels.height;
+
+            const cardWidthCm  = isPhotoHorizontal
+                ? Math.max(Number(settingsSnapshot.height), Number(settingsSnapshot.width))
+                : Math.min(Number(settingsSnapshot.height), Number(settingsSnapshot.width));
+            const cardHeightCm = isPhotoHorizontal
+                ? Math.min(Number(settingsSnapshot.height), Number(settingsSnapshot.width))
+                : Math.max(Number(settingsSnapshot.height), Number(settingsSnapshot.width));
+
+            const photoIsHorizontal = pixels.width > pixels.height;
+            const cardIsHorizontal = cardWidthCm > cardHeightCm;
+            const needSwap = photoIsHorizontal !== cardIsHorizontal;
+
+            let pxPerCmX, pxPerCmY;
+            if (needSwap) {
+                pxPerCmX = pixels.height / cardHeightCm;
+                pxPerCmY = pixels.width  / cardWidthCm;
+            } else {
+                pxPerCmX = pixels.width  / cardWidthCm;
+                pxPerCmY = pixels.height / cardHeightCm;
+            }
+
+            const leftPx   = Math.round(Number(settingsSnapshot.left)   * pxPerCmX);
+            const rightPx  = Math.round(Number(settingsSnapshot.right)  * pxPerCmX);
+            const topPx    = Math.round(Number(settingsSnapshot.top)    * pxPerCmY);
+            const bottomPx = Math.round(Number(settingsSnapshot.bottom) * pxPerCmY);
+
+            const cardContentW = pixels.width  + leftPx + rightPx;
+            const cardContentH = pixels.height + topPx  + bottomPx;
+
+            let pxPerCm;
+            if (pixels.width > pixels.height) {
+                pxPerCm = Math.max(
+                    pixels.height / Number(settingsSnapshot.width),
+                    pixels.width  / Number(settingsSnapshot.height)
+                );
+            } else {
+                pxPerCm = Math.max(
+                    pixels.width  / Number(settingsSnapshot.width),
+                    pixels.height / Number(settingsSnapshot.height)
+                );
+            }
+
+            let finalSheetW = Math.round(Number(settingsSnapshot.widthList)  * pxPerCm);
+            let finalSheetH = Math.round(Number(settingsSnapshot.heightList) * pxPerCm);
+
+            const EPS = 0.02;
+            const isSquare = Math.abs(cardContentW - cardContentH) / Math.max(cardContentW, cardContentH) < EPS;
+            const isCardPortrait = cardContentH > cardContentW;
+            const isSheetPortrait = finalSheetH > finalSheetW;
+
+            if (!isSquare && isCardPortrait !== isSheetPortrait) {
+                [finalSheetW, finalSheetH] = [finalSheetH, finalSheetW];
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width  = finalSheetW;
+            canvas.height = finalSheetH;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, finalSheetW, finalSheetH);
+
+            const offsetX = leftPx;
+            const offsetY = topPx;
+
+            const srcX = Math.max(0, pixels.x);
+            const srcY = Math.max(0, pixels.y);
+
+            const drawX = offsetX + (pixels.x < 0 ? -pixels.x : 0);
+            const drawY = offsetY + (pixels.y < 0 ? -pixels.y : 0);
+
+            const maxPhotoW = pixels.width  - (pixels.x < 0 ? -pixels.x : 0);
+            const maxPhotoH = pixels.height - (pixels.y < 0 ? -pixels.y : 0);
+
+            const srcW = Math.min(pixels.width,  maxPhotoW);
+            const srcH = Math.min(pixels.height, maxPhotoH);
+
+            ctx.drawImage(
+                rotatedCanvasOrigPhoto,
+                srcX, srcY, srcW, srcH,
+                drawX, drawY, srcW, srcH
+            );
+
+            ctx.strokeStyle = '#aaa';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([8, 6]);
+
+            ctx.beginPath();
+            ctx.moveTo(cardContentW, 0);
+            ctx.lineTo(cardContentW, finalSheetH);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0, cardContentH);
+            ctx.lineTo(finalSheetW, cardContentH);
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+
+            const blob = await canvasToBlob(canvas, outputFormat, 92);
+
+            const ext = outputFormat === 'png' ? 'png' : 'jpeg';
+            const baseName = photos.length > 1
+                ? photo.name.split('.')[0]
+                : `${nameOrder || 'photo'}_${nameFormat || 'export'}`;
+            const fileName = `${baseName}.${ext}`;
+
+            saveAs(blob, fileName);
+
+            setLoadingCount(1);
+            setTimeout(() => setDownloadDone(true), 500);
+        } catch (err) {
+            console.error('Ошибка сохранения фото:', err);
+            setIsDownloading(false);
+        }
+    };
+
     const handleDoneClose = () => {
         setIsDownloading(false);
         setDownloadDone(false);
         setLoadingCount(0);
+        setDownloadStartTime(null);
+        setDownloadElapsed(0);
+        setTotalSteps(0);
     };
 
-    const progressPercent = photos.length > 0
-        ? Math.min(100, Math.round((loadingCount / photos.length) * 100))
+    const progressPercent = totalSteps > 0
+        ? Math.min(100, Math.round((loadingCount / totalSteps) * 100))
         : 0;
 
-    // Прогресс обработки добавленных фото
     const processingPercent = processingTotal > 0
         ? Math.round(((processingTotal - processingCount) / processingTotal) * 100)
         : 0;
@@ -636,7 +835,7 @@ const Redactor = () => {
                 </div>
             )}
 
-            {/* Модалка обработки (превью) добавленных фото */}
+            {/* Модалка обработки превью добавленных фото */}
             {processingTotal > 0 && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-2 min-w-[300px]">
@@ -645,7 +844,7 @@ const Redactor = () => {
                         </div>
                         <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
                             <div
-                                className="bg-teal-600 h-2.5 rounded-full transition-all duration-300"
+                                className="bg-teal-600 h-2.5 rounded-full"
                                 style={{ width: `${processingPercent}%` }}
                             />
                         </div>
@@ -679,12 +878,16 @@ const Redactor = () => {
                                 </div>
                                 <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
                                     <div
-                                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                                        className="bg-blue-600 h-2.5 rounded-full"
                                         style={{ width: `${progressPercent}%` }}
                                     />
                                 </div>
                                 <div className="text-sm text-gray-400">
-                                    {loadingCount} / {photos.length} фото
+                                    {loadingCount} / {totalSteps} {progressUnit}
+                                </div>
+                                <div className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                                    <i className="bi bi-stopwatch"></i>
+                                    {formatElapsed(downloadElapsed)}
                                 </div>
                             </>
                         ) : (
@@ -697,6 +900,10 @@ const Redactor = () => {
                                 </div>
                                 <div className="text-base font-light text-gray-700 text-center">
                                     Все фото обработаны и скачены
+                                </div>
+                                <div className="text-xs text-gray-400 text-center flex items-center gap-1">
+                                    <i className="bi bi-stopwatch"></i>
+                                    Заняло {formatElapsed(downloadElapsed)}
                                 </div>
                                 <button
                                     onClick={handleDoneClose}
@@ -734,6 +941,7 @@ const Redactor = () => {
                             pixelsRef={pixelsRef}
                             outputFormat={outputFormat}
                             setOutputFormat={setOutputFormat}
+                            saveCurrentPhoto={saveCurrentPhoto}
                         />
                     </div>
                 </div>

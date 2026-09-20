@@ -108,7 +108,7 @@ export const orderReducer = (state = defaultState, action) =>{
                 }),
             };
 
-            case UPDATE_SMS_PAY:
+        case UPDATE_SMS_PAY:
                 return {
                     ...state,
                     order: state.order.map((el) => {

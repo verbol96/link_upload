@@ -1,7 +1,7 @@
-import {React, useEffect, useState, useRef} from 'react'
-import {useDispatch, useSelector} from 'react-redux'
+import { React, useEffect, useState, useRef } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import _ from 'lodash'
-import {$host} from '../../http/index'
+import { $host } from '../../http/index'
 import { TableRow } from './TableRow'
 import './TableFull.css'
 import { addOrder, saveOrders, saveSettings, saveUsers, updateOrderStatus } from '../../store/orderReducer'
@@ -13,320 +13,367 @@ import Papa from 'papaparse';
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 
+// ============ СКЕЛЕТОН ЗАГРУЗКИ ============
+const OrdersSkeleton = ({ rows = 10, mobile = false }) => {
+    if (mobile) {
+        return (
+            <div className="flex flex-col gap-2 px-2 pt-3">
+                {Array.from({ length: rows }).map((_, i) => (
+                    <div
+                        key={i}
+                        className="bg-white rounded-lg border border-stone-200 p-3
+                                flex flex-col gap-2"
+                        style={{
+                            animation: 'fadeIn 0.4s ease-out both',
+                            animationDelay: `${i * 60}ms`,
+                        }}
+                    >
+                        <div className="flex justify-between items-center">
+                            <div className="h-3 w-24 rounded bg-stone-200 animate-pulse" />
+                            <div className="h-3 w-16 rounded bg-stone-200 animate-pulse" />
+                        </div>
+                        <div className="h-3 w-3/4 rounded bg-stone-200 animate-pulse" />
+                        <div className="flex justify-between items-center mt-1">
+                            <div className="h-3 w-1/3 rounded bg-stone-200 animate-pulse" />
+                            <div className="h-6 w-20 rounded bg-stone-200 animate-pulse" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
 
-export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, handleDetailsClick, isChanged, setIsChanged}) =>{
+    return (
+        <div className="px-2 pt-3">
+           
 
-    
+            {/* Строки */}
+            <div className="flex flex-col gap-1.5">
+                {Array.from({ length: rows }).map((_, i) => (
+                    <div
+                        key={i}
+                        className="flex items-center gap-3 bg-white border border-stone-200
+                                rounded-lg px-3 py-3"
+                        style={{
+                            animation: 'fadeIn 0.4s ease-out both',
+                            animationDelay: `${i * 60}ms`,
+                        }}
+                    >
+                        <div className="h-3 w-20 rounded bg-stone-200 animate-pulse" />
+                        <div className="h-3 w-32 rounded bg-stone-200 animate-pulse" />
+                        <div className="h-3 flex-1 rounded bg-stone-200 animate-pulse" />
+                        <div className="h-3 w-20 rounded bg-stone-200 animate-pulse" />
+                        <div className="h-3 w-24 rounded bg-stone-200 animate-pulse" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, handleDetailsClick, isChanged, setIsChanged }) => {
+
     const dispach = useDispatch()
-     
+
     const [sortKey, setSortKey] = useState('default');
     const [onlyLustre, setOnlyLustre] = useState(false)
     const [onlyHolst, setOnlyHolst] = useState(false)
     const [onlyMagnit, setOnlyMagnit] = useState(false)
     const [onlyA4, setOnlyA4] = useState(false)
 
-    let orders =_.orderBy(_.orderBy(useSelector(state => state.order.order), 'createdAt', 'desc' ), 'status', 'asc' )
+    let orders = _.orderBy(_.orderBy(useSelector(state => state.order.order), 'createdAt', 'desc'), 'status', 'asc')
 
     const sortOrders = (orders, sortKey) => {
-      switch (sortKey) {
-        case 'price':
-          return _.orderBy(orders, [item => Number(item.price)], 'desc');
-        case 'data':
-          return _.orderBy(orders, ['createdAt'], 'desc');
-        case 'city':
-          return _.orderBy(orders, [item => item.city.toLowerCase()], 'asc');
-        case 'FIO':
-          return _.orderBy(orders, item => item.user && item.user.FIO ? item.user.FIO.trim() : '', 'asc');
-        default:
-          return orders;
-      }
+        switch (sortKey) {
+            case 'price':
+                return _.orderBy(orders, [item => Number(item.price)], 'desc');
+            case 'data':
+                return _.orderBy(orders, ['createdAt'], 'desc');
+            case 'city':
+                return _.orderBy(orders, [item => item.city.toLowerCase()], 'asc');
+            case 'FIO':
+                return _.orderBy(orders, item => item.user && item.user.FIO ? item.user.FIO.trim() : '', 'asc');
+            default:
+                return orders;
+        }
     };
 
     orders = sortOrders(orders, sortKey);
-  
+
     const handleSortChange = (e) => {
-      setSortKey(e.target.value);
+        setSortKey(e.target.value);
     };
 
-    useEffect(()=>{
-        $host.get('api/order/getAll').then(
-            res=> {
+    // ============ ЗАГРУЗКА ============
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        setIsLoading(true);
+
+        $host.get('api/order/getAll')
+            .then(res => {
+             
                 dispach(saveOrders(res.data.orders))
                 dispach(saveSettings(res.data.settings))
                 dispach(saveUsers(res.data.users))
-            }
-        )  
-    },[dispach])
+            })
+            .catch(err => {
+                console.error('Ошибка загрузки заказов:', err);
+            })
+            .finally(() => {
+                 
+                  setIsLoading(false);
+            
+            });
+    }, [dispach])
 
-    const [searchQuery, setSearchQuery] = useState(''); // для поиска
-    const [selectedType, setSelectedType] = useState('All'); /// для белпочта/европочта
-    const [origin, setOrigin] = useState('All'); /// для белпочта/европочта
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedType, setSelectedType] = useState('All');
+    const [origin, setOrigin] = useState('All');
 
     const handleSearchChange = (e) => {
-      setSearchQuery(e.target.value);
-    };
-    
-    const handleSelectChange = (e) => {
-      setSelectedType(e.target.value);
+        setSearchQuery(e.target.value);
     };
 
-    const OriginChange = (e) =>{
-      setOrigin(e.target.value)
+    const handleSelectChange = (e) => {
+        setSelectedType(e.target.value);
+    };
+
+    const OriginChange = (e) => {
+        setOrigin(e.target.value)
     }
 
-    const AddNewOrder = async() =>{
-      //const userConfirmation = window.confirm("Добавить новый заказ?");
-
-      /*const getRandomPhoneNumber = () => {
-        const getRandomInt = (min, max) => {
-            min = Math.ceil(min);
-            max = Math.floor(max);
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
-    
-        let phoneNumber = "+37500";
-        for (let i = 0; i < 4; i++) {
-            phoneNumber += getRandomInt(0, 9);
-        }
-        phoneNumber +="000";
-        return phoneNumber;
-    }*/
-    
-   
+    const AddNewOrder = async () => {
         const data = {
-          FIO: 'неизвестно',
-          phone: '+375000000000',
-          typePost: 'E',
-          city: '',
-          adress: '',
-          oblast: '',
-          raion: '',
-          postCode: '',
-          photo: [],
-          other: '',
-          price: '',
-          firstClass: false,
-          status:1
+            FIO: 'неизвестно',
+            phone: '+375000000000',
+            typePost: 'E',
+            city: '',
+            adress: '',
+            oblast: '',
+            raion: '',
+            postCode: '',
+            photo: [],
+            other: '',
+            price: '',
+            firstClass: false,
+            status: 1
         };
-  
-      const response = await $host.post('api/order/addOrder', data)
-      
-      dispach(addOrder(response.data))
-      const newOrderDate = new Date(response.data.createdAt);
-      setEndDate(prevEndDate => newOrderDate > prevEndDate ? newOrderDate : prevEndDate);
-      
 
-      handleDetailsClick(response.data.id)
+        const response = await $host.post('api/order/addOrder', data)
+
+        dispach(addOrder(response.data))
+        const newOrderDate = new Date(response.data.createdAt);
+        setEndDate(prevEndDate => newOrderDate > prevEndDate ? newOrderDate : prevEndDate);
+
+        handleDetailsClick(response.data.id)
     }
 
     const [statusFilterVisible, setStatusFilterVisible] = useState(false);
 
     const handleStatusFilterMouseEnter = () => {
-      setStatusFilterVisible(true);
+        setStatusFilterVisible(true);
     };
-    
+
     const handleStatusFilterMouseLeave = () => {
-      setStatusFilterVisible(false);
+        setStatusFilterVisible(false);
     };
 
-    const [filterCheck, setFilterCheck] = useState([0,1,2,3,4,7,8])
-    const Check = (e, id) =>{
-      if(e){
-          setFilterCheck(filterCheck.concat(id))
-      }else{
-          setFilterCheck(
-              filterCheck.filter(el=>!id.includes(el))
-          )
-      }
+    const [filterCheck, setFilterCheck] = useState([0, 1, 2, 3, 4, 7, 8])
+    const Check = (e, id) => {
+        if (e) {
+            setFilterCheck(filterCheck.concat(id))
+        } else {
+            setFilterCheck(
+                filterCheck.filter(el => !id.includes(el))
+            )
+        }
+    }
 
-  }
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(new Date());
 
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(new Date());
-
-      const filteredOrders = orders.filter((order) => {
+    const filteredOrders = orders.filter((order) => {
         if (selectedType === 'All') return true;
         if (selectedType === 'R0') return order.typePost === 'R' || order.typePost === 'R1' || order.typePost === 'R2';
-        if (selectedType === 'R1') return order.typePost === 'R1'|| order.typePost === 'R2';
+        if (selectedType === 'R1') return order.typePost === 'R1' || order.typePost === 'R2';
         if (selectedType === 'E0') return order.typePost === 'E' || order.typePost === 'E1';
         return order.typePost === selectedType;
-      })
-      .filter((order) => {
-        if (origin === order.origin) {
-          return true;
-        }
-        if (origin === 'All') {
-          return true;
-        }
+    })
+        .filter((order) => {
+            if (origin === order.origin) {
+                return true;
+            }
+            if (origin === 'All') {
+                return true;
+            }
 
-        return order.origin === origin;
-      })
-      .filter((order) => {
-        const data = order.FIO+
-                     order.adress+
-                     order.city+
-                     order.phone+
-                     order.postCode+
-                     order.codeOutside+
-                     order.other+
-                     order.price+
-                     order.name+
-                     order.phone+
-                     order.notes+
-                     order.user?.FIO+
-                     order.user?.aboutUser+
-                     order.user?.phone
-        return data.toLowerCase().includes(searchQuery.toLowerCase());
-      })
-      .filter(s=>filterCheck.includes(Number(s.status)))
-      .filter((order) => {
-        const orderDate = new Date(order.createdAt);
-        return !startDate || !endDate || (orderDate >= startDate && orderDate <= endDate);
-      })
-      .filter((order)=>{
-        if (onlyLustre) {
-          return order.photos.some(el => el.paper === 'lustre');
-        }
-        else return true
-      })
-      .filter((order)=>{
-        if (onlyHolst) {
-          return order.photos.some(el => el.type === 'holst');
-        }
-        else return true
-      })
-      .filter((order)=>{
-        if (onlyMagnit) {
-          return order.photos.some(el => el.type === 'magnit');
-        }
-        else return true
-      })
-      .filter((order)=>{
-        if (onlyA4) {
-          return order.photos.some(el => el.format === 'а4' || el.format === '<а4');
-        }
-        else return true
-      })
-      ;
+            return order.origin === origin;
+        })
+        .filter((order) => {
+            const data = order.FIO +
+                order.adress +
+                order.city +
+                order.phone +
+                order.postCode +
+                order.codeOutside +
+                order.other +
+                order.price +
+                order.name +
+                order.phone +
+                order.notes +
+                order.user?.FIO +
+                order.user?.aboutUser +
+                order.user?.phone
+            return data.toLowerCase().includes(searchQuery.toLowerCase());
+        })
+        .filter(s => filterCheck.includes(Number(s.status)))
+        .filter((order) => {
+            const orderDate = new Date(order.createdAt);
+            return !startDate || !endDate || (orderDate >= startDate && orderDate <= endDate);
+        })
+        .filter((order) => {
+            if (onlyLustre) {
+                return order.photos.some(el => el.paper === 'lustre');
+            }
+            else return true
+        })
+        .filter((order) => {
+            if (onlyHolst) {
+                return order.photos.some(el => el.type === 'holst');
+            }
+            else return true
+        })
+        .filter((order) => {
+            if (onlyMagnit) {
+                return order.photos.some(el => el.type === 'magnit');
+            }
+            else return true
+        })
+        .filter((order) => {
+            if (onlyA4) {
+                return order.photos.some(el => el.format === 'а4' || el.format === '<а4');
+            }
+            else return true
+        })
+        ;
 
     const startDateSet = useRef(false);
-    
+
     useEffect(() => {
-      if (orders.length > 0 && !startDateSet.current) {
-          let ordersDataStart =_.orderBy(orders, 'createdAt', "desc" )
-          setStartDate(new Date(ordersDataStart[orders.length - 1].createdAt));
-          startDateSet.current = true;
-      }
+        if (orders.length > 0 && !startDateSet.current) {
+            let ordersDataStart = _.orderBy(orders, 'createdAt', "desc")
+            setStartDate(new Date(ordersDataStart[orders.length - 1].createdAt));
+            startDateSet.current = true;
+        }
     }, [orders]);
-    
-    /*const handleDateChange = (start, end) => {
-        setStartDate(new Date(start));
-        setEndDate(new Date(end));
-    }*/
 
     const [startArchive, setStartArchive] = useState(0)
     const [endArchive, setEndArchive] = useState(0)
 
+    const DownloadArchive = () => {
+        setIsLoading(true);
+        const data = { startArchive, endArchive }
+        $host.get('api/order/getAllArchive', { params: data })
+            .then(res => {
+                dispach(saveOrders(res.data.orders))
+                dispach(saveSettings(res.data.settings))
+                dispach(saveUsers(res.data.users))
 
-    const DownloadArchive = () =>{
-      const data = {startArchive, endArchive}
-      $host.get('api/order/getAllArchive', { params: data }).then(
-        res=> {
-            dispach(saveOrders(res.data.orders))
-            dispach(saveSettings(res.data.settings))
-            dispach(saveUsers(res.data.users))
-    
-            // Добавьте следующую строку для обновления startDate
-            let ordersDataStart =_.orderBy(res.data.orders, 'createdAt', "desc" )
-            setStartDate(new Date(ordersDataStart[ordersDataStart.length - 1].createdAt));
-        }
-      )  
+                let ordersDataStart = _.orderBy(res.data.orders, 'createdAt', "desc")
+                setStartDate(new Date(ordersDataStart[ordersDataStart.length - 1].createdAt));
+            })
+            .catch(err => {
+                console.error('Ошибка загрузки архива:', err);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
     }
 
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-      if(window.innerWidth < 769) setIsMobile(true)
+        if (window.innerWidth < 769) setIsMobile(true)
     }, []);
 
-    const ShowOrigin = (order) =>{
-          switch(order.origin){
-              case 'telegram': return <i style={{color: 'darkgreen'}} className="bi bi-send"></i>
-              case 'website': return <i style={{color: 'darkgreen'}} className="bi bi-lightning-fill"></i>  
-              case 'email': return <i style={{color: 'darkgreen'}} className="bi bi-envelope"></i>
-              default:  return <i style={{color: 'darkgreen'}} className="bi bi-send"></i>
-          }
-      }
-      const photo = (order) =>{
-        return order.photos.reduce((sum, el)=>{
-          if(el.paper==='lustre'){
-              return sum+el.amount*el.copies+"шт("+el.format+")ЛЮСТР "
-          }else{
-              return sum+el.amount*el.copies+"шт("+el.format+") "
-          }
-      }, '')
-      
+    const ShowOrigin = (order) => {
+        switch (order.origin) {
+            case 'telegram': return <i style={{ color: 'darkgreen' }} className="bi bi-send"></i>
+            case 'website': return <i style={{ color: 'darkgreen' }} className="bi bi-lightning-fill"></i>
+            case 'email': return <i style={{ color: 'darkgreen' }} className="bi bi-envelope"></i>
+            default: return <i style={{ color: 'darkgreen' }} className="bi bi-send"></i>
+        }
     }
 
-    const ShowData = (order) =>{
-      const data = `${order.createdAt.split("T")[0].split("-")[2]}.${order.createdAt.split("T")[0].split("-")[1]}`
-      const time = `${order.createdAt.split("T")[1].split(":")[0]}:${order.createdAt.split("T")[1].split(":")[1]}`
-      return `${data} (${time})`
+    const photo = (order) => {
+        return order.photos.reduce((sum, el) => {
+            if (el.paper === 'lustre') {
+                return sum + el.amount * el.copies + "шт(" + el.format + ")ЛЮСТР "
+            } else {
+                return sum + el.amount * el.copies + "шт(" + el.format + ") "
+            }
+        }, '')
+    }
+
+    const ShowData = (order) => {
+        const data = `${order.createdAt.split("T")[0].split("-")[2]}.${order.createdAt.split("T")[0].split("-")[1]}`
+        const time = `${order.createdAt.split("T")[1].split(":")[0]}:${order.createdAt.split("T")[1].split(":")[1]}`
+        return `${data} (${time})`
     }
 
     const ColorBG = [
-      '#97d0d6',// принят -1
-      '#D8BFD8',//обработан -2
-      '#FDFD96',// в печати -3
-      '#98FF98',// упакован -4
-      'DarkGrey',// отправлено -5
-      'white'// оплачено -6
+        '#97d0d6',// принят -1
+        '#D8BFD8',//обработан -2
+        '#FDFD96',// в печати -3
+        '#98FF98',// упакован -4
+        'DarkGrey',// отправлено -5
+        'white'// оплачено -6
     ]
 
-    const ChangeStatus = (event, order) =>{
-      $host.put(`api/order/updateStatus/${order.id}`, {'status': event.target.value})
-      dispach(updateOrderStatus(order.id, event.target.value))
-      setOrderModal(prev=>({...prev, status: event.target.value}))
+    const ChangeStatus = (event, order) => {
+        $host.put(`api/order/updateStatus/${order.id}`, { 'status': event.target.value })
+        dispach(updateOrderStatus(order.id, event.target.value))
+        setOrderModal(prev => ({ ...prev, status: event.target.value }))
     }
 
-    const Warning = (order) =>{
+    const Warning = (order) => {
         let a = []
-        if(order.codeOutside){
+        if (order.codeOutside) {
             a.push(
-                <i 
-                className="bi bi-qr-code" 
-                style={{marginLeft: 5}}
+                <i
+                    className="bi bi-qr-code"
+                    style={{ marginLeft: 5 }}
                 > </i>)
         }
-        if(order.firstClass === true){
-          a.push( <i className="bi bi-1-square-fill pr-1" style={{color:'red', marginLeft: 5}}> </i>)
+        if (order.firstClass === true) {
+            a.push(<i className="bi bi-1-square-fill pr-1" style={{ color: 'red', marginLeft: 5 }}> </i>)
         }
-        if(order.notes){
-            a.push( <i className="bi bi-exclamation-square-fill" style={{color: 'orange', marginLeft: 5}}> </i>)
+        if (order.notes) {
+            a.push(<i className="bi bi-exclamation-square-fill" style={{ color: 'orange', marginLeft: 5 }}> </i>)
         }
-        if(order.other){
-            a.push( <i className="bi bi-exclamation-square-fill" style={{color: 'yellowgreen', marginLeft: 5}}> </i>)
+        if (order.other) {
+            a.push(<i className="bi bi-exclamation-square-fill" style={{ color: 'yellowgreen', marginLeft: 5 }}> </i>)
         }
-        
-        return a.map((el, index)=><span key={index}>{el} </span>)
+
+        return a.map((el, index) => <span key={index}>{el} </span>)
     }
 
-    const handleProcess = (e) =>{
-      switch(e){
-        case '1': return setFilterCheck([0, 1, 2, 3, 4, 7, 8])
-        case '2': return setFilterCheck([5])
-        case '3': return setFilterCheck([6])
-        default: return setFilterCheck([0, 1, 2, 3, 4, 7, 8])
-      }
-      
+    const handleProcess = (e) => {
+        switch (e) {
+            case '1': return setFilterCheck([0, 1, 2, 3, 4, 7, 8])
+            case '2': return setFilterCheck([5])
+            case '3': return setFilterCheck([6])
+            default: return setFilterCheck([0, 1, 2, 3, 4, 7, 8])
+        }
     }
 
     const [activeModal, setActiveModal] = useState(false)
     const [orderModal, setOrderModal] = useState({})
 
-    const ClickOrderMobile = (order) =>{
-          setActiveModal(true)
-          setOrderModal(order)
+    const ClickOrderMobile = (order) => {
+        setActiveModal(true)
+        setOrderModal(order)
     }
 
     const [isOpen, setIsOpen] = useState(false);
@@ -334,316 +381,323 @@ export const TableFull = ({selectedOrder, setSelectedOrder, collapsedOrderId, se
     const [listPayEP, setListPayEP] = useState([]);
 
     const handleFileChange = (e) => {
-      const file = e.target.files[0];
-  
-      if (file) {
-        Papa.parse(file, {
-          header: true, // Указывает, что первая строка — это заголовки
-          skipEmptyLines: true, // Пропуск пустых строк
-          complete: (result) => {
-            // Фильтрация данных, сохраняя только значения из столбца "ТРЕК-НОМЕР ПЧО"
-            const filteredData = result.data.map(row => row['ТРЕК-НОМЕР ПЧО']);
-            
-            setListPayEP(filteredData); // Сохраняем в состояние только трек-номера
-          },
-          error: (error) => {
-            console.error('Ошибка при обработке CSV:', error);
-          }
-        });
-      }
+        const file = e.target.files[0];
+
+        if (file) {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (result) => {
+                    const filteredData = result.data.map(row => row['ТРЕК-НОМЕР ПЧО']);
+                    setListPayEP(filteredData);
+                },
+                error: (error) => {
+                    console.error('Ошибка при обработке CSV:', error);
+                }
+            });
+        }
     };
-    
+
     const checkPayEP = async () => {
-      try {
-        const data = {
-          list: listPayEP
-        };
-        setIsOpen(false);
-        await $host.post('/api/ep/changeStatusEP', data);
-        
-        // Очищаем список
-        setListPayEP([]);
-        
-        // Алерт об успехе
-        alert(`${listPayEP.length} заказов перенесены в оплаченные!`);
-        
-        
-      } catch (error) {
-        console.error('Ошибка:', error);
-        alert('Произошла ошибка при обновлении статусов');
-      }
+        try {
+            const data = {
+                list: listPayEP
+            };
+            setIsOpen(false);
+            await $host.post('/api/ep/changeStatusEP', data);
+
+            setListPayEP([]);
+
+            alert(`${listPayEP.length} заказов перенесены в оплаченные!`);
+
+
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при обновлении статусов');
+        }
     };
 
 
-    return(
+    return (
         <>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
-              <DialogContent aria-describedby={undefined}>
-                <DialogHeader>
-                  <DialogTitle className='mb-3'>Оплата европочты</DialogTitle>
-                  <div>
-                  
-                      <Input type="file" accept=".csv" onChange={handleFileChange} />
-                  
+                <DialogContent aria-describedby={undefined}>
+                    <DialogHeader>
+                        <DialogTitle className='mb-3'>Оплата европочты</DialogTitle>
+                        <div>
 
-                      <div className='mt-3' style={{maxHeight: 310, overflow: 'hidden', overflowY: 'scroll'}}>
-                        {listPayEP.map((trackNumber, index) => (
-                          <div key={index}>{trackNumber}</div>
-                        ))}
+                            <Input type="file" accept=".csv" onChange={handleFileChange} />
+
+
+                            <div className='mt-3' style={{ maxHeight: 310, overflow: 'hidden', overflowY: 'scroll' }}>
+                                {listPayEP.map((trackNumber, index) => (
+                                    <div key={index}>{trackNumber}</div>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-end">
+                                <Button className="mt-5 mr-5 h-8" onClick={() => checkPayEP()}>перенести в "оплачено"</Button>
+                            </div>
                         </div>
-                    
-                        <div className="flex justify-end">
-                          <Button className="mt-5 mr-5 h-8" onClick={()=>checkPayEP()}>перенести в "оплачено"</Button>
-                        </div>
-                  </div>
-                </DialogHeader>
-              </DialogContent>
+                    </DialogHeader>
+                </DialogContent>
             </Dialog>
 
-            {isMobile ? 
-              <div className={style.mobileMain}>
-                {activeModal?
-                  <ModalOrder order={orderModal} activeModal={activeModal} setActiveModal={setActiveModal} ChangeStatus={ChangeStatus}  />
+            {isMobile ?
+                <div className={style.mobileMain}>
+                    {activeModal ?
+                        <ModalOrder order={orderModal} activeModal={activeModal} setActiveModal={setActiveModal} ChangeStatus={ChangeStatus} />
+                        :
+                        <>
+                            <div className={style.menu}>
+                                <select onChange={handleSelectChange}>
+                                    <option value={'All'}>Все</option>
+                                    <option value={"E0"}>европочта</option>
+                                    <option value={"E1"}>европочта(ЕРИП)</option>
+                                    <option value={"E"}>европочта(налож)</option>
+                                    <option value={"R0"}>белпочта</option>
+                                    <option value={"R1"}>белпочта(ЕРИП)</option>
+                                    <option value={"R"}>белпочта(налож)</option>
+                                </select>
+                                <select onChange={OriginChange}>
+                                    <option value={'All'}>Сайт и телеграм</option>
+                                    <option value={'website'}>только сайт</option>
+                                    <option value={'telegram'}>только телеграм</option>
+                                </select>
+                                <input
+                                    type="text"
+                                    placeholder="Поиск"
+                                    value={searchQuery}
+                                    onChange={handleSearchChange}
+                                />
+                                <select defaultValue={'1'} onChange={e => handleProcess(e.target.value)}>
+                                    <option value={'1'}>в работе</option>
+                                    <option value={'2'}>отправленные</option>
+                                    <option value={'3'}>оплаченные</option>
+                                </select>
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    <OrdersSkeleton rows={5} mobile={true} />
+                                ) : (
+                                    filteredOrders.map(order => (
+                                        <div key={order.id} onClick={(event) => event.stopPropagation()}>
+
+                                            <div className={selectedOrder === order.id ? style.mobileOrderSelected : style.mobileOrder} onClick={() => ClickOrderMobile(order)}>
+                                                <div className={style.origin}>
+                                                    <div className={style.circle}>{ShowOrigin(order)} &nbsp; {order.typePost + (order.order_number % 1000)}</div>
+                                                    <div>{ShowData(order)}</div>
+                                                </div>
+                                                <div className={style.contact}>
+                                                    <div> {order?.user?.FIO}</div>
+                                                    <div className={style.contact2}>
+                                                        <div className={style.dataPhoto}>{photo(order)}</div>
+                                                        <div>{Warning(order)} </div>
+                                                    </div>
+                                                </div>
+                                                <div className={style.data}>
+                                                    <div>{(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р</div>
+                                                    <div onClick={(event) => event.stopPropagation()}>
+                                                        <select style={{ backgroundColor: ColorBG[order.status - 1] }} value={order.status} onChange={(e) => ChangeStatus(e, order)} >
+                                                            <option value="0">новый</option>
+                                                            <option value="1">принят</option>
+                                                            <option value="2">обработан</option>
+                                                            <option value="3">в печати</option>
+                                                            <option value="4">упакован</option>
+                                                            <option value="5">отправлен</option>
+                                                            <option value="6">оплачен</option>
+                                                            <option value="7">в ожидании</option>
+                                                            <option value="8">ошибка</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                                <TableFooter filteredOrders={filteredOrders} />
+                            </div>
+                        </>}
+                </div>
                 :
                 <>
-                <div className={style.menu}>
-                    <select onChange={handleSelectChange}>
-                            <option value={'All'}>Все</option>
-                            <option value={"E0"}>европочта</option>
-                            <option value={"E1"}>европочта(ЕРИП)</option>
-                            <option value={"E"}>европочта(налож)</option>
-                            <option value={"R0"}>белпочта</option>
-                            <option value={"R1"}>белпочта(ЕРИП)</option>
-                            <option value={"R"}>белпочта(налож)</option>
-                    </select>
-                    <select onChange={OriginChange}>
-                            <option value={'All'}>Сайт и телеграм</option>
-                            <option value={'website'}>только сайт</option>
-                            <option value={'telegram'}>только телеграм</option>
-                    </select>
-                    <input
-                          type="text"
-                          placeholder="Поиск"
-                          value={searchQuery}
-                          onChange={handleSearchChange}
-                    />
-                    <select defaultValue={'1'} onChange={e=>handleProcess(e.target.value)}>
-                        <option value={'1'}>в работе</option>
-                        <option value={'2'}>отправленные</option>
-                        <option value={'3'}>оплаченные</option>
-                    </select>
-                </div>
-                <div>
-                {filteredOrders.map(order => 
-                  <div key={order.id} onClick={(event)=>event.stopPropagation()}>
+                    <div className="menu-container" >
 
-                      <div className={selectedOrder===order.id ? style.mobileOrderSelected: style.mobileOrder} onClick={()=>ClickOrderMobile(order)}>
-                        <div className={style.origin}>
-                          <div className={style.circle}>{ShowOrigin(order)} &nbsp; {order.typePost + (order.order_number%1000) }</div>
-                          <div>{ShowData(order)}</div>
+                        <div className="menu-left">
+                            <button className="menu-button" onClick={() => AddNewOrder()}><i style={{ color: 'white' }} className="bi bi-folder-plus" ></i></button>
+                            <select className="menu-select" onChange={handleSelectChange}>
+                                <option value={'All'}>Все</option>
+                                <option value={"E0"}>европочта</option>
+                                <option value={"E1"}>европочта(ЕРИП)</option>
+                                <option value={"E"}>европочта(налож)</option>
+                                <option value={"R0"}>белпочта</option>
+                                <option value={"R1"}>белпочта(ЕРИП)</option>
+                                <option value={"R"}>белпочта(налож)</option>
+                            </select>
+                            <select className="menu-select" style={{ marginLeft: 0 }} onChange={OriginChange}>
+                                <option value={'All'}>Сайт и телеграм</option>
+                                <option value={'website'}>только сайт</option>
+                                <option value={'telegram'}>только телеграм</option>
+                            </select>
+                            <input
+                                className="menu-input"
+                                type="text"
+                                placeholder="Поиск"
+                                value={searchQuery}
+                                onChange={handleSearchChange}
+                            />
+                            <select className="menu-select" onChange={handleSortChange}>
+                                <option value={'default'}>по умолчанию</option>
+                                <option value={'price'}>по цене</option>
+                                <option value={'data'}>по дате</option>
+                                <option value={'city'}>по городу</option>
+                                <option value={'FIO'}>по имени</option>
+                            </select>
+
+                            <button
+                                onClick={() => setOnlyLustre(!onlyLustre)}
+                                className="menu-input"
+                                style={{
+                                    background: onlyLustre ? '#2f616b' : 'white',
+                                    color: onlyLustre ? 'white' : '#000000',
+                                    cursor: 'pointer',
+                                    width: 'auto',
+                                    minWidth: '60px',
+                                    marginLeft: '50px'
+                                }}
+                            >
+                                lustre
+                            </button>
+                            <button
+                                onClick={() => setOnlyHolst(!onlyHolst)}
+                                className="menu-input"
+                                style={{
+                                    background: onlyHolst ? '#2f616b' : 'white',
+                                    color: onlyHolst ? 'white' : '#000000',
+                                    cursor: 'pointer',
+                                    width: 'auto',
+                                    minWidth: '60px',
+                                    marginLeft: '10px'
+                                }}
+                            >
+                                holst
+                            </button>
+                            <button
+                                onClick={() => setOnlyMagnit(!onlyMagnit)}
+                                className="menu-input"
+                                style={{
+                                    background: onlyMagnit ? '#2f616b' : 'white',
+                                    color: onlyMagnit ? 'white' : '#000000',
+                                    cursor: 'pointer',
+                                    width: 'auto',
+                                    minWidth: '60px',
+                                    marginLeft: '10px'
+                                }}
+                            >
+                                magnit
+                            </button>
+                            <button
+                                onClick={() => setOnlyA4(!onlyA4)}
+                                className="menu-input"
+                                style={{
+                                    background: onlyA4 ? '#2f616b' : 'white',
+                                    color: onlyA4 ? 'white' : '#000000',
+                                    cursor: 'pointer',
+                                    width: 'auto',
+                                    minWidth: '60px',
+                                    marginLeft: '10px'
+                                }}
+                            >
+                                A4
+                            </button>
+
+
+                            {
+                                selectedType === 'E' &&
+                                <button className="menu-button ml-2 bg-slate-500" onClick={() => setIsOpen(true)}><i style={{ color: 'white' }} className="bi bi-wallet2"></i></button>
+
+                            }
+
                         </div>
-                        <div className={style.contact}>
-                          <div> {order?.user?.FIO}</div>
-                          <div className={style.contact2}> 
-                            <div className={style.dataPhoto}>{photo(order)}</div>
-                            <div>{Warning(order)} </div>
-                          </div>
-                        </div>
-                        <div className={style.data}>
-                            <div>{(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р</div>
-                            <div  onClick={(event)=>event.stopPropagation()}>
-                              <select style={{backgroundColor: ColorBG[order.status-1]}} value={order.status} onChange={(e)=>ChangeStatus(e, order)} >
-                                 <option value="0">новый</option>
-                                  <option value="1">принят</option>
-                                  <option value="2">обработан</option>
-                                  <option value="3">в печати</option>
-                                  <option value="4">упакован</option>
-                                  <option value="5">отправлен</option>
-                                  <option value="6">оплачен</option>
-                                  <option value="7">в ожидании</option>
-                                  <option value="8">ошибка</option>
-                              </select>
+
+                        <div
+                            className="menu-right"
+                            onMouseEnter={handleStatusFilterMouseEnter}
+                            onMouseLeave={handleStatusFilterMouseLeave}
+                        >
+                            <div className="status-filter-container">
+                                <button className="menu-button">
+                                    <i style={{ color: 'white' }} className="bi bi-filter-square"></i>
+                                </button>
+                                {statusFilterVisible && (
+                                    <div className="status-filter-popup">
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                checked={filterCheck.includes(0) && filterCheck.includes(1) && filterCheck.includes(2) && filterCheck.includes(3) && filterCheck.includes(4) && filterCheck.includes(7) && filterCheck.includes(8)}
+                                                onChange={(e) => Check(e.target.checked, [0, 1, 2, 3, 4, 7, 8])}
+                                            />
+                                            В работе
+                                        </label>
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                checked={filterCheck.includes(5)}
+                                                onChange={(e) => Check(e.target.checked, [5])}
+                                            />
+                                            Отправленные
+                                        </label>
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                checked={filterCheck.includes(6)}
+                                                onChange={(e) => Check(e.target.checked, [6])}
+                                            />
+                                            Оплаченные
+                                        </label>
+                                        <label className='flex flex-col gap-2'>
+                                            <button onClick={() => DownloadArchive()}>загрузить архив</button>
+
+                                            <div className='flex flex-row w-full gap-5'>
+                                                <input className='flex-1 w-[20px]' value={startArchive} onChange={(e) => setStartArchive(e.target.value)} />
+                                                <input className='flex-1 w-[20px]' value={endArchive} onChange={(e) => setEndArchive(e.target.value)} />
+                                            </div>
+
+                                        </label>
+                                    </div>
+                                )}
+
                             </div>
+
                         </div>
-                      </div>
-                  </div>
-                  )
-                }
-                <TableFooter filteredOrders={filteredOrders} />
-                </div>
-                </>}
-              </div>
-              :
-              <> 
-                <div className="menu-container">
-                    
-                    <div className="menu-left">
-                        <button className="menu-button"  onClick={()=>AddNewOrder()}><i style={{color: 'white'}} className="bi bi-folder-plus" ></i></button>
-                        <select className="menu-select" onChange={handleSelectChange}>
-                            <option value={'All'}>Все</option>
-                            <option value={"E0"}>европочта</option>
-                            <option value={"E1"}>европочта(ЕРИП)</option>
-                            <option value={"E"}>европочта(налож)</option>
-                            <option value={"R0"}>белпочта</option>
-                            <option value={"R1"}>белпочта(ЕРИП)</option>
-                            <option value={"R"}>белпочта(налож)</option>
-                        </select>
-                        <select className="menu-select" style={{marginLeft: 0}} onChange={OriginChange}>
-                            <option value={'All'}>Сайт и телеграм</option>
-                            <option value={'website'}>только сайт</option>
-                            <option value={'telegram'}>только телеграм</option>
-                        </select>
-                        <input
-                          className="menu-input"
-                          type="text"
-                          placeholder="Поиск"
-                          value={searchQuery}
-                          onChange={handleSearchChange}
-                        />
-                        <select className="menu-select"  onChange={handleSortChange}>
-                            <option value={'default'}>по умолчанию</option>
-                            <option value={'price'}>по цене</option>
-                            <option value={'data'}>по дате</option>
-                            <option value={'city'}>по городу</option>
-                            <option value={'FIO'}>по имени</option>
-                        </select>
-                        
-                        {/*
-                        <input className='menu-input' style={{textAlign: 'center'}} type="date" value={startDate ? startDate.toISOString().substr(0, 10) : ''} onChange={(e) => handleDateChange(e.target.value, endDate)} />
-                        <i style={{color: '#2f616b'}} className="bi bi-chevron-right"></i>
-                        <input className='menu-input' style={{textAlign: 'center'}} type="date" 
-                                    value={endDate.toLocaleDateString().split('.')[2]+'-'+endDate.toLocaleDateString().split('.')[1]+'-'+endDate.toLocaleDateString().split('.')[0]}
-                                    onChange={(e) => handleDateChange(startDate, e.target.value)} />
-                                    */}
-                        <button
-                            onClick={() => setOnlyLustre(!onlyLustre)}
-                            className="menu-input"
-                            style={{
-                              background: onlyLustre ? '#2f616b' : 'white',
-                              color: onlyLustre ? 'white' : '#000000',
-                              cursor: 'pointer',
-                              width: 'auto',
-                              minWidth: '60px',
-                              marginLeft: '50px'
-                            }}
-                          >
-                            lustre
-                        </button>
-                        <button
-                            onClick={() => setOnlyHolst(!onlyHolst)}
-                            className="menu-input"
-                            style={{
-                              background: onlyHolst ? '#2f616b' : 'white',
-                              color: onlyHolst ? 'white' : '#000000',
-                              cursor: 'pointer',
-                              width: 'auto',
-                              minWidth: '60px',
-                              marginLeft: '10px'
-                            }}
-                          >
-                            holst
-                        </button>
-                        <button
-                            onClick={() => setOnlyMagnit(!onlyMagnit)}
-                            className="menu-input"
-                            style={{
-                              background: onlyMagnit ? '#2f616b' : 'white',
-                              color: onlyMagnit ? 'white' : '#000000',
-                              cursor: 'pointer',
-                              width: 'auto',
-                              minWidth: '60px',
-                              marginLeft: '10px'
-                            }}
-                          >
-                            magnit
-                        </button>
-                        <button
-                            onClick={() => setOnlyA4(!onlyA4)}
-                            className="menu-input"
-                            style={{
-                              background: onlyA4 ? '#2f616b' : 'white',
-                              color: onlyA4 ? 'white' : '#000000',
-                              cursor: 'pointer',
-                              width: 'auto',
-                              minWidth: '60px',
-                              marginLeft: '10px'
-                            }}
-                          >
-                            A4
-                        </button>
-                        
 
-                        {
-                          selectedType==='E' && 
-                          <button className="menu-button ml-2 bg-slate-500"  onClick={()=>setIsOpen(true)}><i style={{color: 'white'}} className="bi bi-wallet2"></i></button>
-
-                        }
-                    
-                    </div> 
-
-                    <div
-                      className="menu-right"
-                      onMouseEnter={handleStatusFilterMouseEnter}
-                      onMouseLeave={handleStatusFilterMouseLeave}
-                    >
-                      <div className="status-filter-container">
-                        <button className="menu-button">
-                          <i style={{color: 'white'}} className="bi bi-filter-square"></i>
-                        </button>
-                        {statusFilterVisible && (
-                          <div className="status-filter-popup">
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={filterCheck.includes(0) && filterCheck.includes(1) && filterCheck.includes(2) && filterCheck.includes(3) && filterCheck.includes(4) && filterCheck.includes(7) && filterCheck.includes(8)}
-                              onChange={(e) => Check(e.target.checked, [0, 1, 2, 3, 4, 7, 8])}
-                            />
-                            В работе
-                          </label>
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={filterCheck.includes(5)}
-                              onChange={(e) => Check(e.target.checked, [5])}
-                            />
-                            Отправленные
-                          </label>
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={filterCheck.includes(6)}
-                              onChange={(e) => Check(e.target.checked, [6])}
-                            />
-                            Оплаченные
-                          </label>
-                          <label className='flex flex-col gap-2'>
-                            <button  onClick={() => DownloadArchive()}>загрузить архив</button>
-
-                            <div className='flex flex-row w-full gap-5'>
-                              <input className='flex-1 w-[20px]' value={startArchive} onChange={(e)=>setStartArchive(e.target.value)} />
-                              <input className='flex-1 w-[20px]' value={endArchive} onChange={(e)=>setEndArchive(e.target.value)} />
-                            </div>
-                            
-                          </label>
-                        </div>
-                        )}  
-                    
-                      </div>
-                      
                     </div>
-                    
-                </div> 
-                <div className='tableFull'>
-                {filteredOrders.map(order =>  
-                  <div key={order.id} ><TableRow orders={orders} order={order} 
-                                    handleDetailsClick={handleDetailsClick} selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
-                                    collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId}
-                                    isChanged={isChanged} setIsChanged={setIsChanged} /></div>)}
-                </div>
-                <TableFooter filteredOrders={filteredOrders} />
-              </>
+                    <div className='tableFull'>
+                        {isLoading ? (
+                            <OrdersSkeleton rows={12} mobile={false} />
+                        ) : (
+                            filteredOrders.map(order => (
+                                <div key={order.id}>
+                                    <TableRow
+                                        orders={orders}
+                                        order={order}
+                                        handleDetailsClick={handleDetailsClick}
+                                        selectedOrder={selectedOrder}
+                                        setSelectedOrder={setSelectedOrder}
+                                        collapsedOrderId={collapsedOrderId}
+                                        setCollapsedOrderId={setCollapsedOrderId}
+                                        isChanged={isChanged}
+                                        setIsChanged={setIsChanged}
+                                    />
+                                </div>
+                            ))
+                        )}
+                    </div>
+                   {!isLoading && (
+                      <TableFooter filteredOrders={filteredOrders} />
+                  )}
+                </>
             }
         </>
     )
 }
-

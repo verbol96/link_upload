@@ -10,6 +10,7 @@ router.get('/getAllArchive', orderController.getAllArchive)
 router.get('/getAllStat', orderController.getAllStat)
 router.put('/updateStatus/:id', orderController.updateStatus)
 router.put('/updateOrder/:id', orderController.updateOrder)
+router.put('/toJoinOrder', orderController.toJoinOrder)
 router.put('/updateUserAdress/:id', orderController.updateUserAdress)
 router.delete('/deleteOrder/:id', orderController.deleteOrder)
 router.delete('/deleteUser/:id', orderController.deleteUser)
@@ -17,6 +18,6 @@ router.post('/getOneUser', orderController.getOneUser)
 router.put('/changeDataOrder/:id', orderController.changeDataOrder)
 router.get('/ordersUser/:id', orderController.ordersUser)
 router.put('/changeAboutUser/:id', orderController.changeAboutUser)
-
+router.get('/getMaterialStats', orderController.getMaterialStats);
 
 module.exports = router
