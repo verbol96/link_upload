@@ -3,10 +3,12 @@ import { ListRow } from "./ListRow"
 import _ from 'lodash'
 import style from './ListCloud.module.css'
 import { Fragment } from "react"
+import { DownloadPanel } from "./DownloadPanel"
+import { useDownloadQueue } from "../../hooks/useDownloadQueue"
 
 
 export const ListCloud=() =>{
-
+    useDownloadQueue();
     const files = _.orderBy(useSelector(state=>state.files.files), 'createdAt', 'desc')
      
     return(
@@ -37,6 +39,8 @@ export const ListCloud=() =>{
                     );
                 })}
             </div>
+
+            <DownloadPanel />
         
         </>
         

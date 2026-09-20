@@ -102,8 +102,6 @@ class euroPostController {
     return res.json(data);
   }
 
-  
-
   changeOrderEP = async (req, res) => {
     const {name1, name2, phone, ops, price, number} = req.body
 
@@ -167,95 +165,95 @@ class euroPostController {
     }
 };
 
-
 addInvoicesPay = async (req, res) => {
+    const { AccountNo, Amount, Info } = req.body;
+    const token = process.env.TOKEN_PAY;
+    const isTest = false;
 
-  const {AccountNo, Amount, Info} = req.body
+    const url = isTest
+        ? `https://sandbox-api.express-pay.by/v1/invoices/`
+        : `https://api.express-pay.by/v1/invoices/`;
 
-  const token = process.env.TOKEN_PAY;
-  const isTest = false; // true для тестового окружения, false для боевого
+    const dataInvoices = {
+        AccountNo,
+        Amount,
+        Currency: "933",
+        Info,
+    };
 
-  // Формируем URL в зависимости от окружения
-  const url = isTest
-      ? `https://sandbox-api.express-pay.by/v1/invoices/`
-      : `https://api.express-pay.by/v1/invoices/`;
+    try {
+        const { data } = await axios.post(url, dataInvoices, {
+            params: { token },
+        });
 
-  const dataInvoices = {
-    AccountNo,
-    Amount,
-    Currency: "933",
-    Info
-  }
+        // ⬇️ ДОБАВЛЯЕМ: обновляем isPayment в БД
+        if (data && data.InvoiceNo) {
+            await Order.update(
+                { isPayment: 'wait' },
+                { where: { order_number: AccountNo } }
+            );
+        }
 
-  try {
-      // Выполняем GET-запрос с токеном в URL
-      const { data } = await axios.post(url, dataInvoices, {
-          params: {
-              token: token
-          }
-      });
-
-      // Отправляем данные в формате JSON
-      return res.json(data);
-  } catch (error) {
-      // Обработка ошибок
-      console.error('Ошибка при выполнении запроса:', error.response ? error.response.data : error.message);
-      return res.status(500).json({ error: 'Ошибка при выполнении запроса', details: error.message });
-  }
+        return res.json(data);
+    } catch (error) {
+        console.error('Ошибка при выполнении запроса:', error.response ? error.response.data : error.message);
+        return res.status(500).json({ error: 'Ошибка при выполнении запроса', details: error.message });
+    }
 };
 
 delInvoicesPay = async (req, res) => {
-  const {InvoiceNo} = req.body
-  const token = process.env.TOKEN_PAY;
+    const { InvoiceNo } = req.body;
+    const token = process.env.TOKEN_PAY;
 
-  const url1 =  `https://api.express-pay.by/v1/invoices/`;
-    // Выполняем GET-запрос с токеном в URL
-    const { data } = await axios.get(url1, {
+    const url1 = `https://api.express-pay.by/v1/invoices/`;
+
+    const { data: data1 } = await axios.get(url1, {
         params: {
-            token: token,
-            AccountNo: InvoiceNo
-        }
+            token,
+            AccountNo: InvoiceNo,
+        },
     });
 
+    const url = `https://api.express-pay.by/v1/invoices/${data1.Items[0].InvoiceNo}`;
 
-  const url = `https://api.express-pay.by/v1/invoices/${data.Items[0].InvoiceNo}`;
+    try {
+        const { data } = await axios.delete(url, {
+            params: { token },
+        });
 
-  try {
-      // Выполняем GET-запрос с токеном в URL
-      const { data } = await axios.delete(url, {
-        params: {
-          token: token
-      }
-      });
+        // ⬇️ ДОБАВЛЯЕМ: сбрасываем isPayment
+        await Order.update(
+            { isPayment: 'none' },
+            { where: { order_number: InvoiceNo } }
+        );
 
-      return res.json(data);
-  } catch (error) {
-      console.error('Ошибка при выполнении запроса:', error.response ? error.response.data : error.message);
-      return res.status(500).json({ error: 'Ошибка при выполнении запроса', details: error.message });
-  }
+        return res.json(data);
+    } catch (error) {
+        console.error('Ошибка при выполнении запроса:', error.response ? error.response.data : error.message);
+        return res.status(500).json({ error: 'Ошибка при выполнении запроса', details: error.message });
+    }
 };
 
 payNotice = async (req, res) => {
-  const { Data } = req.body;
+    const { Data } = req.body;
 
-  let parsedData;
-  
-  if (typeof Data === 'string') {
-    parsedData = JSON.parse(Data);
-  } else {
-    parsedData = Data;
-  }
+    let parsedData;
+    if (typeof Data === 'string') {
+        parsedData = JSON.parse(Data);
+    } else {
+        parsedData = Data;
+    }
 
-  const AccountNo = parsedData.AccountNo
+    const AccountNo = parsedData.AccountNo;
 
-  if(parsedData.CmdType===1){
-    await Order.update(
-      { other: Sequelize.fn('concat', 'оплачено!\n\n', Sequelize.col('other')) }, 
-      { where: { order_number: AccountNo } } 
-    );
-  }
+    if (parsedData.CmdType === 1) {
+        await Order.update(
+            { isPayment: 'paid' },
+            { where: { order_number: AccountNo } }
+        );
+    }
 
-  return res.status(200).json('ok')
+    return res.status(200).json('ok');
 };
 
 

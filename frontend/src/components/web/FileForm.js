@@ -1,76 +1,73 @@
-import { useRef , useEffect, useState} from "react";
+import { useRef, useEffect, useState } from "react";
 import { ImgCard } from "./ImgCard";
-import style from './FileForm.module.css'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux';
 import { saveSettings } from "../../store/orderReducer";
-import { v4 as uuidv4 } from 'uuid'
-import loadImage from 'blueimp-load-image'
+import { v4 as uuidv4 } from 'uuid';
+import loadImage from 'blueimp-load-image';
 import heic2any from "heic2any";
 import { getSettings } from "../../http/dbApi";
 
+export const FileForm = ({ item, filesPrev, setFilesPrev, setFormats, formats, notLoad, setNotLoad }) => {
 
-export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, notLoad, setNotLoad}) =>{
+    const fileInput = useRef(null);
+    const dispach = useDispatch();
 
-    const fileInput = useRef(null); //для кастомного input(file)
-    const dispach = useDispatch()
+    const settings = useSelector(state => state.order.settings);
+    const TypePhoto = ['photo', 'holst', 'magnit'];
 
-    const settings = useSelector(state=>state.order.settings)
-    const TypePhoto = ['photo', 'holst', 'magnit']
-    //const TypePhoto = ['photo', 'magnit']
     const FormatPhoto = settings
-      .filter(el => el.type === 'photo')
-      .sort((a, b) => b.title.localeCompare(a.title));
-    const FormatHolst = settings.filter(el=>el.type==='holst')
-    const FormatMagnit = settings.filter(el=>el.type==='magnit')
+        .filter(el => el.type === 'photo')
+        .sort((a, b) => b.title.localeCompare(a.title));
+    const FormatHolst = settings.filter(el => el.type === 'holst');
+    const FormatMagnit = settings.filter(el => el.type === 'magnit');
 
-    useEffect(()=>{
-        async function getPriceList (){
-            let value = await getSettings()
-            dispach(saveSettings(value))
+    useEffect(() => {
+        async function getPriceList() {
+            let value = await getSettings();
+            dispach(saveSettings(value));
         }
-        getPriceList()
-    },[dispach])
+        getPriceList();
+    }, [dispach]);
 
-    const sizePhoto =()=>{
-        switch(formats[item].type){
-            case 'photo': return FormatPhoto
-            case 'holst': return FormatHolst
-            case 'magnit': return FormatMagnit
-            default: return FormatPhoto
+    const sizePhoto = () => {
+        switch (formats[item].type) {
+            case 'photo': return FormatPhoto;
+            case 'holst': return FormatHolst;
+            case 'magnit': return FormatMagnit;
+            default: return FormatPhoto;
         }
-    }
+    };
 
-    const ChangeType = (e)=>{
-        let formatValue
-        if(e.target.value==='photo') formatValue=FormatPhoto[0].title
-        if(e.target.value==='holst') formatValue=FormatHolst[0].title
-        if(e.target.value==='magnit') formatValue=FormatMagnit[0].title
-        setFormats([...formats.slice(0,item), {...formats[item], type: e.target.value, format: formatValue}, ...formats.slice(item+1)])
-    }
+    const ChangeType = (e) => {
+        let formatValue;
+        if (e.target.value === 'photo') formatValue = FormatPhoto[0].title;
+        if (e.target.value === 'holst') formatValue = FormatHolst[0].title;
+        if (e.target.value === 'magnit') formatValue = FormatMagnit[0].title;
+        setFormats([...formats.slice(0, item), { ...formats[item], type: e.target.value, format: formatValue }, ...formats.slice(item + 1)]);
+    };
 
-    const ChangeSize = (e) =>{
-        setFormats([...formats.slice(0,item), {...formats[item], format: e.target.value}, ...formats.slice(item+1)])
-    }
+    const ChangeSize = (e) => {
+        setFormats([...formats.slice(0, item), { ...formats[item], format: e.target.value }, ...formats.slice(item + 1)]);
+    };
 
-    const ChangePaper = (e) =>{
-        setFormats([...formats.slice(0,item), {...formats[item], paper: e.target.value}, ...formats.slice(item+1)])
-    }
+    const ChangePaper = (e) => {
+        setFormats([...formats.slice(0, item), { ...formats[item], paper: e.target.value }, ...formats.slice(item + 1)]);
+    };
 
-    const ChangeCopies = (e) =>{
-        setFormats([...formats.slice(0,item), {...formats[item], copies: Number(e.target.value)}, ...formats.slice(item+1)])
-    }
+    const ChangeCopies = (e) => {
+        setFormats([...formats.slice(0, item), { ...formats[item], copies: Number(e.target.value) }, ...formats.slice(item + 1)]);
+    };
 
     const [load, setLoad] = useState({
         isLoad: false,
         count: 0
-    })
+    });
 
-    const UploadFiles = async(e) =>{
-        const files = Array.from(e.target.files)
+    const UploadFiles = async (e) => {
+        const files = Array.from(e.target.files);
 
         const getBrowserName = () => {
             const agent = window.navigator.userAgent.toLowerCase();
-          
             if (agent.indexOf('chrome') > -1 && agent.indexOf('safari') > -1) {
                 return 'chrome';
             } else if (agent.indexOf('safari') > -1) {
@@ -78,144 +75,123 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
             } else {
                 return 'unknown';
             }
-        }
+        };
 
-        const createObj = async(file) =>{
-
+        const createObj = async (file) => {
             try {
                 const type = file.name.split('.').pop().toLowerCase();
+                if (file.size === 0) return 0;
 
-                if(file.size===0) return 0
-              
                 if (type === 'heic') {
-                  if (getBrowserName() === 'safari') {
-                    const asyncOperationWithPromise = async () => {
-                      return new Promise((resolve, reject) => {
-                        loadImage(
-                          file,
-                          (canvas) => {
-                            canvas.toBlob(
-                              (blob) => {
-                                resolve({
-                                  id: uuidv4(),
-                                  name: file.name,
-                                  file: blob
-                                });
-                              },
-                              'image/jpeg'
-                            );
-                          },
-                          { canvas: true }
-                        );
-                      });
-                    };
-              
-                    return asyncOperationWithPromise().then((result) => {
-                      const name = result.name.split('.')[0];
-                      let file = new File([result.file], name + '.jpeg', { type: 'image/jpeg' });
-                      const obj = {
-                        id: uuidv4(),
-                        file: file
-                      };
-                      return obj;
-                    });
-                  } else {
-                    const result = await heic2any({
-                      blob: file,
-                      toType: 'image/jpeg'
-                    });
-                    const newfile = new File([result], file.name.split('.')[0] + '.jpeg', { type: 'image/jpeg' });
-                    const obj = {
-                      id: uuidv4(),
-                      file: newfile
-                    };
-                    return obj;
-                  }
+                    if (getBrowserName() === 'safari') {
+                        const asyncOperationWithPromise = async () => {
+                            return new Promise((resolve, reject) => {
+                                loadImage(
+                                    file,
+                                    (canvas) => {
+                                        canvas.toBlob(
+                                            (blob) => {
+                                                resolve({
+                                                    id: uuidv4(),
+                                                    name: file.name,
+                                                    file: blob
+                                                });
+                                            },
+                                            'image/jpeg'
+                                        );
+                                    },
+                                    { canvas: true }
+                                );
+                            });
+                        };
+
+                        return asyncOperationWithPromise().then((result) => {
+                            const name = result.name.split('.')[0];
+                            let file = new File([result.file], name + '.jpeg', { type: 'image/jpeg' });
+                            const obj = { id: uuidv4(), file: file };
+                            return obj;
+                        });
+                    } else {
+                        const result = await heic2any({
+                            blob: file,
+                            toType: 'image/jpeg'
+                        });
+                        const newfile = new File([result], file.name.split('.')[0] + '.jpeg', { type: 'image/jpeg' });
+                        const obj = { id: uuidv4(), file: newfile };
+                        return obj;
+                    }
                 }
-              
+
                 if (type === 'webp' || type === 'bmp') {
-                  const asyncOperationWithPromise = async () => {
-                    return new Promise((resolve, reject) => {
-                      loadImage(
-                        file,
-                        (canvas) => {
-                          canvas.toBlob(
-                            (blob) => {
-                              resolve({
-                                id: uuidv4(),
-                                name: file.name,
-                                file: blob
-                              });
-                            },
-                            'image/jpeg'
-                          );
-                        },
-                        { canvas: true }
-                      );
-                    });
-                  };
-              
-                  return asyncOperationWithPromise().then((result) => {
-                    const name = result.name.split('.')[0];
-                    let file = new File([result.file], name + '.jpeg', { type: 'image/jpeg' });
-                    const obj = {
-                      id: uuidv4(),
-                      file: file
+                    const asyncOperationWithPromise = async () => {
+                        return new Promise((resolve, reject) => {
+                            loadImage(
+                                file,
+                                (canvas) => {
+                                    canvas.toBlob(
+                                        (blob) => {
+                                            resolve({
+                                                id: uuidv4(),
+                                                name: file.name,
+                                                file: blob
+                                            });
+                                        },
+                                        'image/jpeg'
+                                    );
+                                },
+                                { canvas: true }
+                            );
+                        });
                     };
-                    return obj;
-                  });
+
+                    return asyncOperationWithPromise().then((result) => {
+                        const name = result.name.split('.')[0];
+                        let file = new File([result.file], name + '.jpeg', { type: 'image/jpeg' });
+                        const obj = { id: uuidv4(), file: file };
+                        return obj;
+                    });
                 }
-              
+
                 if (type === 'jpeg' || type === 'jpg' || type === 'png') {
-                  const obj = {
-                    id: uuidv4(),
-                    file: file
-                  };
-                  return obj;
+                    const obj = { id: uuidv4(), file: file };
+                    return obj;
                 }
-              
-                return 0;
 
-              } catch (error) {
-                console.log(error)
                 return 0;
-              }
-            
-        }
+            } catch (error) {
+                console.log(error);
+                return 0;
+            }
+        };
 
-        const scaleImg = async(el) =>{
-            return new Promise((resolve,reject)=>{
-                
+        const scaleImg = async (el) => {
+            return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.src = URL.createObjectURL(el.file);
-                img.onload = function() {
+                img.onload = function () {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-
-                    const scale = img.width/img.height
-
-                    canvas.width = 400*scale; // ширина превью
-                    canvas.height = 400; // высота превью
-
+                    const scale = img.width / img.height;
+                    canvas.width = 400 * scale;
+                    canvas.height = 400;
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
                     canvas.toBlob(blob => {
-                        const newFile = new File([blob], el.file.name, {type: el.file.type});
+                        const newFile = new File([blob], el.file.name, { type: el.file.type });
                         const obj = {
                             url: URL.createObjectURL(newFile),
                             id: el.id
-                        }
+                        };
                         resolve(obj);
                     });
-                }
-            })
-        }
+                };
+            });
+        };
 
-        const downloadImg = async() =>{
-            setLoad({isLoad: true, count: files.length})
-            for(const file of files){
-                const original = await createObj(file)
-                if(original === 0) {
+        const downloadImg = async () => {
+            setLoad({ isLoad: true, count: files.length });
+            for (const file of files) {
+                const original = await createObj(file);
+                if (original === 0) {
                     setNotLoad(prevFilesPrevArray => {
                         let newFilesPrevArray = [...prevFilesPrevArray];
                         newFilesPrevArray[item] = [...newFilesPrevArray[item], file.name];
@@ -226,126 +202,157 @@ export const FileForm = ({item, filesPrev, setFilesPrev, setFormats, formats, no
                 setFormats(prev => {
                     let newArr = [...prev];
                     newArr[item] = {
-                    ...newArr[item],
-                    files: [...newArr[item].files, original]
+                        ...newArr[item],
+                        files: [...newArr[item].files, original]
                     };
                     return newArr;
                 });
 
-                const preview = await scaleImg(original)
+                const preview = await scaleImg(original);
                 setFilesPrev(prevFilesPrevArray => {
                     let newFilesPrevArray = [...prevFilesPrevArray];
                     newFilesPrevArray[item] = [...newFilesPrevArray[item], preview];
                     return newFilesPrevArray;
                 });
-
             }
-            setLoad({isLoad: false, count: 0})
-        }
+            setLoad({ isLoad: false, count: 0 });
+        };
 
-        downloadImg()
+        downloadImg();
+    };
 
-    }
+    const deleteImg = (id) => {
+        setFormats([...formats.slice(0, item), { ...formats[item], files: formats[item].files.filter(el => el.id !== id) }, ...formats.slice(item + 1)]);
+        setFilesPrev((prev) => {
+            const newM = prev[item].filter(el => el.id !== id);
+            let newPrev = prev;
+            newPrev[item] = [...newM];
+            return newPrev;
+        });
+    };
 
-    const deleteImg = (id) =>{ 
-        setFormats([...formats.slice(0,item), {...formats[item], files: formats[item].files.filter(el=>el.id!==id)}, ...formats.slice(item+1)])
-        setFilesPrev((prev)=>{
-            const newM = prev[item].filter(el=>el.id!==id)
-            let newPrev = prev
-            newPrev[item] = [...newM]
-            return newPrev
-        })
-    }
-
-    const ShowType = (value) =>{
-        switch(value){
-            case 'photo': return 'Фото'
-            case 'holst': return 'Холст'
-            case 'magnit': return 'Магнит'
-            
+    const ShowType = (value) => {
+        switch (value) {
+            case 'photo': return 'Фото';
+            case 'holst': return 'Холст';
+            case 'magnit': return 'Магнит';
             default: return null;
         }
-    }
+    };
 
+    // Общие стили для селектов и инпутов
+    const labelCls = "absolute top-0 left-0 p-0 md:px-[5px] text-[10px] md:text-[0.8rem] font-normal text-[#2D4B52] -translate-y-1/2 pointer-events-none";
+    const selectCls = "text-[12px] md:text-[14px] h-[30px] md:h-[35px] pl-[5px] md:pl-[10px] pr-[15px] md:pr-2 " +
+        "border-0 border-b-[1.5px] border-[#2C3531] text-left md:text-center " +
+        "w-full outline-none transition-colors duration-1000 " +
+        "appearance-none bg-white text-black " +
+        "shadow-[0_3px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.24)]";
 
-    return(
-        <div className={style.filesFormFormat}>
-            <div className={style.selectContainer}>
-                <div className={style.containerSelect}>
-                    <label className={style.labelSelect}>Тип:</label>
-                    <select className={style.selectForm} value={formats[item].type} onChange={(e)=>ChangeType(e)}>
-                        {TypePhoto.map((el,index)=><option value={el} key={index}>{ShowType(el)}</option>)}
+    return (
+        <div className="border-[0.5px] border-[#2f5766] rounded-[0_5px_5px_5px] px-[10px] py-5 pt-5 md:py-5">
+            {/* === Верхние селекты === */}
+            <div className="flex flex-wrap justify-start gap-[5px] md:gap-[10px] md:p-[10px] my-[10px] md:my-0 md:mb-0 rounded-[5px]">
+
+                {/* Тип */}
+                <div className="flex-[2] min-w-max max-w-[200px] relative">
+                    <label className={labelCls}>Тип:</label>
+                    <select className={selectCls} value={formats[item].type} onChange={(e) => ChangeType(e)}>
+                        {TypePhoto.map((el, index) => <option value={el} key={index}>{ShowType(el)}</option>)}
                     </select>
-                    <span className={style.selectArrow}>▼</span>
+                    <span className="absolute right-[2px] md:right-[10px] top-1/2 -translate-y-1/2 pointer-events-none">▼</span>
                 </div>
-                <div className={style.containerSelect}>
-                    <label className={style.labelSelect}>Размер:</label>
-                    <select className={style.selectForm} value={formats[item].format} onChange={(e)=>ChangeSize(e)}>
-                        {sizePhoto().map((el,index)=>el.title&&<option key={index} value={el.title}>{el.name}</option>)}
+
+                {/* Размер */}
+                <div className="flex-[2] min-w-max max-w-[200px] relative">
+                    <label className={labelCls}>Размер:</label>
+                    <select className={selectCls} value={formats[item].format} onChange={(e) => ChangeSize(e)}>
+                        {sizePhoto().map((el, index) => el.title && <option key={index} value={el.title}>{el.name}</option>)}
                     </select>
-                    <span className={style.selectArrow}>▼</span>
+                    <span className="absolute right-[2px] md:right-[10px] top-1/2 -translate-y-1/2 pointer-events-none">▼</span>
                 </div>
-                <div className={style.containerInput}> 
-                    <label className={style.labelSelect}>Копий:</label>
-                    <input className={style.selectForm} value={formats[item].copies} style={{textAlign: 'center', padding: 0}} onChange={(e)=>ChangeCopies(e)} />
+
+                {/* Копий */}
+                <div className="flex-1 max-w-[100px] relative">
+                    <label className={labelCls}>Копий:</label>
+                    <input
+                        className={selectCls + " text-center !p-0"}
+                        value={formats[item].copies}
+                        onChange={(e) => ChangeCopies(e)}
+                    />
                 </div>
-                {formats[item].type==='photo'
-                ?
-                <div className={style.containerSelect}>
-                <label className={style.labelSelect}>Бумага:</label>
-                    <select className={style.selectForm}  value={formats[item].paper} onChange={(e)=>ChangePaper(e)}>
-                        <option value='glossy'>Глянец</option>
-                        <option value='lustre'>Люстр</option>
-                    </select>
-                <span className={style.selectArrow}>▼</span>
-                </div>
-                :
-                null
-                }
-                {
-                  formats[item].format.includes('<') &&
-                  <div className="flex items-center gap-1 bg-gray-100 rounded-md p-1 px-2">
-                    <i className="bi bi-exclamation-circle"></i>
-                    <label style={{fontSize: 12}}>укажите размер в примечании</label>
-                  </div>
-                }
+
+                {/* Бумага (только для photo) */}
+                {formats[item].type === 'photo' && (
+                    <div className="flex-[2] min-w-max max-w-[200px] relative">
+                        <label className={labelCls}>Бумага:</label>
+                        <select className={selectCls} value={formats[item].paper} onChange={(e) => ChangePaper(e)}>
+                            <option value='glossy'>Глянец</option>
+                            <option value='lustre'>Люстр</option>
+                        </select>
+                        <span className="absolute right-[2px] md:right-[10px] top-1/2 -translate-y-1/2 pointer-events-none">▼</span>
+                    </div>
+                )}
+
+                {/* Предупреждение о размере */}
+                {formats[item].format.includes('<') && (
+                    <div className="flex items-center gap-1 bg-gray-100 rounded-md p-1 px-2">
+                        <i className="bi bi-exclamation-circle"></i>
+                        <label className="text-[12px]">укажите размер в примечании</label>
+                    </div>
+                )}
             </div>
-            
-            
-            <div className={style.cards}>
-                <div className={style.cardFile} style={{border: '2px #2C3531 dashed'}}>
-                    <label className={style.uploadLabel}  onClick={()=> fileInput.current.click()}>
-                            <>  
-                            {!load.isLoad 
-                                ?
-                                    <>
-                                    <div style={{fontSize: 30, textAlign: 'center'}}>
-                                        <i style={{color:'black'}} className="bi bi-plus"></i>
-                                    </div>
-                                    <div style={{textAlign: 'center', padding: 5}}>
+
+            {/* === Сетка карточек === */}
+            <div className="flex flex-wrap gap-[5px] md:gap-[10px] mt-[15px] md:mt-[30px] md:mr-[10px]">
+
+                {/* Карточка «добавить фото» */}
+                <div className="w-[calc(100%/3-4px)] h-[calc(33vw-30px)] md:w-[calc(100%/8-10px)] md:h-[calc(12.5vw-40px)]
+                                overflow-hidden relative rounded-[5px]
+                                shadow-[0_1px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.24)]
+                                flex flex-col bg-transparent
+                                border-2 border-dashed border-[#2C3531]">
+                    <label
+                        className="relative flex items-center justify-center flex-col
+                                px-[10px] py-[5px] cursor-pointer text-[13px] h-full
+                                hover:bg-[#8ca2a7] transition-colors"
+                        onClick={() => fileInput.current.click()}
+                    >
+                        {!load.isLoad ? (
+                            <>
+                                <div className="text-[30px] text-center">
+                                    <i className="bi bi-plus text-black"></i>
+                                </div>
+                                <div className="text-center p-[5px]">
                                     добавить фото
-                                    </div>
-                                    </>
-                                :
-                                    <>
-                                        {filesPrev.length} из {load.count}
-                                    </>
-                                }                           
-                            
+                                </div>
                             </>
+                        ) : (
+                            <>{filesPrev.length} из {load.count}</>
+                        )}
                     </label>
-                    <input style={{display: 'none'}} ref={fileInput} type="file" multiple={true} onChange={(e)=>UploadFiles(e)}></input>
+                    <input
+                        className="hidden"
+                        ref={fileInput}
+                        type="file"
+                        multiple={true}
+                        onChange={(e) => UploadFiles(e)}
+                    />
                 </div>
 
-                {filesPrev && filesPrev.map((el, index) => {
-                    return <ImgCard key={index} image={el} deleteImg={deleteImg} />
-                })}
-
+                {/* Превью */}
+                {filesPrev && filesPrev.map((el, index) => (
+                    <ImgCard key={index} image={el} deleteImg={deleteImg} />
+                ))}
             </div>
 
-            <div className={style.notLoad}>
-                {notLoad[item].map((el, index)=> <div className={style.notLoadRow} key={index}>{el} - формат не поддерживается</div>)}
+            {/* === НЕ поддерживаемые форматы === */}
+            <div className="font-medium text-[11px] mt-[30px]">
+                {notLoad[item].map((el, index) => (
+                    <div className="whitespace-nowrap overflow-hidden text-ellipsis" key={index}>
+                        {el} - формат не поддерживается
+                    </div>
+                ))}
             </div>
         </div>
-    )
-}
+    );
+};

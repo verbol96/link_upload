@@ -1,479 +1,1302 @@
-import {FormSelect, Row, Col} from 'react-bootstrap'
-import {useEffect, useState} from 'react'
-import './stylePages.css'
-import { $host } from "../http"
-import { NavBar } from "../components/admin/NavBar"
-  import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useEffect, useState, useMemo } from 'react';
+import { $host } from "../http";
+import { NavBar } from "../components/admin/NavBar";
+import Footer from "../components/admin/Footer";
+import { toast } from 'sonner';
+import {
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+    ResponsiveContainer, BarChart, Bar,
+} from 'recharts';
 
-const Statistic = () =>{
-    
-    const [order, setOrder] = useState([])
-    const [days, setDays] = useState([])
-    const [weeks, setWeeks] = useState([])
-    const [type, setType] = useState('newClientsMonth') //тип селекта для отображения
+// ============ ХЕЛПЕРЫ ============
+const MONTHS_SHORT = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
+const WEEKDAYS_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
-    useEffect(()=>{
+// Палитра для линий по годам
+const YEAR_COLORS = ['#0D9488', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1'];
 
-        async function getOrder() {
-            const { data } = await $host.get('api/order/getAllStat');
-            setOrder(data.orders);
-            
-          }
-          getOrder();
-        const startDay = new Date(2023,0,2)
-        let dayN = (Date.now() - startDay)/1000/60/60/24
+// Палитра для источников заказов
+const ORIGIN_COLORS = {
+    site: '#0D9488',
+    telegram: '#06b6d4',
+    instagram: '#ec4899',
+    vk: '#6366f1',
+    whatsapp: '#84cc16',
+    phone: '#f59e0b',
+    office: '#8b5cf6',
+    other: '#a8a29e',
+};
+const ORIGIN_LABELS = {
+    site: 'Сайт',
+    telegram: 'Telegram',
+    instagram: 'Instagram',
+    vk: 'VK',
+    whatsapp: 'WhatsApp',
+    phone: 'Телефон',
+    office: 'Офис',
+    other: 'Другое',
+};
 
-        const day = [] 
-        let i = 0
-        while(i<dayN){
-            let copyStartDay = new Date(2023,0,2)
-            day.push(new Date(copyStartDay.setDate(copyStartDay.getDate()+i)))
-            i++
-        }
-        setDays(day)
+const formatNumber = (num, decimals = 0) => {
+    if (num === null || num === undefined) return '0';
+    const fixed = Number(num).toFixed(decimals);
+    const [intPart, decPart] = fixed.split('.');
+    const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return decPart !== undefined ? `${formatted}.${decPart}` : formatted;
+};
 
+// ============ КАСТОМНЫЙ ТУЛТИП ДЛЯ % ГРАФИКА ============
+const OriginPercentTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
 
-        const week = []
-        i = 0
-        while(i<dayN/7){
-            let copyStartDay = new Date(2023,0,2)
-            week.push(new Date(copyStartDay.setDate(copyStartDay.getDate()+i*7)))
-            i++
-        }
-       
-        setWeeks(week)
-        console.log()
-    },[])
-      
-      
-      // Преобразуем объект обратно в массив и сортируем по дате
-    const monthlySum = order.reduce((acc, curr) => {
-        const month = new Date(curr.createdAt).toLocaleString('ru-RU', { month: 'long', year: '2-digit' });
-        const monthOnly = new Date(curr.createdAt).toLocaleString('ru-RU', { month: 'long' }); // "февраль"
-        const monthNumber = new Date(curr.createdAt).getMonth() + 1; // 2 (январь = 0, поэтому +1)
-        const year = new Date(curr.createdAt).getFullYear().toString().slice(-2); // "23"
+    // Считаем общую сумму за месяц (в рублях)
+    const total = payload.reduce((s, p) => {
+        const value = Number(p.payload?.[`${p.dataKey}__sum`] ?? 0);
+        return s + value;
+    }, 0);
 
-        
-        const price = parseFloat(curr.price);  // Преобразуем цену в число
-      
-        // Пропускаем, если значение цены не является числом
-        if (isNaN(price)) {
-          return acc;
-        }
-      
-        const existing = acc.find(item => item.month === month);
-        if (existing) {
-          existing.total = parseFloat((existing.total + price).toFixed(2));
-        } else {
-          acc.push({ month, monthOnly, monthNumber, year,  total: parseFloat(price.toFixed(2))  });  // Добавляем новый месяц
-        }
-        return acc;
-      }, []).sort((a, b) => {
-        // Сравниваем годы
-        if (a.year !== b.year) {
-          return parseInt(a.year) - parseInt(b.year); // "22" < "23" < "24"
-        }
-        // Если годы равны, сравниваем месяцы
-        return a.monthNumber - b.monthNumber; // 1 < 2 < 3 ... < 12
-      });  // Сортируем по дате
+    // Сортируем по убыванию процента
+    const sorted = [...payload]
+        .filter(p => Number(p.value) > 0)
+        .sort((a, b) => Number(b.value) - Number(a.value));
 
+    return (
+        <div style={{
+            background: 'white',
+            border: '1px solid #e7e5e4',
+            borderRadius: 8,
+            fontSize: 12,
+            padding: '8px 10px',
+            minWidth: 200,
+        }}>
+            <div style={{ fontWeight: 600, color: '#2C3531', marginBottom: 6 }}>
+                {label}
+            </div>
+            <div style={{ color: '#78716c', marginBottom: 6, fontSize: 11 }}>
+                Всего: <b style={{ color: '#2C3531' }}>{formatNumber(total, 2)} р</b>
+            </div>
+            {sorted.map(p => {
+                const sum = Number(p.payload?.[`${p.dataKey}__sum`] ?? 0);
+                return (
+                    <div
+                        key={p.dataKey}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            marginTop: 3,
+                        }}
+                    >
+                        <span style={{
+                            width: 8, height: 8, borderRadius: 2,
+                            background: p.color, flexShrink: 0,
+                        }} />
+                        <span style={{ flex: 1, color: '#57534e' }}>
+                            {ORIGIN_LABELS[p.dataKey] || p.dataKey}
+                        </span>
+                        <span style={{ fontWeight: 600, color: '#2C3531', fontVariantNumeric: 'tabular-nums' }}>
+                            {Number(p.value).toFixed(1)}%
+                        </span>
+                        <span style={{ color: '#a8a29e', fontVariantNumeric: 'tabular-nums', fontSize: 11 }}>
+                            {formatNumber(sum, 0)} р
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
 
-    const sum =(date)=>{ 
-        let value
-        switch(type){
-            case 'day': {
-                const [d,m,y] = date.split('.')
-                value = `${y}-${m}-${d}`
-                break
-            }
-            case 'month': {
-                const [m,y] = date.split('.')
-                value = `${y}-${m}`
-                break
-            }
-            default:{}
-        }
-        
-        return order.reduce((acc, el)=>{
-            if(el.createdAt.includes(value)){
-                return acc + Number(el.price)
-            }
-            return acc
-        },0)
-    }
-
-    const sumWeek = (date) =>{
-
-        let step;
-        let value = []
-        for (step = 0; step < 7; step++) {
-            const dd = new Date(date)
-            let [d,m,y] = new Date(dd.setDate(date.getDate()+step)).toLocaleString("ru", {year: 'numeric',  month: 'numeric',  day: 'numeric'}).split('.')
-            value.push(`${y}-${m}-${d}`)
-        }
-
-        return order.reduce((acc, el)=>{
-            if(value.some((elem)=>{
-                return el.createdAt.includes(elem)
-            })) return acc + Number(el.price)
-            return acc
-        },0)
-    }
-
-
-    function generateMonthlySum(orders) {
-        
-        const groupedOrders = orders.reduce((acc, order) => {
-            
-            const date = new Date(order.createdAt);
-            const formattedDate1 = date.toLocaleString('ru-RU', {year: 'numeric', month: 'numeric' });
-            const formattedDate = formattedDate1.split('.')[1] +'.'+ formattedDate1.split('.')[0]
-            if (!acc[formattedDate]) {
-              acc[formattedDate] = { month: formattedDate, total: 0 };
-            }
-        
-            const price = parseFloat(order.price).toFixed(2);
-            acc[formattedDate].total += Number(price);
-        
-            return acc;
-          }, {});
-          
-          return Object.values(groupedOrders).sort((a, b) => (b.month) - (a.month));
-          
-      }
-
-    const ordersByMonth = order ? generateMonthlySum(order) : [];
-
-
-function generateNewClientsByMonth(orders) {
-  const clientsWithOrders = new Set();
-
-  const sortedOrders = [...orders].sort(
-    (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-  );
-
-  const groupedClients = sortedOrders.reduce((acc, order) => {
-    const clientId = order.phone; // укажите ваше уникальное поле клиента
-
-    const date = new Date(order.createdAt);
-    const year = date.getFullYear();
-    const monthNumber = String(date.getMonth() + 1).padStart(2, '0');
-    const key = `${year}-${monthNumber}`;
-
-    if (!acc[key]) {
-      acc[key] = {
-        key,
-        month: `${monthNumber}.${year}`,
-        total: 0,       // новые клиенты
-        ordersCount: 0  // все заказы за месяц
-      };
-    }
-
-    // Каждый заказ учитываем в общем числе заказов месяца
-    acc[key].ordersCount += 1;
-
-    // Если у заказа нет id клиента — не включаем его в новых клиентов
-    if (!clientId) return acc;
-
-    // Первый заказ клиента — это новый клиент
-    if (!clientsWithOrders.has(clientId)) {
-      acc[key].total += 1;
-      clientsWithOrders.add(clientId);
-    }
-
-    return acc;
-  }, {});
-
-  return Object.values(groupedClients).sort((a, b) =>
-    b.key.localeCompare(a.key)
-  );
-}
-
-    const newClientsByMonth = order
-      ? generateNewClientsByMonth(order)
-      : [];
-
-   function NewClientsTable({ newClientsByMonth }) {
-  // Превращаем массив в структуру:
-  // { 2025: { 1: 12, 2: 8, ... }, 2024: {...} }
-const clientsByYear = newClientsByMonth.reduce((acc, item) => {
-  const [year, month] = item.key.split('-');
-
-  if (!acc[year]) {
-    acc[year] = {};
-  }
-
-  acc[year][Number(month)] = {
-    newClients: item.total,
-    ordersCount: item.ordersCount
-  };
-
-  return acc;
-}, {});
-
-  const years = Object.keys(clientsByYear).sort((a, b) => b - a);
-
-  const monthNames = [
-    'Янв', 'Фев', 'Мар', 'Апр',
-    'Май', 'Июн', 'Июл', 'Авг',
-    'Сен', 'Окт', 'Ноя', 'Дек'
-  ];
-
-  return (
-    <div style={{ overflowX: 'auto', margin: '20px auto', maxWidth: '1200px' }}>
-      <div style={{ fontWeight: 'bolder', marginBottom: '10px' }}>
-        Новые клиенты
-      </div>
-
-      <table
-        style={{
-          width: '100%',
-          minWidth: '800px',
-          borderCollapse: 'collapse',
-          backgroundColor: '#f0f0f0'
-        }}
-      >
-        <thead>
-          <tr>
-            <th
-              style={{
-                padding: '10px',
-                textAlign: 'left',
-                borderBottom: '2px solid black'
-              }}
-            >
-              Год
-            </th>
-
-            {monthNames.map(month => (
-              <th
-                key={month}
-                style={{
-                  padding: '10px',
-                  textAlign: 'center',
-                  borderBottom: '2px solid black'
-                }}
-              >
-                {month}
-              </th>
-            ))}
-
-            <th
-              style={{
-                padding: '10px',
-                textAlign: 'center',
-                borderBottom: '2px solid black'
-              }}
-            >
-              Всего
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {years.map(year => {
-            const yearTotal = Object.values(clientsByYear[year]).reduce(
-  (sum, monthData) => {
-    sum.newClients += monthData.newClients;
-    sum.ordersCount += monthData.ordersCount;
-
-    return sum;
-  },
-  {
-    newClients: 0,
-    ordersCount: 0
-  }
+// ============ СВОДКА ============
+const SummaryCard = ({ title, value, sub, icon }) => (
+    <div className="bg-white border border-stone-200 rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-2">
+            <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
+                <i className={`bi ${icon} text-[13px] text-[#0D9488]`} />
+            </span>
+            <div className="text-[10px] uppercase tracking-wider text-stone-400 font-semibold">
+                {title}
+            </div>
+        </div>
+        <div className="text-[20px] font-bold text-[#2C3531] tabular-nums whitespace-nowrap">
+            {value}
+        </div>
+        {sub && <div className="text-[11px] text-stone-400 mt-0.5">{sub}</div>}
+    </div>
 );
 
-            return (
-              <tr key={year}>
-                <td
-                  style={{
-                    padding: '10px',
-                    fontWeight: 'bolder',
-                    borderBottom: '1px solid black'
-                  }}
-                >
-                  {year}
-                </td>
-
-                {Array.from({ length: 12 }, (_, index) => {
-  const monthNumber = index + 1;
-
-  // Если в месяце не было заказов — ставим нули
-  const monthData = clientsByYear[year][monthNumber] || {
-    newClients: 0,
-    ordersCount: 0
-  };
-
-  return (
-    <td
-      key={monthNumber}
-      style={{
-        padding: '10px',
-        textAlign: 'center',
-        borderBottom: '1px solid black'
-      }}
-    >
-      {monthData.newClients.toLocaleString('ru-RU')}
-      <span style={{ color: '#777', fontSize: '12px' }}>
-        {' '}({monthData.ordersCount.toLocaleString('ru-RU')})
-      </span>
-    </td>
-  );
-})}
-
-                <td
-  style={{
-    padding: '10px',
-    textAlign: 'center',
-    fontWeight: 'bolder',
-    borderBottom: '1px solid black'
-  }}
->
-  {yearTotal.newClients.toLocaleString('ru-RU')}
-  <span style={{ color: '#777', fontSize: '12px' }}>
-    {' '}({yearTotal.ordersCount.toLocaleString('ru-RU')})
-  </span>
-</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+// ============ СКЕЛЕТОН ============
+const StatSkeleton = () => (
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {[1, 2, 3, 4, 5].map(n => (
+            <div key={n} className="bg-white border border-stone-200 rounded-xl p-4">
+                <div className="h-3 w-24 rounded bg-stone-200 animate-pulse mb-3" />
+                <div className="h-7 w-32 rounded bg-stone-200 animate-pulse" />
+            </div>
+        ))}
     </div>
-  );
-}
+);
 
-    return(
-        <>
-        <NavBar />
+// ============ ТАБЫ ============
+const TABS = [
+    { value: 'graphic',         label: 'График',            icon: 'bi-graph-up-arrow' },
+    { value: 'month',           label: 'По годам',          icon: 'bi-calendar-month' },
+    { value: 'day',             label: 'По дням',           icon: 'bi-calendar-day' },
+    { value: 'newClientsMonth', label: 'Новые клиенты',     icon: 'bi-people' },
+];
 
-        <Row>
-            <Col md={{span:2}} style={{marginLeft: '5%', maxWidth: '90%'}}>
-                <FormSelect className="mt-3" value={type} onChange={(e)=>setType(e.target.value)}>
-                    <option value='day'>day</option>
-                    <option value='month'>month</option>
-                    <option value='graphic'>graphic</option>
-                    <option value='newClientsMonth'>newClientsMonth</option>
-                </FormSelect>
-            </Col>
-        </Row>
+// ============ ТАБЛИЦА НОВЫХ КЛИЕНТОВ ============
+const NewClientsTable = ({ newClientsByMonth }) => {
+    const clientsByYear = newClientsByMonth.reduce((acc, item) => {
+        const [year, month] = item.key.split('-');
+        if (!acc[year]) acc[year] = {};
+        acc[year][Number(month)] = {
+            newClients: item.total,
+            ordersCount: item.ordersCount,
+        };
+        return acc;
+    }, {});
 
-        {type==='day'&&
-          <Row className="justify-content-center mt-5">
-              <Col md={10}>
-                  <div className="stat">
-                  {days.map((el,index)=><div key={index} className='cardStat'>
-                      <div>
-                          {sum(el.toLocaleString("ru", {year: 'numeric',  month: 'numeric',  day: 'numeric'})).toFixed(2)}
-                      </div>
-                      <div>
-                          {el.toLocaleString("ru", {year: 'numeric',  month: 'numeric',  day: 'numeric',  weekday: 'long'})}
-                      </div>
-                  </div>
-                  )}
-                  </div>
-              </Col>
-              <Col md={1}>
-                  <div className="stat">
-                      {weeks.map((el,index)=><div key={index} className='cardWeek'>
-                          <div>
-                              {sumWeek(el).toFixed(2)}
-                          </div>
-                          <div>
-                              This week
-                          </div>
-                          </div>)}
-                  </div>
-              </Col>
-          </Row>
-        }
-        
-        {type==='month'&& 
-          <div>
-              {
-                  ordersByMonth.map(el => (
-                      <div 
-                        key={el.month} 
-                        style={{
-                          display: 'flex', 
-                          justifyContent: 'flex-start', 
-                          alignItems: 'center', 
-                          width: '30%', 
-                          minWidth: '300px',
-                          margin: '10px auto', 
-                          border: '1px solid black', 
-                          borderRadius: '5px', 
-                          padding: '10px', 
-                          backgroundColor: '#f0f0f0'
-                        }}>
-                        <div 
-                          style={{
-                            flex: 1, 
-                            marginLeft: '10%', 
-                            textAlign: 'left'
-                          }}>
-                          {el.month.replace('г.', '')}
-                        </div>
-                        <div 
-                          style={{
-                            flex: 1, 
-                            marginLeft: '10%', 
-                            fontWeight: 'Bolder', 
-                            textAlign: 'left'
-                          }}>
-                          {Math.floor(el.total).toLocaleString('ru-RU')} руб
-                        </div>
-                      </div>
-                    ))
-              }
-          </div>
-      
-        }
+    const years = Object.keys(clientsByYear).sort((a, b) => b - a);
 
-        {
-          type==='graphic' && 
-            <div className="flex flex-col gap-5 m-10">
-           
-              <ResponsiveContainer height={400}>
-                <LineChart
-                  data={monthlySum}
-                  margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="10 5" /> {/*10px линия, 1px пробел (пунктирная сетка)*/}
-                  <XAxis 
-                    dataKey="month" // например "2023-02"
-                    tickFormatter={(dateKey) => {
-                      // dateKey = "2023-02"
-                      const [month, year] = dateKey.split(' ');
-                      return `${month.slice(0,3)} ${year.slice(-2)}`;
-                    }}
-                      interval={2}
-                  />
-                  <YAxis tickCount={8} />
-                  <Tooltip />
-                  <Legend />
-                 
-                  <Line type="monotone" dataKey="total" stroke="#82ca9d" name="Доход по месяцам"  />
-                </LineChart>
-              </ResponsiveContainer>
+    return (
+        <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 bg-stone-50 border-b border-stone-200">
+                <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
+                    <i className="bi bi-people text-[13px] text-[#0D9488]" />
+                </span>
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                    Новые клиенты
+                </div>
+                <div className="ml-auto text-[11px] text-stone-400">
+                    <span className="font-semibold text-stone-600">жирным</span> — новые,
+                    <span className="text-stone-500"> (в скобках)</span> — все заказы
+                </div>
             </div>
 
+            <div className="overflow-x-auto">
+                <table className="w-full text-[13px] min-w-[900px]">
+                    <thead>
+                        <tr className="text-[10px] uppercase tracking-wider font-semibold text-stone-500
+                                    border-b border-stone-200 bg-stone-50/60">
+                            <th className="text-left px-4 py-2.5 sticky left-0 bg-stone-50/60">Год</th>
+                            {MONTHS_SHORT.map(m => (
+                                <th key={m} className="text-center px-2 py-2.5">{m}</th>
+                            ))}
+                            <th className="text-center px-4 py-2.5">Всего</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100">
+                        {years.map(year => {
+                            const yearData = clientsByYear[year];
+                            const yearTotal = Object.values(yearData).reduce(
+                                (sum, m) => {
+                                    sum.newClients += m.newClients;
+                                    sum.ordersCount += m.ordersCount;
+                                    return sum;
+                                },
+                                { newClients: 0, ordersCount: 0 }
+                            );
+
+                            return (
+                                <tr key={year} className="hover:bg-stone-50/60 transition-colors">
+                                    <td className="px-4 py-2.5 font-bold text-[#2C3531] sticky left-0 bg-white">
+                                        {year}
+                                    </td>
+
+                                    {Array.from({ length: 12 }, (_, i) => {
+                                        const monthNumber = i + 1;
+                                        const monthData = yearData[monthNumber] || {
+                                            newClients: 0,
+                                            ordersCount: 0,
+                                        };
+
+                                        return (
+                                            <td
+                                                key={monthNumber}
+                                                className={`text-center px-2 py-2.5 tabular-nums
+                                                        ${monthData.newClients > 0
+                                                            ? 'text-[#2C3531] font-medium'
+                                                            : 'text-stone-300'
+                                                        }`}
+                                            >
+                                                {monthData.newClients > 0 ? monthData.newClients : '—'}
+                                                {monthData.ordersCount > 0 && (
+                                                    <span className="text-stone-400 text-[11px] ml-0.5">
+                                                        ({monthData.ordersCount})
+                                                    </span>
+                                                )}
+                                            </td>
+                                        );
+                                    })}
+
+                                    <td className="text-center px-4 py-2.5 font-bold text-[#2C3531] tabular-nums
+                                                    bg-stone-50/40">
+                                        {yearTotal.newClients}
+                                        <span className="text-stone-400 font-normal text-[11px] ml-0.5">
+                                            ({yearTotal.ordersCount})
+                                        </span>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+
+                        {years.length === 0 && (
+                            <tr>
+                                <td colSpan={14} className="text-center py-8 text-stone-400">
+                                    Нет данных
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
+// ============ ГЛАВНЫЙ КОМПОНЕНТ ============
+const Statistic = () => {
+    const [order, setOrder] = useState([]);
+    const [type, setType] = useState('graphic');
+    const [loading, setLoading] = useState(true);
+
+    const [daysPeriod, setDaysPeriod] = useState(6);
+
+    // ============ ЗАГРУЗКА ============
+    useEffect(() => {
+        $host.get('api/order/getAllStat')
+            .then(({ data }) => setOrder(data.orders))
+            .catch(err => {
+                console.error(err);
+                toast.error('Не удалось загрузить статистику');
+            })
+            .finally(() => setLoading(false));
+    }, []);
+
+    // ============ СВОДКА ============
+    const totalRevenue = useMemo(() =>
+        order.reduce((s, o) => s + (Number(o.price) || 0), 0), [order]);
+
+    const totalOrders = order.length;
+
+    const totalClients = useMemo(() => {
+        const set = new Set(order.map(o => o.phone).filter(Boolean));
+        return set.size;
+    }, [order]);
+
+    const avgCheck = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    const daysSinceStart = useMemo(() => {
+        if (!order.length) return 0;
+        const firstDate = order.reduce((min, o) => {
+            const d = new Date(o.createdAt);
+            return d < min ? d : min;
+        }, new Date());
+        return Math.floor((Date.now() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+    }, [order]);
+
+    // ============ ГРАФИК ПО МЕСЯЦАМ ============
+    const monthlySum = useMemo(() => {
+        const grouped = order.reduce((acc, curr) => {
+            const date = new Date(curr.createdAt);
+            const monthNumber = date.getMonth() + 1;
+            const year = date.getFullYear();
+            const key = `${year}-${String(monthNumber).padStart(2, '0')}`;
+
+            const price = parseFloat(curr.price);
+            if (isNaN(price)) return acc;
+
+            if (!acc[key]) {
+                acc[key] = {
+                    key,
+                    month: `${MONTHS_SHORT[monthNumber - 1]} ${String(year).slice(-2)}`,
+                    monthNumber,
+                    year,
+                    total: 0,
+                };
+            }
+            acc[key].total = parseFloat((acc[key].total + price).toFixed(2));
+            return acc;
+        }, {});
+
+        const arr = Object.values(grouped).sort((a, b) => a.key.localeCompare(b.key));
+
+        const now = new Date();
+        const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        return arr.map(item => {
+            if (item.key === currentKey) {
+                const daysInMonth = new Date(item.year, item.monthNumber, 0).getDate();
+                const currentDay = now.getDate();
+                const projected = currentDay > 0
+                    ? (item.total / currentDay) * daysInMonth
+                    : 0;
+                return { ...item, projected: Number(projected.toFixed(2)) };
+            }
+            return item;
+        });
+    }, [order]);
+
+    // ============ ПО ГОДАМ ============
+    const ordersByYear = useMemo(() => {
+        const grouped = order.reduce((acc, o) => {
+            const date = new Date(o.createdAt);
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const price = parseFloat(o.price);
+            if (isNaN(price)) return acc;
+
+            if (!acc[year]) acc[year] = { year, months: {}, total: 0, orders: 0 };
+            acc[year].months[month] = (acc[year].months[month] || 0) + price;
+            acc[year].total += price;
+            acc[year].orders += 1;
+            return acc;
+        }, {});
+
+        return Object.values(grouped)
+            .sort((a, b) => b.year - a.year)
+            .map(y => ({
+                ...y,
+                months: Object.fromEntries(
+                    Object.entries(y.months).map(([k, v]) => [k, Number(v.toFixed(2))])
+                ),
+                total: Number(y.total.toFixed(2)),
+            }));
+    }, [order]);
+
+    // Данные для BarChart «суммы по годам» + прогноз для текущего года
+    const yearsChartData = useMemo(() => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const yearStart = new Date(currentYear, 0, 1);
+        const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+
+        const elapsedMs = now.getTime() - yearStart.getTime();
+        const totalMs = yearEnd.getTime() - yearStart.getTime();
+        const elapsedRatio = Math.min(1, elapsedMs / totalMs);
+
+        return [...ordersByYear]
+            .sort((a, b) => a.year - b.year)
+            .map(y => {
+                const isCurrent = y.year === currentYear;
+                const projected = isCurrent && elapsedRatio > 0
+                    ? Number((y.total / elapsedRatio).toFixed(2))
+                    : null;
+
+                return {
+                    year: String(y.year),
+                    total: y.total,
+                    projected,
+                    orders: y.orders,
+                };
+            });
+    }, [ordersByYear]);
+
+    // Данные для LineChart «сравнение по месяцам за разные годы»
+    const monthsCompareData = useMemo(() => {
+        const years = ordersByYear.map(y => y.year).sort((a, b) => a - b);
+        const recentYears = years.slice(-4);
+
+        return MONTHS_SHORT.map((monthName, i) => {
+            const monthNumber = i + 1;
+            const row = { month: monthName };
+
+            recentYears.forEach(y => {
+                const yearData = ordersByYear.find(o => o.year === y);
+                row[`y${y}`] = yearData?.months[monthNumber]
+                    ? Number(yearData.months[monthNumber].toFixed(2))
+                    : 0;
+            });
+
+            return row;
+        });
+    }, [ordersByYear]);
+
+    const recentYears = useMemo(() => {
+        const years = ordersByYear.map(y => y.year).sort((a, b) => a - b);
+        return years.slice(-4);
+    }, [ordersByYear]);
+
+    // Данные для BarChart «заказы по годам» + прогноз для текущего года
+    const ordersYearsChartData = useMemo(() => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const yearStart = new Date(currentYear, 0, 1);
+        const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+
+        const elapsedMs = now.getTime() - yearStart.getTime();
+        const totalMs = yearEnd.getTime() - yearStart.getTime();
+        const elapsedRatio = Math.min(1, elapsedMs / totalMs);
+
+        return [...ordersByYear]
+            .sort((a, b) => a.year - b.year)
+            .map(y => {
+                const isCurrent = y.year === currentYear;
+                const projected = isCurrent && elapsedRatio > 0
+                    ? Math.round(y.orders / elapsedRatio)
+                    : null;
+
+                return {
+                    year: String(y.year),
+                    orders: y.orders,
+                    projected,
+                };
+            });
+    }, [ordersByYear]);
+
+
+    // ============ ИСТОЧНИКИ ЗАКАЗОВ — данные для % графика (stacked bar) ============
+    const originPercentData = useMemo(() => {
+        const grouped = order.reduce((acc, curr) => {
+            const date = new Date(curr.createdAt);
+            const monthNumber = date.getMonth() + 1;
+            const year = date.getFullYear();
+            const key = `${year}-${String(monthNumber).padStart(2, '0')}`;
+
+            const price = parseFloat(curr.price);
+            if (isNaN(price)) return acc;
+
+            const origin = curr.origin || 'other';
+
+            if (!acc[key]) {
+                acc[key] = {
+                    key,
+                    month: `${MONTHS_SHORT[monthNumber - 1]} ${String(year).slice(-2)}`,
+                    origins: {},
+                    total: 0,
+                };
+            }
+
+            acc[key].origins[origin] = (acc[key].origins[origin] || 0) + price;
+            acc[key].total += price;
+            return acc;
+        }, {});
+
+        const allOrigins = new Set();
+        Object.values(grouped).forEach(m => {
+            Object.keys(m.origins).forEach(o => allOrigins.add(o));
+        });
+        const origins = Array.from(allOrigins).sort();
+
+        const data = Object.values(grouped)
+            .sort((a, b) => a.key.localeCompare(b.key))
+            .map(item => {
+                const row = { month: item.month, key: item.key, __total: item.total };
+                origins.forEach(o => {
+                    const sum = item.origins[o] || 0;
+                    // Процент с 2 знаками
+                    const pct = item.total > 0
+                        ? Number(((sum / item.total) * 100).toFixed(2))
+                        : 0;
+                    row[o] = pct;
+                    row[`${o}__sum`] = Number(sum.toFixed(2));
+                });
+                return row;
+            });
+
+        return { data, origins };
+    }, [order]);
+
+    // ============ ПО ДНЯМ ============
+    const dailyStats = useMemo(() => {
+        if (!order.length) return [];
+
+        const grouped = order.reduce((acc, o) => {
+            const d = new Date(o.createdAt);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const price = parseFloat(o.price);
+            if (isNaN(price)) return acc;
+            acc[key] = (acc[key] || 0) + price;
+            return acc;
+        }, {});
+
+        const sortedDates = order.map(o => new Date(o.createdAt)).sort((a, b) => a - b);
+        const startDate = new Date(sortedDates[0]);
+        startDate.setHours(0, 0, 0, 0);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const result = [];
+        const cursor = new Date(startDate);
+
+        while (cursor <= today) {
+            const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
+            const weekday = cursor.getDay() === 0 ? 6 : cursor.getDay() - 1;
+
+            result.push({
+                key,
+                date: new Date(cursor),
+                weekday,
+                total: Number((grouped[key] || 0).toFixed(2)),
+            });
+
+            cursor.setDate(cursor.getDate() + 1);
         }
 
-        {type === 'newClientsMonth' && (
-         <NewClientsTable newClientsByMonth={newClientsByMonth} />
-        )}
-        
-        
-        </>
-    )
-}
+        const weeks = [];
+        let currentWeek = { days: [], weekStart: null, weekTotal: 0 };
 
-export default Statistic
+        result.forEach(day => {
+            if (day.weekday === 0 && currentWeek.days.length > 0) {
+                weeks.push(currentWeek);
+                currentWeek = { days: [], weekStart: null, weekTotal: 0 };
+            }
+
+            if (currentWeek.days.length === 0 && day.weekday > 0) {
+                for (let i = 0; i < day.weekday; i++) {
+                    currentWeek.days.push({ empty: true });
+                }
+            }
+
+            if (!currentWeek.weekStart) currentWeek.weekStart = day.date;
+            currentWeek.days.push(day);
+            currentWeek.weekTotal += day.total;
+        });
+
+        if (currentWeek.days.length > 0) {
+            while (currentWeek.days.length < 7) {
+                currentWeek.days.push({ empty: true });
+            }
+            weeks.push(currentWeek);
+        }
+
+        return [...weeks].reverse();
+    }, [order]);
+
+    // ============ НОВЫЕ КЛИЕНТЫ ============
+    const newClientsByMonth = useMemo(() => {
+        if (!order.length) return [];
+
+        const clientsWithOrders = new Set();
+        const sortedOrders = [...order].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+        const grouped = sortedOrders.reduce((acc, o) => {
+            const clientId = o.phone;
+            const date = new Date(o.createdAt);
+            const year = date.getFullYear();
+            const monthNumber = String(date.getMonth() + 1).padStart(2, '0');
+            const key = `${year}-${monthNumber}`;
+
+            if (!acc[key]) {
+                acc[key] = { key, month: `${monthNumber}.${year}`, total: 0, ordersCount: 0 };
+            }
+
+            acc[key].ordersCount += 1;
+            if (!clientId) return acc;
+
+            if (!clientsWithOrders.has(clientId)) {
+                acc[key].total += 1;
+                clientsWithOrders.add(clientId);
+            }
+            return acc;
+        }, {});
+
+        return Object.values(grouped).sort((a, b) => b.key.localeCompare(a.key));
+    }, [order]);
+
+    const newClientsChart = useMemo(() => {
+        return [...newClientsByMonth]
+            .reverse()
+            .map(item => {
+                const [y, m] = item.key.split('-');
+                return {
+                    month: `${MONTHS_SHORT[Number(m) - 1]} ${String(y).slice(-2)}`,
+                    clients: item.total,
+                    orders: item.ordersCount,
+                };
+            });
+    }, [newClientsByMonth]);
+
+    // Видимые недели
+    const visibleWeeks = useMemo(() => {
+        if (!dailyStats.length) return [];
+
+        const monthsAgo = new Date();
+        monthsAgo.setMonth(monthsAgo.getMonth() - daysPeriod);
+        monthsAgo.setHours(0, 0, 0, 0);
+
+        return dailyStats.filter(w => w.weekStart && w.weekStart >= monthsAgo);
+    }, [dailyStats, daysPeriod]);
+
+    // Пороги для цветовой шкалы
+    const intensityThresholds = useMemo(() => {
+        const values = dailyStats
+            .flatMap(w => w.days.filter(d => !d.empty).map(d => d.total))
+            .filter(v => v > 0)
+            .sort((a, b) => a - b);
+
+        if (!values.length) return [500, 2000, 5000];
+
+        const p50 = values[Math.floor(values.length * 0.5)] || 100;
+        const p75 = values[Math.floor(values.length * 0.75)] || 300;
+        const p90 = values[Math.floor(values.length * 0.9)] || 800;
+
+        return [p50, p75, p90];
+    }, [dailyStats]);
+
+    return (
+        <div className="flex flex-col min-h-screen bg-stone-100">
+
+            <NavBar />
+
+            <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-6">
+
+                {/* Заголовок */}
+                <div className="mb-6">
+                    <div className="text-[11px] uppercase tracking-widest text-stone-400 font-semibold mb-1">
+                        LINK · Аналитика
+                    </div>
+                    <h1 className="text-[24px] md:text-[30px] font-bold text-[#2C3531] leading-tight">
+                        Статистика
+                    </h1>
+                </div>
+
+                {/* Сводка */}
+                {loading ? (
+                    <div className="mb-6"><StatSkeleton /></div>
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                        <SummaryCard
+                            title="Выручка"
+                            value={`${formatNumber(totalRevenue, 2)} р`}
+                            sub="за всё время"
+                            icon="bi-currency-dollar"
+                        />
+                        <SummaryCard
+                            title="Заказов"
+                            value={formatNumber(totalOrders)}
+                            sub="за всё время"
+                            icon="bi-receipt"
+                        />
+                        <SummaryCard
+                            title="Клиентов"
+                            value={formatNumber(totalClients)}
+                            sub="уникальных"
+                            icon="bi-people"
+                        />
+                        <SummaryCard
+                            title="Средний чек"
+                            value={`${formatNumber(avgCheck, 2)} р`}
+                            sub="на заказ"
+                            icon="bi-calculator"
+                        />
+                        <SummaryCard
+                            title="Дней статистики"
+                            value={formatNumber(daysSinceStart)}
+                            sub="с первого заказа"
+                            icon="bi-calendar-check"
+                        />
+                    </div>
+                )}
+
+                {/* Табы */}
+                <div className="mb-6 flex flex-wrap gap-1.5 bg-white border border-stone-200 rounded-lg p-1 w-fit">
+                    {TABS.map(({ value, label, icon }) => {
+                        const active = type === value;
+                        return (
+                            <button
+                                key={value}
+                                onClick={() => setType(value)}
+                                disabled={loading}
+                                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-md
+                                        text-[12.5px] font-medium whitespace-nowrap
+                                        transition-colors disabled:cursor-not-allowed
+                                        ${active
+                                            ? 'bg-[#2C3531] text-white'
+                                            : 'text-stone-600 hover:bg-stone-100'
+                                        }`}
+                            >
+                                <i className={`bi ${icon} text-[12px]`} />
+                                {label}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* ============ ГРАФИК ============ */}
+                {type === 'graphic' && (
+                    <div className="flex flex-col gap-4">
+                        {/* Доход по месяцам — столбиками */}
+                        <div className="bg-white border border-stone-200 rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
+                                    <i className="bi bi-bar-chart-fill text-[13px] text-[#0D9488]" />
+                                </span>
+                                <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                                    Доход по месяцам
+                                </div>
+                            </div>
+
+                            <div style={{ width: '100%', height: 360 }}>
+                                <ResponsiveContainer>
+                                    <BarChart data={monthlySum} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="10 5" stroke="#e7e5e4" />
+                                        <XAxis
+                                            dataKey="month"
+                                            tick={{ fontSize: 11, fill: '#78716c' }}
+                                            axisLine={{ stroke: '#e7e5e4' }}
+                                            tickLine={false}
+                                            interval={0}
+                                            angle={-45}
+                                            textAnchor="end"
+                                            height={60}
+                                        />
+                                        <YAxis
+                                            tickCount={8}
+                                            tick={{ fontSize: 11, fill: '#78716c' }}
+                                            axisLine={{ stroke: '#e7e5e4' }}
+                                            tickLine={false}
+                                            tickFormatter={(v) => v >= 1000 ? `${Math.round(v / 1000)}к` : v}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{
+                                                background: 'white',
+                                                border: '1px solid #e7e5e4',
+                                                borderRadius: 8,
+                                                fontSize: 12,
+                                            }}
+                                            formatter={(v, name) => [`${formatNumber(v, 2)} р`, name]}
+                                        />
+                                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                                        <Bar
+                                            dataKey="total"
+                                            fill="#0D9488"
+                                            name="Фактический доход"
+                                            radius={[4, 4, 0, 0]}
+                                        />
+                                        <Bar
+                                            dataKey="projected"
+                                            fill="#a8a29e"
+                                            fillOpacity={0.5}
+                                            name="Предполагаемый"
+                                            radius={[4, 4, 0, 0]}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            <div className="mt-3 text-[11px] text-stone-400 flex items-center gap-1">
+                                <i className="bi bi-info-circle" />
+                                Серый столбик — прогноз текущего месяца (по темпу дней).
+                            </div>
+                        </div>
+
+
+                        {/* Источники заказов — % по месяцам (stacked bar) */}
+                        <div className="bg-white border border-stone-200 rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
+                                    <i className="bi bi-pie-chart text-[13px] text-[#0D9488]" />
+                                </span>
+                                <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                                    Источники заказов — доля в % по месяцам
+                                </div>
+                            </div>
+
+                            <div style={{ width: '100%', height: 340 }}>
+                                <ResponsiveContainer>
+                                    <BarChart
+                                        data={originPercentData.data}
+                                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="10 5" stroke="#e7e5e4" />
+                                        <XAxis
+                                            dataKey="month"
+                                            tick={{ fontSize: 11, fill: '#78716c' }}
+                                            axisLine={{ stroke: '#e7e5e4' }}
+                                            tickLine={false}
+                                            interval={0}
+                                            angle={-45}
+                                            textAnchor="end"
+                                            height={60}
+                                        />
+                                        <YAxis
+                                            domain={[0, 100]}
+                                            tick={{ fontSize: 11, fill: '#78716c' }}
+                                            axisLine={{ stroke: '#e7e5e4' }}
+                                            tickLine={false}
+                                            tickFormatter={(v) => `${v}%`}
+                                        />
+                                        <Tooltip content={<OriginPercentTooltip />} />
+                                        <Legend
+                                            wrapperStyle={{ fontSize: 12 }}
+                                            formatter={(value) => ORIGIN_LABELS[value] || value}
+                                        />
+                                        {originPercentData.origins.map((origin, i) => (
+                                            <Bar
+                                                key={origin}
+                                                dataKey={origin}
+                                                stackId="origins"
+                                                fill={ORIGIN_COLORS[origin] || YEAR_COLORS[i % YEAR_COLORS.length]}
+                                                name={origin}
+                                                radius={i === originPercentData.origins.length - 1 ? [4, 4, 0, 0] : 0}
+                                            />
+                                        ))}
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            <div className="mt-3 text-[11px] text-stone-400 flex items-center gap-1">
+                                <i className="bi bi-info-circle" />
+                                Каждый столбик — 100%. Наведите, чтобы увидеть проценты и суммы.
+                            </div>
+                        </div>
+
+                        {/* Новые клиенты vs Заказы */}
+                        <div className="bg-white border border-stone-200 rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
+                                    <i className="bi bi-people text-[13px] text-[#0D9488]" />
+                                </span>
+                                <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                                    Новые клиенты vs Заказы по месяцам
+                                </div>
+                            </div>
+
+                            <div style={{ width: '100%', height: 300 }}>
+                                <ResponsiveContainer>
+                                    <BarChart data={newClientsChart} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="10 5" stroke="#e7e5e4" />
+                                        <XAxis
+                                            dataKey="month"
+                                            tick={{ fontSize: 10, fill: '#78716c' }}
+                                            axisLine={{ stroke: '#e7e5e4' }}
+                                            tickLine={false}
+                                            interval={0}
+                                            angle={-45}
+                                            textAnchor="end"
+                                            height={50}
+                                        />
+                                        <YAxis
+                                            tick={{ fontSize: 11, fill: '#78716c' }}
+                                            axisLine={{ stroke: '#e7e5e4' }}
+                                            tickLine={false}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{
+                                                background: 'white',
+                                                border: '1px solid #e7e5e4',
+                                                borderRadius: 8,
+                                                fontSize: 12,
+                                            }}
+                                        />
+                                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                                        <Bar dataKey="clients" fill="#0D9488" name="Новые клиенты" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="orders" fill="#a8a29e" name="Все заказы" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ============ ПО ГОДАМ ============ */}
+                {type === 'month' && (
+                    <div className="flex flex-col gap-4">
+                        {/* Таблица */}
+                        <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
+                            <div className="flex items-center gap-2 px-4 py-3 bg-stone-50 border-b border-stone-200">
+                                <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
+                                    <i className="bi bi-calendar-month text-[13px] text-[#0D9488]" />
+                                </span>
+                                <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                                    Суммы по месяцам за каждый год
+                                </div>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-[12.5px] min-w-[1000px]">
+                                    <thead>
+                                        <tr className="bg-stone-50/60 border-b border-stone-200
+                                                    text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                                            <th className="text-left px-4 py-2.5 sticky left-0 bg-stone-50/60">Год</th>
+                                            {MONTHS_SHORT.map(m => (
+                                                <th key={m} className="text-center px-2 py-2.5">{m}</th>
+                                            ))}
+                                            <th className="text-right px-4 py-2.5">Итого</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-stone-100">
+                                        {ordersByYear.map(y => (
+                                            <tr key={y.year} className="hover:bg-stone-50/60 transition-colors">
+                                                <td className="px-4 py-2 font-bold text-[#2C3531] sticky left-0 bg-white">
+                                                    {y.year}
+                                                </td>
+                                                {Array.from({ length: 12 }, (_, i) => {
+                                                    const m = i + 1;
+                                                    const val = y.months[m] || 0;
+                                                    return (
+                                                        <td
+                                                            key={m}
+                                                            className={`text-center px-2 py-2 tabular-nums
+                                                                    ${val > 0
+                                                                        ? 'text-stone-800 font-medium'
+                                                                        : 'text-stone-300'
+                                                                    }`}
+                                                        >
+                                                            {val > 0 ? formatNumber(Math.round(val)) : '—'}
+                                                        </td>
+                                                    );
+                                                })}
+                                                <td className="px-4 py-2 text-right font-bold text-[#2C3531] tabular-nums
+                                                                bg-stone-50/40">
+                                                    {formatNumber(Math.round(y.total))}
+                                                </td>
+                                            </tr>
+                                        ))}
+
+                                        {ordersByYear.length === 0 && (
+                                            <tr>
+                                                <td colSpan={14} className="text-center py-8 text-stone-400">
+                                                    Нет данных
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* LineChart: сравнение по месяцам за разные годы */}
+                        <div className="bg-white border border-stone-200 rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
+                                    <i className="bi bi-activity text-[13px] text-[#0D9488]" />
+                                </span>
+                                <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                                    Сравнение по месяцам за разные годы
+                                </div>
+                                {recentYears.length > 0 && (
+                                    <div className="ml-auto text-[11px] text-stone-400">
+                                        {recentYears.length} последних года
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ width: '100%', height: 320 }}>
+                                <ResponsiveContainer>
+                                    <LineChart data={monthsCompareData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                        <CartesianGrid strokeDasharray="10 5" stroke="#e7e5e4" />
+                                        <XAxis
+                                            dataKey="month"
+                                            tick={{ fontSize: 11, fill: '#78716c' }}
+                                            axisLine={{ stroke: '#e7e5e4' }}
+                                            tickLine={false}
+                                        />
+                                        <YAxis
+                                            tick={{ fontSize: 11, fill: '#78716c' }}
+                                            axisLine={{ stroke: '#e7e5e4' }}
+                                            tickLine={false}
+                                            tickFormatter={(v) => v >= 1000 ? `${Math.round(v / 1000)}к` : v}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{
+                                                background: 'white',
+                                                border: '1px solid #e7e5e4',
+                                                borderRadius: 8,
+                                                fontSize: 12,
+                                            }}
+                                            formatter={(v) => [`${formatNumber(v, 2)} р`, '']}
+                                        />
+                                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                                        {recentYears.map((year, i) => (
+                                            <Line
+                                                key={year}
+                                                type="monotone"
+                                                dataKey={`y${year}`}
+                                                stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
+                                                strokeWidth={2}
+                                                dot={{ r: 3, fill: YEAR_COLORS[i % YEAR_COLORS.length] }}
+                                                activeDot={{ r: 5 }}
+                                                name={String(year)}
+                                            />
+                                        ))}
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* === Графики === */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                            {/* BarChart: суммы по годам + прогноз текущего */}
+                            <div className="bg-white border border-stone-200 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
+                                        <i className="bi bi-bar-chart-fill text-[13px] text-[#0D9488]" />
+                                    </span>
+                                    <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                                        Суммы по годам
+                                    </div>
+                                </div>
+
+                                <div style={{ width: '100%', height: 260 }}>
+                                    <ResponsiveContainer>
+                                        <BarChart data={yearsChartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="10 5" stroke="#e7e5e4" />
+                                            <XAxis
+                                                dataKey="year"
+                                                tick={{ fontSize: 12, fill: '#78716c' }}
+                                                axisLine={{ stroke: '#e7e5e4' }}
+                                                tickLine={false}
+                                            />
+                                            <YAxis
+                                                tick={{ fontSize: 11, fill: '#78716c' }}
+                                                axisLine={{ stroke: '#e7e5e4' }}
+                                                tickLine={false}
+                                                tickFormatter={(v) => v >= 1000 ? `${Math.round(v / 1000)}к` : v}
+                                            />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    background: 'white',
+                                                    border: '1px solid #e7e5e4',
+                                                    borderRadius: 8,
+                                                    fontSize: 12,
+                                                }}
+                                                formatter={(v, name) => [`${formatNumber(v, 2)} р`, name]}
+                                            />
+                                            <Legend wrapperStyle={{ fontSize: 12 }} />
+                                            <Bar dataKey="total" fill="#0D9488" name="Выручка" radius={[6, 6, 0, 0]} />
+                                            <Bar dataKey="projected" fill="#a8a29e" fillOpacity={0.5} name="Прогноз" radius={[6, 6, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* BarChart: количество заказов по годам + прогноз текущего */}
+                            <div className="bg-white border border-stone-200 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
+                                        <i className="bi bi-receipt text-[13px] text-[#0D9488]" />
+                                    </span>
+                                    <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                                        Количество заказов по годам
+                                    </div>
+                                </div>
+
+                                <div style={{ width: '100%', height: 260 }}>
+                                    <ResponsiveContainer>
+                                        <BarChart data={ordersYearsChartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="10 5" stroke="#e7e5e4" />
+                                            <XAxis
+                                                dataKey="year"
+                                                tick={{ fontSize: 12, fill: '#78716c' }}
+                                                axisLine={{ stroke: '#e7e5e4' }}
+                                                tickLine={false}
+                                            />
+                                            <YAxis
+                                                tick={{ fontSize: 11, fill: '#78716c' }}
+                                                axisLine={{ stroke: '#e7e5e4' }}
+                                                tickLine={false}
+                                            />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    background: 'white',
+                                                    border: '1px solid #e7e5e4',
+                                                    borderRadius: 8,
+                                                    fontSize: 12,
+                                                }}
+                                                formatter={(v, name) => [v, name]}
+                                            />
+                                            <Legend wrapperStyle={{ fontSize: 12 }} />
+                                            <Bar dataKey="orders" fill="#2C3531" name="Заказов" radius={[6, 6, 0, 0]} />
+                                            <Bar dataKey="projected" fill="#a8a29e" fillOpacity={0.5} name="Прогноз" radius={[6, 6, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ============ ПО ДНЯМ ============ */}
+                {type === 'day' && (
+                    <div className="bg-white border border-stone-200 rounded-xl p-5">
+                        <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
+                            <div className="flex items-center gap-2">
+                                <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
+                                    <i className="bi bi-calendar-day text-[13px] text-[#0D9488]" />
+                                </span>
+                                <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                                    Календарь дохода по дням
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 text-[11px] text-stone-500 flex-wrap">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-3.5 h-3.5 rounded bg-stone-100 border border-stone-200" />
+                                    пусто
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-3.5 h-3.5 rounded bg-[#0D9488]/15" />
+                                    до {formatNumber(Math.round(intensityThresholds[0]))}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-3.5 h-3.5 rounded bg-[#0D9488]/40" />
+                                    до {formatNumber(Math.round(intensityThresholds[1]))}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-3.5 h-3.5 rounded bg-[#0D9488]/70" />
+                                    до {formatNumber(Math.round(intensityThresholds[2]))}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-3.5 h-3.5 rounded bg-[#0D9488]" />
+                                    больше
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_120px] gap-1.5 mb-1.5">
+                            {WEEKDAYS_SHORT.map(d => (
+                                <div key={d} className="text-center py-1
+                                                        text-[11px] uppercase tracking-wider font-semibold text-stone-400">
+                                    {d}
+                                </div>
+                            ))}
+                            <div className="text-center py-1
+                                            text-[11px] uppercase tracking-wider font-semibold text-stone-400">
+                                Итог недели
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            {visibleWeeks.map((week, wi) => (
+                                <div
+                                    key={wi}
+                                    className="grid grid-cols-[repeat(7,minmax(0,1fr))_120px] gap-1.5"
+                                >
+                                    {week.days.map((day, di) => {
+                                        if (day.empty) {
+                                            return <div key={di} className="aspect-square rounded-lg bg-transparent" />;
+                                        }
+
+                                        const intensity =
+                                            day.total === 0 ? 0 :
+                                            day.total < intensityThresholds[0] ? 1 :
+                                            day.total < intensityThresholds[1] ? 2 :
+                                            day.total < intensityThresholds[2] ? 3 : 4;
+
+                                        const bgClass = [
+                                            'bg-stone-50 hover:bg-stone-100 border border-stone-100',
+                                            'bg-[#0D9488]/15 border border-[#0D9488]/20',
+                                            'bg-[#0D9488]/35 border border-[#0D9488]/40',
+                                            'bg-[#0D9488]/65 border border-[#0D9488]/70',
+                                            'bg-[#0D9488] border border-[#0D9488]',
+                                        ][intensity];
+
+                                        const textClass = intensity >= 3 ? 'text-white' : 'text-stone-800';
+                                        const subClass = intensity >= 3 ? 'text-white/80' : 'text-stone-500';
+
+                                        return (
+                                            <div
+                                                key={di}
+                                                title={`${day.date.toLocaleDateString('ru-RU')}: ${formatNumber(day.total, 2)} р`}
+                                                className={`aspect-square rounded-lg ${bgClass}
+                                                        flex flex-col items-center justify-center
+                                                        transition-colors cursor-default`}
+                                            >
+                                                <span className={`text-[11px] font-medium leading-none ${subClass}`}>
+                                                    {day.date.getDate()}
+                                                </span>
+                                                {day.total > 0 && (
+                                                    <span className={`mt-1 text-[14px] md:text-[15px] font-bold leading-none tabular-nums ${textClass}`}>
+                                                        {formatNumber(Math.round(day.total))}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+
+                                    <div className="aspect-square rounded-lg bg-[#2C3531]
+                                                    flex flex-col items-center justify-center text-white">
+                                        <span className="text-[10px] uppercase tracking-wider opacity-50">
+                                            {week.weekStart?.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                                        </span>
+                                        <span className="text-[16px] md:text-[17px] font-bold mt-1 tabular-nums leading-none">
+                                            {formatNumber(Math.round(week.weekTotal))}
+                                        </span>
+                                        <span className="text-[10px] opacity-60 mt-0.5">р</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {visibleWeeks.length < dailyStats.length && (
+                            <div className="mt-5 text-center">
+                                <button
+                                    onClick={() => setDaysPeriod(p => p + 6)}
+                                    className="px-5 py-2.5 rounded-lg text-[13px] font-medium
+                                            bg-white border border-stone-200 text-stone-700
+                                            hover:bg-stone-50 hover:border-stone-300
+                                            transition-colors
+                                            inline-flex items-center gap-2"
+                                >
+                                    <i className="bi bi-arrow-down-circle" />
+                                    Показать ещё 6 месяцев
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ============ НОВЫЕ КЛИЕНТЫ ============ */}
+                {type === 'newClientsMonth' && (
+                    <div className="flex flex-col gap-4">
+
+                        <NewClientsTable newClientsByMonth={newClientsByMonth} />
+
+                        <div className="bg-white border border-stone-200 rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
+                                    <i className="bi bi-bar-chart text-[13px] text-[#0D9488]" />
+                                </span>
+                                <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                                    Новые клиенты по месяцам
+                                </div>
+                            </div>
+
+                            <div style={{ width: '100%', height: 300 }}>
+                                <ResponsiveContainer>
+                                    <BarChart data={newClientsChart}>
+                                        <CartesianGrid strokeDasharray="10 5" stroke="#e7e5e4" />
+                                        <XAxis
+                                            dataKey="month"
+                                            tick={{ fontSize: 10, fill: '#78716c' }}
+                                            axisLine={{ stroke: '#e7e5e4' }}
+                                            tickLine={false}
+                                            interval={0}
+                                            angle={-45}
+                                            textAnchor="end"
+                                            height={50}
+                                        />
+                                        <YAxis
+                                            tick={{ fontSize: 11, fill: '#78716c' }}
+                                            axisLine={{ stroke: '#e7e5e4' }}
+                                            tickLine={false}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{
+                                                background: 'white',
+                                                border: '1px solid #e7e5e4',
+                                                borderRadius: 8,
+                                                fontSize: 12,
+                                            }}
+                                        />
+                                        <Bar dataKey="clients" fill="#0D9488" name="Новые клиенты" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+            </div>
+
+            <Footer />
+        </div>
+    );
+};
+
+export default Statistic;

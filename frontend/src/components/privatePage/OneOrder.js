@@ -5,6 +5,7 @@ import { deleteOrder, getSettings } from '../../http/dbApi';
 import { deleteOrderId } from '../../store/orderReducer';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteFile } from '../../http/cloudApi';
+import { toast } from 'sonner';
 
 
 export const OneOrder = ({order, index}) =>{
@@ -69,7 +70,7 @@ export const OneOrder = ({order, index}) =>{
         'Печать заказа завершена, и он был аккуратно упакован для безопасной пересылки.',// упакован
         'Ваш заказ был передан на отправку. По штрихкоду можете его отслеживать.',// отправлен
         'Спасибо за заказ. Будем рады помочь снова', //оплачен 
-        'Особый статус, обычно заказ готов, а вероятные причины: ожидание оплаты, либо дня отправки, либо добавления фото. Для уточнения можете написать нам в телеграм/инстаграм ',// в ожидании
+        'Вероятные причины: ожидание оплаты для отправки, либо дня отправки, либо добавления фото. Для уточнения можете написать нам в телеграм/инстаграм ',// в ожидании
         <label>Ошибка в заказе. Вероятно не загрузились фото.
             Можете загрузить заново, а этот <span style={{color:'red', cursor: 'pointer'}} onClick={()=>{DeleteOrder()}}>удалить заказ</span>. Либо напишите нам в Телеграм/Инстаграм</label>,// ошибка
        
@@ -81,13 +82,17 @@ export const OneOrder = ({order, index}) =>{
         }, 1500)
     }
 
-    const SumTeor =()=> {
+    /*
+        
+        const SumTeor =()=> {
         const pr = order.photos.reduce((sum, el)=>{
             return sum+PriceList(el.format)*el.amount*el.copies
         },0 )
 
         return pr.toFixed(2)
     }
+    
+    */
 
     const [settings, setSettings] = useState([])
 
@@ -126,6 +131,39 @@ export const OneOrder = ({order, index}) =>{
     }
 
     const [showDetails, setShowDetails] = useState(false);
+
+    const copyInvoice = async (orderNumber) => {
+        const invoiceNumber = `27307-1-${orderNumber}`;
+        try {
+            await navigator.clipboard.writeText(invoiceNumber);
+            toast.success('Номер счёта скопирован', {
+                description: invoiceNumber,
+                duration: 2000,
+            });
+        } catch (err) {
+            console.error('Ошибка копирования:', err);
+            // Fallback — старый способ через execCommand
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = invoiceNumber;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                toast.success('Номер счёта скопирован', {
+                    description: invoiceNumber,
+                    duration: 2000,
+                });
+            } catch (fallbackErr) {
+                console.error('Fallback тоже не сработал:', fallbackErr);
+                toast.error('Не удалось скопировать', {
+                    description: 'Скопируйте номер счёта вручную',
+                });
+            }
+        }
+    };
 
     return(
         <>
@@ -263,37 +301,8 @@ export const OneOrder = ({order, index}) =>{
                 {/* === ПРАВАЯ КОЛОНКА: статус и сумма === */}
                 <div className="space-y-3">
 
-                    {/* Сумма заказа */}
-                    <div className="bg-teal-50 rounded-lg p-3 border border-teal-100">
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">Сумма заказа</span>
-                            <span className="text-base md:text-lg font-bold text-teal-900">
-                                {Number(order.price).toFixed(2)} ₽
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center mt-1 text-xs text-gray-500">
-                            <span>Пересылка</span>
-                            <span className="font-medium">
-                                {order.price_deliver === '0' ? 'нет данных' : `+${order.price_deliver} р`}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Дата отправки */}
-                    {(order.status > 0 && order.status <= 4 && order.date_sent) && (
-                        <div className="bg-gray-50 rounded-lg p-3 flex flex-row justify-between">
-                            <div className="text-xs text-gray-400 mb-1">Отправка ожидается</div>
-                            <div className="font-semibold text-gray-800 text-sm">
-                                {order.date_sent.split('-')[2]}.{order.date_sent.split('-')[1]}.{order.date_sent.split('-')[0]}
-                            </div>
-                        </div>
-                    )}
-
-                    
-
+                    {/* Строка статуса + этап */}
                     <div className="bg-gray-50 rounded-lg p-3 space-y-3">
-
-                        {/* Строка статуса + этап */}
                         <div className="flex items-center justify-between gap-2">
                             <span className='font-light text-xs  text-black-900'>Статус:</span> 
                             <span className={`text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full ${order.status === 6 || order.status === 5
@@ -329,7 +338,85 @@ export const OneOrder = ({order, index}) =>{
                         </div>
                     </div>
 
+                    {/* Дата отправки */}
+                    {(order.status > 0 && order.status <= 4 && order.date_sent) && (
+                        <div className="bg-gray-50 rounded-lg p-3 flex flex-row justify-between">
+                            <div className="text-xs text-gray-400 mb-1">Отправка ожидается</div>
+                            <div className="font-semibold text-gray-800 text-sm">
+                                {order.date_sent.split('-')[2]}.{order.date_sent.split('-')[1]}.{order.date_sent.split('-')[0]}
+                            </div>
+                        </div>
+                    )}
 
+                    {/* Сумма заказа */}
+                    <div className="bg-teal-50 rounded-lg p-3 border border-teal-100">
+                        <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-600">Сумма заказа</span>
+                            <span className="text-base md:text-lg font-bold text-teal-900">
+                                {Number(order.price).toFixed(2)} ₽
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center mt-1 text-xs text-gray-500">
+                            <span>Пересылка</span>
+                            <span className="font-medium">
+                                {order.price_deliver === '0' ? 'нет данных' : `+${order.price_deliver} р`}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Статус оплаты — для клиента в ЛК */}
+                    {(order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') && (
+                        <div className="...">
+                            {/* Оплачен */}
+                            {order.isPayment === 'paid' && (
+                                <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md
+                                                text-[15px] font-medium w-full
+                                                bg-green-50 text-green-700 border border-green-200">
+                                    <i className="bi bi-check-circle-fill text-[11px]" />
+                                    Заказ оплачен
+                                </div>
+                            )}
+
+                            {/* Ждёт оплаты — с инструкцией */}
+                            {order.isPayment === 'wait' && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <div className="flex items-center gap-2 text-amber-800 font-medium text-[13px] mb-2">
+                                    <i className="bi bi-clock-fill text-[12px]" />
+                                    Ожидает оплаты
+                                </div>
+
+                                <div className="text-[12px] text-amber-900/80 leading-relaxed">
+                                    <div>ЕРИП → E-POS</div>
+
+                                    {/* Номер счёта + кнопка копирования */}
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span>
+                                            Номер счёта:{' '}
+                                            <b className="font-mono tracking-wide">
+                                                27307-1-{order.order_number}
+                                            </b>
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => copyInvoice(order.order_number)}
+                                            className="inline-flex items-center justify-center
+                                                    w-6 h-6 rounded bg-white border-[1px] rounded-md
+                                                    text-amber-700 hover:bg-amber-100
+                                                    transition-colors"
+                                            title="Скопировать номер счёта"
+                                        >
+                                            <i className="bi bi-clipboard text-[11px]" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                            {/* Счёт не выставлен — ничего клиенту не показываем */}
+                            {/* order.isPayment === 'none' → ничего */}
+                        </div>
+                    )}
 
                     {/* Штрихкод */}
                     {order.status === 5 && (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import './DescRow.css';
 import { OneFormat } from './OneFormat';
 import { deleteOrder, getSettings, updateOrder } from '../../http/dbApi';
@@ -14,9 +14,10 @@ import style from './DescRow.module.css'
 import { Button } from '../../ui/button';
 import MyModalComponent from './DialogEP';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../ui/dialog';
+import { toast } from 'sonner';
 
 
-export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged, setIsChanged }) => {
+export const DescRow = ({ orders, order, setSelectedOrder, handleDetailsClick, isChanged, setIsChanged }) => {
 
   const dispatch = useDispatch()
   const users = useSelector(state=>state.order.users)
@@ -37,7 +38,7 @@ export const DescRow = ({ order, setSelectedOrder, handleDetailsClick, isChanged
   const [notes, setNotes] = useState(order.notes || '')
   const [codeOutside, setCodeOutside] = useState(order.codeOutside || '')
 
-  const [origin, setOrigin] = useState(order.origin || '');
+  const [origin] = useState(order.origin || '');
   const [is_sms_add, setIs_sms_add] = useState(order.is_sms_add || false);
   const [is_sms_send, setIs_sms_send] = useState(order.is_sms_send || false);
   const [is_sms_error, setIs_sms_error] = useState(order.is_sms_error || false);
@@ -535,81 +536,118 @@ const ShowBtnSms = (smsType, fanc, text) =>{
 }
 
 const AddInvoices = async () => {
-  // Приводим к числу и устанавливаем 0, если значение невалидно
-  const price = Number(order.price) || 0;
-  const priceDeliver = Number(order.price_deliver) || 0;
+    const price = Number(order.price) || 0;
+    const priceDeliver = Number(order.price_deliver) || 0;
+    const totalAmount = (price + priceDeliver).toFixed(2);
 
-  // Вычисляем сумму и округляем
-  const totalAmount = (price + priceDeliver).toFixed(2);
+    const sendConfirmation = window.confirm(
+        `Подтвердите:\n` +
+        `Номер заказа: ${order.order_number}\n` +
+        `Цена: ${totalAmount}р\n` +
+        `Info: Заказ ${order.FIO}`
+    );
 
-  const sendConfirmation = window.confirm(
-    `Подтвердите:\n` +
-    `Номер заказа: ${order.order_number}\n` +
-    `Цена: ${totalAmount}р\n` +
-    `Info: Заказ ${order.FIO}`
-  );
-    
-  if (sendConfirmation) {
-    const dataInvoices = {
-      AccountNo: order.order_number,
-      Amount: totalAmount,  // Уже строка с 2 знаками после запятой
-      Info: `Заказ ${order.FIO}`
-    };
+    if (sendConfirmation) {
+        const dataInvoices = {
+            AccountNo: order.order_number,
+            Amount: totalAmount,
+            Info: `Заказ ${order.FIO}`,
+        };
 
-    try {
-      const { data } = await $host.post('/api/ep/addInvoicesPay', dataInvoices);
-      if (data) {
-        setOther(prev => `Данные для оплаты: 
-          ЕРИП -> E-POS 
-          номер счета: 27307-1-${order.order_number} \n \n` + prev);
-      }
-    } catch (error) {
-      console.error('Ошибка:', error);
-      alert('Не удалось создать счет. Попробуйте еще раз.'); // Уведомление пользователя
+        try {
+            const { data } = await $host.post('/api/ep/addInvoicesPay', dataInvoices);
+
+            if (data) {
+                // Обновляем Redux — синхронизируем с бэком
+                dispatch(updateOrderAction(order.id, {
+                    ...order,
+                    isPayment: 'wait',
+                }));
+
+                toast.success('Счёт выставлен');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            toast.error('Не удалось создать счёт', {
+                description: 'Попробуйте ещё раз',
+            });
+        }
     }
-  }
 };
 
-const CancelInvoices = async() =>{
+const CancelInvoices = async () => {
+    const info = window.confirm('Отменить счёт?');
 
-  const info = window.confirm( 'Отменить счет?' );
-    
-  if (info) {
-      try {
-        const dataAPI = {
-          InvoiceNo : order.order_number 
+    if (info) {
+        try {
+            const dataAPI = {
+                InvoiceNo: order.order_number,
+            };
+
+            const { data } = await $host.post('/api/ep/delInvoicesPay', dataAPI);
+
+            if (data) {
+                // Обновляем Redux — синхронизируем с бэком
+                dispatch(updateOrderAction(order.id, {
+                    ...order,
+                    isPayment: 'none',
+                }));
+
+                toast.success('Счёт отменён');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            toast.error('Не удалось отменить счёт');
         }
-        const {data} = await $host.post('/api/ep/delInvoicesPay', dataAPI);
-        console.log(data)
-        if(data) window.alert( 'отменен!' )
-      } catch (error) {
-        console.error('Ошибка:', error);
-      }
+    }
+};
 
-  }
-}
 
-const CheckInvoices = async() =>{
+const CheckInvoices = async () => {
+    try {
+        const { data } = await $host.post('/api/ep/getInvoicesPay', {
+            No: order.order_number,
+        });
 
-      try {
-        const {data} = await $host.post('/api/ep/getInvoicesPay', {No: order.order_number });
         const descStatus = {
-          '1':'Ожидает оплату',
-          '2':'Просрочен',
-          '3':'Оплачен',
-          '4':'Оплачен частично',
-          '5':'Отменен',
-          '6':'Оплачен с помощью банковской карты',
-          '7': 'Платеж возращен'
-        }
-        const status = data.Status
-        window.alert(descStatus[status]);
-      } catch (error) {
-        console.error('Ошибка:', error);
-        window.alert('счет не найдет');
-      }
+            '1': 'Ожидает оплату',
+            '2': 'Просрочен',
+            '3': 'Оплачен',
+            '4': 'Оплачен частично',
+            '5': 'Отменён',
+            '6': 'Оплачен банковской картой',
+            '7': 'Платёж возвращён',
+        };
 
-  }
+        const status = String(data.Status);
+        const statusText = descStatus[status] || 'Неизвестный статус';
+
+        // ===== Оплачен =====
+        if (status === '3' || status === '6') {
+            if (order.isPayment === 'paid') {
+                toast.info(`Статус: ${statusText}`);
+                return;
+            }
+
+            await updateOrder(order.id, {
+                ...order,
+                isPayment: 'paid',
+            });
+
+            toast.success('Заказ оплачен', { description: statusText });
+            return;
+        }
+
+        // ===== Другие статусы =====
+        toast.info(`Статус: ${statusText}`);
+
+    } catch (error) {
+        console.error('Ошибка:', error);
+        toast.error('Счёт не найден', {
+            description: 'Проверьте номер заказа',
+        });
+    }
+};
 
 const [isOpen1, setIsOpen1] = useState(false)
 const [ordersModal, setOrdersModal] = useState([])
@@ -668,8 +706,83 @@ const sendSmsNew = async () => {
   }
 };
 
+    const duplicateOrders = useMemo(() => {
+        const ACTIVE_STATUSES = [0, 1, 2, 3, 4, 7, 8];
+        const pretend = orders.filter(el => ACTIVE_STATUSES.includes(el.status));
+        const samePhone = pretend.filter(el => el.phone === order.phone);
+        return samePhone
+            .filter(el => el.id !== order.id)
+            .map(el => ({
+                id: el.id,
+                order_number: el.order_number,
+            }));
+    }, [orders, order.phone, order.id]);
 
 
+    const toJoinOrder = async (duplicateId) => {
+        const second = orders.find(o => o.id === duplicateId);
+        if (!second) return;
+
+        // ====== ПОДТВЕРЖДЕНИЕ ======
+        const confirmed = window.confirm(
+            `Объединить заказ №${order.order_number} с заказом №${second.order_number}?\n\n` +
+            `Фото и примечания из заказа №${second.order_number} перейдут в текущий.\n` +
+            `Заказ №${second.order_number} будет удалён.\n\n` +
+            `Продолжить?`
+        );
+        if (!confirmed) return;
+
+        // ====== СКЛЕИВАЕМ OTHER ======
+        let mergedOther = other || '';
+        if (second.other) {
+            mergedOther = mergedOther
+                ? `${mergedOther}\n(№${second.order_number}) ${second.other}`
+                : `(№${second.order_number}) ${second.other}`;
+        }
+
+        // ====== СУММИРУЕМ PRICE ======
+        const mergedPrice = (
+            Number(price || 0) + Number(second.price || 0)
+        ).toFixed(2);
+
+        const data = {
+            id: order.id,
+            idJoin: duplicateId,
+            other: mergedOther,
+            price: mergedPrice,
+        };
+
+        try {
+            const response = await $host.put('/api/order/toJoinOrder', data);
+            const updatedOrder = response.data;
+
+            // ====== ОБНОВЛЯЕМ ФОРМУ ======
+            setOther(updatedOrder.other ?? mergedOther);
+            setPrice(updatedOrder.price ?? mergedPrice);
+            setPhoto(updatedOrder.photos || updatedOrder.photo || []);
+
+            // ====== УДАЛЯЕМ ВТОРОЙ ЗАКАЗ ИЗ СПИСКА ======
+            dispatch(deleteOrderId(duplicateId));
+
+            // ====== ТОСТ УСПЕХА ======
+            toast.success('Заказы объединены', {
+                description: `Заказ №${second.order_number} → №${order.order_number}`,
+                duration: 4000,
+            });
+
+        } catch (err) {
+            console.error('Ошибка объединения:', err);
+            console.error('Status:', err.response?.status);
+            console.error('Data:', err.response?.data);
+
+            // ====== ТОСТ ОШИБКИ ======
+            toast.error('Не удалось объединить заказы', {
+                description: err.response?.data?.error || 'Попробуйте ещё раз',
+            });
+        }
+    };
+
+   
   return (
     <>
     <Dialog open={isOpen1} onOpenChange={setIsOpen1}>
@@ -792,6 +905,7 @@ const sendSmsNew = async () => {
        
       </DialogContent>
     </Dialog>
+
     <div className="order_details_card">
       {isModalOpen && <MyModalComponent isOpen={isModalOpen} closeModal={closeModal} codeOutside={codeOutside} />}
       
@@ -904,7 +1018,29 @@ const sendSmsNew = async () => {
 
         <div className="card_admin">
           <div>
-          {photo.map((el, index) => <OneFormat index={index} setPhoto={setPhoto} photo={photo} 
+            {/* для обьеденения*/}
+            {duplicateOrders.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mt-1 mb-8">
+                    {duplicateOrders.map((el) => (
+                        <button
+                            key={el.id}
+                            onClick={() => toJoinOrder(el.id)}
+                            className="group inline-flex items-center gap-1.5
+                                    px-2.5 py-1 rounded-md
+                                    bg-stone-50 border border-stone-200
+                                    text-[12px] font-medium text-stone-700
+                                    transition-all
+                                    hover:bg-[#2C3531] hover:border-[#2C3531] hover:text-white
+                                    active:scale-95"
+                            title={`Объединить с заказом №${el.order_number}`}
+                        >
+                            <i className="bi bi-plus-circle text-[11px] opacity-70 group-hover:opacity-100" />
+                            №{el.order_number}
+                        </button>
+                    ))}
+                </div>
+            )}
+          { photo.map((el, index) => <OneFormat index={index} setPhoto={setPhoto} photo={photo} 
                             el={el} key={index} DeleteFormat={DeleteFormat}  />) }
               <button style={{marginLeft: '50px', marginTop: '10px'}} type="button" onClick={()=>{AddFormat()}}>добавить</button>
             </div> 
@@ -939,14 +1075,6 @@ const sendSmsNew = async () => {
 
         <div className="card_admin">
           <div>
-           <div className='origin'>
-              <label>Источник:</label>
-              <select value={origin} onChange={(e)=>setOrigin(e.target.value)}>
-                  <option value={'website'}>website</option>
-                  <option value={'telegram'}>telegram</option>
-                  <option value={'email'}>email</option>
-              </select>
-            </div>
             <div className='origin'>
               <label>Отправка ожидается:</label>
               <input className='inputData' type='date' value={date_sent} onChange={(e)=>setDate_sent(e.target.value)} />
@@ -1003,36 +1131,112 @@ const sendSmsNew = async () => {
 
           </div>
           
-          {
-          users.find(user => user.phone === phoneUser)?.role === 'USER' && 
-          
-            (
-            [0,8].includes(order.status) ? 
-              <div className="gap-1 flex justify-start">
+          {/* === СМС — только для USER === */}
+          {order.user?.role === 'USER' && (
+              [0, 8].includes(order.status) ? (
+                  <div className="gap-1 flex justify-start">
+                      {ShowBtnSms(is_sms_error, SmsError, 'ошибка')}
+                  </div>
+              ) : (
+                  <div className="relative mt-4 pt-1">
 
-                {ShowBtnSms(is_sms_error, SmsError, 'ошибка')}
-                
-              </div>
-            :
-              <>
-              <div className="gap-1 flex justify-start">
+                      {/* Подпись «СМС» на рамке */}
+                      <span className="absolute -top-2 left-3 px-1.5 bg-white
+                                      text-[10px] uppercase tracking-wider font-semibold
+                                      text-stone-400 select-none">
+                          Смс
+                      </span>
 
-                { ShowBtnSms(is_sms_add, SmsAdd, 'принят') }
-                { ShowBtnSms(is_sms_send, SmsSend, 'отправлен')}
-                { (order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') && ShowBtnSms(is_sms_pay, SmsPay, 'оплата') }
-                
-              </div>
+                      {/* Внутренний блок с рамкой */}
+                      <div className="flex items-center gap-1.5 px-3 py-2
+                                      border border-stone-200 rounded-lg
+                                      whitespace-nowrap">
 
-              <div className='flex justify-end mt-3 gap-1' >
-                { (order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') && <>
-                  <Button  variant='outline' size='sm' onClick={()=>AddInvoices()}>выставить счет</Button>
-                  <Button  variant='outline' size='sm' onClick={()=>CancelInvoices()}>отменить счет</Button>
-                  <Button  variant='outline' size='sm' onClick={()=>CheckInvoices()}>проверить счет</Button>
-                  </>
-                }
+                          {ShowBtnSms(is_sms_add, SmsAdd, 'принят')}
+                          {ShowBtnSms(is_sms_send, SmsSend, 'отправлен')}
+                          {(order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') &&
+                              ShowBtnSms(is_sms_pay, SmsPay, 'оплата')}
+
+                      </div>
+                  </div>
+              )
+          )}
+
+          {/* === Блок оплаты — для всех типов ЕРИП, вне зависимости от роли === */}
+          {(order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') &&
+          [1, 2, 3, 4, 5, 7].includes(Number(order.status)) && (
+              <div className="relative mt-4 pt-1">
+
+                  {/* Подпись «ОПЛАТА» на рамке */}
+                  <span className="absolute -top-2 left-3 px-1.5 bg-white
+                                  text-[10px] uppercase tracking-wider font-semibold
+                                  text-stone-400 select-none">
+                      Оплата
+                  </span>
+
+                  {/* Внутренний блок с рамкой */}
+                  <div className="flex items-center gap-1.5 px-3 py-2
+                                  border border-stone-200 rounded-lg
+                                  whitespace-nowrap">
+
+                      {/* Статус оплаты — 3 варианта */}
+                      {order.isPayment === 'paid' && (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
+                                          text-[12px] font-medium whitespace-nowrap
+                                          bg-green-50 text-green-700 border border-green-200">
+                              <i className="bi bi-check-circle-fill text-[11px]" />
+                              Оплачен
+                          </div>
+                      )}
+
+                      {order.isPayment === 'wait' && (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
+                                          text-[12px] font-medium whitespace-nowrap
+                                          bg-amber-50 text-amber-700 border border-amber-200">
+                              <i className="bi bi-clock-fill text-[11px]" />
+                              Ожидает оплаты
+                          </div>
+                      )}
+
+                      {order.isPayment === 'none' && (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
+                                          text-[12px] font-medium whitespace-nowrap
+                                          bg-stone-50 text-stone-500 border border-stone-200">
+                              <i className="bi bi-dash-circle text-[11px]" />
+                              Счёт не выставлен
+                          </div>
+                      )}
+
+                      {/* Кнопки — в зависимости от состояния */}
+                      {order.isPayment === 'none' && (
+                          <Button variant='outline' size='sm' onClick={() => AddInvoices()}>
+                              <i className="bi bi-receipt text-[12px] mr-1" />
+                              Выставить счёт
+                          </Button>
+                      )}
+
+                      {order.isPayment === 'wait' && (
+                          <>
+                              <Button variant='outline' size='sm' onClick={() => CancelInvoices()}>
+                                  <i className="bi bi-x-circle text-[12px] mr-1" />
+                                  отменить
+                              </Button>
+                              <Button variant='outline' size='sm' onClick={() => CheckInvoices()}>
+                                  <i className="bi bi-arrow-clockwise text-[12px] mr-1" />
+                                  проверить
+                              </Button>
+                          </>
+                      )}
+
+                      {order.isPayment === 'paid' && (
+                          <Button variant='outline' size='sm' onClick={() => CheckInvoices()}>
+                              <i className="bi bi-arrow-clockwise text-[12px] mr-1" />
+                              проверить
+                          </Button>
+                      )}
+                  </div>
               </div>
-              </>)
-            }
+          )}
 
           <div className='flex justify-end mt-3 gap-1' >
             <Button className='w-[25%]' variant='destructive' size='sm' onClick={()=>DeleteOrder()}>удалить</Button>

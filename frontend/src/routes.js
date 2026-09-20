@@ -7,19 +7,15 @@ import PrivatePage from "./pages/PrivatePage"
 import Cloud from "./pages/Cloud"
 import Users from "./pages/Users"
 import { Auth } from "./pages/Auth"
-import Editor from "./pages/Editor"
 import History from "./pages/History"
-import Test from "./pages/Test"
 import RedactorPhoto from "./pages/RedactorPhoto"
+import Material from "./pages/Material"
+import Expenses from "./pages/Expenses"
 
 export const adminRoutes = [
     {
         path: '/table',
         Component: Table
-    },
-    {
-        path: '/editor',
-        Component: Editor
     },
     
     {
@@ -55,17 +51,16 @@ export const adminRoutes = [
         Component: History
     },
     {
-        path: '/test',
-        Component: Test
+        path: '/material',
+        Component: Material
+    },
+    {
+        path: '/expenses',
+        Component: Expenses
     }
 ]
 
 export const userRoutes = [
-
-    {
-        path: '/editor',
-        Component: Editor
-    },
 
     {
         path: '/private',

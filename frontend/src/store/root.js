@@ -5,13 +5,15 @@ import { orderReducer } from './orderReducer'
 import { authReducer } from './authReducer'
 import fileReducer from './fileReducer'
 import privatePageReducer from './privatePageReducer'
+import downloadsReducer from './downloadsReducer';
 
 
 const rootReducer = combineReducers({
     order: orderReducer,
     auth: authReducer,
     files: fileReducer,
-    private: privatePageReducer
+    private: privatePageReducer,
+    downloads: downloadsReducer,
 })
 
 export const store = createStore(rootReducer, composeWithDevTools(applyMiddleware(thunk)))

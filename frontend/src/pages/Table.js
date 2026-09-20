@@ -1,69 +1,70 @@
 import { TableFull } from "../components/table/TableFull"
-import {useState} from 'react'
+import { useState } from 'react'
 import Footer from "../components/admin/Footer"
 import { NavBar } from "../components/admin/NavBar"
-import style from './Table.module.css'
 
-const Table = () =>{
+const Table = () => {
 
-    const [selectedOrder, setSelectedOrder] = useState(null); // выбранный заказ для полного отображения
-    const [collapsedOrderId, setCollapsedOrderId] = useState(null) //для подсветки закрытого заказа
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [collapsedOrderId, setCollapsedOrderId] = useState(null);
     const [isChanged, setIsChanged] = useState(false);
-    
-    const handleDetailsClick = (orderId) => { //состояние описания заказа
-        
-        if(orderId==='save') {
-          setSelectedOrder(null)
-          setIsChanged(false)
-          return;
+
+    const handleDetailsClick = (orderId) => {
+        if (orderId === 'save') {
+            setSelectedOrder(null);
+            setIsChanged(false);
+            return;
         }
-         
+
         if (selectedOrder === orderId || isChanged) {
-          const confirmClose = isChanged ? window.confirm('Закрыть без сохранения?') : true;
-        
-          if (confirmClose) {
-            setSelectedOrder(selectedOrder === orderId ? null : orderId);
-            setIsChanged(selectedOrder === orderId ? null : true)
-          }
+            const confirmClose = isChanged ? window.confirm('Закрыть без сохранения?') : true;
+
+            if (confirmClose) {
+                setSelectedOrder(selectedOrder === orderId ? null : orderId);
+                setIsChanged(selectedOrder === orderId ? null : true);
+            }
         } else {
-          setSelectedOrder(orderId);
+            setSelectedOrder(orderId);
         }
 
         setCollapsedOrderId(orderId);
         setTimeout(() => {
-          setCollapsedOrderId(null);
-        }, 3000); // Удалить подсветку через 2 секунды
-      };
+            setCollapsedOrderId(null);
+        }, 3000);
+    };
 
-    const CloseOrder = () =>{
-      if(selectedOrder===null) return;
-      
-      if (!isChanged || window.confirm('Закрыть без сохранения?')) {
-        setSelectedOrder(null);
-        setIsChanged(false)
-      }
+    const CloseOrder = () => {
+        if (selectedOrder === null) return;
 
-      
-    }
- 
-    return(
-        <div style={{display: 'flex', flexDirection: 'column',background: 'rgb(243, 243, 243)', minHeight: '100vh'}}>
-           <NavBar />
+        if (!isChanged || window.confirm('Закрыть без сохранения?')) {
+            setSelectedOrder(null);
+            setIsChanged(false);
+        }
+    };
 
-            <div className={style.row} onClick={()=>CloseOrder()}>
-                <div className={style.col}>
-                    <TableFull selectedOrder={selectedOrder} setSelectedOrder={setSelectedOrder}
-                        collapsedOrderId={collapsedOrderId} setCollapsedOrderId={setCollapsedOrderId}
+    return (
+        <div className="flex flex-col min-h-screen bg-stone-100">
+
+            <NavBar />
+
+            {/* Обёртка контента — растягивается на всё доступное место */}
+            <div className="flex-1 w-full flex justify-center" onClick={() => CloseOrder()}>
+                <div className="w-full md:w-[91.5%]">
+                    <TableFull
+                        selectedOrder={selectedOrder}
+                        setSelectedOrder={setSelectedOrder}
+                        collapsedOrderId={collapsedOrderId}
+                        setCollapsedOrderId={setCollapsedOrderId}
                         handleDetailsClick={handleDetailsClick}
-                        isChanged={isChanged} setIsChanged={setIsChanged} />
+                        isChanged={isChanged}
+                        setIsChanged={setIsChanged}
+                    />
                 </div>
             </div>
-           
-           
-            <Footer />
-            
-        </div>
-    )
-}
 
-export default Table
+            <Footer />
+        </div>
+    );
+};
+
+export default Table;
