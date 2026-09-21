@@ -8,7 +8,6 @@ router.get('/logout', authController.logout)
 router.get('/refresh', authController.refresh)
 router.get('/whoAmI',authMiddleware, authController.whoAmI)
 router.get('/getUsers',authMiddleware, authController.getUsers)
-router.get('/deleteUsersWithoutOrders',authMiddleware, authController.deleteUsersWithoutOrders)
 router.put('/dataChange', authController.dataChange)
 router.put('/users_changeData', authController.users_changeData)
 router.delete('/usersDelete/:id', authController.usersDelete);

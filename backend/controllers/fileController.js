@@ -177,52 +177,135 @@ class fileController {
         }
     }
 
-    async downloadFile(req,res){
-        
+    async downloadFile(req, res) {
         try {
-            const file = await File.findOne({where:{id: req.query.id}})
-            const path = `${process.env.FILEPATH}/${file.path}/${file.name}`
+            const file = await File.findOne({ where: { id: req.query.id } });
+            const path = `${process.env.FILEPATH}/${file.path}/${file.name}`;
 
-            if(file.type==='dir'){
-                var zip = new JSZip();
+            if (file.type === 'dir') {
+                const maxSize = Number(req.query.maxSize) || 2 * 1024 * 1024 * 1024;
+                const partNumber = Number(req.query.part) || 1;
 
-                const AddToZip = async(id, a)=>{
-                    const files = await File.findAll({where: {parent: id}})
+                // Собираем все файлы рекурсивно
+                const allFiles = [];
+                const collectFiles = async (parentId, relativePath) => {
+                    const children = await File.findAll({ where: { parent: parentId } });
+                    for (const child of children) {
+                        if (child.type === 'dir') {
+                            await collectFiles(child.id, `${relativePath}/${child.name}`);
+                        } else {
+                            allFiles.push({
+                                name: child.name,
+                                path: child.path,
+                                size: Number(child.size),
+                                relativePath,
+                            });
+                        }
+                    }
+                };
+                await collectFiles(file.id, '');
 
-                    for await(const el of files){
-                        
-                        if(el.type==='dir'){
-                            let folder
-                            if(a){
-                                 folder = a.folder(`${el.name}`)
-                            }
-                            else  folder = zip.folder(`${el.name}`)
-                            await AddToZip(el.id, folder)
-                            
-                        }else{
-                            if(a){a.file(`${el.dataValues.name}`, fs.readFileSync(`${process.env.FILEPATH}/${el.dataValues.path}/${el.dataValues.name}`) , {base64: true})}
-                            else zip.file(`${el.dataValues.name}`, fs.readFileSync(`${process.env.FILEPATH}/${el.dataValues.path}/${el.dataValues.name}`) , {base64: true})
-                         }
+                // Делим на части
+                const parts = [];
+                let currentPart = { sizeBytes: 0, files: [] };
+                for (const f of allFiles) {
+                    if (currentPart.sizeBytes + f.size > maxSize && currentPart.files.length > 0) {
+                        parts.push(currentPart);
+                        currentPart = { sizeBytes: 0, files: [] };
+                    }
+                    currentPart.files.push(f);
+                    currentPart.sizeBytes += f.size;
+                }
+                if (currentPart.files.length > 0) parts.push(currentPart);
+
+                // Берём нужную часть
+                const targetPart = parts[partNumber - 1];
+                if (!targetPart) {
+                    return res.status(400).json({ message: 'часть не найдена' });
+                }
+
+                // Собираем ZIP только для этой части
+                const zip = new JSZip();
+                for (const f of targetPart.files) {
+                    const fullPath = `${process.env.FILEPATH}/${f.path}/${f.name}`;
+                    const buffer = fs.readFileSync(fullPath);
+
+                    // relativePath может начинаться со слэша — убираем
+                    const cleanPath = f.relativePath.replace(/^\//, '');
+                    if (cleanPath) {
+                        const folder = zip.folder(cleanPath);
+                        folder.file(f.name, buffer, { base64: true });
+                    } else {
+                        zip.file(f.name, buffer, { base64: true });
                     }
                 }
-                
-                await AddToZip(file.id)
 
-                await File.update({
-                   isDownload: true  
-                }, {where: {id: file.id}}
-                )
+                await File.update({ isDownload: true }, { where: { id: file.id } });
 
-                const content = await zip.generateAsync({type: 'nodebuffer'})
-                const downloadPath = `${process.env.FILEPATH}/download.zip`
-                fs.writeFileSync(downloadPath, content)
-                return res.download(downloadPath)
-            }else{
-                return res.download(path)
+                const content = await zip.generateAsync({ type: 'nodebuffer' });
+                const downloadPath = `${process.env.FILEPATH}/download_part${partNumber}.zip`;
+                fs.writeFileSync(downloadPath, content);
+                return res.download(downloadPath);
+
+            } else {
+                return res.download(path);
             }
-
         } catch (error) {
-            return res.status(400).json({message:"ошибка скачивания"})
+            console.error(error);
+            return res.status(400).json({ message: 'ошибка скачивания' });
+        }
+    }
+
+    async getDownloadParts(req, res) {
+        try {
+            const file = await File.findOne({ where: { id: req.query.id } });
+            const maxSize = Number(req.query.maxSize) || 2 * 1024 * 1024 * 1024; // 2 ГБ по умолчанию
+
+            // Рекурсивно собираем все файлы с полными путями
+            const allFiles = [];
+            const collectFiles = async (parentId, relativePath) => {
+                const children = await File.findAll({ where: { parent: parentId } });
+                for (const child of children) {
+                    if (child.type === 'dir') {
+                        await collectFiles(child.id, `${relativePath}/${child.name}`);
+                    } else {
+                        allFiles.push({
+                            id: child.id,
+                            name: child.name,
+                            path: child.path,
+                            size: Number(child.size),
+                            relativePath,
+                        });
+                    }
+                }
+            };
+            await collectFiles(file.id, '');
+
+            // Делим на части по весу
+            const parts = [];
+            let currentPart = { sizeBytes: 0, files: [] };
+
+            for (const f of allFiles) {
+                if (currentPart.sizeBytes + f.size > maxSize && currentPart.files.length > 0) {
+                    parts.push(currentPart);
+                    currentPart = { sizeBytes: 0, files: [] };
+                }
+                currentPart.files.push(f);
+                currentPart.sizeBytes += f.size;
+            }
+            if (currentPart.files.length > 0) parts.push(currentPart);
+
+            // Возвращаем структуру без самих файлов (только метаданные)
+            return res.json({
+                totalParts: parts.length,
+                parts: parts.map((p, i) => ({
+                    part: i + 1,
+                    sizeBytes: p.sizeBytes,
+                    fileCount: p.files.length,
+                })),
+            });
+        } catch (error) {
+            return res.status(400).json({ message: 'ошибка' });
         }
     }
 

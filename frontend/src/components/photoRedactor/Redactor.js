@@ -587,9 +587,14 @@ const Redactor = () => {
                 }
 
                 ctx.strokeStyle = '#aaa';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([8, 6]);
+                ctx.lineWidth = 1.2;
+                ctx.setLineDash([20, 80]);
 
+                // Проверяем: есть ли слово "полоска" в названии формата
+                const formatName = (settingsSnapshot.name || '').toLowerCase();
+                const isPoloska = formatName.includes('полоска');
+
+                // Вертикальные линии — рисуются всегда
                 for (let c = 0; c <= cols; c++) {
                     const x = c * cardW;
                     if (x > sheetW) break;
@@ -599,13 +604,16 @@ const Redactor = () => {
                     ctx.stroke();
                 }
 
-                for (let r = 0; r <= rows; r++) {
-                    const y = r * cardH;
-                    if (y > sheetH) break;
-                    ctx.beginPath();
-                    ctx.moveTo(0, y);
-                    ctx.lineTo(sheetW, y);
-                    ctx.stroke();
+                // Горизонтальные линии — только если это НЕ "полоска"
+                if (!isPoloska) {
+                    for (let r = 0; r <= rows; r++) {
+                        const y = r * cardH;
+                        if (y > sheetH) break;
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(sheetW, y);
+                        ctx.stroke();
+                    }
                 }
 
                 ctx.setLineDash([]);

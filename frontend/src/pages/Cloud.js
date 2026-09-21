@@ -42,7 +42,6 @@ const Cloud = () =>{
 
     const getTotalSize = (files) => files.reduce((total, file) => total + file.size, 0) / (1024 * 1024 * 1024);
 
-
     const isDateOlderThan14Days = (dateString) => {
         const currentDate = new Date();
         const thirtyDaysAgo = new Date();
@@ -77,20 +76,38 @@ const Cloud = () =>{
       }, []);
 
     return (
-        <div style={{display: 'flex', flexDirection: 'column',background: '#e8e8e8', minHeight: '100vh'}}>
+        <div className="flex flex-col bg-stone-100 min-h-screen">
             <NavBar />
-            <div className="cloud-menu"> 
-                <div>
-                    <button style={{border: '1px solid #dbdbdb', borderRadius: 5, background: 'white', width: '40px'}} onClick={currentDir?()=>BackClick():null}>
-                        <i style={{color: 'black'}} className="bi bi-arrow-left"></i>
+
+            <div className="flex flex-row items-center gap-2 mt-4 mx-10">
+                <div className="shrink-0 w-[50px]">
+                    <button
+                        className="w-full h-10 bg-white border border-stone-300 rounded-md
+                                flex items-center justify-center
+                                text-stone-600 hover:bg-stone-50 hover:border-stone-400
+                                transition-colors"
+                        onClick={currentDir ? () => BackClick() : null}
+                    >
+                        <i className="bi bi-arrow-left"></i>
                     </button>
                 </div>
-                <div className="cloud-menu-path">
-                    Облако LINK{stack.map((el, index)=><span key={index}><i className="bi bi-chevron-right"></i> {el} </span>)}
+
+                <div className="flex items-center gap-1.5 min-w-0 text-[13px] text-stone-600 ml-4">
+                    <span className="font-medium text-stone-700 shrink-0 whitespace-nowrap">
+                        Все файлы
+                    </span>
+                    {stack.map((el, index) => (
+                        <span key={index} className="inline-flex items-center gap-1.5 min-w-0">
+                            <i className="bi bi-chevron-right text-[10px] text-black shrink-0"></i>
+                            <span className="truncate">{el}</span>
+                        </span>
+                    ))}
                 </div>
-                <div className="cloud-menu-right">
-                    <h6 style={{fontSize: 14}}>{`Память: ${getTotalSize(filesAll).toFixed(2)}gb / 60gb`}</h6>
-                    
+
+                <div className="ml-auto shrink-0">
+                    <h6 className="text-[14px] text-stone-600 tabular-nums font-medium">
+                        {`Память: ${getTotalSize(filesAll).toFixed(2)}gb / 60gb`}
+                    </h6>
                 </div>
             </div>
 

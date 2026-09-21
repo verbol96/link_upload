@@ -12,6 +12,19 @@ import {
 const MONTHS_SHORT = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
 const WEEKDAYS_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
+const MONTHS_RU = [
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
+];
+
+const PERIOD_OPTIONS = [
+    { value: '1',   label: 'Месяц',     months: 1 },
+    { value: '3',   label: '3 мес.',    months: 3 },
+    { value: '6',   label: '6 мес.',    months: 6 },
+    { value: '12',  label: 'Год',       months: 12 },
+    { value: 'all', label: 'Всё время', months: null },
+];
+
 // Палитра для линий по годам
 const YEAR_COLORS = ['#0D9488', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#ec4899', '#6366f1'];
 
@@ -45,17 +58,38 @@ const formatNumber = (num, decimals = 0) => {
     return decPart !== undefined ? `${formatted}.${decPart}` : formatted;
 };
 
+// ============ РАСЧЁТ ДИАПАЗОНА ПО ВЫБРАННОМУ ПЕРИОДУ ============
+const getPeriodRange = (startYear, startMonth, periodOption) => {
+    const from = new Date(Number(startYear), Number(startMonth) - 1, 1, 0, 0, 0, 0);
+
+    if (periodOption.months === null) {
+        const to = new Date();
+        to.setHours(23, 59, 59, 999);
+        return { from, to };
+    }
+
+    const to = new Date(from);
+    to.setMonth(to.getMonth() + periodOption.months);
+    to.setMilliseconds(-1);
+
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (to > today) {
+        return { from, to: today };
+    }
+
+    return { from, to };
+};
+
 // ============ КАСТОМНЫЙ ТУЛТИП ДЛЯ % ГРАФИКА ============
 const OriginPercentTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
 
-    // Считаем общую сумму за месяц (в рублях)
     const total = payload.reduce((s, p) => {
         const value = Number(p.payload?.[`${p.dataKey}__sum`] ?? 0);
         return s + value;
     }, 0);
 
-    // Сортируем по убыванию процента
     const sorted = [...payload]
         .filter(p => Number(p.value) > 0)
         .sort((a, b) => Number(b.value) - Number(a.value));
@@ -144,6 +178,35 @@ const TABS = [
     { value: 'day',             label: 'По дням',           icon: 'bi-calendar-day' },
     { value: 'newClientsMonth', label: 'Новые клиенты',     icon: 'bi-people' },
 ];
+
+// ============ КАСТОМНЫЙ СЕЛЕКТ ============
+const FancySelect = ({ value, onChange, options, disabled, width = 'w-[140px]' }) => (
+    <div className={`relative ${width}`}>
+        <select
+            value={value}
+            onChange={onChange}
+            disabled={disabled}
+            className="w-full appearance-none pl-3 pr-8 py-1.5
+                    bg-white border border-stone-200 rounded-md
+                    text-[12.5px] font-medium text-stone-800
+                    cursor-pointer
+                    transition-colors
+                    hover:border-stone-300
+                    focus:outline-none focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20
+                    disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+            {options.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                </option>
+            ))}
+        </select>
+        <i className="bi bi-chevron-down
+                    absolute right-2.5 top-1/2 -translate-y-1/2
+                    text-[10px] text-stone-400
+                    pointer-events-none" />
+    </div>
+);
 
 // ============ ТАБЛИЦА НОВЫХ КЛИЕНТОВ ============
 const NewClientsTable = ({ newClientsByMonth }) => {
@@ -263,6 +326,19 @@ const Statistic = () => {
 
     const [daysPeriod, setDaysPeriod] = useState(6);
 
+    // ===== Период (для вкладок График / По годам / По дням) =====
+    const now = new Date();
+    const [startYear, setStartYear] = useState(String(now.getFullYear()));
+    const [startMonth, setStartMonth] = useState(String(now.getMonth() + 1).padStart(2, '0'));
+    const [period, setPeriod] = useState('all');
+
+    const years = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const result = [];
+        for (let y = currentYear; y >= 2020; y--) result.push(String(y));
+        return result;
+    }, []);
+
     // ============ ЗАГРУЗКА ============
     useEffect(() => {
         $host.get('api/order/getAllStat')
@@ -274,31 +350,46 @@ const Statistic = () => {
             .finally(() => setLoading(false));
     }, []);
 
+    // ============ ФИЛЬТР ДАННЫХ ПО ПЕРИОДУ ============
+    const filteredOrder = useMemo(() => {
+        const periodOption = PERIOD_OPTIONS.find(p => p.value === period);
+        if (!periodOption || periodOption.months === null) return order;
+
+        const { from, to } = getPeriodRange(startYear, startMonth, periodOption);
+        return order.filter(o => {
+            const d = new Date(o.createdAt);
+            return d >= from && d <= to;
+        });
+    }, [order, startYear, startMonth, period]);
+
+    // Показываем ли панель периода (не на вкладке новых клиентов)
+    const showPeriodPanel = type === 'graphic' || type === 'month' || type === 'day';
+
     // ============ СВОДКА ============
     const totalRevenue = useMemo(() =>
-        order.reduce((s, o) => s + (Number(o.price) || 0), 0), [order]);
+        filteredOrder.reduce((s, o) => s + (Number(o.price) || 0), 0), [filteredOrder]);
 
-    const totalOrders = order.length;
+    const totalOrders = filteredOrder.length;
 
     const totalClients = useMemo(() => {
-        const set = new Set(order.map(o => o.phone).filter(Boolean));
+        const set = new Set(filteredOrder.map(o => o.phone).filter(Boolean));
         return set.size;
-    }, [order]);
+    }, [filteredOrder]);
 
     const avgCheck = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     const daysSinceStart = useMemo(() => {
-        if (!order.length) return 0;
-        const firstDate = order.reduce((min, o) => {
+        if (!filteredOrder.length) return 0;
+        const firstDate = filteredOrder.reduce((min, o) => {
             const d = new Date(o.createdAt);
             return d < min ? d : min;
         }, new Date());
         return Math.floor((Date.now() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
-    }, [order]);
+    }, [filteredOrder]);
 
     // ============ ГРАФИК ПО МЕСЯЦАМ ============
     const monthlySum = useMemo(() => {
-        const grouped = order.reduce((acc, curr) => {
+        const grouped = filteredOrder.reduce((acc, curr) => {
             const date = new Date(curr.createdAt);
             const monthNumber = date.getMonth() + 1;
             const year = date.getFullYear();
@@ -336,11 +427,11 @@ const Statistic = () => {
             }
             return item;
         });
-    }, [order]);
+    }, [filteredOrder]);
 
     // ============ ПО ГОДАМ ============
     const ordersByYear = useMemo(() => {
-        const grouped = order.reduce((acc, o) => {
+        const grouped = filteredOrder.reduce((acc, o) => {
             const date = new Date(o.createdAt);
             const year = date.getFullYear();
             const month = date.getMonth() + 1;
@@ -363,9 +454,8 @@ const Statistic = () => {
                 ),
                 total: Number(y.total.toFixed(2)),
             }));
-    }, [order]);
+    }, [filteredOrder]);
 
-    // Данные для BarChart «суммы по годам» + прогноз для текущего года
     const yearsChartData = useMemo(() => {
         const now = new Date();
         const currentYear = now.getFullYear();
@@ -393,7 +483,6 @@ const Statistic = () => {
             });
     }, [ordersByYear]);
 
-    // Данные для LineChart «сравнение по месяцам за разные годы»
     const monthsCompareData = useMemo(() => {
         const years = ordersByYear.map(y => y.year).sort((a, b) => a - b);
         const recentYears = years.slice(-4);
@@ -418,7 +507,6 @@ const Statistic = () => {
         return years.slice(-4);
     }, [ordersByYear]);
 
-    // Данные для BarChart «заказы по годам» + прогноз для текущего года
     const ordersYearsChartData = useMemo(() => {
         const now = new Date();
         const currentYear = now.getFullYear();
@@ -445,10 +533,9 @@ const Statistic = () => {
             });
     }, [ordersByYear]);
 
-
-    // ============ ИСТОЧНИКИ ЗАКАЗОВ — данные для % графика (stacked bar) ============
+    // ============ ИСТОЧНИКИ ЗАКАЗОВ — % (stacked bar) ============
     const originPercentData = useMemo(() => {
-        const grouped = order.reduce((acc, curr) => {
+        const grouped = filteredOrder.reduce((acc, curr) => {
             const date = new Date(curr.createdAt);
             const monthNumber = date.getMonth() + 1;
             const year = date.getFullYear();
@@ -485,7 +572,6 @@ const Statistic = () => {
                 const row = { month: item.month, key: item.key, __total: item.total };
                 origins.forEach(o => {
                     const sum = item.origins[o] || 0;
-                    // Процент с 2 знаками
                     const pct = item.total > 0
                         ? Number(((sum / item.total) * 100).toFixed(2))
                         : 0;
@@ -496,13 +582,13 @@ const Statistic = () => {
             });
 
         return { data, origins };
-    }, [order]);
+    }, [filteredOrder]);
 
     // ============ ПО ДНЯМ ============
     const dailyStats = useMemo(() => {
-        if (!order.length) return [];
+        if (!filteredOrder.length) return [];
 
-        const grouped = order.reduce((acc, o) => {
+        const grouped = filteredOrder.reduce((acc, o) => {
             const d = new Date(o.createdAt);
             const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             const price = parseFloat(o.price);
@@ -511,7 +597,7 @@ const Statistic = () => {
             return acc;
         }, {});
 
-        const sortedDates = order.map(o => new Date(o.createdAt)).sort((a, b) => a - b);
+        const sortedDates = filteredOrder.map(o => new Date(o.createdAt)).sort((a, b) => a - b);
         const startDate = new Date(sortedDates[0]);
         startDate.setHours(0, 0, 0, 0);
 
@@ -563,7 +649,7 @@ const Statistic = () => {
         }
 
         return [...weeks].reverse();
-    }, [order]);
+    }, [filteredOrder]);
 
     // ============ НОВЫЕ КЛИЕНТЫ ============
     const newClientsByMonth = useMemo(() => {
@@ -645,9 +731,6 @@ const Statistic = () => {
 
                 {/* Заголовок */}
                 <div className="mb-6">
-                    <div className="text-[11px] uppercase tracking-widest text-stone-400 font-semibold mb-1">
-                        LINK · Аналитика
-                    </div>
                     <h1 className="text-[24px] md:text-[30px] font-bold text-[#2C3531] leading-tight">
                         Статистика
                     </h1>
@@ -661,13 +744,13 @@ const Statistic = () => {
                         <SummaryCard
                             title="Выручка"
                             value={`${formatNumber(totalRevenue, 2)} р`}
-                            sub="за всё время"
+                            sub={showPeriodPanel ? 'за период' : 'за всё время'}
                             icon="bi-currency-dollar"
                         />
                         <SummaryCard
                             title="Заказов"
                             value={formatNumber(totalOrders)}
-                            sub="за всё время"
+                            sub={showPeriodPanel ? 'за период' : 'за всё время'}
                             icon="bi-receipt"
                         />
                         <SummaryCard
@@ -691,28 +774,80 @@ const Statistic = () => {
                     </div>
                 )}
 
-                {/* Табы */}
-                <div className="mb-6 flex flex-wrap gap-1.5 bg-white border border-stone-200 rounded-lg p-1 w-fit">
-                    {TABS.map(({ value, label, icon }) => {
-                        const active = type === value;
-                        return (
-                            <button
-                                key={value}
-                                onClick={() => setType(value)}
+                {/* ============ ТАБЫ + ПАНЕЛЬ ПЕРИОДА (в одну строку) ============ */}
+                <div className="mb-6 flex flex-wrap items-center gap-3">
+
+                    {/* Табы */}
+                    <div className="flex flex-wrap gap-1.5 bg-white border border-stone-200 rounded-lg p-1">
+                        {TABS.map(({ value, label, icon }) => {
+                            const active = type === value;
+                            return (
+                                <button
+                                    key={value}
+                                    onClick={() => setType(value)}
+                                    disabled={loading}
+                                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-md
+                                            text-[12.5px] font-medium whitespace-nowrap
+                                            transition-colors disabled:cursor-not-allowed
+                                            ${active
+                                                ? 'bg-[#2C3531] text-white'
+                                                : 'text-stone-600 hover:bg-stone-100'
+                                            }`}
+                                >
+                                    <i className={`bi ${icon} text-[12px]`} />
+                                    {label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Панель периода — справа, в одну строку с табами */}
+                    {!loading && showPeriodPanel && (
+                        <div className="bg-white border border-stone-200 rounded-lg p-1
+                                        flex items-center gap-2
+                                        md:ml-auto
+                                        overflow-x-auto">
+                            <span className="text-[11px] uppercase tracking-wider font-semibold text-stone-400
+                                             shrink-0 pl-2">
+                                С
+                            </span>
+
+                            <FancySelect
+                                value={startMonth}
+                                onChange={e => setStartMonth(e.target.value)}
                                 disabled={loading}
-                                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-md
-                                        text-[12.5px] font-medium whitespace-nowrap
-                                        transition-colors disabled:cursor-not-allowed
-                                        ${active
-                                            ? 'bg-[#2C3531] text-white'
-                                            : 'text-stone-600 hover:bg-stone-100'
-                                        }`}
-                            >
-                                <i className={`bi ${icon} text-[12px]`} />
-                                {label}
-                            </button>
-                        );
-                    })}
+                                options={MONTHS_RU.map((name, i) => ({
+                                    value: String(i + 1).padStart(2, '0'),
+                                    label: name.slice(0, 3),
+                                }))}
+                                width="w-[80px] shrink-0"
+                            />
+
+                            <FancySelect
+                                value={startYear}
+                                onChange={e => setStartYear(e.target.value)}
+                                disabled={loading}
+                                options={years.map(y => ({ value: y, label: y }))}
+                                width="w-[80px] shrink-0"
+                            />
+
+                            <span className="text-[11px] uppercase tracking-wider font-semibold text-stone-400
+                                             shrink-0 ml-1">
+                                За
+                            </span>
+
+                            <FancySelect
+                                value={period}
+                                onChange={e => setPeriod(e.target.value)}
+                                disabled={loading}
+                                options={PERIOD_OPTIONS.map(o => ({
+                                    value: o.value,
+                                    label: o.value === 'all' ? 'Всё' : o.label,
+                                }))}
+                                width="w-[120px] shrink-0"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* ============ ГРАФИК ============ */}
@@ -782,7 +917,6 @@ const Statistic = () => {
                                 Серый столбик — прогноз текущего месяца (по темпу дней).
                             </div>
                         </div>
-
 
                         {/* Источники заказов — % по месяцам (stacked bar) */}
                         <div className="bg-white border border-stone-200 rounded-xl p-4">
@@ -1021,7 +1155,6 @@ const Statistic = () => {
                         {/* === Графики === */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-                            {/* BarChart: суммы по годам + прогноз текущего */}
                             <div className="bg-white border border-stone-200 rounded-xl p-4">
                                 <div className="flex items-center gap-2 mb-4">
                                     <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
@@ -1065,7 +1198,6 @@ const Statistic = () => {
                                 </div>
                             </div>
 
-                            {/* BarChart: количество заказов по годам + прогноз текущего */}
                             <div className="bg-white border border-stone-200 rounded-xl p-4">
                                 <div className="flex items-center gap-2 mb-4">
                                     <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
@@ -1113,8 +1245,8 @@ const Statistic = () => {
 
                 {/* ============ ПО ДНЯМ ============ */}
                 {type === 'day' && (
-                    <div className="bg-white border border-stone-200 rounded-xl p-5">
-                        <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
+                    <div className="bg-white border border-stone-200 rounded-xl p-3 md:p-5">
+                        <div className="flex items-center justify-between gap-3 mb-4 md:mb-5 flex-wrap">
                             <div className="flex items-center gap-2">
                                 <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
                                     <i className="bi bi-calendar-day text-[13px] text-[#0D9488]" />
@@ -1148,79 +1280,83 @@ const Statistic = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_120px] gap-1.5 mb-1.5">
-                            {WEEKDAYS_SHORT.map(d => (
-                                <div key={d} className="text-center py-1
-                                                        text-[11px] uppercase tracking-wider font-semibold text-stone-400">
-                                    {d}
-                                </div>
-                            ))}
-                            <div className="text-center py-1
-                                            text-[11px] uppercase tracking-wider font-semibold text-stone-400">
-                                Итог недели
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                            {visibleWeeks.map((week, wi) => (
-                                <div
-                                    key={wi}
-                                    className="grid grid-cols-[repeat(7,minmax(0,1fr))_120px] gap-1.5"
-                                >
-                                    {week.days.map((day, di) => {
-                                        if (day.empty) {
-                                            return <div key={di} className="aspect-square rounded-lg bg-transparent" />;
-                                        }
-
-                                        const intensity =
-                                            day.total === 0 ? 0 :
-                                            day.total < intensityThresholds[0] ? 1 :
-                                            day.total < intensityThresholds[1] ? 2 :
-                                            day.total < intensityThresholds[2] ? 3 : 4;
-
-                                        const bgClass = [
-                                            'bg-stone-50 hover:bg-stone-100 border border-stone-100',
-                                            'bg-[#0D9488]/15 border border-[#0D9488]/20',
-                                            'bg-[#0D9488]/35 border border-[#0D9488]/40',
-                                            'bg-[#0D9488]/65 border border-[#0D9488]/70',
-                                            'bg-[#0D9488] border border-[#0D9488]',
-                                        ][intensity];
-
-                                        const textClass = intensity >= 3 ? 'text-white' : 'text-stone-800';
-                                        const subClass = intensity >= 3 ? 'text-white/80' : 'text-stone-500';
-
-                                        return (
-                                            <div
-                                                key={di}
-                                                title={`${day.date.toLocaleDateString('ru-RU')}: ${formatNumber(day.total, 2)} р`}
-                                                className={`aspect-square rounded-lg ${bgClass}
-                                                        flex flex-col items-center justify-center
-                                                        transition-colors cursor-default`}
-                                            >
-                                                <span className={`text-[11px] font-medium leading-none ${subClass}`}>
-                                                    {day.date.getDate()}
-                                                </span>
-                                                {day.total > 0 && (
-                                                    <span className={`mt-1 text-[14px] md:text-[15px] font-bold leading-none tabular-nums ${textClass}`}>
-                                                        {formatNumber(Math.round(day.total))}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-
-                                    <div className="aspect-square rounded-lg bg-[#2C3531]
-                                                    flex flex-col items-center justify-center text-white">
-                                        <span className="text-[10px] uppercase tracking-wider opacity-50">
-                                            {week.weekStart?.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
-                                        </span>
-                                        <span className="text-[16px] md:text-[17px] font-bold mt-1 tabular-nums leading-none">
-                                            {formatNumber(Math.round(week.weekTotal))}
-                                        </span>
-                                        <span className="text-[10px] opacity-60 mt-0.5">р</span>
+                        <div className="overflow-x-auto -mx-3 md:mx-0 px-3 md:px-0">
+                            <div className="min-w-[640px]">
+                                <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_110px] gap-1.5 mb-1.5">
+                                    {WEEKDAYS_SHORT.map(d => (
+                                        <div key={d} className="text-center py-1
+                                                                text-[11px] uppercase tracking-wider font-semibold text-stone-400">
+                                            {d}
+                                        </div>
+                                    ))}
+                                    <div className="text-center py-1
+                                                    text-[11px] uppercase tracking-wider font-semibold text-stone-400">
+                                        Итог недели
                                     </div>
                                 </div>
-                            ))}
+
+                                <div className="flex flex-col gap-1.5">
+                                    {visibleWeeks.map((week, wi) => (
+                                        <div
+                                            key={wi}
+                                            className="grid grid-cols-[repeat(7,minmax(0,1fr))_110px] gap-1.5"
+                                        >
+                                            {week.days.map((day, di) => {
+                                                if (day.empty) {
+                                                    return <div key={di} className="aspect-square rounded-lg bg-transparent" />;
+                                                }
+
+                                                const intensity =
+                                                    day.total === 0 ? 0 :
+                                                    day.total < intensityThresholds[0] ? 1 :
+                                                    day.total < intensityThresholds[1] ? 2 :
+                                                    day.total < intensityThresholds[2] ? 3 : 4;
+
+                                                const bgClass = [
+                                                    'bg-stone-50 hover:bg-stone-100 border border-stone-100',
+                                                    'bg-[#0D9488]/15 border border-[#0D9488]/20',
+                                                    'bg-[#0D9488]/35 border border-[#0D9488]/40',
+                                                    'bg-[#0D9488]/65 border border-[#0D9488]/70',
+                                                    'bg-[#0D9488] border border-[#0D9488]',
+                                                ][intensity];
+
+                                                const textClass = intensity >= 3 ? 'text-white' : 'text-stone-800';
+                                                const subClass = intensity >= 3 ? 'text-white/80' : 'text-stone-500';
+
+                                                return (
+                                                    <div
+                                                        key={di}
+                                                        title={`${day.date.toLocaleDateString('ru-RU')}: ${formatNumber(day.total, 2)} р`}
+                                                        className={`aspect-square rounded-lg ${bgClass}
+                                                                flex flex-col items-center justify-center
+                                                                transition-colors cursor-default`}
+                                                    >
+                                                        <span className={`text-[10px] md:text-[11px] font-medium leading-none ${subClass}`}>
+                                                            {day.date.getDate()}
+                                                        </span>
+                                                        {day.total > 0 && (
+                                                            <span className={`mt-0.5 md:mt-1 text-[12px] md:text-[15px] font-bold leading-none tabular-nums ${textClass}`}>
+                                                                {formatNumber(Math.round(day.total))}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+
+                                            <div className="aspect-square rounded-lg bg-[#2C3531]
+                                                            flex flex-col items-center justify-center text-white">
+                                                <span className="text-[9px] md:text-[10px] uppercase tracking-wider opacity-50">
+                                                    {week.weekStart?.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                                                </span>
+                                                <span className="text-[14px] md:text-[17px] font-bold mt-1 tabular-nums leading-none">
+                                                    {formatNumber(Math.round(week.weekTotal))}
+                                                </span>
+                                                <span className="text-[9px] md:text-[10px] opacity-60 mt-0.5">р</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         {visibleWeeks.length < dailyStats.length && (

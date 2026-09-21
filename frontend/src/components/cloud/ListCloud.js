@@ -13,8 +13,6 @@ export const ListCloud=() =>{
      
     return(
         <>
-            <div className={style.menu}>Файлов: {files.length}</div>
-
             <div className={style.filesList}>
                 {files.map((el, index) => {
                     const date = el.createdAt ? new Date(el.createdAt).toLocaleDateString('ru-RU') : '';

@@ -60,6 +60,7 @@ const CropperMain = ({
     };
 
     // При загрузке изображения — инициализация
+    // если несколько на листе, то изначлаьный кроп по настройкам
     const onMediaLoaded = useCallback((mediaSize) => {
         setMedia(mediaSize);
 
@@ -81,6 +82,20 @@ const CropperMain = ({
                 sizeFrame = cropRef.current.containerRect.width * kef * indexDown;
             }
 
+            // Определяем, сколько фото будет на листе
+            const cardW = Number(activeSettings.width) + Number(activeSettings.left) + Number(activeSettings.right);
+            const cardH = Number(activeSettings.height) + Number(activeSettings.top) + Number(activeSettings.bottom);
+
+            const sheetW = Number(activeSettings.widthList);
+            const sheetH = Number(activeSettings.heightList);
+
+            const cols = Math.max(1, Math.floor(sheetW / cardW));
+            const rows = Math.max(1, Math.floor(sheetH / cardH));
+            const perPage = cols * rows;
+
+            // Если фото несколько на листе — фиксируем ориентацию кропа под карточку
+            const shouldFixOrientation = perPage > 1;
+
             let x, y;
             if (mediaSize.width > mediaSize.height) {
                 x = sizeFrame;
@@ -88,6 +103,16 @@ const CropperMain = ({
             } else {
                 x = sizeFrame * activeSettings.width / activeSettings.height;
                 y = sizeFrame;
+            }
+
+            // Если несколько фото на лист и ориентации не совпадают — меняем кроп местами
+            if (shouldFixOrientation) {
+                const photoIsHorizontal = mediaSize.width > mediaSize.height;
+                const cardIsHorizontal = Number(activeSettings.width) > Number(activeSettings.height);
+
+                if (photoIsHorizontal !== cardIsHorizontal) {
+                    [x, y] = [y, x];
+                }
             }
 
             const valueZoom = Math.max(
@@ -324,6 +349,18 @@ const CropperMain = ({
     }, [rotation, media, cropSize, photos, activePhoto, onSaveCrop]);
 
     const RotationAspect = useCallback(() => {
+        // Определяем, сколько фото будет на листе
+        const cardW = Number(activeSettings.width) + Number(activeSettings.left) + Number(activeSettings.right);
+        const cardH = Number(activeSettings.height) + Number(activeSettings.top) + Number(activeSettings.bottom);
+        const sheetW = Number(activeSettings.widthList);
+        const sheetH = Number(activeSettings.heightList);
+        const cols = Math.max(1, Math.floor(sheetW / cardW));
+        const rows = Math.max(1, Math.floor(sheetH / cardH));
+        const perPage = cols * rows;
+
+        // Если фото несколько на листе — не даём менять ориентацию
+        if (perPage > 1) return;
+
         const x = cropSize.width;
         const y = cropSize.height;
 
@@ -348,8 +385,8 @@ const CropperMain = ({
             zoom: newZoom,
             zoomDef: newZoom
         });
-    }, [cropSize, media, zoom, photos, activePhoto, onSaveCrop]);
-
+    }, [cropSize, media, zoom, photos, activePhoto, onSaveCrop, activeSettings]);
+    
     const cropCenter = (value) => {
         const position = { ...crop };
 

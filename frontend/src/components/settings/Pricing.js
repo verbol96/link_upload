@@ -8,6 +8,7 @@ const TYPE_STYLES = {
     photo:  { bg: 'bg-teal-50',   text: 'text-teal-700',   label: 'фото'    },
     holst:  { bg: 'bg-amber-50',  text: 'text-amber-700',  label: 'холст'   },
     magnit: { bg: 'bg-violet-50', text: 'text-violet-700', label: 'магнит'  },
+    poster: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'постер'  },
 };
 
 const getTypeStyle = (type) =>
@@ -155,6 +156,7 @@ export const Pricing = () => {
                     <option value="photo">фото</option>
                     <option value="holst">холст</option>
                     <option value="magnit">магнит</option>
+                    <option value="poster">постер</option>
                 </select>
 
                 <input

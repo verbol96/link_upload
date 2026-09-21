@@ -246,6 +246,7 @@ const Web = () => {
                     case 'photo': return 'photo'
                     case 'holst': return 'holst'
                     case 'magnit': return 'magnit'
+                    case 'poster': return 'poster'
                     default: return 'photo'
                 }
             }

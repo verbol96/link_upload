@@ -6,11 +6,12 @@ import { getFilesPhotosId } from '../../http/cloudApi';
 export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
 
   const settings = useSelector(state=>state.order.settings)
-  const typePhoto = ['photo', 'holst', 'magnit']
+  const typePhoto = ['photo', 'holst', 'magnit', 'poster']
  
   const formatPhoto = settings.filter(el=>el.type==='photo')
   const formatHolst = settings.filter(el=>el.type==='holst')
   const formatMagnit = settings.filter(el=>el.type==='magnit')
+  const formatPoster = settings.filter(el=>el.type==='poster')
   
   const Update = (e, prop) =>{
     if(prop==='type'){
@@ -18,6 +19,7 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
             case 'photo': return setPhoto([...photo.slice(0, index), {type: "photo", format: "а6", amount: "1", copies: 1,  paper: 'glossy'}, ...photo.slice(index + 1)])
             case 'holst': return setPhoto([...photo.slice(0, index), {type: "holst", format: "30x40", amount: "1", copies: 1,  paper: 'glossy'}, ...photo.slice(index + 1)])
             case 'magnit': return setPhoto([...photo.slice(0, index), {type: "magnit", format: "5x8", amount: "1", copies: 1,  paper: 'glossy'}, ...photo.slice(index + 1)])
+            case 'poster': return setPhoto([...photo.slice(0, index), {type: "poster", format: "poster3040", amount: "1", copies: 1,  paper: 'glossy'}, ...photo.slice(index + 1)])
             default: return setPhoto([...photo.slice(0, index), {type: "photo", format: "А6", amount: "1", copies: 1,  paper: 'glossy'}, ...photo.slice(index + 1)])
         }
     }
@@ -67,6 +69,8 @@ export const OneFormat = ({el, setPhoto, photo, index, DeleteFormat}) =>{
                   formatHolst.map((el,index)=><option key={index} value={el.title}>{el.title}</option>) :
                       (el.type==='magnit') ?
                       formatMagnit.map((el,index)=><option key={index} value={el.title}>{el.title}</option>) :
+                        (el.type==='poster') ?
+                        formatPoster.map((el,index)=><option key={index} value={el.title}>{el.title}</option>) :
                           null
               }
             </select>
