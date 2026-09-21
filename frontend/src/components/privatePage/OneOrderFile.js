@@ -58,6 +58,7 @@ export const OneOrderFile = ({ el, status, PriceList, settings }) => {
             case 'holst': return 'Холст';
             case 'photo': return 'Фото';
             case 'magnit': return 'Магнит';
+            case 'poster': return 'Постер';
             default: return 'Неизвестно';
         }
     };

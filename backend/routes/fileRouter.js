@@ -9,6 +9,8 @@ router.get('/getFilesAll', fileController.getFilesAll)
 router.delete('', fileController.deleteFile)
 router.delete('/all', fileController.deleteFileAll)
 router.get('/download', fileController.downloadFile)
+router.get('/download-parts', fileController.getDownloadParts)
+
 router.get('/thumb', fileController.displayFile)
 router.post('/getFilesPhotosId', fileController.getFilesPhotosId)
 

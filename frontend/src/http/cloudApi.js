@@ -43,31 +43,71 @@ export const deleteFileAll = async()=>{
     return data
 }
 
-export const downloadFiles = async(file, onProgress) => {
-    const {data} = await $host.get(`/api/file/download/?id=${file.id}`, {
-        responseType: 'blob',
-        onDownloadProgress: (progressEvent) => {
-            let percentCompleted = Math.round( (progressEvent.loaded * 100) / progressEvent.total );
-            onProgress(percentCompleted);
-        }
-    });
+export const downloadFiles = async (file, onProgress) => {
+    // === ЛИМИТ ЗАДАЁТСЯ ЗДЕСЬ ===
+    const MAX_PART_SIZE = 1500 * 1024 * 1024; // 1.5 ГБ в байтах
 
-    const downloadUrl = window.URL.createObjectURL(data);
-    const link = document.createElement('a');
-    link.href = downloadUrl;
+    // 1. Получаем список частей
+    const { data: partsInfo } = await $host.get(
+        `/api/file/download-parts/?id=${file.id}&maxSize=${MAX_PART_SIZE}`
+    );
 
-    if(file.type==='dir'){
-        link.download = `${file.name}.zip`;
-    }else{
-        link.download = file.name;
+    const totalParts = partsInfo.totalParts;
+
+    if (totalParts === 0) {
+        throw new Error('Нет файлов для скачивания');
     }
 
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    // 2. Если одна часть — качаем как раньше
+    if (totalParts === 1) {
+        const { data } = await $host.get(
+            `/api/file/download/?id=${file.id}&part=1&maxSize=${MAX_PART_SIZE}`,
+            {
+                responseType: 'blob',
+                onDownloadProgress: (progressEvent) => {
+                    const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    onProgress(1, 1, percent);
+                },
+            }
+        );
 
-    return data;
-}
+        const downloadUrl = window.URL.createObjectURL(data);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${file.name}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        return data;
+    }
+
+    // 3. Если несколько частей — качаем по очереди
+    for (let i = 0; i < totalParts; i++) {
+        const partNumber = i + 1;
+
+        const { data } = await $host.get(
+            `/api/file/download/?id=${file.id}&part=${partNumber}&maxSize=${MAX_PART_SIZE}`,
+            {
+                responseType: 'blob',
+                onDownloadProgress: (progressEvent) => {
+                    const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    onProgress(partNumber, totalParts, percent);
+                },
+            }
+        );
+
+        const downloadUrl = window.URL.createObjectURL(data);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${file.name}_part${partNumber}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        // Пауза между скачиваниями
+        await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+};
 
 export const displayFileImg = async (id) => {
   if (!id) return null;

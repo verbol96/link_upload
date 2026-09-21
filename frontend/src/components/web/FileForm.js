@@ -13,13 +13,14 @@ export const FileForm = ({ item, filesPrev, setFilesPrev, setFormats, formats, n
     const dispach = useDispatch();
 
     const settings = useSelector(state => state.order.settings);
-    const TypePhoto = ['photo', 'holst', 'magnit'];
+    const TypePhoto = ['photo', 'holst', 'magnit', 'poster'];
 
     const FormatPhoto = settings
         .filter(el => el.type === 'photo')
         .sort((a, b) => b.title.localeCompare(a.title));
     const FormatHolst = settings.filter(el => el.type === 'holst');
     const FormatMagnit = settings.filter(el => el.type === 'magnit');
+    const FormatPoster = settings.filter(el => el.type === 'poster');
 
     useEffect(() => {
         async function getPriceList() {
@@ -34,6 +35,7 @@ export const FileForm = ({ item, filesPrev, setFilesPrev, setFormats, formats, n
             case 'photo': return FormatPhoto;
             case 'holst': return FormatHolst;
             case 'magnit': return FormatMagnit;
+            case 'poster': return FormatPoster;
             default: return FormatPhoto;
         }
     };
@@ -43,6 +45,7 @@ export const FileForm = ({ item, filesPrev, setFilesPrev, setFormats, formats, n
         if (e.target.value === 'photo') formatValue = FormatPhoto[0].title;
         if (e.target.value === 'holst') formatValue = FormatHolst[0].title;
         if (e.target.value === 'magnit') formatValue = FormatMagnit[0].title;
+        if (e.target.value === 'poster') formatValue = FormatPoster[0].title;
         setFormats([...formats.slice(0, item), { ...formats[item], type: e.target.value, format: formatValue }, ...formats.slice(item + 1)]);
     };
 
@@ -233,9 +236,10 @@ export const FileForm = ({ item, filesPrev, setFilesPrev, setFormats, formats, n
 
     const ShowType = (value) => {
         switch (value) {
-            case 'photo': return 'Фото';
-            case 'holst': return 'Холст';
-            case 'magnit': return 'Магнит';
+            case 'photo': return 'Фотографии';
+            case 'holst': return 'Холсты';
+            case 'magnit': return 'Магниты';
+            case 'poster': return 'Постеры';
             default: return null;
         }
     };

@@ -15,16 +15,14 @@ const Setting = () => {
     ];
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden">
+        <div className="flex flex-col min-h-screen">
             <NavBar />
 
-            <div className="flex-1 flex min-h-0">
+            <div className="flex-1 flex flex-col md:flex-row min-h-0">
 
                 {/* === ЖЁСТКИЙ ЛЕВЫЙ САЙДБАР (десктоп) === */}
                 <aside className="hidden md:flex w-[260px] shrink-0 flex-col
                                 bg-white border-r border-stone-200">
-
-                   
 
                     {/* Пункты меню */}
                     <nav className="flex-1 px-3 flex flex-col gap-1 mt-10">
@@ -41,7 +39,6 @@ const Setting = () => {
                                                 : 'text-stone-700 hover:bg-stone-100'
                                             }`}
                                 >
-                                    {/* Иконка в квадратике */}
                                     <span
                                         className={`shrink-0 w-8 h-8 rounded-md flex items-center justify-center mt-0.5
                                                 transition-colors
@@ -57,7 +54,6 @@ const Setting = () => {
                                                 }` } />
                                     </span>
 
-                                    {/* Текст */}
                                     <div className="flex-1 min-w-0">
                                         <div className={`text-[13.5px] font-medium leading-tight ${
                                             active ? 'text-stone-700' : 'text-stone-800'
@@ -71,7 +67,6 @@ const Setting = () => {
                                         </div>
                                     </div>
 
-                                    {/* Полоска слева у активного */}
                                     {active && (
                                         <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r
                                                         bg-teal-900" />
@@ -83,10 +78,12 @@ const Setting = () => {
 
                 </aside>
 
-                {/* === МОБИЛЬНОЕ МЕНЮ (горизонтальная полоса) === */}
-                <div className="md:hidden w-full">
-                    <div className="border-b border-stone-200 bg-white px-3 py-2
-                                    flex gap-1.5 overflow-x-auto">
+                {/* === ОСНОВНАЯ ОБЛАСТЬ (общая для мобилки и десктопа) === */}
+                <div className="flex-1 flex flex-col min-w-0 min-h-0">
+
+                    {/* Мобильные табы */}
+                    <div className="md:hidden border-b border-stone-200 bg-white px-3 py-2
+                                    flex gap-1.5 overflow-x-auto shrink-0">
                         {tabs.map(({ label, index, icon }) => {
                             const active = activeTab === index;
                             return (
@@ -108,23 +105,15 @@ const Setting = () => {
                         })}
                     </div>
 
-                    <main className="w-full">
-                        <div className="max-w-3xl mx-auto px-4 py-6">
+                    {/* Контент */}
+                    <main className="flex-1 min-h-0 overflow-y-auto w-full">
+                        <div className="max-w-3xl md:max-w-none mx-auto px-4 md:px-6 py-6 md:py-8">
                             {activeTab === 0 && <Pricing />}
                             {activeTab === 1 && <OtherSettings />}
                             {activeTab === 2 && <LogsUser />}
                         </div>
                     </main>
                 </div>
-
-                {/* === КОНТЕНТ (десктоп) === */}
-                <main className="hidden md:block flex-1 min-w-0 overflow-auto w-full">
-                    <div className="mx-auto px-6 py-8">
-                        {activeTab === 0 && <Pricing />}
-                        {activeTab === 1 && <OtherSettings />}
-                        {activeTab === 2 && <LogsUser />}
-                    </div>
-                </main>
             </div>
 
             <Footer />
