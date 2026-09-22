@@ -2,8 +2,8 @@ import axios from "axios"
 
 const $host = axios.create({
     withCredentials: true,
-    baseURL: `http://${window.location.hostname}:8002/` //для local
-    //baseURL: 'https://link1.by:8002/' // для server
+    //baseURL: `http://${window.location.hostname}:8002/` //для local
+    baseURL: 'https://link1.by:8002/' // для server
 })
 
 $host.interceptors.request.use((config) => {
