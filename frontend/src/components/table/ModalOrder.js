@@ -13,6 +13,7 @@ import { OneFormat } from './OneFormat'
 import SearchBar from './SearchBar'
 import { Button } from '../../ui/button';
 import { $host } from '../../http';
+import { toast } from 'sonner';
 
 export const ModalOrder = ({order, activeModal, setActiveModal, ChangeStatus}) =>{
 
@@ -426,82 +427,118 @@ const ShowBtnSms = (smsType, fanc, text) =>{
   )
 }
 
-const AddInvoices = async () => {
-  // Приводим к числу и устанавливаем 0, если значение невалидно
-  const price = Number(order.price) || 0;
-  const priceDeliver = Number(order.price_deliver) || 0;
+const AddInvoices = async () => { 
+    const price = Number(order.price) || 0;
+    const priceDeliver = Number(order.price_deliver) || 0;
+    const totalAmount = (price + priceDeliver).toFixed(2);
 
-  // Вычисляем сумму и округляем
-  const totalAmount = (price + priceDeliver).toFixed(2);
+    const sendConfirmation = window.confirm(
+        `Подтвердите:\n` +
+        `Номер заказа: ${order.order_number}\n` +
+        `Цена: ${totalAmount}р\n` +
+        `Info: Заказ ${order.FIO}`
+    );
 
-  const sendConfirmation = window.confirm(
-    `Подтвердите:\n` +
-    `Номер заказа: ${order.order_number}\n` +
-    `Цена: ${totalAmount}р\n` +
-    `Info: Заказ ${order.FIO}`
-  );
-    
-  if (sendConfirmation) {
-    const dataInvoices = {
-      AccountNo: order.order_number,
-      Amount: totalAmount,  // Уже строка с 2 знаками после запятой
-      Info: `Заказ ${order.FIO}`
-    };
+    if (sendConfirmation) {
+        const dataInvoices = {
+            AccountNo: order.order_number,
+            Amount: totalAmount,
+            Info: `Заказ ${order.FIO}`,
+        };
 
-    try {
-      const { data } = await $host.post('/api/ep/addInvoicesPay', dataInvoices);
-      if (data) {
-        setOther(prev => `Данные для оплаты: 
-          ЕРИП -> E-POS 
-          номер счета: 27307-1-${order.order_number} \n \n` + prev);
-      }
-    } catch (error) {
-      console.error('Ошибка:', error);
-      alert('Не удалось создать счет. Попробуйте еще раз.'); // Уведомление пользователя
+        try {
+            const { data } = await $host.post('/api/ep/addInvoicesPay', dataInvoices);
+
+            if (data) {
+                // Обновляем Redux — синхронизируем с бэком
+                dispatch(updateOrderAction(order.id, {
+                    ...order,
+                    isPayment: 'wait',
+                }));
+
+                toast.success('Счёт выставлен');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            toast.error('Не удалось создать счёт', {
+                description: 'Попробуйте ещё раз',
+            });
+        }
     }
-  }
 };
 
-const CancelInvoices = async() =>{
+const CancelInvoices = async () => {
+    const info = window.confirm('Отменить счёт?');
 
-  const info = window.confirm( 'Отменить счет?' );
-    
-  if (info) {
-      try {
-        const dataAPI = {
-          InvoiceNo : order.order_number 
+    if (info) {
+        try {
+            const dataAPI = {
+                InvoiceNo: order.order_number,
+            };
+
+            const { data } = await $host.post('/api/ep/delInvoicesPay', dataAPI);
+
+            if (data) {
+                // Обновляем Redux — синхронизируем с бэком
+                dispatch(updateOrderAction(order.id, {
+                    ...order,
+                    isPayment: 'none',
+                }));
+
+                toast.success('Счёт отменён');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            toast.error('Не удалось отменить счёт');
         }
-        const {data} = await $host.post('/api/ep/delInvoicesPay', dataAPI);
-        console.log(data)
-        if(data) window.alert( 'отменен!' )
-      } catch (error) {
-        console.error('Ошибка:', error);
-      }
+    }
+};
 
-  }
-}
+const CheckInvoices = async () => {
+    try {
+        const { data } = await $host.post('/api/ep/getInvoicesPay', {
+            No: order.order_number,
+        });
 
-const CheckInvoices = async() =>{
-
-      try {
-        const {data} = await $host.post('/api/ep/getInvoicesPay', {No: order.order_number });
         const descStatus = {
-          '1':'Ожидает оплату',
-          '2':'Просрочен',
-          '3':'Оплачен',
-          '4':'Оплачен частично',
-          '5':'Отменен',
-          '6':'Оплачен с помощью банковской карты',
-          '7': 'Платеж возращен'
-        }
-        const status = data.Status
-        window.alert(descStatus[status]);
-      } catch (error) {
-        console.error('Ошибка:', error);
-        window.alert('счет не найдет');
-      }
+            '1': 'Ожидает оплату',
+            '2': 'Просрочен',
+            '3': 'Оплачен',
+            '4': 'Оплачен частично',
+            '5': 'Отменён',
+            '6': 'Оплачен банковской картой',
+            '7': 'Платёж возвращён',
+        };
 
-  }
+        const status = String(data.Status);
+        const statusText = descStatus[status] || 'Неизвестный статус';
+
+        // ===== Оплачен =====
+        if (status === '3' || status === '6') {
+            if (order.isPayment === 'paid') {
+                toast.info(`Статус: ${statusText}`);
+                return;
+            }
+
+            await updateOrder(order.id, {
+                ...order,
+                isPayment: 'paid',
+            });
+
+            toast.success('Заказ оплачен', { description: statusText });
+            return;
+        }
+
+        // ===== Другие статусы =====
+        toast.info(`Статус: ${statusText}`);
+
+    } catch (error) {
+        console.error('Ошибка:', error);
+        toast.error('Счёт не найден', {
+            description: 'Проверьте номер заказа',
+        });
+    }
+};
 
 
   
@@ -706,18 +743,85 @@ const CheckInvoices = async() =>{
                               {(order.typePost === 'R1' || order.typePost === 'E1') && ShowBtnSms(is_sms_pay, SmsPay, 'оплата')}
                             </div>
 
-                            {/* Вторая строка — кнопки счетов */}
-                            <div className="flex justify-between w-full gap-1">
-                              {(order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') && (
-                                <>
-                                  <Button className="px-3" variant='outline' size='sm' onClick={AddInvoices}>выставить</Button>
-                                  <Button className="px-3"  variant='outline' size='sm' onClick={CancelInvoices}>отменить</Button>
-                                  <Button className="px-3"  variant='outline' size='sm' onClick={CheckInvoices}>проверить</Button>
-                                </>
-                              )}
+                            
                             </div>
-                          </div>
                           }
+
+                                    {/* === Блок оплаты — для всех типов ЕРИП, вне зависимости от роли === */}
+                                    {(order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') &&
+                                    [1, 2, 3, 4, 5, 7].includes(Number(order.status)) && (
+                                        <div className="relative mt-4 pt-1">
+                          
+                                            {/* Подпись «ОПЛАТА» на рамке */}
+                                            <span className="absolute -top-2 left-3 px-1.5 bg-white
+                                                            text-[10px] uppercase tracking-wider font-semibold
+                                                            text-stone-400 select-none">
+                                                Оплата
+                                            </span>
+                          
+                                            {/* Внутренний блок с рамкой */}
+                                            <div className="flex items-center gap-1.5 px-3 py-2
+                                                            border border-stone-200 rounded-lg
+                                                            whitespace-nowrap">
+                          
+                                                {/* Статус оплаты — 3 варианта */}
+                                                {order.isPayment === 'paid' && (
+                                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
+                                                                    text-[12px] font-medium whitespace-nowrap
+                                                                    bg-green-50 text-green-700 border border-green-200">
+                                                        <i className="bi bi-check-circle-fill text-[11px]" />
+                                                        Оплачен
+                                                    </div>
+                                                )}
+                          
+                                                {order.isPayment === 'wait' && (
+                                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
+                                                                    text-[12px] font-medium whitespace-nowrap
+                                                                    bg-amber-50 text-amber-700 border border-amber-200">
+                                                        <i className="bi bi-clock-fill text-[11px]" />
+                                                        Ожидает оплаты
+                                                    </div>
+                                                )}
+                          
+                                                {order.isPayment === 'none' && (
+                                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
+                                                                    text-[12px] font-medium whitespace-nowrap
+                                                                    bg-stone-50 text-stone-500 border border-stone-200">
+                                                        <i className="bi bi-dash-circle text-[11px]" />
+                                                        Счёт не выставлен
+                                                    </div>
+                                                )}
+                          
+                                                {/* Кнопки — в зависимости от состояния */}
+                                                {order.isPayment === 'none' && (
+                                                    <Button variant='outline' size='sm' onClick={() => AddInvoices()}>
+                                                        <i className="bi bi-receipt text-[12px] mr-1" />
+                                                        Выставить счёт
+                                                    </Button>
+                                                )}
+                          
+                                                {order.isPayment === 'wait' && (
+                                                    <>
+                                                        <Button variant='outline' size='sm' onClick={() => CancelInvoices()}>
+                                                            <i className="bi bi-x-circle text-[12px] mr-1" />
+                                                            отменить
+                                                        </Button>
+                                                        <Button variant='outline' size='sm' onClick={() => CheckInvoices()}>
+                                                            <i className="bi bi-arrow-clockwise text-[12px] mr-1" />
+                                                            проверить
+                                                        </Button>
+                                                    </>
+                                                )}
+                          
+                                                {order.isPayment === 'paid' && (
+                                                    <Button variant='outline' size='sm' onClick={() => CheckInvoices()}>
+                                                        <i className="bi bi-arrow-clockwise text-[12px] mr-1" />
+                                                        проверить
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                        
                     <div className={style.buttons}>
                         <button className="save_button" onClick={()=>SaveData()}  style={{ backgroundColor: isChanged ? '#dbcc00' : '' }}>Сохранить</button>

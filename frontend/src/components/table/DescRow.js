@@ -535,7 +535,7 @@ const ShowBtnSms = (smsType, fanc, text) =>{
   )
 }
 
-const AddInvoices = async () => {
+const AddInvoices = async () => { 
     const price = Number(order.price) || 0;
     const priceDeliver = Number(order.price_deliver) || 0;
     const totalAmount = (price + priceDeliver).toFixed(2);
