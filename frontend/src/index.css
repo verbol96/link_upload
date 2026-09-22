@@ -52,4 +52,21 @@ button:focus-visible {
         transform: translateY(0);
     }
 }
+
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@500&display=swap');
+
+@media print {
+  @page {
+    size: 6cm 8cm;
+    margin: 0;
+  }
+  body {
+    margin: 0;
+    font-size: 10px;
+  }
+  .print-content {
+    width: 6cm;
+    height: 8cm;
+  }
+}
   

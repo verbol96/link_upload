@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-    items: [], // [{ id, name, type, progress, status, error }]
+    items: [],
     // status: 'pending' | 'downloading' | 'done' | 'error'
 };
 
@@ -11,7 +11,6 @@ const downloadsSlice = createSlice({
     reducers: {
         addDownload: (state, action) => {
             const { id, name, type } = action.payload;
-            // Если уже есть — не добавляем дубликат
             if (state.items.some(d => d.id === id)) return;
             state.items.push({
                 id,
@@ -20,23 +19,54 @@ const downloadsSlice = createSlice({
                 progress: 0,
                 status: 'pending',
                 error: null,
+                part: 1,
+                totalParts: 1,
+                loadedMB: null,
             });
         },
+
         setProgress: (state, action) => {
-            const { id, progress } = action.payload;
+            const { id, progress, part, totalParts, loadedMB } = action.payload;
             const item = state.items.find(d => d.id === id);
-            if (item) {
+            if (!item) return;
+
+            // Если задача уже завершена — не трогаем прогресс
+            if (item.status === 'done' || item.status === 'error') return;
+
+            item.status = 'downloading';
+
+            if (progress !== null && progress !== undefined) {
                 item.progress = progress;
-                item.status = 'downloading';
+                item.loadedMB = null;
+            } else {
+                item.progress = 0;
+                item.loadedMB = loadedMB || null;
             }
+
+            if (part !== undefined) item.part = part;
+            if (totalParts !== undefined) item.totalParts = totalParts;
         },
+
         setDone: (state, action) => {
-            const item = state.items.find(d => d.id === action.payload);
-            if (item) {
+            const { id, part, totalParts } = action.payload;
+            const item = state.items.find(d => d.id === id);
+            if (!item) return;
+
+            if (part !== undefined && totalParts !== undefined && part < totalParts) {
+                item.part = part;
+                item.totalParts = totalParts;
+                item.progress = 0;
+                item.loadedMB = null;
+                item.status = 'downloading';
+            } else {
                 item.progress = 100;
                 item.status = 'done';
+                item.loadedMB = null;
+                item.part = totalParts || 1;
+                item.totalParts = totalParts || 1;
             }
         },
+
         setError: (state, action) => {
             const { id, error } = action.payload;
             const item = state.items.find(d => d.id === id);
@@ -45,11 +75,15 @@ const downloadsSlice = createSlice({
                 item.error = error;
             }
         },
+
         removeDownload: (state, action) => {
             state.items = state.items.filter(d => d.id !== action.payload);
         },
+
         clearFinished: (state) => {
-            state.items = state.items.filter(d => d.status !== 'done' && d.status !== 'error');
+            state.items = state.items.filter(
+                d => d.status !== 'done' && d.status !== 'error'
+            );
         },
     },
 });
