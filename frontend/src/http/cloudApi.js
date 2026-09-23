@@ -47,8 +47,8 @@ export const downloadFiles = async (file, onProgress, onPartDone) => {
     // === ЛИМИТ НА ЧАСТЬ АРХИВА ===
     const MAX_PART_SIZE = 1500 * 1024 * 1024; // 1.5 ГБ
 
-    // Базовый URL для fetch
-    const BASE_URL = `http://${window.location.hostname}:8002`;
+    // Базовый URL для fetch http://${window.location.hostname}:8002
+    const BASE_URL = `https://link1.by:8002`;
     // Для сервера: 'https://link1.by:8002'
 
     const getToken = () => localStorage.getItem('token');
