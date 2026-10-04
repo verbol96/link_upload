@@ -172,10 +172,31 @@ class authController {
         return res.json(response.data)
     }
 
-    async setLogUser(req, res){
-        const {dataLog} = req.body
-        await LogUser.create(dataLog)
-        return res.json('ok')
+    async setLogUser(req,res){
+        try{
+            const{dataLog={}}=req.body;
+            const log=await LogUser.create({
+                phone:dataLog.phone||'0',
+                surname:dataLog.surname||null,
+                sessionId:dataLog.sessionId||null,
+                event:dataLog.event||'visit',
+                eventType:dataLog.eventType||'info',
+                page:dataLog.page||null,
+                orderId:dataLog.orderId||null,
+                photosCount:dataLog.photosCount??null,
+                format:dataLog.format||null,
+                error:dataLog.error?String(dataLog.error).slice(0,2000):null,
+                appVersion:dataLog.appVersion||null,
+                device:dataLog.device||'unknown',
+                browser:dataLog.browser||'unknown',
+                OS:dataLog.OS||'unknown',
+                screen:dataLog.screen||'unknown'
+            });
+            return res.json({status:'ok',id:log.id});
+        }catch(error){
+            console.error('setLogUser error:',error);
+            return res.status(500).json({message:'Ошибка записи лога'});
+        }
     }
 
     async getLogUser(req, res) {
@@ -202,73 +223,105 @@ class authController {
     return res.json(moscowData);
     }
 
-   async clients (req, res){
-            const { 
-                page,
-                limit,
-                search,
-                sortBy,
-                sortDir
-            } = req.query;
-            
-            const offset = (page - 1) * limit;
+    async deleteOldLogs(req,res){
+        try{
+            const date=new Date();
+            date.setDate(date.getDate()-30);
 
-            // Условия поиска
-            const where = {};
-            if (search) {
-                where[Op.or] = [
-                    { FIO: { [Op.like]: `%${search}%` } },
-                    { phone: { [Op.like]: `%${search}%` } },
-                    { aboutUser: { [Op.like]: `%${search}%` } }
-                ];
-            }
-
-            const order = [];
-            if (sortBy && sortDir) {
-                order.push([sortBy, sortDir.toUpperCase()]);
-            } else {
-                order.push(['createdAt', 'DESC']);
-            }
-
-            const { count, rows } = await User.findAndCountAll({
-                where,
-                limit: parseInt(limit),
-                offset: parseInt(offset),
-                attributes: {
-                    exclude: ['oblast', 'raion', 'updatedAt'],
-                    include: [
-                        // Дата последнего заказа
-                        [
-                            sequelize.literal(`(
-                                SELECT MAX("createdAt") 
-                                FROM "orders"
-                                WHERE "orders"."userId" = "user"."id"
-                            )`),
-                            'lastOrderDate'
-                        ]
-                    ]
-                },
-                order,
-                logging: false
-            });
-            
-            // Форматируем дату для каждого клиента
-            const formattedRows = rows.map(user => {
-                const data = user.toJSON();
-                if (data.lastOrderDate) {
-                    data.lastOrderDate = new Date(data.lastOrderDate).toLocaleDateString('ru-RU');
+            const deleted=await LogUser.destroy({
+                where:{
+                    createdAt:{
+                        [Op.lt]:date
+                    }
                 }
-                return data;
             });
-            
-            res.json({
-                data: formattedRows,
-                total: count,
-                page: parseInt(page),
-                pageSize: parseInt(limit),
-                totalPage: Math.ceil(count / limit)
+
+            return res.json({
+                status:'ok',
+                deleted
             });
-        };
+        }catch(error){
+            console.error('deleteOldLogs error:',error);
+            return res.status(500).json({message:'Ошибка удаления старых логов'});
+        }
+    }
+    
+    async clients(req, res) {
+        const {
+            page = 1,
+            limit = 100,
+            search,
+            sortBy,
+            sortDir,
+            role,
+        } = req.query;
+
+        const offset = (page - 1) * limit;
+
+        // ============ WHERE ============
+        const where = {};
+
+        if (search) {
+            where[Op.or] = [
+                { FIO:       { [Op.iLike]: `%${search}%` } },
+                { phone:     { [Op.iLike]: `%${search}%` } },
+                { aboutUser: { [Op.iLike]: `%${search}%` } },
+            ];
+        }
+
+        // Фильтр по роли — применяется всегда, если передан
+        if (role) {
+            where.role = role;
+        }
+
+        // ============ ORDER ============
+        const order = [];
+        if (sortBy && sortDir) {
+            order.push([sortBy, sortDir.toUpperCase()]);
+        } else {
+            order.push(['createdAt', 'DESC']);
+        }
+
+        // ============ ЗАПРОС ============
+        const { count, rows } = await User.findAndCountAll({
+            where,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            attributes: {
+                exclude: ['oblast', 'raion', 'updatedAt'],
+                include: [
+                    [
+                        sequelize.literal(`(
+                            SELECT MAX("createdAt")
+                            FROM "orders"
+                            WHERE "orders"."userId" = "user"."id"
+                        )`),
+                        'lastOrderDate'
+                    ]
+                ]
+            },
+            order,
+            logging: false,
+        });
+
+        // Форматируем дату
+        const formattedRows = rows.map(user => {
+            const data = user.toJSON();
+            if (data.lastOrderDate) {
+                data.lastOrderDate = new Date(data.lastOrderDate).toLocaleDateString('ru-RU');
+            }
+            return data;
+        });
+
+        res.json({
+            data: formattedRows,
+            total: count,
+            page: parseInt(page),
+            pageSize: parseInt(limit),
+            totalPage: Math.ceil(count / limit),
+        });
+    }
+
     async clientUpdate(req,res)
     {
         try {

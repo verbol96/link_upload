@@ -100,6 +100,12 @@ export const EXPENSE_CATEGORIES = {
         color: '#ef4444',
         icon: 'bi-people',
     },
+        partnerPayments: {
+        name: 'Выплаты партнёрам',
+        group: 'admin',
+        color: '#8b5cf6',
+        icon: 'bi-handshake',
+    },
     equipment: {
         name: 'Оборудование',
         group: 'admin',

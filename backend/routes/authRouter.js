@@ -14,6 +14,7 @@ router.delete('/usersDelete/:id', authController.usersDelete);
 router.post('/sendSms', authController.sendSms)
 router.post('/setLogUser', authController.setLogUser)
 router.get('/getLogUser', authController.getLogUser)
+router.delete('/deleteOldLogs', authController.deleteOldLogs)
 router.get('/clients', authController.clients)
 router.get('/updateUsers', authController.updateUsers)
 router.put('/clientUpdate/:id', authController.clientUpdate)

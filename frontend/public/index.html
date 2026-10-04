@@ -3,60 +3,62 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+
+    <!-- Цвет адресной строки браузера на мобилке — цвет твоей шапки -->
+    <meta name="theme-color" content="#116466" />
+
     <meta
       name="description"
-      content="Сервис для заказа фотографий"
+      content="Сервис для заказа фотографий LINK — печать, редактор, доставка"
     />
-    <!-- ВСЕ эти мета-теги для разных браузеров отключение автоперевода -->
+
+    <!-- Отключение автоперевода страницы -->
     <meta name="google" content="notranslate">
-    <meta name="robots" content="no translate">
+    <meta name="robots" content="notranslate">
     <meta name="slurp" content="noydir">
     <meta http-equiv="Content-Language" content="ru">
-    <!--
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
-      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
-      crossorigin="anonymous"
-    /> 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
-    -->
-    <!-- Локальный Bootstrap CSS -->
+
+    <!-- Bootstrap CSS и иконки (локальные) -->
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
-    <!-- Локальный Bootstrap Icons -->
     <link rel="stylesheet" href="/static/fonts/bootstrap-icons.css">
-    <link rel="icon" href="./favicon.ico">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/image/icon.PNG" />
+    <link rel="shortcut icon" type="image/png" href="/static/image/icon.PNG"   />
+    <link rel="apple-touch-icon" href="/static/image/iconApple.PNG" />
+    
+
+    <!-- Заголовок по умолчанию. Меняется динамически из React -->
     <title>Фотоцентр LINK</title>
   </head>
   <body translate="no">
-    <noscript>Table</noscript>
-    
+    <noscript>
+      Для работы сайта необходим JavaScript. Включите его в настройках браузера.
+    </noscript>
+
     <div id="root"></div>
-    <!-- Скрипт для полной блокировки перевода -->
+
+    <!-- Блокировка автоперевода -->
     <script>
-      // Блокировка перевода при загрузке
       document.documentElement.setAttribute('translate', 'no');
       document.documentElement.setAttribute('lang', 'ru');
       document.body.setAttribute('translate', 'no');
-      
-      // Блокировка для Google Chrome
+
       if (window.chrome && chrome.runtime) {
         try {
           chrome.runtime.sendMessage({ type: 'DISABLE_TRANSLATE' });
-        } catch(e) {}
+        } catch (e) {}
       }
-      
-      // Блокировка через MutationObserver
-      const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-          if (mutation.type === 'attributes' && 
+
+      const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          if (mutation.type === 'attributes' &&
               mutation.attributeName === 'translated') {
             document.documentElement.removeAttribute('translated');
           }
         });
       });
-      
+
       observer.observe(document.documentElement, {
         attributes: true,
         attributeFilter: ['translated', 'class']

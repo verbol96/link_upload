@@ -6,6 +6,7 @@ const {recalculateUserStats} = require('../services/orderService')
 const fs = require('fs/promises');
 const path = require('path');
 const { sequelize } = require('../models/models');
+const {sendTelegramMessage}=require('../services/telegram');
 
 //для объединения заказов
 const pathExists = async (p) => {
@@ -34,9 +35,13 @@ class orderController{
             // E/E1 → вторник (+2), остальные → понедельник (+1)
             dateSent.setDate(dateSent.getDate() + (isEuropePost ? 2 : 1));
         }
+        // Если Европочта попала на понедельник — сдвигаем на вторник
+        else if (dateSent.getDay() === 1 && (typePost === 'E' || typePost === 'E1')) {
+            dateSent.setDate(dateSent.getDate() + 1);
+        }
         // Если попали на субботу — сдвигаем НАЗАД на пятницу
         else if (dateSent.getDay() === 6) {
-            dateSent.setDate(dateSent.getDate() - 1);   // −1 день → пятница
+            dateSent.setDate(dateSent.getDate() - 1);
         }
 
         let order
@@ -93,8 +98,49 @@ class orderController{
         }
 
         await recalculateUserStats(response.userId)
-          
-        return res.json(response)
+
+        const productNames={
+            photo:'Фото',
+            holst:'Холст',
+            magnit:'Магнит',
+            poster:'Постер'
+        };
+
+        const products={};
+
+        response.photos?.forEach(item=>{
+            const type=productNames[item.type]||item.type||'Товар';
+            const format=item.format||'';
+            const key=`${type} ${format}`.trim();
+
+            const amount=Number(item.amount||0)*Number(item.copies||1);
+
+            if(products[key]){
+                products[key]+=amount;
+            }else{
+                products[key]=amount;
+            }
+        });
+
+        const productLines=Object.entries(products).map(([name,amount])=>{
+            return `${name} — <b>${amount} шт.</b>`;
+        });
+
+        const totalPrice=(
+            Number(response.price||0)+
+            Number(response.price_deliver||0)
+        ).toFixed(2);
+
+        const telegramMessage=[
+            `🟢 <b>Новый заказ №${response.order_number}</b>`,
+            `👤 ${response.FIO||'—'}`,
+            ...productLines,
+            `💰 Итого: <b>${totalPrice} руб.</b>`
+        ].join('\n');
+
+        sendTelegramMessage(telegramMessage);
+
+        return res.json(response);
     }
 
     async updateUserAdress(req,res){
@@ -209,11 +255,30 @@ class orderController{
 
     async getAllStat(req, res) {
         const orders = await Order.findAll({
-          attributes: ['price', 'createdAt', 'phone', 'origin']
+            attributes: ['price', 'createdAt', 'phone', 'origin'],
+            include: [
+                {
+                    model: User,
+                    attributes: ['role'],
+                    required: false, // LEFT JOIN — заказы без юзера тоже попадут
+                },
+            ],
         });
-      
-        return res.json({orders});
-      }
+
+        // Разворачиваем role на верхний уровень, чтобы фронт видел order.role
+        const flatOrders = orders.map(o => {
+            const plain = o.get({ plain: true });
+            return {
+                price: plain.price,
+                createdAt: plain.createdAt,
+                phone: plain.phone,
+                origin: plain.origin,
+                role: plain.user?.role || null,
+            };
+        });
+
+        return res.json({ orders: flatOrders });
+    }
  
     async getOneUser(req,res){
         const {phone} = req.body

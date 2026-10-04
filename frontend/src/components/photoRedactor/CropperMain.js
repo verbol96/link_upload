@@ -61,90 +61,84 @@ const CropperMain = ({
 
     // При загрузке изображения — инициализация
     // если несколько на листе, то изначлаьный кроп по настройкам
-    const onMediaLoaded = useCallback((mediaSize) => {
-        setMedia(mediaSize);
-
-        if (photos[activePhoto]?.cropData?.cropSize !== undefined) {
-            // уже инициализировано
-        } else {
-            setRotation(0);
-            if (!cropRef.current?.containerRect) return;
-
-            const indexDown = 0.85;
-            let k, kef, sizeFrame;
-            if ((activeSettings.top + activeSettings.bottom) > (activeSettings.left + activeSettings.right)) {
-                k = (Math.max(activeSettings.top, activeSettings.bottom));
-                kef = activeSettings.height / (Number(activeSettings.height) + 2 * k);
-                sizeFrame = cropRef.current.containerRect.height * kef * indexDown;
-            } else {
-                k = (Math.max(activeSettings.left, activeSettings.right));
-                kef = activeSettings.width / (Number(activeSettings.width) + 2 * k);
-                sizeFrame = cropRef.current.containerRect.width * kef * indexDown;
-            }
-
-            // Определяем, сколько фото будет на листе
-            const cardW = Number(activeSettings.width) + Number(activeSettings.left) + Number(activeSettings.right);
-            const cardH = Number(activeSettings.height) + Number(activeSettings.top) + Number(activeSettings.bottom);
-
-            const sheetW = Number(activeSettings.widthList);
-            const sheetH = Number(activeSettings.heightList);
-
-            const cols = Math.max(1, Math.floor(sheetW / cardW));
-            const rows = Math.max(1, Math.floor(sheetH / cardH));
-            const perPage = cols * rows;
-
-            // Если фото несколько на листе — фиксируем ориентацию кропа под карточку
-            const shouldFixOrientation = perPage > 1;
-
-            let x, y;
-            if (mediaSize.width > mediaSize.height) {
-                x = sizeFrame;
-                y = sizeFrame * activeSettings.width / activeSettings.height;
-            } else {
-                x = sizeFrame * activeSettings.width / activeSettings.height;
-                y = sizeFrame;
-            }
-
-            // Если несколько фото на лист и ориентации не совпадают — меняем кроп местами
-            if (shouldFixOrientation) {
-                const photoIsHorizontal = mediaSize.width > mediaSize.height;
-                const cardIsHorizontal = Number(activeSettings.width) > Number(activeSettings.height);
-
-                if (photoIsHorizontal !== cardIsHorizontal) {
-                    [x, y] = [y, x];
-                }
-            }
-
-            const valueZoom = Math.max(
-                x / mediaSize.width,
-                y / mediaSize.height,
-            );
-
-            const newCropData = { width: x, height: y };
-
-            setCropSize(newCropData);
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    setCrop({ x: 0, y: 0 });
-                    setZoom(valueZoom);
-                }, 30);
-
-                setZoomDef(valueZoom);
-                setMedia(mediaSize);
-                setFieldsWhite(false);
-
-                onSaveCrop(photos[activePhoto].id, {
-                    zoom: valueZoom,
-                    zoomDef: valueZoom,
-                    cropSize: newCropData,
-                    crop: { x: 0, y: 0 },
-                    media: mediaSize,
-                    rotation: 0,
-                    fieldsWhite: false
-                });
-            });
+const onMediaLoaded = useCallback((mediaSize) => {
+    setMedia(mediaSize);
+    if (photos[activePhoto]?.cropData?.cropSize !== undefined) {
+        return;
+    }
+    setRotation(0);
+    if (!cropRef.current?.containerRect) return;
+    const containerW = cropRef.current.containerRect.width;
+    const containerH = cropRef.current.containerRect.height;
+    const formatW = Number(activeSettings.width);
+    const formatH = Number(activeSettings.height);
+    const left = Number(activeSettings.left) || 0;
+    const right = Number(activeSettings.right) || 0;
+    const top = Number(activeSettings.top) || 0;
+    const bottom = Number(activeSettings.bottom) || 0;
+    const cardW = formatW + left + right;
+    const cardH = formatH + top + bottom;
+    const sheetW = Number(activeSettings.widthList);
+    const sheetH = Number(activeSettings.heightList);
+    const cols = Math.max(1, Math.floor(sheetW / cardW));
+    const rows = Math.max(1, Math.floor(sheetH / cardH));
+    const perPage = cols * rows;
+    const shouldFixOrientation = perPage > 1;
+    let targetW = formatW;
+    let targetH = formatH;
+    let frameLeft = left;
+    let frameRight = right;
+    let frameTop = top;
+    let frameBottom = bottom;
+    if (!shouldFixOrientation) {
+        const photoIsHorizontal = mediaSize.width > mediaSize.height;
+        const formatIsHorizontal = formatW > formatH;
+        if (photoIsHorizontal !== formatIsHorizontal) {
+            targetW = formatH;
+            targetH = formatW;
+            frameLeft = top;
+            frameRight = bottom;
+            frameTop = left;
+            frameBottom = right;
         }
-    }, [photos, activePhoto, activeSettings, onSaveCrop]);
+    }
+    const totalW = targetW + frameLeft + frameRight;
+    const totalH = targetH + frameTop + frameBottom;
+    const indexDown = 0.85;
+    const scale = Math.min(
+        (containerW * indexDown) / totalW,
+        (containerH * indexDown) / totalH
+    );
+    const cropW = targetW * scale;
+    const cropH = targetH * scale;
+    const newCropData = {
+        width: cropW,
+        height: cropH
+    };
+    const valueZoom = Math.max(
+        cropW / mediaSize.width,
+        cropH / mediaSize.height
+    );
+    setCropSize(newCropData);
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            setCrop({ x: 0, y: 0 });
+            setZoom(valueZoom);
+        }, 30);
+        setZoomDef(valueZoom);
+        setMedia(mediaSize);
+        setFieldsWhite(false);
+        onSaveCrop(photos[activePhoto].id, {
+            zoom: valueZoom,
+            zoomDef: valueZoom,
+            cropSize: newCropData,
+            crop: { x: 0, y: 0 },
+            media: mediaSize,
+            rotation: 0,
+            fieldsWhite: false
+        });
+    });
+}, [photos, activePhoto, activeSettings, onSaveCrop]);
 
     const changePhoto = useCallback((index) => {
         if (index < 0 || index >= photos.length) return;

@@ -10,28 +10,9 @@ import {
     SheetDescription,
 } from '../../ui/sheet';
 
-const MENU_GROUPS = [
-    {
-        title: 'Работа',
-        items: [
-            { label: 'Заказы',   path: '/table',    icon: 'bi-receipt' },
-            { label: 'Редактор', path: '/redactor', icon: 'bi-image' },
-            { label: 'Файлы',    path: '/cloud',    icon: 'bi-folder2-open' },
-        ],
-    },
-    {
-        title: 'Другое',
-        items: [
-            { label: 'Журнал расходов', path: '/expenses',   icon: 'bi-cash-stack' },
-            { label: 'Клиенты',         path: '/users',      icon: 'bi-people' },
-            { label: 'Статистика (root)', path: '/statistic', icon: 'bi-bar-chart', adminOnly: true },
-            { label: 'Бумага (root)',    path: '/material',  icon: 'bi-card-list', adminOnly: true },
-            { label: 'Личный кабинет',  path: '/private',   icon: 'bi-person-badge' },
-            { label: 'Форма заказа',    path: '/web',       icon: 'bi-cart' },
-            { label: 'Настройки',       path: '/setting',   icon: 'bi-gear' },
-        ],
-    },
-];
+import { getMenuForRole } from '../../routes/access';
+import { logout } from '../../http/authApi';
+import { setUser } from '../../store/privatePageReducer';
 
 export const LeftMenu = () => {
     const navigate = useNavigate();
@@ -40,16 +21,18 @@ export const LeftMenu = () => {
     const leftMenu = useSelector((state) => state.order.leftMenu);
     const user = useSelector((state) => state.private.user);
 
+    const isAuth = !!user?.role;
+    const userRole = user?.role || 'GUEST';
+    const visibleGroups = isAuth ? getMenuForRole(userRole) : [];
+
     const closeMenu = useCallback(() => dispatch({ type: 'closeLeftMenu' }), [dispatch]);
 
     const goTo = (link) => {
         closeMenu();
-        // небольшая задержка — чтобы анимация закрытия успела начаться
         setTimeout(() => navigate(link), 80);
     };
 
     const isActive = (path) => location.pathname === path;
-    const isAdmin = user?.phone === '+375333258247';
 
     const getShortName = (fio) => {
         if (!fio || typeof fio !== 'string') return 'Без имени';
@@ -61,6 +44,23 @@ export const LeftMenu = () => {
         return `${last} ${initials}`;
     };
 
+    // ============ ВЫХОД ============
+    const handleLogout = async () => {
+        if (!window.confirm('Вы уверены, что хотите выйти?')) return;
+
+        closeMenu();
+        dispatch({ type: 'authStatus', paylods: false });
+        dispatch(setUser({ user: {}, order: {} }));
+        await logout();
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('logSessionId');
+        sessionStorage.removeItem('logVisitCreated');
+        sessionStorage.removeItem('logLastPage');
+        sessionStorage.removeItem('logUserPhone');
+        sessionStorage.removeItem('logUserSurname');
+        navigate('/web');
+    };
+
     return (
         <Sheet open={leftMenu} onOpenChange={(v) => { if (!v) closeMenu(); }}>
             <SheetContent
@@ -70,21 +70,23 @@ export const LeftMenu = () => {
                            bg-white border-r border-gray-800
                            [&>button]:hidden"
             >
-                {/* Хедер */}
+                {/* ===== Шапка меню ===== */}
                 <SheetHeader className="flex-row items-center justify-between space-y-0
                                         px-4 pt-4 pb-3.5
-                                        border-b border-teal-800 bg-teal-900 shrink-0">
+                                        border-b border-teal-800 bg-teal-800 shrink-0">
                     <div className="flex items-center gap-2.5 text-left">
                         <span className="w-8 h-8 rounded-lg border border-neutral-500 text-neutral-500
                                         bg-white flex items-center justify-center font-bold text-[15px]">
                             L
                         </span>
+
                         <div className="leading-none">
                             <SheetTitle className="text-xl font-light text-white leading-none">
                                 LINK
                             </SheetTitle>
+
                             <SheetDescription className="text-[10.5px] text-gray-400 mt-0.5">
-                                админ-панель
+                                {isAuth ? 'меню' : 'гость'}
                             </SheetDescription>
                         </div>
                     </div>
@@ -92,86 +94,183 @@ export const LeftMenu = () => {
                     <button
                         className="w-9 h-9 rounded-md flex items-center justify-center
                                 text-gray-300 hover:bg-white/10 hover:text-white
+                                focus:outline-none focus-visible:outline-none focus:ring-0
                                 transition-colors text-sm"
                         onClick={closeMenu}
                         aria-label="Закрыть"
+                        type="button"
                     >
                         <i className="bi bi-x-lg" />
                     </button>
                 </SheetHeader>
 
-                {/* Меню */}
+                {/* ===== Меню ===== */}
                 <nav
                     className="flex-1 overflow-y-auto overscroll-contain
-                            px-2.5 py-3.5 flex flex-col gap-8"
+                            px-2.5 py-3.5 flex flex-col"
                     style={{ WebkitOverflowScrolling: 'touch' }}
                 >
-                    {MENU_GROUPS.map((group) => {
-                        const visibleItems = group.items.filter(
-                            (item) => !item.adminOnly || isAdmin
-                        );
-                        if (!visibleItems.length) return null;
+                    <div className="my-auto flex flex-col gap-6">
+                        {isAuth ? (
+                            /* ===== АВТОРИЗОВАННЫЙ ===== */
+                            visibleGroups.map((group, gIdx) => (
+                                <div key={`${group.title}-${gIdx}`} className="flex flex-col gap-0.5">
+                                    <div className="text-[10px] font-semibold tracking-wider uppercase
+                                                text-gray-400 px-3 pb-2 select-none">
+                                        {group.title}
+                                    </div>
 
-                        return (
-                            <div key={group.title} className="flex flex-col gap-0.5">
-                                <div className="text-[10px] font-semibold tracking-wider uppercase
-                                            text-gray-400 px-3 pb-1.5 select-none">
-                                    {group.title}
+                                    {group.items.map((item) => {
+                                        const active = isActive(item.path);
+
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={`${item.path}-${item.label}`}
+                                                onClick={() => goTo(item.path)}
+                                                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg
+                                                        text-[12.5px] font-medium cursor-pointer
+                                                        text-left select-none transition-colors
+                                                        ${active
+                                                            ? 'bg-teal-900/60 text-white font-semibold'
+                                                            : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                                                        }`}
+                                            >
+                                                <i
+                                                    className={`bi ${item.icon} w-[18px] text-center text-[15px]
+                                                            shrink-0 transition-colors
+                                                            ${active ? 'text-white' : 'text-gray-400'}`}
+                                                />
+
+                                                <span className="flex-1 truncate">
+                                                    {item.label}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            ))
+                        ) : (
+                            /* ===== ГОСТЬ ===== */
+                            <>
+                                {/* Группа "Меню" — как у авторизованных */}
+                                <div className="flex flex-col gap-0.5 mt-4">
+                                    <div className="text-[10px] font-semibold tracking-wider uppercase
+                                                text-gray-400 px-3 pb-1.5 select-none">
+                                        Меню
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => goTo('/web')}
+                                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg
+                                                text-[12.5px] font-medium cursor-pointer
+                                                text-left select-none transition-colors
+                                                ${isActive('/web')
+                                                    ? 'bg-teal-900/60 text-white font-semibold'
+                                                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                                                }`}
+                                    >
+                                        <i className={`bi bi-cart w-[18px] text-center text-[15px]
+                                                    shrink-0 transition-colors
+                                                    ${isActive('/web') ? 'text-white' : 'text-gray-400'}`}
+                                        />
+
+                                        <span className="flex-1 truncate">
+                                            Оформить заказ
+                                        </span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => goTo('/auth')}
+                                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg
+                                                text-[12.5px] font-medium cursor-pointer
+                                                text-left select-none transition-colors
+                                                ${isActive('/auth')
+                                                    ? 'bg-teal-900/60 text-white font-semibold'
+                                                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
+                                                }`}
+                                    >
+                                        <i className={`bi bi-person-badge w-[18px] text-center text-[15px]
+                                                    shrink-0 transition-colors
+                                                    ${isActive('/auth') ? 'text-white' : 'text-gray-400'}`}
+                                        />
+
+                                        <span className="flex-1 truncate">
+                                            Личный кабинет
+                                        </span>
+                                    </button>
                                 </div>
 
-                                {visibleItems.map((item) => {
-                                    const active = isActive(item.path);
-                                    return (
-                                        <button
-                                            type="button"
-                                            key={item.path}
-                                            onClick={() => goTo(item.path)}
-                                            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg
-                                                    text-[13.5px] font-medium cursor-pointer
-                                                    text-left select-none transition-colors
-                                                    ${active
-                                                        ? 'bg-teal-900/60 text-white font-semibold'
-                                                        : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200'
-                                                    }`}
-                                        >
-                                            <i
-                                                className={`bi ${item.icon} w-[18px] text-center text-[15px]
-                                                        shrink-0 transition-colors
-                                                        ${active ? 'text-white' : 'text-gray-400'}`}
-                                            />
-                                            <span className="flex-1 truncate">
-                                                {item.label}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        );
-                    })}
+                                {/* Компактное уведомление о входе */}
+                                <div className="flex flex-col gap-0.5 mt-5 border-[1px] border-gray-300/30 rounded-md p-3 px-4 mt-auto">
+                                    <div>
+                                        <div className="text-[12px] text-gray-500 leading-snug">
+                                            Войдите, чтобы открыть личный кабинет и историю заказов.
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => goTo('/auth')}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg
+                                                text-[12.5px] font-medium cursor-pointer
+                                                text-left select-none transition-colors
+                                                text-teal-800 hover:bg-teal-50 active:bg-teal-100"
+                                    >
+                                        <i className="bi bi-box-arrow-in-right w-[18px] text-center text-[15px]
+                                                    shrink-0 text-teal-700" />
+
+                                        <span className="flex-1 truncate">
+                                            Войти
+                                        </span>
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </nav>
 
-                {/* Подвал */}
-                <div className="flex items-center justify-between gap-2.5 px-4 py-3
-                                border-t border-teal-800 bg-teal-900 shrink-0
-                                pb-[max(env(safe-area-inset-bottom),12px)]">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <i className="bi bi-person-circle text-[17px] text-white shrink-0" />
-                        <div className="text-[12px] font-light text-white truncate min-w-0">
-                            {getShortName(user?.FIO)}
+                {/* ===== Подвал ===== */}
+                {isAuth ?
+                    <div className="border-t border-teal-800 bg-white shrink-0
+                                    pb-[max(env(safe-area-inset-bottom),12px)]">
+
+                        <div className="flex items-center justify-between gap-2.5 px-4 py-2">
+
+                            {/* Левая часть: аватар + имя */}
+                            <button
+                                type="button"
+                                onClick={() => goTo('/myProfile')}
+                                className="flex items-center gap-2.5 min-w-0 flex-1 text-left"
+                            >
+                                <i className="bi bi-person-circle text-[20px] text-gray-600 shrink-0" />
+
+                                <div className="text-[12.5px] font-light text-gray-600 truncate">
+                                    {getShortName(user?.FIO)}
+                                </div>
+                            </button>
+
+                            {/* Правая часть: кнопка «Выйти» */}
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                className="shrink-0 inline-flex items-center gap-1.5 px-3 rounded-md
+                                        text-[11.5px] font-light
+                                        text-gray-600 border-[0.3px] border-white "
+                            >
+                                <i className="bi bi-box-arrow-right text-[12px]" />
+                                <span>Выйти</span>
+                            </button>
                         </div>
                     </div>
-
-                    <button
-                        className="shrink-0 bg-teal-900 border border-gray-200 text-white
-                                text-[9px] font-semibold tracking-wide rounded-md
-                                px-2.5 py-1.5 transition-all
-                                hover:bg-teal-800 hover:text-white hover:border-white"
-                        onClick={() => goTo('/history')}
-                        title="История версий"
-                    >
-                        v 5.1
-                    </button>
-                </div>
+                    :
+                    <div className="border-t border-teal-800 bg-white shrink-0
+                                    pb-[max(env(safe-area-inset-bottom),12px)]">
+                        <div className="flex items-center justify-between gap-2.5 px-4 py-3"></div>
+                    </div>
+                }
             </SheetContent>
         </Sheet>
     );

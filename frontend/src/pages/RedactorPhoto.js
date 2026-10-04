@@ -1,6 +1,5 @@
 import Footer from "../components/admin/Footer";
 import { NavBar } from "../components/admin/NavBar";
-//import Redactor from "../components/photoEditor/Redactor";
 import Redactor from "../components/photoRedactor/Redactor";
 
 const RedactorPhoto = () => {

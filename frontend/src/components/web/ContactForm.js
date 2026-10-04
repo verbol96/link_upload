@@ -1,129 +1,138 @@
 import InputMask from 'react-input-mask';
 
-export const ContactForm = ({ FIO, setFIO, phone, setPhone, typePost, setTypePost, city, setCity,
-    adress, setAdress, postCode, setPostCode, other, setOther, isValid, isHolst, calcDelivery }) => {
+export const ContactForm = ({
+    FIO, setFIO,
+    phone, setPhone,
+    typePost, setTypePost,
+    city, setCity,
+    adress, setAdress,
+    postCode, setPostCode,
+    other, setOther,
+    isValid, isHolst, calcDelivery,
+}) => {
+    const inputCls = "w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-[16px] md:text-[13px] font-normal text-slate-800 outline-none placeholder:text-slate-300 focus:border-[#19766d] focus:ring-2 focus:ring-[#19766d]/10 transition";
+    const labelCls = "block mb-1 text-[10.5px] md:text-[11px] font-semibold text-slate-500";
+    const selectCls = "w-full h-10 rounded-lg border border-slate-200 bg-white pl-3 pr-8 text-[16px] md:text-[13px] font-normal text-slate-700 outline-none appearance-none focus:border-[#19766d] focus:ring-2 focus:ring-[#19766d]/10 transition";
 
-    // Общий стиль label — «висит» на границе поля
-    const labelCls = "absolute top-0 left-0 px-[5px] -translate-y-1/2 " +
-        "font-normal text-[0.8rem] text-[#2D4B52] pointer-events-none";
-
-    // Инпут: нижняя граница, тень, центр текста
-    const inputCls = "outline-none text-[0.9rem] px-2 py-2 " +
-        "border-0 border-b-2 border-[#2C3531] rounded-[3px] " +
-        "text-center w-full h-[35px] " +
-        "shadow-[0_3px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.24)]";
+    const isPost = typePost === 'R' || typePost === 'R1' || typePost === 'R2';
 
     return (
-        <div className="bg-white rounded-[5px] px-[10px] py-5 md:p-5
-                        shadow-[0px_0px_6px_1px_rgba(61,96,94,0.38)]
-                        mt-3 md:my-5">
+        <div className="w-full p-2 mt-2">
+            <div className="grid grid-cols-1 lg:grid-cols-[0.8fr_1.4fr] gap-3 lg:gap-8">
 
-            <div>
-                <h4 className="font-light text-[16px] md:text-[20px] p-[5px] pb-[25px] pt-0 text-[#2C3531] my-[10px] md:my-0">
-                    <i className="bi bi-2-square text-black mr-[10px]"></i>
-                    Данные для отправки
-                </h4>
-            </div>
-
-            {/* === Ряд 1: Телефон + ФИО === */}
-            <div className="flex flex-col md:flex-row gap-[5px] mt-4 md:px-5">
-                <div className="flex-1 relative">
-                    <label className={labelCls}>Телефон:</label>
-                    <InputMask
-                        value={phone}
-                        mask="+375 (99) 999-99-99"
-                        maskChar={''}
-                        className={inputCls}
-                        style={{ border: isValid && '2px solid red' }}
-                        onChange={(e) => setPhone(e.target.value)}
-                    />
-                </div>
-
-                <div className="flex-1 relative">
-                    <label className={labelCls}>ФИО:</label>
-                    <input
-                        className={inputCls}
-                        value={FIO}
-                        onChange={(e) => setFIO(e.target.value)}
-                    />
-                </div>
-            </div>
-
-            {/* === Ряд 2: Тип отправки, индекс, город, адрес === */}
-            <div className="flex flex-col md:flex-row gap-[10px] mt-4 md:px-5">
-
-                {/* Тип отправки — flex 3 */}
-                <div className="relative md:mr-[8vw] w-[90%] md:w-auto mx-auto md:mx-0 md:flex-[3]">
-                    <label className={labelCls}>Тип отправки:</label>
-                    <select
-                        className="text-[0.9rem] px-2 py-2 border-0 border-b-[1.5px] border-[#2C3531]
-                                text-center min-w-[200px] w-full h-[35px] outline-none
-                                transition-colors
-                                appearance-none bg-white text-black
-                                shadow-[0_3px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.24)]"
-                        value={typePost}
-                        onChange={(e) => setTypePost(e.target.value)}
-                    >
-                        <option value={'E1'}>Европочта(оплата ЕРИП) ~ {calcDelivery('E1')}р</option>
-                        <option value={'E'}>Европочта(наложенный) ~ {calcDelivery('E')}р</option>
-                        {!isHolst() && <option value={'R1'}>Письмо(оплата ЕРИП) ~ {calcDelivery('R1')}р</option>}
-                        {isHolst() && <option value={'R2'}>Белпочта(оплата ЕРИП) ~ {calcDelivery('R1')}р</option>}
-                        <option value={'R'}>Белпочта(наложенный) ~ {calcDelivery('R')}р</option>
-                    </select>
-                    <span className="absolute right-[10px] top-1/2 -translate-y-1/2 pointer-events-none">▼</span>
-                </div>
-
-                {/* Индекс — flex 1, показывается условно */}
-                {(typePost === 'R' || typePost === 'R1') && (
-                    <div className="flex-1 relative">
-                        <label className={labelCls}>Индекс:</label>
+                {/* ===== Левая колонка: ФИО + телефон ===== */}
+                <div className="flex flex-col gap-2 lg:gap-3">
+                    <div>
+                        <label className={labelCls}>
+                            ФИО 
+                        </label>
                         <input
                             className={inputCls}
-                            value={postCode}
-                            onChange={(e) => setPostCode(e.target.value)}
+                            value={FIO}
+                            onChange={(e) => setFIO(e.target.value)}
+                            placeholder="ФИО"
                         />
                     </div>
-                )}
 
-                {/* Город — flex 2 */}
-                <div className="md:flex-[2] relative">
-                    <label className={labelCls}>Город:</label>
-                    <input
-                        className={inputCls}
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                    />
+                    <div>
+                        <label className={labelCls}>Телефон</label>
+                        <InputMask
+                            value={phone}
+                            mask="+375 (99) 999-99-99"
+                            maskChar=""
+                            autoComplete="tel"
+                            inputMode="tel"
+                            className={`${inputCls} ${isValid ? 'border-red-400 focus:border-red-400 focus:ring-red-100' : ''}`}
+                            onChange={(e) => setPhone(e.target.value)}
+                            onBlur={(e) => setPhone(e.target.value)}
+                        />
+                    </div>
                 </div>
 
-                {/* Адрес — flex 5 */}
-                <div className="md:flex-[5] relative">
-                    <label className={labelCls}>
-                        {(typePost === 'R' || typePost === 'R1')
-                            ? 'Улица, дом, квартира:'
-                            : 'Номер отделения либо его адрес:'}
-                    </label>
-                    <input
-                        className={inputCls}
-                        value={adress}
-                        onChange={(e) => setAdress(e.target.value)}
-                    />
+                {/* ===== Правая колонка: способ + адрес ===== */}
+                <div className="flex flex-col gap-2 lg:gap-3">
+                    <div>
+                        <label className={labelCls}>Тип отправки (оплаты)</label>
+                        <div className="relative">
+                            <select
+                                className={selectCls}
+                                value={typePost}
+                                onChange={(e) => setTypePost(e.target.value)}
+                            >
+                                <option value="E1">Европочта (ЕРИП) ~ {calcDelivery('E1')} р</option>
+                                <option value="E">Европочта (наложенный) ~ {calcDelivery('E')} р</option>
+                                {!isHolst() && <option value="R1">Письмо (ЕРИП) ~ {calcDelivery('R1')} р</option>}
+                                {isHolst() && <option value="R2">Белпочта (ЕРИП) ~ {calcDelivery('R1')} р</option>}
+                                <option value="R">Белпочта (наложенный) ~ {calcDelivery('R')} р</option>
+                            </select>
+                            <i className="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    {/* ===== Адрес ===== */}
+                    {isPost ? (
+                        <div className="grid grid-cols-[0.8fr_1.2fr] gap-2 lg:gap-3">
+                            <div>
+                                <label className={labelCls}>Индекс</label>
+                                <input
+                                    className={inputCls}
+                                    value={postCode}
+                                    onChange={(e) => setPostCode(e.target.value)}
+                                    placeholder="220000"
+                                    inputMode="numeric"
+                                />
+                            </div>
+                            <div>
+                                <label className={labelCls}>Город</label>
+                                <input
+                                    className={inputCls}
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    placeholder="Город"
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <label className={labelCls}>Город</label>
+                            <input
+                                className={inputCls}
+                                value={city}
+                                onChange={(e) => setCity(e.target.value)}
+                                placeholder="Город"
+                            />
+                        </div>
+                    )}
+
+                    <div>
+                        <label className={labelCls}>
+                            {isPost ? 'Улица, дом, квартира' : 'Отделение или его адрес'}
+                        </label>
+                        <input
+                            className={inputCls}
+                            value={adress}
+                            onChange={(e) => setAdress(e.target.value)}
+                            placeholder={isPost ? 'Улица, дом, квартира' : 'Номер отделения или адрес'}
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* === Ряд 3: Примечания === */}
-            <div className="flex flex-col md:flex-row gap-[10px] mt-12 md:px-5">
-                <div className="flex-1 relative">
-                    <label className={labelCls}>Примечания:</label>
-                    <textarea
-                        className="text-[1rem] px-2 py-2 border-0 border-b-[1.5px] border-[#2C3531]
-                                rounded-[3px] w-full md:w-1/2 outline-none
-                                transition-colors
-                                shadow-[0_3px_3px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.24)]"
-                        rows={2}
-                        value={other}
-                        onChange={(e) => setOther(e.target.value)}
-                    ></textarea>
-                </div>
+            {/* ===== Примечание ===== */}
+            <div className="mt-8 pt-4 border-t border-teal-800">
+                <label className={labelCls}>
+                    Примечание <span className="font-normal text-slate-300">· необязательно</span>
+                </label>
+                <textarea
+                    className="w-full min-h-[104px] md:min-h-[64px] resize-y rounded-lg border border-slate-200 bg-white
+                            px-3 py-2 text-[16px] md:text-[13px] font-normal text-slate-800
+                            outline-none placeholder:text-slate-300
+                            focus:border-[#19766d] focus:ring-2 focus:ring-[#19766d]/10 transition"
+                    rows={4}
+                    value={other}
+                    onChange={(e) => setOther(e.target.value)}
+                    placeholder="Дополнительная информация к заказу"
+                />
             </div>
         </div>
     );

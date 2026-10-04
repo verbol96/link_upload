@@ -94,14 +94,24 @@ const File = sequelize.define('file', {
     isDownload:{type: DataTypes.BOOLEAN, defaultValue: false}
 })
 
-const LogUser = sequelize.define('logUser', {
-  id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
-  phone: {type: DataTypes.STRING, defaultValue: '0'},
-  device:{type: DataTypes.STRING},
-  browser:{type: DataTypes.STRING},
-  OS:{type: DataTypes.STRING},
-  screen:{type: DataTypes.STRING}
-})
+const LogUser = sequelize.define('logUser',{
+    id:{type:DataTypes.UUID,primaryKey:true,defaultValue:UUIDV4},
+    phone:{type:DataTypes.STRING,defaultValue:'0'},
+    surname:{type:DataTypes.STRING,allowNull:true},
+    sessionId:{type:DataTypes.UUID,allowNull:true},
+    event:{type:DataTypes.STRING,defaultValue:'visit'},
+    eventType:{type:DataTypes.STRING,defaultValue:'info'},
+    page:{type:DataTypes.STRING,allowNull:true},
+    orderId:{type:DataTypes.STRING,allowNull:true},
+    photosCount:{type:DataTypes.INTEGER,allowNull:true},
+    format:{type:DataTypes.STRING,allowNull:true},
+    error:{type:DataTypes.TEXT,allowNull:true},
+    appVersion:{type:DataTypes.STRING,allowNull:true},
+    device:{type:DataTypes.STRING},
+    browser:{type:DataTypes.STRING},
+    OS:{type:DataTypes.STRING},
+    screen:{type:DataTypes.STRING}
+});
 
 const Expense = sequelize.define('expense', {
     id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },

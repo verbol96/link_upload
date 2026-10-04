@@ -177,17 +177,61 @@ class fileController {
         }
     }
 
-async downloadFile(req, res) {
-    try {
-        const file = await File.findOne({ where: { id: req.query.id } });
-        const path = `${process.env.FILEPATH}/${file.path}/${file.name}`;
+    async downloadFile(req, res) {
+        try {
+            const file = await File.findOne({ where: { id: req.query.id } });
 
-        if (file.type === 'dir') {
+            if (!file) {
+                return res.status(404).json({ message: 'файл не найден' });
+            }
+
             const maxSize = Number(req.query.maxSize) || 2 * 1024 * 1024 * 1024;
             const partNumber = Number(req.query.part) || 1;
 
+            // ================================================================
+            // === ОДИНОЧНЫЙ ФАЙЛ — ОТДАЁМ КАК ЕСТЬ, БЕЗ ZIP ===
+            // ================================================================
+            if (file.type !== 'dir') {
+                const fullPath = `${process.env.FILEPATH}/${file.path}/${file.name}`;
+
+                if (!fs.existsSync(fullPath)) {
+                    return res.status(404).json({ message: 'файл не найден на диске' });
+                }
+
+                await File.update({ isDownload: true }, { where: { id: file.id } });
+
+                const stat = fs.statSync(fullPath);
+
+                res.setHeader('Content-Length', stat.size);
+                res.setHeader(
+                    'Content-Disposition',
+                    `attachment; filename="${encodeURIComponent(file.name)}"`
+                );
+                res.setHeader('Cache-Control', 'no-cache');
+
+                const stream = fs.createReadStream(fullPath, {
+                    highWaterMark: 64 * 1024,
+                });
+
+                stream.on('error', (err) => {
+                    console.error('Ошибка стрима:', err);
+                    if (!res.headersSent) {
+                        res.status(500).json({ message: 'ошибка чтения файла' });
+                    } else {
+                        res.end();
+                    }
+                });
+
+                stream.pipe(res);
+                return;
+            }
+
+            // ================================================================
+            // === ПАПКА — СОБИРАЕМ ZIP ===
+            // ================================================================
+
             // Собираем все файлы рекурсивно
-            const allFiles = [];
+            const filesToZip = [];
             const collectFiles = async (parentId, relativePath) => {
                 const children = await File.findAll({ where: { parent: parentId } });
                 for (const child of children) {
@@ -197,10 +241,10 @@ async downloadFile(req, res) {
                             : child.name;
                         await collectFiles(child.id, newPath);
                     } else {
-                        allFiles.push({
+                        filesToZip.push({
                             name: child.name,
                             path: child.path,
-                            size: Number(child.size),
+                            size: Number(child.size) || 0,
                             relativePath,
                         });
                     }
@@ -208,10 +252,15 @@ async downloadFile(req, res) {
             };
             await collectFiles(file.id, '');
 
+            if (filesToZip.length === 0) {
+                return res.status(400).json({ message: 'нет файлов для скачивания' });
+            }
+
             // Делим на части по весу
             const parts = [];
             let currentPart = { sizeBytes: 0, files: [] };
-            for (const f of allFiles) {
+
+            for (const f of filesToZip) {
                 if (
                     currentPart.sizeBytes + f.size > maxSize &&
                     currentPart.files.length > 0
@@ -230,10 +279,17 @@ async downloadFile(req, res) {
                 return res.status(400).json({ message: 'часть не найдена' });
             }
 
-            // Собираем ZIP только для этой части
+            // === СОБИРАЕМ ZIP ===
             const zip = new JSZip();
+
             for (const f of targetPart.files) {
                 const fullPath = `${process.env.FILEPATH}/${f.path}/${f.name}`;
+
+                if (!fs.existsSync(fullPath)) {
+                    console.warn(`Файл не найден на диске: ${fullPath}`);
+                    continue;
+                }
+
                 const buffer = fs.readFileSync(fullPath);
 
                 if (f.relativePath) {
@@ -251,21 +307,18 @@ async downloadFile(req, res) {
             const downloadPath = `${process.env.FILEPATH}/download_${file.id}_part${partNumber}.zip`;
             fs.writeFileSync(downloadPath, content);
 
-            // === СТРИМИМ ЧАНКАМИ ПО 64 КБ ===
             const stat = fs.statSync(downloadPath);
 
             res.setHeader('Content-Length', stat.size);
             res.setHeader('Content-Type', 'application/zip');
+            res.setHeader('Cache-Control', 'no-cache');
             res.setHeader(
                 'Content-Disposition',
                 `attachment; filename="${encodeURIComponent(file.name)}_part${partNumber}.zip"`
             );
 
-            // Важно: явно отключаем сжатие и буферизацию
-            res.setHeader('Cache-Control', 'no-cache');
-
             const stream = fs.createReadStream(downloadPath, {
-                highWaterMark: 64 * 1024, // 64 КБ — размер чанка
+                highWaterMark: 64 * 1024,
             });
 
             stream.on('error', (err) => {
@@ -277,67 +330,74 @@ async downloadFile(req, res) {
                 }
             });
 
+            stream.on('close', () => {
+                fs.unlink(downloadPath, (err) => {
+                    if (err) console.error('Не удалить временный zip:', err);
+                });
+            });
+
             stream.pipe(res);
             return;
-        } else {
-            return res.download(path);
+        } catch (error) {
+            console.error('downloadFile error:', error);
+            return res.status(400).json({ message: 'ошибка скачивания' });
         }
-    } catch (error) {
-        console.error(error);
-        return res.status(400).json({ message: 'ошибка скачивания' });
     }
-}
 
     async getDownloadParts(req, res) {
         try {
             const file = await File.findOne({ where: { id: req.query.id } });
-            const maxSize = Number(req.query.maxSize) || 2 * 1024 * 1024 * 1024; // 2 ГБ по умолчанию
 
-            // Рекурсивно собираем все файлы с полными путями
-            const allFiles = [];
-            const collectFiles = async (parentId, relativePath) => {
-                const children = await File.findAll({ where: { parent: parentId } });
-                for (const child of children) {
-                    if (child.type === 'dir') {
-                        await collectFiles(child.id, `${relativePath}/${child.name}`);
-                    } else {
-                        allFiles.push({
-                            id: child.id,
-                            name: child.name,
-                            path: child.path,
-                            size: Number(child.size),
-                            relativePath,
-                        });
-                    }
-                }
-            };
-            await collectFiles(file.id, '');
-
-            // Делим на части по весу
-            const parts = [];
-            let currentPart = { sizeBytes: 0, files: [] };
-
-            for (const f of allFiles) {
-                if (currentPart.sizeBytes + f.size > maxSize && currentPart.files.length > 0) {
-                    parts.push(currentPart);
-                    currentPart = { sizeBytes: 0, files: [] };
-                }
-                currentPart.files.push(f);
-                currentPart.sizeBytes += f.size;
+            if (!file) {
+                return res.status(404).json({ message: 'файл не найден' });
             }
-            if (currentPart.files.length > 0) parts.push(currentPart);
 
-            // Возвращаем структуру без самих файлов (только метаданные)
-            return res.json({
-                totalParts: parts.length,
-                parts: parts.map((p, i) => ({
-                    part: i + 1,
-                    sizeBytes: p.sizeBytes,
-                    fileCount: p.files.length,
-                })),
-            });
+            const maxSize = Number(req.query.maxSize) || 2 * 1024 * 1024 * 1024;
+
+            // === ПАПКА: считаем части по содержимому ===
+            if (file.type === 'dir') {
+                const allFiles = [];
+
+                const collectFiles = async (parentId) => {
+                    const children = await File.findAll({ where: { parent: parentId } });
+                    for (const child of children) {
+                        if (child.type === 'dir') {
+                            await collectFiles(child.id);
+                        } else {
+                            allFiles.push({
+                                size: Number(child.size) || 0,
+                            });
+                        }
+                    }
+                };
+
+                await collectFiles(file.id);
+
+                if (allFiles.length === 0) {
+                    return res.json({ totalParts: 0 });
+                }
+
+                let totalParts = 0;
+                let currentSize = 0;
+
+                for (const f of allFiles) {
+                    if (currentSize + f.size > maxSize && currentSize > 0) {
+                        totalParts += 1;
+                        currentSize = 0;
+                    }
+                    currentSize += f.size;
+                }
+
+                if (currentSize > 0) totalParts += 1;
+
+                return res.json({ totalParts });
+            }
+
+            // === ОДИНОЧНЫЙ ФАЙЛ: всегда одна часть ===
+            return res.json({ totalParts: 1 });
         } catch (error) {
-            return res.status(400).json({ message: 'ошибка' });
+            console.error('getDownloadParts error:', error);
+            return res.status(500).json({ message: 'ошибка при подсчёте частей' });
         }
     }
 

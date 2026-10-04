@@ -26,9 +26,9 @@ import {
     Legend,
 } from 'recharts';
 
-// ============ БЫСТРЫЕ ПЕРИОДЫ (длительность от выбранной даты начала) ============
+// ============ БЫСТРЫЕ ПЕРИОДЫ ============
 const PERIODS = [
-    { value: '1',   label: 'Месяц',     short: 'Мес.',  months: 1 },
+    { value: '1',   label: 'Месяц',     short: 'Мес.',   months: 1 },
     { value: '3',   label: '3 мес.',    short: '3 мес.', months: 3 },
     { value: '6',   label: '6 мес.',    short: '6 мес.', months: 6 },
     { value: '12',  label: 'Год',       short: 'Год',    months: 12 },
@@ -103,7 +103,6 @@ const formatDateShort = (iso) => {
     return `${day}.${month}`;
 };
 
-// Сумма без копеек, если они равны .00
 const formatMoney = (num) => {
     const n = Number(num) || 0;
     const hasCents = Math.round(n * 100) % 100 !== 0;
@@ -127,8 +126,6 @@ const ExpensesSkeleton = () => (
     </div>
 );
 
-
-
 // ============ ГРАФИК 1: ПО КАТЕГОРИЯМ (СТОЛБЦЫ) ============
 const CategoryChart = ({ expenses, compact = false, hideHeader = false }) => {
     const dataByCategory = {};
@@ -148,7 +145,6 @@ const CategoryChart = ({ expenses, compact = false, hideHeader = false }) => {
         })
         .sort((a, b) => b.value - a.value);
 
-    // На мобилке — топ-5 + Прочее
     if (compact && chartData.length > 5) {
         const top = chartData.slice(0, 5);
         const rest = chartData.slice(5);
@@ -661,6 +657,39 @@ const SortDropdown = ({ value, onChange, disabled }) => {
     );
 };
 
+// ============ ОБЩАЯ КНОПКА «ПОКАЗАТЬ ЕЩЁ» ============
+const ShowMoreButton = ({ onClick, hasMore, total, visible }) => {
+    if (!hasMore) {
+        if (total > 10) {
+            return (
+                <div className="text-center text-[11.5px] text-stone-400 py-3">
+                    Показаны все {total}
+                </div>
+            );
+        }
+        return null;
+    }
+
+    return (
+        <div className="text-center py-3">
+            <button
+                onClick={onClick}
+                className="inline-flex items-center gap-2 px-5 py-2.5
+                        bg-white border border-stone-200 rounded-lg
+                        text-[13px] font-medium text-stone-700
+                        hover:bg-stone-50 hover:border-stone-300
+                        transition-colors"
+            >
+                <i className="bi bi-arrow-down-circle" />
+                Показать ещё 10
+            </button>
+            <div className="text-[11px] text-stone-400 mt-2 tabular-nums">
+                {visible} из {total}
+            </div>
+        </div>
+    );
+};
+
 // ============ ОСНОВНАЯ СТРАНИЦА ============
 const Expenses = () => {
     const [expenses, setExpenses] = useState([]);
@@ -685,6 +714,10 @@ const Expenses = () => {
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [editingExpense, setEditingExpense] = useState(null);
 
+    // ====== ПАГИНАЦИЯ ======
+    const PAGE_SIZE = 10;
+    const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
     // ====== ПАРАМЕТРЫ ЗАПРОСА ======
     const buildParams = () => {
         const params = {};
@@ -697,7 +730,10 @@ const Expenses = () => {
     // ====== ПЕРЕЗАГРУЗКА ======
     const reloadExpenses = () => {
         $host.get('/api/expense/getAll', { params: buildParams() })
-            .then(({ data }) => setExpenses(data))
+            .then(({ data }) => {
+                setExpenses(data);
+                setVisibleCount(PAGE_SIZE);
+            })
             .catch(err => {
                 console.error('Ошибка перезагрузки:', err);
             });
@@ -706,6 +742,7 @@ const Expenses = () => {
     // ====== ЗАГРУЗКА ======
     useEffect(() => {
         setLoading(true);
+        setVisibleCount(PAGE_SIZE);
 
         $host.get('/api/expense/getAll', { params: buildParams() })
             .then(({ data }) => setExpenses(data))
@@ -792,6 +829,14 @@ const Expenses = () => {
 
     const hasData = !loading && filteredExpenses.length > 0;
 
+    // ====== СРЕЗ ДЛЯ ПОКАЗА ======
+    const visibleExpenses = sortedExpenses.slice(0, visibleCount);
+
+    // ====== СБРОС ПАГИНАЦИИ ПРИ СМЕНЕ ФИЛЬТРОВ ======
+    useEffect(() => {
+        setVisibleCount(PAGE_SIZE);
+    }, [groupFilter, sortBy]);
+
     return (
         <div className="flex flex-col min-h-screen bg-stone-100">
 
@@ -812,7 +857,6 @@ const Expenses = () => {
                         )}
                     </div>
 
-                    {/* Кнопка «Добавить» — только на десктопе */}
                     <button
                         onClick={() => setAddModalOpen(true)}
                         className="hidden md:inline-flex items-center gap-2 px-4 py-2.5
@@ -826,15 +870,13 @@ const Expenses = () => {
                 </div>
 
                 {/* ============ ПАНЕЛЬ ФИЛЬТРОВ + ТОТАЛ ============ */}
-                {/* Десктоп: 2 колонки в одной строке. Мобилка: фильтры одной строкой, тотал отдельно */}
-                {/* ============ ПАНЕЛЬ ФИЛЬТРОВ + ТОТАЛ ============ */}
                 <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 md:items-stretch mb-3 md:mb-4">
 
                     {/* --- ПАНЕЛЬ ФИЛЬТРОВ --- */}
                     <div className="bg-white border border-stone-200 rounded-xl p-2.5 md:p-4
                                     h-full flex flex-col justify-center">
 
-                        {/* Мобилка: одна строка */}
+                        {/* Мобилка */}
                         <div className="md:hidden flex items-center gap-1.5">
                             <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-400 shrink-0">
                                 С
@@ -918,7 +960,7 @@ const Expenses = () => {
                             </div>
                         </div>
 
-                        {/* Десктоп: две строки */}
+                        {/* Десктоп */}
                         <div className="hidden md:block">
                             <div className="flex items-center gap-2 mb-3">
                                 <div className="text-[11px] uppercase tracking-wider font-semibold text-stone-400 w-12 shrink-0">
@@ -1044,7 +1086,6 @@ const Expenses = () => {
                 {/* ============ ФИЛЬТР ГРУППЫ + СОРТИРОВКА ============ */}
                 {hasData && (
                     <div className="flex items-center gap-2 mb-3 md:mb-4">
-                        {/* Сегмент-кнопки с иконками */}
                         <div className="flex gap-1 bg-white border border-stone-200 rounded-lg p-1 flex-1 md:flex-none">
                             {GROUP_FILTERS.map(({ value, label, icon }) => {
                                 const active = groupFilter === value;
@@ -1070,7 +1111,6 @@ const Expenses = () => {
                             })}
                         </div>
 
-                        {/* Сортировка — иконка-кнопка */}
                         <div className="ml-auto">
                             <SortDropdown
                                 value={sortBy}
@@ -1084,7 +1124,6 @@ const Expenses = () => {
                 {/* ============ ГРАФИКИ ============ */}
                 {hasData && (
                     <>
-                        {/* Десктоп: 2 графика в строку */}
                         <div className="hidden md:grid md:grid-cols-2 gap-4 mb-4">
                             <div style={{ height: 320 }}>
                                 <CategoryChart expenses={filteredExpenses} />
@@ -1094,10 +1133,8 @@ const Expenses = () => {
                             </div>
                         </div>
 
-                        {/* Мобилка: карточка с переключателем внутри и без дублирования заголовка */}
                         <div className="md:hidden mb-3">
                             <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
-                                {/* Заголовок карточки с переключателем */}
                                 <div className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100">
                                     <span className="w-7 h-7 rounded-md bg-stone-100
                                                     flex items-center justify-center shrink-0">
@@ -1108,7 +1145,6 @@ const Expenses = () => {
                                         По категориям
                                     </div>
 
-                                    {/* Мини-табы */}
                                     <div className="ml-auto flex gap-1 bg-stone-100 rounded-md p-0.5">
                                         <button
                                             onClick={() => setMobileChart('bar')}
@@ -1137,7 +1173,6 @@ const Expenses = () => {
                                     </div>
                                 </div>
 
-                                {/* График без внутреннего заголовка */}
                                 <div style={{ height: 280 }}>
                                     {mobileChart === 'bar' && (
                                         <CategoryChart expenses={filteredExpenses} compact hideHeader />
@@ -1178,9 +1213,9 @@ const Expenses = () => {
                     </div>
                 ) : (
                     <>
-                        {/* Мобилка: карточки-строки */}
+                        {/* Мобилка: карточки */}
                         <div className="md:hidden flex flex-col gap-2">
-                            {sortedExpenses.map(expense => {
+                            {visibleExpenses.map(expense => {
                                 const cat = EXPENSE_CATEGORIES[expense.category];
                                 return (
                                     <div
@@ -1188,7 +1223,6 @@ const Expenses = () => {
                                         className="bg-white border border-stone-200 rounded-xl p-3
                                                 flex items-center gap-3"
                                     >
-                                        {/* Иконка категории */}
                                         <span
                                             className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
                                             style={{ backgroundColor: `${cat?.color || '#a8a29e'}20` }}
@@ -1199,7 +1233,6 @@ const Expenses = () => {
                                             />
                                         </span>
 
-                                        {/* Текст */}
                                         <div className="flex-1 min-w-0">
                                             <div className="text-[13.5px] font-medium text-stone-800
                                                             truncate leading-tight">
@@ -1217,7 +1250,6 @@ const Expenses = () => {
                                             </div>
                                         </div>
 
-                                        {/* Сумма + действия */}
                                         <div className="flex items-center gap-1 shrink-0">
                                             <div className="text-[14px] font-bold text-[#2C3531]
                                                             tabular-nums whitespace-nowrap mr-1">
@@ -1264,7 +1296,7 @@ const Expenses = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-stone-100">
-                                        {sortedExpenses.map(expense => {
+                                        {visibleExpenses.map(expense => {
                                             const cat = EXPENSE_CATEGORIES[expense.category];
 
                                             return (
@@ -1328,6 +1360,14 @@ const Expenses = () => {
                                 </table>
                             </div>
                         </div>
+
+                        {/* Кнопка «Показать ещё» */}
+                        <ShowMoreButton
+                            onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                            hasMore={visibleCount < sortedExpenses.length}
+                            total={sortedExpenses.length}
+                            visible={Math.min(visibleCount, sortedExpenses.length)}
+                        />
                     </>
                 )}
 

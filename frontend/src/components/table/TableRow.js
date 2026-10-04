@@ -1,6 +1,5 @@
 import { $host } from '../../http/index'
 import { updateOrderStatus } from '../../store/orderReducer';
-import './TableRow.css'
 import { useDispatch } from 'react-redux';
 import { DescRow } from './DescRow';
 import { CopyToClipboard } from 'react-copy-to-clipboard'
@@ -27,9 +26,9 @@ const getDateSentColor = (order) => {
     const sentTime = sentDate.getTime();
     const todayTime = today.getTime();
 
-    if (sentTime === todayTime) return '#956b16';   // жёлтый (yellow-600)
-    if (sentTime < todayTime) return '#dc2626';     // красный (red-600)
-    return 'darkgreen';                              // по умолчанию
+    if (sentTime === todayTime) return '#956b16';
+    if (sentTime < todayTime) return '#dc2626';
+    return 'darkgreen';
 };
 
 export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, setSelectedOrder,
@@ -51,39 +50,55 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
         event.stopPropagation();
     };
 
-    const Warning = () => {
-        let a = []
-        if (order.codeOutside) {
-            a.push(<i className="bi bi-qr-code" style={{ marginLeft: 5 }}> </i>)
-        }
-        if (order.typePost === "R2") {
-            a.push(<i className="bi bi-1-square-fill pr-1" style={{ color: 'red', marginLeft: 5 }}> </i>)
-        }
-        if (order.typePost === "R1") {
-            a.push(<i className="bi bi-1-square-fill pr-1" style={{ color: 'red', marginLeft: 5 }}> </i>)
-        }
-        if (order.typePost === "E1") {
-            a.push(<i className="bi bi-currency-dollar" style={{ color: 'red', marginLeft: 5 }}> </i>)
-        }
-        if (order.notes) {
-            a.push(<i className="bi bi-exclamation-square-fill" style={{ color: 'orange', marginLeft: 5 }}> </i>)
-        }
-        if (order.other) {
-            a.push(<i className="bi bi-exclamation-square-fill" style={{ color: 'yellowgreen', marginLeft: 5 }}> </i>)
-        }
+    const PaymentWarning = () => {
+        const isErip = ['E1', 'R1', 'R2'].includes(order.typePost);
 
-        return a.map((el, index) => <span key={index}>{el} </span>)
+        if (!isErip) return null;
+
+        const paymentClass = {
+            none: 'bg-white border-red-300',
+            wait: 'bg-red-200 border-red-300',
+            paid: 'bg-green-200 border-green-300'
+        };
+
+        const paymentTitle = {
+            none: 'ЕРИП не выставлен',
+            wait: 'Ожидает оплаты',
+            paid: 'Оплачен'
+        };
+
+        return (
+            <span
+                className={`inline-flex w-[15px] h-[15px] items-center justify-center rounded-[3px] border-[1.5px] ${paymentClass[order.isPayment] || paymentClass.none}`}
+                title={paymentTitle[order.isPayment] || paymentTitle.none}
+            >
+                <i className="bi bi-currency-dollar text-gray-700 text-[10px] leading-none"/>
+            </span>
+        )
+    }
+
+    const NotesWarning = () => {
+        if (!order.notes && !order.other) return null;
+
+        return (
+            <span
+                className="inline-flex w-[15px] h-[15px] items-center justify-center"
+                title="Есть заметки или примечания"
+            >
+                <i className="bi bi-exclamation-square-fill text-amber-300 text-[15px] leading-none"/>
+            </span>
+        )
     }
 
     const ColorBG = [
-        '#97d0d6',// принят -1
-        '#D8BFD8',//обработан -2
-        '#FDFD96',// в печати -3
-        '#98FF98',// упакован -4
-        'DarkGrey',// отправлено -5
-        'white',// оплачено -6
-        'rgb(243, 243, 243)',// в ожидании -7
-        'rgb(243, 243, 243)'// ошибка -8
+        '#97d0d6',
+        '#D8BFD8',
+        '#FDFD96',
+        '#98FF98',
+        'DarkGrey',
+        'white',
+        'rgb(243, 243, 243)',
+        'rgb(243, 243, 243)'
     ]
 
     const ChangeStatus = (event) => {
@@ -107,13 +122,13 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
     }
 
     const ShowOrigin = () => {
-            switch (order.origin) {
-                case 'telegram': return <i style={{ color: 'darkgreen' }} className="bi bi-send"></i>
-                case 'website': return <i style={{ color: 'darkgreen' }} className="bi bi-lightning-fill"></i>
-                case 'email': return <i style={{ color: 'darkgreen' }} className="bi bi-envelope"></i>
-                default: return <i style={{ color: 'darkgreen' }} className="bi bi-send"></i>
-            }
+        switch (order.origin) {
+            case 'telegram': return <i style={{ color: 'darkgreen' }} className="bi bi-send"></i>
+            case 'website': return <i style={{ color: 'darkgreen' }} className="bi bi-lightning-fill"></i>
+            case 'email': return <i style={{ color: 'darkgreen' }} className="bi bi-envelope"></i>
+            default: return <i style={{ color: 'darkgreen' }} className="bi bi-send"></i>
         }
+    }
 
     const textColor = useMemo(() => {
         const ACTIVE_STATUSES = [0, 1, 2, 3, 4, 7, 8];
@@ -122,42 +137,81 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
         return count > 1 ? 'blue' : 'black';
     }, [orders, order.phone]);
 
-    return (
+    const isSelected = selectedOrder === order.id;
 
+    return (
         <div
             style={{
                 ...(order.id === collapsedOrderId ? { backgroundColor: '#c5dce0' } : {}),
-                ...((order.status === 7 || order.status === 8) && order.id !== selectedOrder
+                ...((order.status === 7 || order.status === 8) && !isSelected
                     ? { opacity: 0.3 }
                     : {})
             }}
-            className={`order_card_t${selectedOrder === order.id ? ' order_card_t_expanded' : ''}`}
-            onClick={(e) => handleClick(e)}
+            className={`w-full max-md:w-[600px] inline-block rounded-[5px] text-[15px] my-[3px] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] hover:bg-[#f0f0f0] ${isSelected ? 'border-[3px] border-[#6f969d] shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] my-[15px]' : 'border-0'}`}
+            onClick={handleClick}
         >
             <div
                 style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
-                onDoubleClick={() => { handleDetailsClick(order.id) }}
-                className={`order_card_main_t${selectedOrder === order.id ? ' order_card_main_t_expanded' : ''}`}>
-                <div className='col_origin'  onClick={() => handleDetailsClick(order.id)} >
+                onDoubleClick={() => handleDetailsClick(order.id)}
+                className={`grid grid-cols-[40px_120px_70px_minmax(120px,4fr)_minmax(150px,4fr)_minmax(100px,3fr)_minmax(150px,6fr)_28px_80px_28px_90px] max-md:grid-cols-[20px_90px_55px_150px_28px_80px_28px_50px] items-center px-[3px] pl-[10px] py-[3px] min-w-0 ${isSelected ? 'bg-[#6f969d]' : ''}`}
+            >
+                <div
+                    onClick={() => handleDetailsClick(order.id)}
+                    className="text-[12px] px-[5px] flex items-center justify-center max-md:px-[2px]"
+                >
                     {ShowOrigin()}
                 </div>
-                <div className='col_data'> {ShowData()}</div>
+
+                <div className="text-[12px] px-[10px] whitespace-nowrap max-md:px-[2px] max-md:text-center">
+                    {ShowData()}
+                </div>
+
                 <CopyToClipboard text={`${order.typePost?.[0] || ''}${order.order_number % 1000} ${order?.user?.FIO?.split(' ')?.[0] || ''}`.trim()}>
-                    <div className='col_number' style={{ color: getDateSentColor(order), fontWeight: 'bold', minWidth: 60 }}>
+                    <div
+                        className="text-[12px] font-bold px-[10px] whitespace-nowrap cursor-pointer max-md:px-[2px] max-md:text-center"
+                        style={{ color: getDateSentColor(order) }}
+                    >
                         {order.typePost.split('')[0] + (order.order_number % 1000)}
                     </div>
                 </CopyToClipboard>
-                <div className='col_fio overflow NoMobile' >
+
+                <div className="text-[12px] px-[10px] whitespace-nowrap overflow-hidden text-ellipsis max-md:hidden">
                     {order?.user?.FIO}
                 </div>
-                <div className='col_phone NoMobile' style={{ color: textColor }}>
+
+                <div
+                    className="text-[12px] px-[10px] text-center whitespace-nowrap max-md:hidden"
+                    style={{ color: textColor }}
+                >
                     {formatPhoneNumber(order.phone)}
                 </div>
-                <div className='col_city overflow NoMobile'>{order.city}</div>
-                <div className='col_photo overflow '>{photo()}</div>
-                <div className='col_warn'>{Warning()}</div>
-                <div className='col_price' >{(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р</div>
-                <select className="select_col" style={{ backgroundColor: ColorBG[order.status - 1] }} value={order.status} onChange={(e) => ChangeStatus(e)} >
+
+                <div className="text-[12px] px-[10px] text-center whitespace-nowrap overflow-hidden text-ellipsis max-md:hidden">
+                    {order.city}
+                </div>
+
+                <div className="text-[12px] px-[10px] text-center whitespace-nowrap overflow-hidden text-ellipsis max-md:px-[2px]">
+                    {photo()}
+                </div>
+
+                <div className="h-[24px] flex items-center justify-center">
+                    <NotesWarning/>
+                </div>
+
+                <div className="text-[12px] px-[6px] text-center whitespace-nowrap tabular-nums">
+                    {(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р
+                </div>
+
+                <div className="h-[24px] flex items-center justify-center mr-4">
+                    <PaymentWarning/>
+                </div>
+
+                <select
+                    className="h-[24px] text-[13px] border border-[#298390] px-[10px] appearance-none outline-none max-md:w-[50px] max-md:px-[2px]"
+                    style={{ backgroundColor: ColorBG[order.status - 1] }}
+                    value={order.status}
+                    onChange={ChangeStatus}
+                >
                     <option value="0">новый</option>
                     <option value="1">принят</option>
                     <option value="2">обработан</option>
@@ -169,21 +223,18 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
                     <option value="8">ошибка</option>
                 </select>
             </div>
-            {
-                selectedOrder === order.id
-                    ?
-                    <DescRow
-                        key={`${order.id}-${order.status}`}
-                        orders={orders}
-                        order={order}
-                        setSelectedOrder={setSelectedOrder}
-                        handleDetailsClick={handleDetailsClick}
-                        isChanged={isChanged}
-                        setIsChanged={setIsChanged}
-                    />
-                    : null
-            }
-        </div>
 
+            {isSelected && (
+                <DescRow
+                    key={`${order.id}-${order.status}`}
+                    orders={orders}
+                    order={order}
+                    setSelectedOrder={setSelectedOrder}
+                    handleDetailsClick={handleDetailsClick}
+                    isChanged={isChanged}
+                    setIsChanged={setIsChanged}
+                />
+            )}
+        </div>
     )
 }

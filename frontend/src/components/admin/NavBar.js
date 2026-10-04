@@ -1,84 +1,61 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../http/authApi';
+import { useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { LeftMenu } from './LeftMenu';
-import { setUser } from '../../store/privatePageReducer';
+import { getSectionTitle } from '../../routes/access';
 
 export const NavBar = () => {
-    const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
 
-    const user = useSelector(state => state.private.user);
-    const isAuth = useSelector(state => state.auth.auth);
+    const openMenu = () => dispatch({ type: 'showLeftMenu' });
 
-    const Logout = async () => {
-        if (window.confirm("Вы уверены, что хотите выйти?")) {
-            dispatch({ type: 'authStatus', paylods: false });
-            dispatch(setUser({ user: {}, order: {} }));
-            await logout();
-            navigate('/web');
-            localStorage.removeItem('token');
-        }
-    };
-
-    // Стиль кнопок меню — точно как на скрине
-    const labelClass = `
-        cursor-pointer text-[15px] font-thin text-white/80
-        border-[0.5px] border-white/20
-        px-3 md:px-4 py-1
-        rounded-md
-        hover:bg-white/5
-        whitespace-nowrap
-    `;
+    // Название текущего раздела
+    const currentSection = getSectionTitle(location.pathname);
 
     return (
         <div className="w-full bg-teal-900 text-white">
-            <div className="px-2 ml-4 flex  h-14 md:flex items-center justify-between md:mx-12 md:h-14 md:px-6 ">
+            <div className="px-3 md:px-6 flex h-14 items-center justify-between
+                            md:mx-12 gap-3">
 
-                <div className="flex items-center gap-4">
-                    <LeftMenu />
-                    <div
-                        className="text-3xl font-thin text-white cursor-pointer select-none"
-                        onClick={isAuth && user.role === 'ADMIN' ? () => dispatch({ type: 'showLeftMenu' }) : null}
+                {/* ===== Левая часть: бургер + название раздела ===== */}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+
+                    {/* Бургер */}
+                    <button
+                        type="button"
+                        onClick={openMenu}
+                        className="w-10 h-10 rounded-lg shrink-0 flex items-center justify-center
+                                text-white/80 hover:text-white hover:bg-white/10
+                                active:bg-white/15
+                                border border-white/20
+                                focus:outline-none focus-visible:outline-none focus:ring-0
+                                transition-colors"
+                        aria-label="Меню"
                     >
-                        LINK
-                    </div>
-                </div>
+                        <i className="bi bi-list text-[22px]" />
+                    </button>
 
-                {/* Правая часть: пункты меню */}
-                <div className="flex items-center gap-3">
-                    {isAuth ? (
-                        <>
-                            {location.pathname === '/private' ? (
-                                <label className={labelClass} onClick={() => navigate('/web')}>
-                                    Форма заказа
-                                </label>
-                            ) : (
-                                <label className={labelClass} onClick={() => navigate('/private')}>
-                                    Личный кабинет
-                                </label>
-                            )}
-
-                            <label className={labelClass} onClick={Logout}>
-                                Выйти
-                            </label>
-                        </>
-                    ) : (
-                        <>
-                            {location.pathname === '/auth' ? (
-                                <label className={labelClass} onClick={() => navigate('/web')}>
-                                    Форма заказа
-                                </label>
-                            ) : (
-                                <label className={labelClass} onClick={() => navigate('/auth')}>
-                                    Личный кабинет
-                                </label>
-                            )}
-                        </>
+                    {/* Название текущего раздела */}
+                    {currentSection && (
+                        <div className="text-[15px] md:text-[20px] md:ml-10 font-thin
+                                        text-white/90 ">
+                            {currentSection}
+                        </div>
                     )}
                 </div>
+
+                {/* ===== Правая часть: логотип ===== */}
+                <div
+                    className="text-2xl md:text-3xl font-thin text-white
+                            cursor-pointer select-none shrink-0"
+                    onClick={openMenu}
+                >
+                    LINK
+                </div>
             </div>
+
+            {/* Само меню */}
+            <LeftMenu />
         </div>
     );
 };

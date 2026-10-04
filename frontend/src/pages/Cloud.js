@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ListCloud } from "../components/cloud/ListCloud"
 import { deleteFile, getFiles, getFilesAll } from '../http/cloudApi'
@@ -14,11 +14,13 @@ const Cloud = () => {
     const stack = useSelector(state => state.files.stack)
     const filesAll = useSelector(state => state.files.filesAll)
     const files = useSelector(state => state.files.files)
+    const [filesLoaded, setFilesLoaded] = useState(false)
 
     useEffect(() => {
         async function getFile() {
             let value = await getFiles(currentDir)
             dispatch(setFiles(value))
+            setFilesLoaded(true)
         }
         getFile()
     }, [currentDir, dispatch])
@@ -41,10 +43,10 @@ const Cloud = () => {
 
     const isDateOlderThan14Days = (dateString) => {
         const currentDate = new Date();
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(currentDate.getDate() - 14);
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(currentDate.getDate() - 14);
         const date = new Date(dateString);
-        return date < thirtyDaysAgo;
+        return date < fourteenDaysAgo;
     }
 
     const deleteFileClick = async (el) => {
@@ -53,24 +55,23 @@ const Cloud = () => {
     }
 
     useEffect(() => {
+        if (!filesLoaded) return;
+
         const ClearCloud = async () => {
-            if (files.length > 0) {
-                const oldFiles = files.filter(el => isDateOlderThan14Days(el.createdAt));
-                if (oldFiles.length > 0) {
-                    for (const el of oldFiles) {
-                        try {
-                            await deleteFileClick(el);
-                        } catch (error) {
-                            console.error(`Ошибка при удалении файла ${el.name}:`, error);
-                        }
-                    }
+            const oldFiles = files.filter(el => isDateOlderThan14Days(el.createdAt));
+
+            for (const el of oldFiles) {
+                try {
+                    await deleteFileClick(el);
+                } catch (error) {
+                    console.error(`Ошибка при удалении файла ${el.name}:`, error);
                 }
             }
         };
 
         ClearCloud();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [filesLoaded]);
 
     return (
         <div className="flex flex-col bg-white min-h-screen">

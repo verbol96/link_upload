@@ -1,7 +1,9 @@
 import Footer from "../components/admin/Footer"
 import InputMask from 'react-input-mask';
 import { useState } from "react";
-import { login, sendSms } from "../http/authApi";
+import { login, sendSms, setLogUserData } from "../http/authApi";
+import { getOneUser } from "../http/dbApi";
+import { setUser } from "../store/privatePageReducer";
 import { useDispatch } from 'react-redux';
 import { NavBar } from "../components/admin/NavBar";
 import { $host } from "../http";
@@ -26,10 +28,19 @@ export const Auth = () => {
             setTimeout(() => setIsValid1(false), 500)
             return;
         }
-        const data = await login(removeNonNumeric(phone));
 
-        if (typeof data === 'object') {
-            dispatch({ type: 'authStatus', paylods: true });
+        try {
+            const data = await login(removeNonNumeric(phone));
+
+            if (typeof data === 'object') {
+                dispatch({ type: 'authStatus', paylods: true });
+
+                const userData = await getOneUser(removeNonNumeric(phone));
+                dispatch(setUser(userData));
+                setLogUserData(userData.user);
+            }
+        } catch (error) {
+            console.error('Ошибка входа:', error);
         }
     };
 
@@ -143,7 +154,7 @@ export const Auth = () => {
                             </div>
                         )}
 
-                       {/* Основная кнопка + подпись */}
+                        {/* Основная кнопка + подпись */}
                         <div className="flex flex-col items-center gap-3">
                             <button
                                 onClick={() => isSend ? Auth() : SendSms()}

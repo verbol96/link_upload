@@ -1,10 +1,12 @@
 import axios from "axios"
 
-const $host = axios.create({
+//export const API_URL = `http://${window.location.hostname}:8002/`;
+export const API_URL = `https://link1.by:8002/`;
+
+export const $host = axios.create({
     withCredentials: true,
-    //baseURL: `http://${window.location.hostname}:8002/` //для local
-    baseURL: 'https://link1.by:8002/' // для server
-})
+    baseURL: API_URL,
+});
 
 $host.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
@@ -35,6 +37,3 @@ $host.interceptors.response.use(config =>
         throw error;
       }
 )
-
-
-export { $host }
