@@ -16,17 +16,7 @@ const sendTelegramMessage=async(text)=>{
             body:JSON.stringify({
                 chat_id:chatId,
                 text,
-                parse_mode:'HTML',
-                reply_markup:{
-                    inline_keyboard:[
-                        [
-                            {
-                                text:'Посмотреть',
-                                url:'https://link1.by/table'
-                            }
-                        ]
-                    ]
-                }
+                parse_mode:'HTML'
             })
         });
 
