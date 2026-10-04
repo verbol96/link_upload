@@ -7,8 +7,10 @@ const VALID_CATEGORIES = [
     // Производственные
     'photopaper', 'chemistry', 'water', 'ink', 'canvas',
     'plotter_paper', 'stretchers', 'photo_frames', 'packaging', 'other_materials',
+
     // Административные
-    'shipping', 'taxes', 'rent', 'ads', 'site', 'salary', 'equipment', 'other_expenses',
+    'shipping', 'taxes', 'rent', 'ads', 'site', 'salary',
+    'partnerPayments', 'equipment', 'household', 'other_expenses',
 ];
 
 // ============ ПРОИЗВОДСТВЕННЫЕ КАТЕГОРИИ ============
