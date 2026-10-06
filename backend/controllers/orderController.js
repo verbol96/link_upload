@@ -155,7 +155,7 @@ class orderController{
             });
 
             const telegramMessage=[
-                `✅ <b>Новый заказ №${order.order_number}</b>`,
+                `➕ <b>Новый заказ №${order.order_number}</b>`,
                 `👤 ${order.FIO||'—'}`,
                 ...productLines,
                 `💰 Итого: <b>${totalPrice} руб.</b>`
