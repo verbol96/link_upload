@@ -245,6 +245,46 @@ class authController {
             return res.status(500).json({message:'Ошибка удаления старых логов'});
         }
     }
+
+    async deleteLogSession(req,res){
+    try{
+        const{sessionId}=req.params;
+
+        if(!sessionId){
+            return res.status(400).json({message:'Не указан ID сессии'});
+        }
+
+        const deleted=await LogUser.destroy({
+            where:{
+                sessionId
+            }
+        });
+
+        return res.json({
+            status:'ok',
+            deleted
+        });
+    }catch(error){
+        console.error('deleteLogSession error:',error);
+        return res.status(500).json({message:'Ошибка удаления сессии'});
+    }
+}
+
+    async deleteAllLogs(req,res){
+        try{
+            const deleted=await LogUser.destroy({
+                where:{}
+            });
+
+            return res.json({
+                status:'ok',
+                deleted
+            });
+        }catch(error){
+            console.error('deleteAllLogs error:',error);
+            return res.status(500).json({message:'Ошибка очистки логов'});
+        }
+    }
     
     async clients(req, res) {
         const {

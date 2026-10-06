@@ -14,6 +14,7 @@ const AppRouter=()=>{
     const[userRole,setUserRole]=useState('');
     const[isUserDataLoaded,setUserDataLoaded]=useState(false);
     const initialPage=useRef(location.pathname);
+    const visitLogged=useRef(false);
 
     useEffect(()=>{
         const loadUser=async()=>{
@@ -29,6 +30,7 @@ const AppRouter=()=>{
                 }catch(err){
                     console.error('Ошибка загрузки пользователя:',err);
                     setUserRole('');
+                    setLogUserData(null);
                 }finally{
                     setUserDataLoaded(true);
                 }
@@ -43,6 +45,10 @@ const AppRouter=()=>{
     },[dispatch,isAuth]);
 
     useEffect(()=>{
+        if(!isUserDataLoaded||visitLogged.current)return;
+
+        visitLogged.current=true;
+
         setLogUser({
             event:'visit',
             eventType:'info',
@@ -50,9 +56,11 @@ const AppRouter=()=>{
         }).catch(error=>{
             console.error('setLogUser error:',error);
         });
-    },[]);
+    },[isUserDataLoaded]);
 
     useEffect(()=>{
+        if(!isUserDataLoaded||!visitLogged.current)return;
+
         if(location.pathname===initialPage.current){
             initialPage.current=null;
             return;
@@ -65,7 +73,7 @@ const AppRouter=()=>{
         }).catch(error=>{
             console.error('page_view log error:',error);
         });
-    },[location.pathname]);
+    },[location.pathname,isUserDataLoaded]);
 
     const allowedPaths=useMemo(()=>{
         if(!isAuth)return getPublicRoutes();

@@ -38,8 +38,8 @@ export const MENU_GROUPS = [
         items: [
             { label: 'Журнал расходов', path: '/expenses',  icon: 'bi-cash-stack' },
             { label: 'Статистика',      path: '/statistic', icon: 'bi-bar-chart' },
+           { label: 'Инструменты', path: '/tools', icon: 'bi-tools' },
             { label: 'Настройки',       path: '/setting',   icon: 'bi-gear' },
-            { label: 'Инструменты',       path: '/tools',   icon: 'bi-three-dots' },
             
         ],
     },

@@ -3,50 +3,56 @@ import Footer from "../components/admin/Footer";
 import OtherSettings from "../components/settings/OtherSettings";
 import { Pricing } from "../components/settings/Pricing";
 import { NavBar } from '../components/admin/NavBar';
+
+const SETTINGS=[
+    {id:"pricing",title:"Настройки цены",description:"Прайс и форматы",icon:"bi-tag"},
+    {id:"other",title:"Другие настройки",description:"Параметры системы",icon:"bi-sliders"}
+];
+
 const Setting=()=>{
-    const[activeTab,setActiveTab]=useState(0);
-    const tabs=[
-        {label:'Настройки цены',index:0,icon:'bi-tag',hint:'Прайс и форматы'},
-        {label:'Другие настройки',index:1,icon:'bi-sliders',hint:'Параметры системы'}
-    ];
+    const[activeTab,setActiveTab]=useState("pricing");
+    const[menuOpen,setMenuOpen]=useState(false);
+
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen bg-[#f3f6f5]">
             <NavBar />
-            <div className="flex-1 flex flex-col md:flex-row min-h-0">
-                <aside className="hidden md:flex w-[260px] shrink-0 flex-col bg-white border-r border-stone-200">
-                    <nav className="flex-1 px-3 flex flex-col gap-1 mt-10">
-                        {tabs.map(({label,index,icon,hint})=>{
-                            const active=activeTab===index;
-                            return (
-                                <button key={index} onClick={()=>setActiveTab(index)} className={`group relative flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${active?'bg-gray-400/50 text-gray-900':'text-stone-700 hover:bg-stone-100'}`}>
-                                    <span className={`shrink-0 w-8 h-8 rounded-md flex items-center justify-center mt-0.5 transition-colors ${active?'bg-gray-400':'text-black hover:bg-stone-100'}`}><i className={`bi ${icon} text-[14px] ${active?'text-gray-100':'text-gray-800'}`}/></span>
-                                    <div className="flex-1 min-w-0">
-                                        <div className={`text-[13.5px] font-medium leading-tight ${active?'text-stone-700':'text-stone-800'}`}>{label}</div>
-                                        <div className={`text-[11px] mt-0.5 leading-tight ${active?'text-stone-600':'text-stone-400'}`}>{hint}</div>
-                                    </div>
-                                    {active&&<span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r bg-teal-900"/>}
-                                </button>
-                            );
-                        })}
-                    </nav>
-                </aside>
-                <div className="flex-1 flex flex-col min-w-0 min-h-0">
-                    <div className="md:hidden border-b border-stone-200 bg-white px-3 py-2 flex gap-1.5 overflow-x-auto shrink-0">
-                        {tabs.map(({label,index,icon})=>{
-                            const active=activeTab===index;
-                            return <button key={index} onClick={()=>setActiveTab(index)} className={`flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-medium rounded-md whitespace-nowrap transition-colors ${active?'bg-[#2C3531] text-white':'text-stone-600 hover:bg-stone-100'}`}><i className={`bi ${icon} text-[13px]`}/>{label}</button>;
-                        })}
-                    </div>
-                    <main className="flex-1 min-h-0 overflow-y-auto w-full">
-                        <div className="max-w-3xl md:max-w-none mx-auto px-4 md:px-6 py-6 md:py-8">
-                            {activeTab===0&&<Pricing />}
-                            {activeTab===1&&<OtherSettings />}
-                        </div>
-                    </main>
+            <main className="flex-1 w-[94%] max-w-7xl mx-auto py-5 md:py-8">
+                <div className="lg:hidden mb-3 flex gap-1.5 overflow-x-auto">
+                    {SETTINGS.map(item=>{
+                        const active=activeTab===item.id;
+                        return <button key={item.id} type="button" onClick={()=>setActiveTab(item.id)} className={`shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg border text-[12px] font-medium transition ${active?"bg-[#eaf4f2] border-[#19766d]/20 text-[#19766d]":"bg-white border-slate-200 text-slate-600"}`}><i className={`bi ${item.icon} text-[14px]`}/>{item.title}</button>;
+                    })}
                 </div>
-            </div>
+
+                <div className="flex gap-4 items-start">
+                    <aside className={`hidden lg:block shrink-0 transition-[width] duration-200 ${menuOpen?"w-[270px]":"w-[56px]"}`}>
+                        <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
+                            <div className={`h-[42px] flex items-center border-b border-slate-200/80 bg-slate-50 ${menuOpen?"justify-between px-3.5":"justify-center"}`}>
+                                {menuOpen&&<span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Настройки</span>}
+                                <button type="button" onClick={()=>setMenuOpen(prev=>!prev)} title={menuOpen?"Свернуть меню":"Развернуть меню"} className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-[#19766d] hover:bg-white transition"><i className={`bi ${menuOpen?"bi-chevron-left":"bi-chevron-right"} text-[12px]`}/></button>
+                            </div>
+
+                            {SETTINGS.map(item=>{
+                                const active=activeTab===item.id;
+                                return <button key={item.id} type="button" title={!menuOpen?item.title:undefined} onClick={()=>setActiveTab(item.id)} className={`relative w-full flex items-center border-b border-slate-100 last:border-b-0 transition ${menuOpen?"gap-3 px-3.5 py-3 text-left":"justify-center h-[52px]"} ${active?"bg-[#19766d]/5":"hover:bg-slate-50"}`}>
+                                    {active&&<span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r bg-[#19766d]"/>}
+                                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${active?"bg-[#eaf4f2] text-[#19766d]":"bg-slate-100 text-slate-500"}`}><i className={`bi ${item.icon} text-[14px]`}/></span>
+                                    {menuOpen&&<span className="min-w-0 flex-1"><span className={`block text-[13px] font-semibold ${active?"text-[#19766d]":"text-slate-700"}`}>{item.title}</span><span className="block mt-0.5 text-[10.5px] leading-[1.35] text-slate-400">{item.description}</span></span>}
+                                    {menuOpen&&active&&<span className="w-1.5 h-1.5 rounded-full bg-[#19766d] shrink-0"/>}
+                                </button>;
+                            })}
+                        </div>
+                    </aside>
+
+                    <section className="flex-1 min-w-0">
+                        {activeTab==="pricing"&&<Pricing />}
+                        {activeTab==="other"&&<OtherSettings />}
+                    </section>
+                </div>
+            </main>
             <Footer />
         </div>
     );
 };
+
 export default Setting;

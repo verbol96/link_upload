@@ -60,7 +60,7 @@ export const Pricing = () => {
     };
 
     const changePrice = async (title, price) => {
-        const { data } = await $host.post('/api/settings/changePriceDel', { title, price });
+        const { data } = await $host.post('api/settings/changePriceDel', { title, price });
         if (data === 'ok') {
             setInputR(0);
             setInputR1(0);

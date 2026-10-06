@@ -3,7 +3,6 @@ import { useSelector } from "react-redux"
 import { v4 as uuidv4 } from 'uuid'
 import { toast } from 'sonner'
 import { uploadFiles, createDir } from "../http/cloudApi"
-import { SendToDB } from "../http/tableApi"
 import { getSettings, updateOrder } from "../http/dbApi"
 import Footer from "../components/admin/Footer"
 import { NavBar } from "../components/admin/NavBar"
@@ -13,6 +12,7 @@ import { PageUpload } from "../components/web/PageUpload"
 import { SendGroup } from "../components/web/SendGroup"
 import { FileForm } from "../components/web/FileForm"
 import { setLogUser } from "../http/authApi"
+import { $host } from "../http"
 
 // ============ БЛОК-СЕКЦИЯ ============
 const SectionBlock = ({ number, title, children, sectionRef }) => (
@@ -297,9 +297,10 @@ const Web = () => {
         }
 
         let userData;
-        try{
-            userData=await SendToDB(data);
-        }catch(error){
+        try {
+            const response = await $host.post('api/order/addOrder', data);
+            userData = response.data;
+        } catch (error) {
             setLogUser({
                 event:'order_create_error',
                 eventType:'error',
@@ -377,6 +378,8 @@ const Web = () => {
             });
             await Promise.all(uploadPromises);
         }
+        //уведомление в ТГ
+        await $host.post(`api/order/uploadCompleted/${userData.id}`);
 
         setLogUser({
             event:'order_upload_completed',

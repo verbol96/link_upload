@@ -25,7 +25,7 @@ $host.interceptors.response.use(config =>
         if (error.response.status === 401 && error.config && !error.config._isRetry) {
             originalRequest._isRetry = true;
             try {
-                let response = await $host.get('/api/auth/refresh', { withCredentials: true });
+                let response = await $host.get('api/auth/refresh', { withCredentials: true });
                 if(response.data==='error_refresh') localStorage.removeItem('token');
                 else localStorage.setItem('token', response.data.accessToken);
                 return $host.request(originalRequest);

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { deleteOldLogs, getLogUser } from "../../http/authApi";
+import { deleteAllLogs, deleteLogSession, deleteOldLogs, getLogUser } from "../../http/authApi";
 import _ from "lodash";
 
 const PAGE_SIZE=100;
@@ -44,11 +44,13 @@ const getEventInfo=(event)=>{
 };
 
 const formatDate=(iso)=>{
-    if(!iso)return{date:"—",time:"—"};
+    if(!iso)return{date:"—",shortDate:"—",time:"—"};
     const value=new Date(iso);
-    if(Number.isNaN(value.getTime()))return{date:"—",time:"—"};
+    if(Number.isNaN(value.getTime()))return{date:"—",shortDate:"—",time:"—"};
+
     return{
         date:value.toLocaleDateString("ru-RU"),
+        shortDate:value.toLocaleDateString("ru-RU",{day:"2-digit",month:"2-digit"}),
         time:value.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"})
     };
 };
@@ -62,18 +64,28 @@ const isMobile=(screen)=>{
 
 const formatDuration=(from,to)=>{
     if(!from||!to)return"—";
+
     const start=new Date(from).getTime();
     const end=new Date(to).getTime();
+
     if(!Number.isFinite(start)||!Number.isFinite(end)||end<start)return"—";
+
     const seconds=Math.floor((end-start)/1000);
+
     if(seconds<60)return`${seconds} сек`;
+
     const minutes=Math.floor(seconds/60);
+
     if(minutes<60)return`${minutes} мин`;
+
     const hours=Math.floor(minutes/60);
     const restMinutes=minutes%60;
+
     if(hours<24)return restMinutes?`${hours} ч ${restMinutes} мин`:`${hours} ч`;
+
     const days=Math.floor(hours/24);
     const restHours=hours%24;
+
     return restHours?`${days} д ${restHours} ч`:`${days} д`;
 };
 
@@ -221,6 +233,34 @@ const LogsUser=()=>{
         return sessions.length;
     };
 
+    const handleDeleteSession=async(session)=>{
+        if(!session.sessionId)return;
+
+        if(!window.confirm("Удалить эту сессию со всеми событиями?"))return;
+
+        try{
+            await deleteLogSession(session.sessionId);
+
+            setLogs(prev=>prev.filter(log=>log.sessionId!==session.sessionId));
+            setExpandedId(null);
+        }catch(error){
+            console.error("deleteLogSession error:",error);
+        }
+    };
+
+    const handleDeleteAllLogs=async()=>{
+        if(!window.confirm("Удалить все логи? Это действие нельзя отменить."))return;
+
+        try{
+            await deleteAllLogs();
+            setLogs([]);
+            setExpandedId(null);
+            setVisibleCount(PAGE_SIZE);
+        }catch(error){
+            console.error("deleteAllLogs error:",error);
+        }
+    };
+
     return (
         <div className="w-full">
             <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
@@ -230,26 +270,68 @@ const LogsUser=()=>{
                             <span className="w-7 h-7 rounded-md bg-[#eaf4f2] flex items-center justify-center shrink-0">
                                 <i className="bi bi-list-ul text-[12px] text-[#19766d]"/>
                             </span>
+
                             <div>
-                                <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-600">Сессии пользователей</div>
-                                <div className="text-[10px] text-slate-400">{filteredSessions.length===sessions.length?`${sessions.length} сессий`:`${filteredSessions.length} из ${sessions.length}`}</div>
+                                <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-600">
+                                    Сессии пользователей
+                                </div>
+
+                                <div className="text-[10px] text-slate-400">
+                                    {filteredSessions.length===sessions.length?`${sessions.length} сессий`:`${filteredSessions.length} из ${sessions.length}`}
+                                </div>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-1 overflow-x-auto lg:ml-3">
                             {FILTERS.map(item=>(
-                                <button key={item.id} type="button" onClick={()=>setFilter(item.id)} className={`shrink-0 h-8 px-2.5 rounded-md text-[11px] font-medium transition-colors ${filter===item.id?"bg-[#19766d] text-white":"bg-white border border-slate-200 text-slate-500 hover:bg-slate-100"}`}>
+                                <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={()=>setFilter(item.id)}
+                                    className={`shrink-0 h-8 px-2.5 rounded-md text-[11px] font-medium transition-colors ${filter===item.id?"bg-[#19766d] text-white":"bg-white border border-slate-200 text-slate-500 hover:bg-slate-100"}`}
+                                >
                                     {item.label}
-                                    <span className={`ml-1.5 text-[9px] ${filter===item.id?"text-white/70":"text-slate-400"}`}>{getFilterCount(item.id)}</span>
+                                    <span className={`ml-1.5 text-[9px] ${filter===item.id?"text-white/70":"text-slate-400"}`}>
+                                        {getFilterCount(item.id)}
+                                    </span>
                                 </button>
                             ))}
                         </div>
 
                         <div className="relative lg:ml-auto w-full lg:w-[300px]">
                             <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400"/>
-                            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Фамилия, телефон, заказ..." className="w-full h-8 pl-8 pr-8 rounded-md border border-slate-200 bg-white outline-none text-[11px] text-slate-700 placeholder:text-slate-400 focus:border-[#19766d]"/>
-                            {search&&<button type="button" onClick={()=>setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-slate-400 hover:text-slate-700"><i className="bi bi-x-lg text-[9px]"/></button>}
+
+
+
+                            <input
+                                value={search}
+                                onChange={e=>setSearch(e.target.value)}
+                                placeholder="Фамилия, телефон, заказ..."
+                                className="w-full h-8 pl-8 pr-8 rounded-md border border-slate-200 bg-white outline-none text-[11px] text-slate-700 placeholder:text-slate-400 focus:border-[#19766d]"
+                            />
+
+                            {search&&(
+                                <button
+                                    type="button"
+                                    onClick={()=>setSearch("")}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-slate-400 hover:text-slate-700"
+                                >
+                                    <i className="bi bi-x-lg text-[9px]"/>
+                                </button>
+                            )}
+
+                            
                         </div>
+                        <button
+    type="button"
+    onClick={handleDeleteAllLogs}
+    disabled={logs.length===0}
+    title="Очистить все логи"
+    className="shrink-0 h-8 px-2.5 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+>
+    <i className="bi bi-trash3 mr-1.5"/>
+    Очистить все
+</button>
                     </div>
                 </div>
 
@@ -276,6 +358,7 @@ const LogsUser=()=>{
                                     <col className="w-[80px]"/>
                                     <col className="w-[100px]"/>
                                 </colgroup>
+
                                 <thead>
                                     <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 border-b border-slate-200">
                                         <th className="text-left px-4 py-2">Время</th>
@@ -287,10 +370,11 @@ const LogsUser=()=>{
                                         <th className="text-right px-4 py-2">Время</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
                                     {visibleSessions.map((session,index)=>{
-                                        const{date,time}=formatDate(session.createdAt);
-                                        const previousDate=index>0?formatDate(visibleSessions[index-1].createdAt).date:null;
+                                        const{date,time}=formatDate(session.updatedAt);
+                                        const previousDate=index>0?formatDate(visibleSessions[index-1].updatedAt).date:null;
                                         const isNewDay=index===0||date!==previousDate;
                                         const expanded=expandedId===session.id;
                                         const lastInfo=getEventInfo(session.lastStep);
@@ -310,16 +394,29 @@ const LogsUser=()=>{
                                                     </tr>
                                                 )}
 
-                                                <tr onClick={()=>setExpandedId(prev=>prev===session.id?null:session.id)} className={`border-b border-slate-100 hover:bg-slate-50/60 transition-colors cursor-pointer ${expanded?"bg-slate-50/70":""}`}>
-                                                    <td className="px-4 py-2.5 text-slate-500 tabular-nums">{time}</td>
+                                                <tr
+                                                    onClick={()=>setExpandedId(prev=>prev===session.id?null:session.id)}
+                                                    className={`border-b border-slate-100 hover:bg-slate-50/60 transition-colors cursor-pointer ${expanded?"bg-slate-50/70":""}`}
+                                                >
+                                                    <td className="px-4 py-2.5 text-slate-500 tabular-nums">
+                                                        {time}
+                                                    </td>
+
                                                     <td className="px-4 py-2.5">
                                                         {session.surname?(
                                                             <div className="min-w-0">
                                                                 <div className="flex items-center gap-1.5">
                                                                     <i className="bi bi-person text-[11px] text-[#19766d] shrink-0"/>
-                                                                    <span className="text-[11px] font-medium text-slate-700 truncate capitalize">{session.surname}</span>
+                                                                    <span className="text-[11px] font-medium text-slate-700 truncate capitalize">
+                                                                        {session.surname}
+                                                                    </span>
                                                                 </div>
-                                                                {session.phone&&<div className="mt-0.5 text-[9px] text-slate-400 truncate">{session.phone}</div>}
+
+                                                                {session.phone&&(
+                                                                    <div className="mt-0.5 text-[9px] text-slate-400 truncate">
+                                                                        {session.phone}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         ):(
                                                             <div className="flex items-center gap-1.5 text-slate-400">
@@ -328,6 +425,7 @@ const LogsUser=()=>{
                                                             </div>
                                                         )}
                                                     </td>
+
                                                     <td className="px-4 py-2.5">
                                                         <div className="flex items-center gap-1.5 min-w-0">
                                                             {session.reachedSteps.map((event,stepIndex)=>{
@@ -335,10 +433,18 @@ const LogsUser=()=>{
 
                                                                 return (
                                                                     <Fragment key={event}>
-                                                                        {stepIndex>0&&<i className="bi bi-chevron-right text-[7px] text-slate-300 shrink-0"/>}
-                                                                        <span title={info.label} className={`h-7 px-2 rounded-md inline-flex items-center gap-1.5 shrink-0 ${info.className}`}>
+                                                                        {stepIndex>0&&(
+                                                                            <i className="bi bi-chevron-right text-[7px] text-slate-300 shrink-0"/>
+                                                                        )}
+
+                                                                        <span
+                                                                            title={info.label}
+                                                                            className={`h-7 px-2 rounded-md inline-flex items-center gap-1.5 shrink-0 ${info.className}`}
+                                                                        >
                                                                             <i className={`bi ${info.icon} text-[11px]`}/>
-                                                                            <span className="text-[10px] font-medium hidden 2xl:inline">{info.shortLabel}</span>
+                                                                            <span className="text-[10px] font-medium hidden 2xl:inline">
+                                                                                {info.shortLabel}
+                                                                            </span>
                                                                         </span>
                                                                     </Fragment>
                                                                 );
@@ -347,9 +453,12 @@ const LogsUser=()=>{
                                                             {session.hasError&&(
                                                                 <>
                                                                     <i className="bi bi-chevron-right text-[7px] text-slate-300 shrink-0"/>
+
                                                                     <span className="h-7 px-2 rounded-md inline-flex items-center gap-1.5 shrink-0 bg-red-50 text-red-600">
                                                                         <i className="bi bi-exclamation-triangle text-[11px]"/>
-                                                                        <span className="text-[10px] font-medium hidden 2xl:inline">Ошибка</span>
+                                                                        <span className="text-[10px] font-medium hidden 2xl:inline">
+                                                                            Ошибка
+                                                                        </span>
                                                                     </span>
                                                                 </>
                                                             )}
@@ -357,17 +466,31 @@ const LogsUser=()=>{
                                                             {session.reachedSteps.length===0&&(
                                                                 <span className={`h-7 px-2 rounded-md inline-flex items-center gap-1.5 ${lastInfo.className}`}>
                                                                     <i className={`bi ${lastInfo.icon} text-[11px]`}/>
-                                                                    <span className="text-[10px] font-medium">{lastInfo.shortLabel}</span>
+                                                                    <span className="text-[10px] font-medium">
+                                                                        {lastInfo.shortLabel}
+                                                                    </span>
                                                                 </span>
                                                             )}
 
                                                             <i className={`bi ${expanded?"bi-chevron-up":"bi-chevron-down"} ml-auto text-[9px] text-slate-300 shrink-0`}/>
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-2.5 text-slate-600 truncate">{session.orderId?`№${session.orderId}`:"—"}</td>
-                                                    <td className="px-4 py-2.5 text-slate-600 truncate">{session.format||"—"}</td>
-                                                    <td className="px-4 py-2.5 text-right text-slate-600 tabular-nums">{session.photosCount??"—"}</td>
-                                                    <td className="px-4 py-2.5 text-right text-slate-500 tabular-nums">{duration}</td>
+
+                                                    <td className="px-4 py-2.5 text-slate-600 truncate">
+                                                        {session.orderId?`№${session.orderId}`:"—"}
+                                                    </td>
+
+                                                    <td className="px-4 py-2.5 text-slate-600 truncate">
+                                                        {session.format||"—"}
+                                                    </td>
+
+                                                    <td className="px-4 py-2.5 text-right text-slate-600 tabular-nums">
+                                                        {session.photosCount??"—"}
+                                                    </td>
+
+                                                    <td className="px-4 py-2.5 text-right text-slate-500 tabular-nums">
+                                                        {duration}
+                                                    </td>
                                                 </tr>
 
                                                 {expanded&&(
@@ -375,23 +498,52 @@ const LogsUser=()=>{
                                                         <td colSpan={7} className="px-4 py-4">
                                                             <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                                                                 <div>
-                                                                    <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">События сессии</div>
-                                                                    <div className="mt-0.5 text-[10px] text-slate-400">{session.events.length} событий · {duration}</div>
+                                                                    <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
+                                                                        События сессии
+                                                                    </div>
+
+                                                                    <div className="mt-0.5 text-[10px] text-slate-400">
+                                                                        {session.events.length} событий · {duration}
+                                                                    </div>
                                                                 </div>
 
                                                                 <div className="flex items-center gap-3">
                                                                     {session.surname&&(
                                                                         <div className="text-right">
-                                                                            <div className="text-[10px] font-medium text-slate-600 capitalize">{session.surname}</div>
-                                                                            {session.phone&&<div className="text-[9px] text-slate-400">{session.phone}</div>}
+                                                                            <div className="text-[10px] font-medium text-slate-600 capitalize">
+                                                                                {session.surname}
+                                                                            </div>
+
+                                                                            {session.phone&&(
+                                                                                <div className="text-[9px] text-slate-400">
+                                                                                    {session.phone}
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     )}
-                                                                    {session.sessionId&&<div className="max-w-[280px] truncate text-[9px] font-mono text-slate-400" title={session.sessionId}>{session.sessionId}</div>}
+
+                                                                    {session.sessionId&&(
+                                                                        <div className="max-w-[280px] truncate text-[9px] font-mono text-slate-400" title={session.sessionId}>
+                                                                            {session.sessionId}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {session.sessionId&&(
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={()=>handleDeleteSession(session)}
+                                                                            title="Удалить сессию"
+                                                                            className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                                        >
+                                                                            <i className="bi bi-trash text-[11px]"/>
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                             </div>
 
                                                             <div className="relative">
                                                                 <div className="absolute left-[13px] top-3 bottom-3 w-px bg-slate-200"/>
+
                                                                 <div className="space-y-1">
                                                                     {session.events.map((event,eventIndex)=>{
                                                                         const eventInfo=getEventInfo(event.event);
@@ -403,24 +555,58 @@ const LogsUser=()=>{
                                                                                 <div className={`relative z-10 w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${eventInfo.className}`}>
                                                                                     <i className={`bi ${eventInfo.icon} text-[11px]`}/>
                                                                                 </div>
+
                                                                                 <div className="min-w-0 flex-1 pb-3">
                                                                                     <div className="flex items-center gap-2 min-h-7">
-                                                                                        <span className="text-[11px] font-medium text-slate-700">{eventInfo.label}</span>
-                                                                                        <span className="text-[10px] text-slate-400 tabular-nums">{eventTime.time}</span>
-                                                                                        {event.page&&<span className="text-[10px] font-mono text-[#19766d]">{event.page}</span>}
-                                                                                        {event.orderId&&<span className="text-[10px] text-slate-500">№{event.orderId}</span>}
-                                                                                        {event.photosCount!=null&&<span className="text-[10px] text-slate-400">{event.photosCount} фото</span>}
-                                                                                        {event.format&&<span className="text-[10px] text-slate-400 truncate">{event.format}</span>}
+                                                                                        <span className="text-[11px] font-medium text-slate-700">
+                                                                                            {eventInfo.label}
+                                                                                        </span>
+
+                                                                                        <span className="text-[10px] text-slate-400 tabular-nums shrink-0">
+                                                                                            {eventTime.shortDate} {eventTime.time}
+                                                                                        </span>
+
+                                                                                        {event.page&&(
+                                                                                            <span className="text-[10px] font-mono text-[#19766d]">
+                                                                                                {event.page}
+                                                                                            </span>
+                                                                                        )}
+
+                                                                                        {event.orderId&&(
+                                                                                            <span className="text-[10px] text-slate-500">
+                                                                                                №{event.orderId}
+                                                                                            </span>
+                                                                                        )}
+
+                                                                                        {event.photosCount!=null&&(
+                                                                                            <span className="text-[10px] text-slate-400">
+                                                                                                {event.photosCount} фото
+                                                                                            </span>
+                                                                                        )}
+
+                                                                                        {event.format&&(
+                                                                                            <span className="text-[10px] text-slate-400 truncate">
+                                                                                                {event.format}
+                                                                                            </span>
+                                                                                        )}
                                                                                     </div>
 
                                                                                     {event.error&&(
                                                                                         <div className="mt-1 p-2.5 rounded-lg bg-red-50 border border-red-100">
-                                                                                            <div className="text-[11px] leading-relaxed text-red-700 break-words">{event.error}</div>
+                                                                                            <div className="text-[11px] leading-relaxed text-red-700 break-words">
+                                                                                                {event.error}
+                                                                                            </div>
                                                                                         </div>
                                                                                     )}
 
                                                                                     <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-slate-400">
-                                                                                        {event.device&&<span><i className={`bi ${mobile?"bi-phone":"bi-display"} mr-1`}/>{event.device}</span>}
+                                                                                        {event.device&&(
+                                                                                            <span>
+                                                                                                <i className={`bi ${mobile?"bi-phone":"bi-display"} mr-1`}/>
+                                                                                                {event.device}
+                                                                                            </span>
+                                                                                        )}
+
                                                                                         {event.OS&&<span>{event.OS}</span>}
                                                                                         {event.browser&&<span>{event.browser}</span>}
                                                                                         {event.screen&&<span>{event.screen}</span>}
@@ -443,8 +629,8 @@ const LogsUser=()=>{
 
                         <div className="md:hidden">
                             {visibleSessions.map((session,index)=>{
-                                const{date,time}=formatDate(session.createdAt);
-                                const previousDate=index>0?formatDate(visibleSessions[index-1].createdAt).date:null;
+                                const{date,time}=formatDate(session.updatedAt);
+                                const previousDate=index>0?formatDate(visibleSessions[index-1].updatedAt).date:null;
                                 const isNewDay=index===0||date!==previousDate;
                                 const expanded=expandedId===session.id;
                                 const duration=formatDuration(session.createdAt,session.updatedAt);
@@ -460,20 +646,31 @@ const LogsUser=()=>{
                                             </div>
                                         )}
 
-                                        <button type="button" onClick={()=>setExpandedId(prev=>prev===session.id?null:session.id)} className={`w-full px-3 py-2.5 text-left border-b border-slate-100 ${expanded?"bg-slate-50":"bg-white"}`}>
+                                        <button
+                                            type="button"
+                                            onClick={()=>setExpandedId(prev=>prev===session.id?null:session.id)}
+                                            className={`w-full px-3 py-2.5 text-left border-b border-slate-100 ${expanded?"bg-slate-50":"bg-white"}`}
+                                        >
                                             <div className="flex items-start gap-2">
-                                                <span className="w-[38px] shrink-0 pt-1 text-[11px] text-slate-400 tabular-nums">{time}</span>
+                                                <span className="w-[38px] shrink-0 pt-1 text-[11px] text-slate-400 tabular-nums">
+                                                    {time}
+                                                </span>
+
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-1.5 mb-1.5">
                                                         {session.surname?(
                                                             <>
                                                                 <i className="bi bi-person text-[11px] text-[#19766d]"/>
-                                                                <span className="text-[11px] font-medium text-slate-700 capitalize truncate">{session.surname}</span>
+                                                                <span className="text-[11px] font-medium text-slate-700 capitalize truncate">
+                                                                    {session.surname}
+                                                                </span>
                                                             </>
                                                         ):(
                                                             <>
                                                                 <i className="bi bi-person-x text-[11px] text-slate-400"/>
-                                                                <span className="text-[10px] text-slate-400">Не авторизован</span>
+                                                                <span className="text-[10px] text-slate-400">
+                                                                    Не авторизован
+                                                                </span>
                                                             </>
                                                         )}
                                                     </div>
@@ -484,8 +681,14 @@ const LogsUser=()=>{
 
                                                             return (
                                                                 <Fragment key={event}>
-                                                                    {stepIndex>0&&<i className="bi bi-chevron-right text-[6px] text-slate-300 shrink-0"/>}
-                                                                    <span title={info.label} className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${info.className}`}>
+                                                                    {stepIndex>0&&(
+                                                                        <i className="bi bi-chevron-right text-[6px] text-slate-300 shrink-0"/>
+                                                                    )}
+
+                                                                    <span
+                                                                        title={info.label}
+                                                                        className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${info.className}`}
+                                                                    >
                                                                         <i className={`bi ${info.icon} text-[11px]`}/>
                                                                     </span>
                                                                 </Fragment>
@@ -495,6 +698,7 @@ const LogsUser=()=>{
                                                         {session.hasError&&(
                                                             <>
                                                                 <i className="bi bi-chevron-right text-[6px] text-slate-300 shrink-0"/>
+
                                                                 <span className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-red-50 text-red-600">
                                                                     <i className="bi bi-exclamation-triangle text-[11px]"/>
                                                                 </span>
@@ -528,20 +732,46 @@ const LogsUser=()=>{
                                             <div className="px-3 py-3 bg-slate-50/70 border-b border-slate-200">
                                                 <div className="flex items-center justify-between gap-2 mb-3">
                                                     <div>
-                                                        <div className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">События сессии</div>
-                                                        <div className="text-[9px] text-slate-400">{session.events.length} событий · {duration}</div>
+                                                        <div className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">
+                                                            События сессии
+                                                        </div>
+
+                                                        <div className="text-[9px] text-slate-400">
+                                                            {session.events.length} событий · {duration}
+                                                        </div>
                                                     </div>
 
-                                                    {session.surname&&(
-                                                        <div className="text-right">
-                                                            <div className="text-[10px] font-medium text-slate-600 capitalize">{session.surname}</div>
-                                                            {session.phone&&<div className="text-[9px] text-slate-400">{session.phone}</div>}
-                                                        </div>
-                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        {session.surname&&(
+                                                            <div className="text-right">
+                                                                <div className="text-[10px] font-medium text-slate-600 capitalize">
+                                                                    {session.surname}
+                                                                </div>
+
+                                                                {session.phone&&(
+                                                                    <div className="text-[9px] text-slate-400">
+                                                                        {session.phone}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {session.sessionId&&(
+                                                            <button
+                                                                type="button"
+                                                                onClick={()=>handleDeleteSession(session)}
+                                                                title="Удалить сессию"
+                                                                className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                            >
+                                                                <i className="bi bi-trash text-[11px]"/>
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
 
                                                 <div className="relative">
                                                     <div className="absolute left-[13px] top-3 bottom-3 w-px bg-slate-200"/>
+
                                                     <div className="space-y-1">
                                                         {session.events.map((event,eventIndex)=>{
                                                             const eventInfo=getEventInfo(event.event);
@@ -552,13 +782,23 @@ const LogsUser=()=>{
                                                                     <div className={`relative z-10 w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${eventInfo.className}`}>
                                                                         <i className={`bi ${eventInfo.icon} text-[11px]`}/>
                                                                     </div>
+
                                                                     <div className="min-w-0 flex-1 pb-3">
                                                                         <div className="flex items-center gap-2">
-                                                                            <span className="text-[11px] font-medium text-slate-700">{eventInfo.label}</span>
-                                                                            <span className="ml-auto shrink-0 text-[10px] text-slate-400 tabular-nums">{eventTime.time}</span>
+                                                                            <span className="text-[11px] font-medium text-slate-700">
+                                                                                {eventInfo.label}
+                                                                            </span>
+
+                                                                            <span className="ml-auto shrink-0 text-[10px] text-slate-400 tabular-nums">
+                                                                                {eventTime.shortDate} {eventTime.time}
+                                                                            </span>
                                                                         </div>
 
-                                                                        {event.page&&<div className="mt-0.5 text-[9px] font-mono text-[#19766d] break-all">{event.page}</div>}
+                                                                        {event.page&&(
+                                                                            <div className="mt-0.5 text-[9px] font-mono text-[#19766d] break-all">
+                                                                                {event.page}
+                                                                            </div>
+                                                                        )}
 
                                                                         {(event.orderId||event.format||event.photosCount!=null)&&(
                                                                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[9px] text-slate-400">
@@ -570,13 +810,25 @@ const LogsUser=()=>{
 
                                                                         {event.error&&(
                                                                             <div className="mt-1.5 p-2 rounded-lg bg-red-50 border border-red-100">
-                                                                                <div className="text-[10px] leading-relaxed text-red-700 break-words">{event.error}</div>
+                                                                                <div className="text-[10px] leading-relaxed text-red-700 break-words">
+                                                                                    {event.error}
+                                                                                </div>
                                                                             </div>
                                                                         )}
 
                                                                         <div className="mt-1.5 text-[9px] text-slate-400 space-y-0.5">
-                                                                            {(event.device||event.OS)&&<div>{[event.device,event.OS].filter(Boolean).join(" · ")}</div>}
-                                                                            {event.browser&&<div className="break-all">{event.browser}</div>}
+                                                                            {(event.device||event.OS)&&(
+                                                                                <div>
+                                                                                    {[event.device,event.OS].filter(Boolean).join(" · ")}
+                                                                                </div>
+                                                                            )}
+
+                                                                            {event.browser&&(
+                                                                                <div className="break-all">
+                                                                                    {event.browser}
+                                                                                </div>
+                                                                            )}
+
                                                                             {event.screen&&<div>{event.screen}</div>}
                                                                         </div>
                                                                     </div>
@@ -588,8 +840,13 @@ const LogsUser=()=>{
 
                                                 {session.sessionId&&(
                                                     <div className="mt-1 pt-2 border-t border-slate-200">
-                                                        <div className="text-[8px] uppercase tracking-wider font-semibold text-slate-400">Session ID</div>
-                                                        <div className="mt-0.5 text-[9px] font-mono text-slate-400 break-all">{session.sessionId}</div>
+                                                        <div className="text-[8px] uppercase tracking-wider font-semibold text-slate-400">
+                                                            Session ID
+                                                        </div>
+
+                                                        <div className="mt-0.5 text-[9px] font-mono text-slate-400 break-all">
+                                                            {session.sessionId}
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -601,10 +858,16 @@ const LogsUser=()=>{
 
                         {hasMore&&(
                             <div className="flex justify-center px-4 py-4 border-t border-slate-100">
-                                <button type="button" onClick={()=>setVisibleCount(prev=>prev+PAGE_SIZE)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-medium text-slate-600 transition-colors">
+                                <button
+                                    type="button"
+                                    onClick={()=>setVisibleCount(prev=>prev+PAGE_SIZE)}
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-medium text-slate-600 transition-colors"
+                                >
                                     <i className="bi bi-chevron-down text-[10px]"/>
                                     Показать ещё
-                                    <span className="text-[10px] text-slate-400">({Math.min(PAGE_SIZE,filteredSessions.length-visibleCount)})</span>
+                                    <span className="text-[10px] text-slate-400">
+                                        ({Math.min(PAGE_SIZE,filteredSessions.length-visibleCount)})
+                                    </span>
                                 </button>
                             </div>
                         )}

@@ -95,7 +95,7 @@ const Users = () => {
 
     // ============ ОТКРЫТИЕ КАРТОЧКИ ============
     const handleRowDoubleClick = async (client) => {
-        const { data } = await $host.get(`/api/order/ordersUser/${client.id}`);
+        const { data } = await $host.get(`api/order/ordersUser/${client.id}`);
         setOrdersModal(data);
         setSelectedUser(client);
         setFormData(client);
@@ -118,7 +118,7 @@ const Users = () => {
                 delete payload.role;
             }
 
-            await $host.put(`/api/auth/clientUpdate/${selectedUser.id}`, payload);
+            await $host.put(`api/auth/clientUpdate/${selectedUser.id}`, payload);
 
             const updatedData = data.map((u) =>
                 u.id === selectedUser.id ? { ...u, ...payload } : u
@@ -140,7 +140,7 @@ const Users = () => {
         if (!ok) return;
 
         try {
-            await $host.delete(`/api/auth/usersDelete/${selectedUser.id}`);
+            await $host.delete(`api/auth/usersDelete/${selectedUser.id}`);
             setData((prev) => prev.filter((u) => u.id !== selectedUser.id));
             setTotal((t) => t - 1);
             setIsModalOpen(false);
@@ -158,7 +158,7 @@ const Users = () => {
         if (!ok) return;
 
         try {
-            await $host.delete(`/api/order/deleteOrder/${order.id}`);
+            await $host.delete(`api/order/deleteOrder/${order.id}`);
 
             setOrdersModal((prev) => prev.filter((o) => o.id !== order.id));
 

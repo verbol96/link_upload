@@ -83,7 +83,7 @@ export const OtherSettings = () => {
     const UpdateUsers = async () => {
         setLoading('users');
         try {
-            await $host.get('/api/auth/updateUsers');
+            await $host.get('api/auth/updateUsers');
             toast.success('Счётчики обновлены');
         } catch (err) {
             console.error(err);

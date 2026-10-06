@@ -7,6 +7,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const { sequelize } = require('../models/models');
 const {sendTelegramMessage}=require('../services/telegram');
+require('dotenv').config()
 
 //для объединения заказов
 const pathExists = async (p) => {
@@ -99,48 +100,81 @@ class orderController{
 
         await recalculateUserStats(response.userId)
 
-        const productNames={
-            photo:'Фото',
-            holst:'Холст',
-            magnit:'Магнит',
-            poster:'Постер'
-        };
-
-        const products={};
-
-        response.photos?.forEach(item=>{
-            const type=productNames[item.type]||item.type||'Товар';
-            const format=item.format||'';
-            const key=`${type} ${format}`.trim();
-
-            const amount=Number(item.amount||0)*Number(item.copies||1);
-
-            if(products[key]){
-                products[key]+=amount;
-            }else{
-                products[key]=amount;
-            }
-        });
-
-        const productLines=Object.entries(products).map(([name,amount])=>{
-            return `${name} — <b>${amount} шт.</b>`;
-        });
-
-        const totalPrice=(
-            Number(response.price||0)+
-            Number(response.price_deliver||0)
-        ).toFixed(2);
-
-        const telegramMessage=[
-            `🟢 <b>Новый заказ №${response.order_number}</b>`,
-            `👤 ${response.FIO||'—'}`,
-            ...productLines,
-            `💰 Итого: <b>${totalPrice} руб.</b>`
-        ].join('\n');
-
-        sendTelegramMessage(telegramMessage);
-
         return res.json(response);
+    }
+
+    async uploadCompleted(req, res) {
+        try {
+            const { id } = req.params;
+
+            const order = await Order.findOne({
+                where: { id },
+                include: [
+                    {
+                        model: User,
+                    },
+                    {
+                        model: Photo,
+                    },
+                ],
+            });
+
+            if (!order) {
+                return res.status(404).json({ message: 'Заказ не найден' });
+            }
+
+            const productNames = {
+                photo: 'Фото',
+                holst: 'Холст',
+                magnit: 'Магнит',
+                poster: 'Постер'
+            };
+
+            const products = {};
+
+            order.photos?.forEach(item => {
+                const type = productNames[item.type] || item.type || 'Товар';
+                const format = item.format || '';
+                const key = `${type} ${format}`.trim();
+                const amount = Number(item.amount || 0) * Number(item.copies || 1);
+
+                if (products[key]) {
+                    products[key] += amount;
+                } else {
+                    products[key] = amount;
+                }
+            });
+
+            const totalPrice = (
+                Number(order.price || 0) +
+                Number(order.price_deliver || 0)
+            ).toFixed(2);
+
+            const productLines=Object.entries(products).map(([name,amount])=>{
+                return `▫️ ${name} — <b>${amount} шт.</b>`;
+            });
+
+            const telegramMessage=[
+                `✅ <b>Новый заказ №${order.order_number}</b>`,
+                `👤 ${order.FIO||'—'}`,
+                ...productLines,
+                `💰 Итого: <b>${totalPrice} руб.</b>`
+            ].join('\n');
+
+            try {
+                if(process.env.STATUS === 'release'){
+                    await sendTelegramMessage(telegramMessage);
+                }
+            } catch (error) {
+                console.error(`Telegram: не удалось отправить заказ №${order.order_number}`, error);
+            }
+
+            return res.json({ success: true });
+
+        } catch (error) {
+            console.error('Ошибка завершения загрузки заказа:', error);
+            return res.status(500).json({ message: 'Ошибка завершения загрузки заказа' });
+        }
     }
 
     async updateUserAdress(req,res){

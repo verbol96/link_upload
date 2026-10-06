@@ -26,7 +26,7 @@ const MaterialTab=({startYear,startMonth,period})=>{
         setLoading(true);
         const params={};
         if(period!=='all'){params.startMonth=`${startYear}-${startMonth}`;params.count=period;}
-        $host.get('/api/order/getMaterialStats',{params}).then(({data})=>setStats(data)).catch(err=>{console.error('Ошибка загрузки материалов:',err);toast.error('Не удалось загрузить статистику материалов',{description:err.response?.data?.error||'Попробуйте позже'});}).finally(()=>setLoading(false));
+        $host.get('api/order/getMaterialStats',{params}).then(({data})=>setStats(data)).catch(err=>{console.error('Ошибка загрузки материалов:',err);toast.error('Не удалось загрузить статистику материалов',{description:err.response?.data?.error||'Попробуйте позже'});}).finally(()=>setLoading(false));
     },[startYear,startMonth,period]);
     const activeTable=useMemo(()=>{for(const section of SECTIONS){const found=section.tables.find(t=>t.key===activeKey);if(found)return {...found,group:section.group};}return null;},[activeKey]);
     const activeRows=stats&&activeTable?(stats[activeTable.key]||[]):[];

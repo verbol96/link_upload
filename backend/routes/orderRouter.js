@@ -19,5 +19,6 @@ router.put('/changeDataOrder/:id', orderController.changeDataOrder)
 router.get('/ordersUser/:id', orderController.ordersUser)
 router.put('/changeAboutUser/:id', orderController.changeAboutUser)
 router.get('/getMaterialStats', orderController.getMaterialStats);
+router.post('/uploadCompleted/:id', orderController.uploadCompleted)
 
 module.exports = router

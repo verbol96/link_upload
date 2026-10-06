@@ -390,7 +390,7 @@ export const DescRow = ({ orders, order, setSelectedOrder, handleDetailsClick, i
   useEffect(()=>{
       const getListOps = async () => {
           try {
-            const {data} = await $host.get('/api/ep/getListOps');
+            const {data} = await $host.get('api/ep/getListOps');
             setListObs(data.Table)
           } catch (error) {
             console.error('Ошибка при получении JWT:', error);
@@ -453,7 +453,7 @@ export const DescRow = ({ orders, order, setSelectedOrder, handleDetailsClick, i
         const dataSend = {sum: price, OPS: nameOPS.WarehouseId, phone: phoneWithoutPlus(), name1: nameSplit(0), name2: nameSplit(1)}
         
         try {
-          const {data} = await $host.post('/api/ep/sendOrder', dataSend);
+          const {data} = await $host.post('api/ep/sendOrder', dataSend);
           setCodeOutside(data.Table[0].Number)
         } catch (error) {
           console.error('Ошибка:', error);
@@ -555,7 +555,7 @@ const AddInvoices = async () => {
         };
 
         try {
-            const { data } = await $host.post('/api/ep/addInvoicesPay', dataInvoices);
+            const { data } = await $host.post('api/ep/addInvoicesPay', dataInvoices);
 
             if (data) {
                 // Обновляем Redux — синхронизируем с бэком
@@ -584,7 +584,7 @@ const CancelInvoices = async () => {
                 InvoiceNo: order.order_number,
             };
 
-            const { data } = await $host.post('/api/ep/delInvoicesPay', dataAPI);
+            const { data } = await $host.post('api/ep/delInvoicesPay', dataAPI);
 
             if (data) {
                 // Обновляем Redux — синхронизируем с бэком
@@ -605,7 +605,7 @@ const CancelInvoices = async () => {
 
 const CheckInvoices = async () => {
     try {
-        const { data } = await $host.post('/api/ep/getInvoicesPay', {
+        const { data } = await $host.post('api/ep/getInvoicesPay', {
             No: order.order_number,
         });
 
@@ -654,7 +654,7 @@ const [ordersModal, setOrdersModal] = useState([])
 
 const openModalOrders = async() =>{
   
-  const {data} = await $host.get(`/api/order/ordersUser/${order.userId}`)
+  const {data} = await $host.get(`api/order/ordersUser/${order.userId}`)
   setOrdersModal(data)
   setIsOpen1(true)
 }
@@ -679,7 +679,7 @@ const [smsText, setSmsText] = useState('');
 
 const saveAboutUser = async () => {
   try {
-    await $host.put(`/api/order/changeAboutUser/${order.userId}`, { aboutUser });
+    await $host.put(`api/order/changeAboutUser/${order.userId}`, { aboutUser });
     alert('Сохранено'); 
   } catch (error) {
     console.error(error);
@@ -753,7 +753,7 @@ const sendSmsNew = async () => {
         };
 
         try {
-            const response = await $host.put('/api/order/toJoinOrder', data);
+            const response = await $host.put('api/order/toJoinOrder', data);
             const updatedOrder = response.data;
 
             // ====== ОБНОВЛЯЕМ ФОРМУ ======

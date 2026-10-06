@@ -1,6 +1,6 @@
 import Footer from "../components/admin/Footer"
 import InputMask from 'react-input-mask';
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { login, sendSms, setLogUserData } from "../http/authApi";
 import { getOneUser } from "../http/dbApi";
 import { setUser } from "../store/privatePageReducer";
@@ -19,6 +19,7 @@ export const Auth = () => {
     const [isValid1, setIsValid1] = useState(false)
     const [disableSms, setDisableSms] = useState(false)
     const [tik, setTik] = useState(60)
+    const codeInputRef = useRef(null);
 
     const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
 
@@ -63,6 +64,11 @@ export const Auth = () => {
             }
             else await sendSms(removeNonNumeric(phone), `${code} - код для подтверждения`)
             setIsSend(true)
+
+            setTimeout(() => {
+                codeInputRef.current?.focus()
+            }, 0)
+
             setDisableSms(true)
             TikTak()
             setTimeout(() => {
@@ -88,14 +94,10 @@ export const Auth = () => {
     return (
         <div className="flex flex-col min-h-screen bg-stone-100">
             <NavBar />
-
             <div className="flex-1 w-full flex items-center justify-center px-4 py-10">
-                <div className="w-full max-w-md bg-white border border-stone-200 rounded-2xl
-                                shadow-sm p-6 md:p-8">
-
+                <div className="w-full max-w-md bg-white border border-stone-200 rounded-2xl shadow-sm p-6 md:p-8">
                     {/* Заголовок */}
                     <div className="mb-6 text-center">
-                     
                         <h1 className="text-[20px] font-normal text-teal-950">
                             Вход в личный кабинет
                         </h1>
@@ -103,7 +105,6 @@ export const Auth = () => {
 
                     {/* Форма */}
                     <div className="flex flex-col gap-4">
-
                         {/* Телефон */}
                         <div>
                             <label className="text-[12px] text-stone-500 font-medium block mb-1.5">
@@ -135,6 +136,7 @@ export const Auth = () => {
                                     Код из СМС
                                 </label>
                                 <input
+                                    ref={codeInputRef}
                                     value={password}
                                     placeholder="••••"
                                     maxLength={4}
@@ -186,10 +188,8 @@ export const Auth = () => {
                             </button>
                         )}
                     </div>
-
                 </div>
             </div>
-
             <Footer />
         </div>
     )

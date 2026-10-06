@@ -21,9 +21,7 @@ import {
     Tooltip,
     ResponsiveContainer,
     Cell,
-    PieChart,
-    Pie,
-    Legend,
+    LabelList,
 } from 'recharts';
 
 // ============ БЫСТРЫЕ ПЕРИОДЫ ============
@@ -126,14 +124,15 @@ const ExpensesSkeleton = () => (
     </div>
 );
 
-// ============ ГРАФИК 1: ПО КАТЕГОРИЯМ (СТОЛБЦЫ) ============
+// ============ ГРАФИК: ПО КАТЕГОРИЯМ ============
 const CategoryChart = ({ expenses, compact = false, hideHeader = false }) => {
     const dataByCategory = {};
     expenses.forEach(e => {
         dataByCategory[e.category] = (dataByCategory[e.category] || 0) + Number(e.amount);
     });
 
-    let chartData = Object.entries(dataByCategory)
+    const total = Object.values(dataByCategory).reduce((sum, value) => sum + value, 0);
+    const chartData = Object.entries(dataByCategory)
         .map(([key, value]) => {
             const cat = EXPENSE_CATEGORIES[key];
             return {
@@ -141,32 +140,34 @@ const CategoryChart = ({ expenses, compact = false, hideHeader = false }) => {
                 name: cat?.name || key,
                 color: cat?.color || '#a8a29e',
                 value: Number(value.toFixed(2)),
+                percent: total > 0 ? Math.round(value / total * 100) : 0,
+                label: `${formatMoney(value)} р (${total > 0 ? Math.round(value / total * 100) : 0}%)`,
             };
         })
         .sort((a, b) => b.value - a.value);
 
-    if (compact && chartData.length > 5) {
-        const top = chartData.slice(0, 5);
-        const rest = chartData.slice(5);
-        const restSum = rest.reduce((s, e) => s + e.value, 0);
-        top.push({
-            key: '__other__',
-            name: `Прочее (${rest.length})`,
-            color: '#d6d3d1',
-            value: Number(restSum.toFixed(2)),
-        });
-        chartData = top;
-    }
-
     if (chartData.length === 0) return null;
 
+    const chartHeight = Math.max(compact ? 280 : 320, chartData.length * (compact ? 42 : 46));
+    const renderValueLabel = ({ x, y, width, height, value }) => (
+        <text
+            x={x + width + 8}
+            y={y + height / 2}
+            dy="0.35em"
+            fill="#78716c"
+            fontSize={compact ? 10 : 11}
+            textAnchor="start"
+        >
+            {value}
+        </text>
+    );
+
     return (
-        <div className={`bg-white border border-stone-200 rounded-xl w-full h-full flex flex-col
+        <div className={`bg-white border border-stone-200 rounded-xl w-full flex flex-col
                         ${hideHeader ? 'p-0' : 'p-3 md:p-4'}`}>
             {!hideHeader && (
                 <div className="flex items-center gap-2 mb-3 shrink-0">
-                    <span className="w-7 h-7 rounded-md bg-stone-100
-                                    flex items-center justify-center shrink-0">
+                    <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
                         <i className="bi bi-bar-chart text-[13px] text-[#0D9488]" />
                     </span>
                     <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
@@ -175,12 +176,12 @@ const CategoryChart = ({ expenses, compact = false, hideHeader = false }) => {
                 </div>
             )}
 
-            <div className={`flex-1 min-h-0 w-full ${hideHeader ? 'p-3' : ''}`}>
+            <div className={`w-full ${hideHeader ? 'p-3' : ''}`} style={{ height: chartHeight }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         data={chartData}
                         layout="vertical"
-                        margin={{ top: 0, right: 50, left: 0, bottom: 0 }}
+                        margin={{ top: 0, right: compact ? 105 : 135, left: 0, bottom: 0 }}
                     >
                         <XAxis type="number" hide />
                         <YAxis
@@ -188,8 +189,13 @@ const CategoryChart = ({ expenses, compact = false, hideHeader = false }) => {
                             dataKey="name"
                             axisLine={false}
                             tickLine={false}
-                            width={compact ? 100 : 150}
+                            width={compact ? 105 : 155}
+                            interval={0}
                             tick={{ fontSize: compact ? 11 : 12, fill: '#44403c' }}
+                            tickFormatter={(value) => {
+                                const maxLength = compact ? 16 : 20;
+                                return value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value;
+                            }}
                         />
                         <Tooltip
                             cursor={{ fill: '#fafaf9' }}
@@ -199,122 +205,18 @@ const CategoryChart = ({ expenses, compact = false, hideHeader = false }) => {
                                 borderRadius: 8,
                                 fontSize: 12,
                             }}
-                            formatter={(value) => [`${formatMoney(value)} р`, 'Сумма']}
+                            formatter={(value, name, props) => [
+                                `${formatMoney(value)} р (${props.payload.percent}%)`,
+                                'Сумма'
+                            ]}
                         />
                         <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={compact ? 16 : 18}>
                             {chartData.map((entry, index) => (
                                 <Cell key={index} fill={entry.color} />
                             ))}
+                            <LabelList dataKey="label" content={renderValueLabel} />
                         </Bar>
                     </BarChart>
-                </ResponsiveContainer>
-            </div>
-        </div>
-    );
-};
-
-// ============ ГРАФИК 2: КРУГОВАЯ ============
-const PieChartByCategory = ({ expenses, compact = false, hideHeader = false }) => {
-    const dataByCategory = {};
-    expenses.forEach(e => {
-        dataByCategory[e.category] = (dataByCategory[e.category] || 0) + Number(e.amount);
-    });
-
-    let chartData = Object.entries(dataByCategory)
-        .map(([key, value]) => {
-            const cat = EXPENSE_CATEGORIES[key];
-            return {
-                key,
-                name: cat?.name || key,
-                color: cat?.color || '#a8a29e',
-                value: Number(value.toFixed(2)),
-            };
-        })
-        .sort((a, b) => b.value - a.value);
-
-    if (compact && chartData.length > 5) {
-        const top = chartData.slice(0, 5);
-        const rest = chartData.slice(5);
-        const restSum = rest.reduce((s, e) => s + e.value, 0);
-        top.push({
-            key: '__other__',
-            name: `Прочее (${rest.length})`,
-            color: '#d6d3d1',
-            value: Number(restSum.toFixed(2)),
-        });
-        chartData = top;
-    }
-
-    if (chartData.length === 0) return null;
-
-    const total = chartData.reduce((sum, e) => sum + e.value, 0);
-
-    const renderLabel = ({ percent }) => {
-        if (percent < 0.05) return '';
-        return `${Math.round(percent * 100)}%`;
-    };
-
-    return (
-        <div className={`bg-white border border-stone-200 rounded-xl w-full h-full flex flex-col
-                        ${hideHeader ? 'p-0' : 'p-3 md:p-4'}`}>
-            {!hideHeader && (
-                <div className="flex items-center gap-2 mb-3 shrink-0">
-                    <span className="w-7 h-7 rounded-md bg-stone-100
-                                    flex items-center justify-center shrink-0">
-                        <i className="bi bi-pie-chart text-[13px] text-[#0D9488]" />
-                    </span>
-                    <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
-                        Структура расходов
-                    </div>
-                    <div className="ml-auto text-[11px] text-stone-400">
-                        Всего: <b className="text-stone-700">{formatMoney(total)}</b>
-                    </div>
-                </div>
-            )}
-
-            <div className={`flex-1 min-h-0 w-full ${hideHeader ? 'p-2' : ''}`}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={chartData}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius="72%"
-                            innerRadius="45%"
-                            paddingAngle={2}
-                            label={renderLabel}
-                            labelLine={false}
-                        >
-                            {chartData.map((entry, index) => (
-                                <Cell
-                                    key={index}
-                                    fill={entry.color}
-                                    stroke="white"
-                                    strokeWidth={2}
-                                />
-                            ))}
-                        </Pie>
-                        <Tooltip
-                            contentStyle={{
-                                background: 'white',
-                                border: '1px solid #e7e5e4',
-                                borderRadius: 8,
-                                fontSize: 12,
-                            }}
-                            formatter={(value, name) => [
-                                `${formatMoney(value)} р (${Math.round(value / total * 100)}%)`,
-                                name,
-                            ]}
-                        />
-                        <Legend
-                            verticalAlign="bottom"
-                            height={36}
-                            iconType="circle"
-                            wrapperStyle={{ fontSize: 11 }}
-                        />
-                    </PieChart>
                 </ResponsiveContainer>
             </div>
         </div>
@@ -333,7 +235,7 @@ const CategorySelect = ({ value, onChange, disabled }) => {
             value={value}
             onChange={onChange}
             disabled={disabled}
-            className="w-full px-3 py-2 text-[13px] text-stone-800
+            className="w-full px-3 py-2 text-[16px] md:text-[13px] text-stone-800
                     bg-stone-50 border border-stone-200 rounded-md
                     focus:outline-none focus:ring-1 focus:ring-[#0D9488] focus:border-[#0D9488]
                     cursor-pointer"
@@ -377,7 +279,7 @@ const AddExpenseModal = ({ open, onOpenChange, onAdded }) => {
 
         setSaving(true);
         try {
-            await $host.post('/api/expense/add', {
+            await $host.post('api/expense/add', {
                 category,
                 amount: amountNum,
                 title: title.trim() || null,
@@ -394,88 +296,85 @@ const AddExpenseModal = ({ open, onOpenChange, onAdded }) => {
         }
     };
 
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="w-[90%] max-w-md">
-                <DialogHeader>
-                    <DialogTitle className="text-[16px] font-semibold text-stone-900">
-                        Новый расход
-                    </DialogTitle>
-                    <DialogDescription className="sr-only">Добавить</DialogDescription>
-                </DialogHeader>
+return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="w-[92%] max-w-[420px] rounded-xl p-4 md:p-6">
+            <DialogHeader>
+                <DialogTitle className="text-[18px] font-semibold text-stone-800">
+                    Добавить расход
+                </DialogTitle>
+                <DialogDescription className="text-[13px] text-stone-400">
+                </DialogDescription>
+            </DialogHeader>
 
-                <div className="flex flex-col gap-3 mt-2">
-                    <div>
-                        <label className="text-[12px] text-stone-500 font-medium block mb-1">
-                            Категория
-                        </label>
-                        <CategorySelect
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="text-[12px] text-stone-500 font-medium block mb-1">
-                            Сумма (в рублях)
-                        </label>
-                        <Input
-                            type="number"
-                            inputMode="decimal"
-                            step="0.01"
-                            min="0"
-                            placeholder="1000"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            disabled={saving}
-                            autoFocus
-                        />
-                    </div>
-
-                    <div>
-                        <label className="text-[12px] text-stone-500 font-medium block mb-1">
-                            Заметка <span className="text-stone-400">(необязательно)</span>
-                        </label>
-                        <Input
-                            type="text"
-                            placeholder="Например: для лаба"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            disabled={saving}
-                            maxLength={200}
-                        />
-                    </div>
+            <div className="flex flex-col gap-4 mt-2">
+                <div>
+                    <label className="block mb-1.5 text-[12px] font-medium text-stone-500">
+                        Категория
+                    </label>
+                    <CategorySelect
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        disabled={saving}
+                    />
                 </div>
 
-                <div className="flex justify-end gap-2 mt-5">
-                    <button
+                <div>
+                    <label className="block mb-1.5 text-[12px] font-medium text-stone-500">
+                        Сумма
+                    </label>
+                    <Input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0"
+                        placeholder="0"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        disabled={saving}
+                        autoFocus
+                        className="h-11 text-[16px] rounded-lg bg-stone-50 border-stone-200 focus:bg-white"
+                    />
+                </div>
+
+                <div>
+                    <label className="block mb-1.5 text-[12px] font-medium text-stone-500">
+                        Заметка
+                    </label>
+                    <Input
+                        type="text"
+                        placeholder="Необязательно"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        disabled={saving}
+                        maxLength={200}
+                        className="h-11 text-[16px] rounded-lg bg-stone-50 border-stone-200 focus:bg-white"
+                    />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                    <Button
+                        type="button"
+                        variant="outline"
                         onClick={() => onOpenChange(false)}
                         disabled={saving}
-                        className="px-4 py-2 rounded-md text-[13px] font-medium
-                                text-stone-600 hover:bg-stone-100 transition-colors
-                                disabled:opacity-50"
+                        className="h-10 px-4 rounded-lg text-[14px]"
                     >
                         Отмена
-                    </button>
+                    </Button>
+
                     <Button
                         onClick={handleSubmit}
                         disabled={saving || !amount}
-                        className="px-4 py-2 bg-[#2C3531] hover:bg-[#3A4540] text-white
-                                text-[13px] font-medium rounded-md
-                                disabled:opacity-50"
+                        className="h-10 px-5 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-[14px]"
                     >
-                        {saving ? (
-                            <>
-                                <i className="bi bi-arrow-repeat animate-spin mr-1" />
-                                Сохранение...
-                            </>
-                        ) : 'Добавить'}
+                        {saving ? 'Сохранение...' : 'Добавить'}
                     </Button>
                 </div>
-            </DialogContent>
-        </Dialog>
-    );
+            </div>
+        </DialogContent>
+    </Dialog>
+);
 };
 
 // ============ МОДАЛКА: РЕДАКТИРОВАТЬ ============
@@ -503,7 +402,7 @@ const EditExpenseModal = ({ open, onOpenChange, expense, onUpdated }) => {
 
         setSaving(true);
         try {
-            await $host.put(`/api/expense/update/${expense.id}`, {
+            await $host.put(`api/expense/update/${expense.id}`, {
                 category,
                 amount: amountNum,
                 title: title.trim() || null,
@@ -520,86 +419,85 @@ const EditExpenseModal = ({ open, onOpenChange, expense, onUpdated }) => {
         }
     };
 
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="w-[90%] max-w-md">
-                <DialogHeader>
-                    <DialogTitle className="text-[16px] font-semibold text-stone-900">
-                        Редактировать расход
-                    </DialogTitle>
-                    <DialogDescription className="sr-only">Изменить</DialogDescription>
-                </DialogHeader>
+return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="w-[92%] max-w-[420px] rounded-xl p-4 md:p-6">
+            <DialogHeader>
+                <DialogTitle className="text-[18px] font-semibold text-stone-800">
+                    Редактировать расход
+                </DialogTitle>
+                <DialogDescription className="text-[13px] text-stone-400">
+                    Измените данные расхода
+                </DialogDescription>
+            </DialogHeader>
 
-                <div className="flex flex-col gap-3 mt-2">
-                    <div>
-                        <label className="text-[12px] text-stone-500 font-medium block mb-1">
-                            Категория
-                        </label>
-                        <CategorySelect
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="text-[12px] text-stone-500 font-medium block mb-1">
-                            Сумма (в рублях)
-                        </label>
-                        <Input
-                            type="number"
-                            inputMode="decimal"
-                            step="0.01"
-                            min="0"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            disabled={saving}
-                            autoFocus
-                        />
-                    </div>
-
-                    <div>
-                        <label className="text-[12px] text-stone-500 font-medium block mb-1">
-                            Заметка <span className="text-stone-400">(необязательно)</span>
-                        </label>
-                        <Input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            disabled={saving}
-                            maxLength={200}
-                        />
-                    </div>
+            <div className="flex flex-col gap-2 mt-2">
+                <div>
+                    <label className="block mb-1.5 text-[12px] font-medium text-stone-500">
+                        Категория
+                    </label>
+                    <CategorySelect
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        disabled={saving}
+                    />
                 </div>
 
-                <div className="flex justify-end gap-2 mt-5">
-                    <button
+                <div>
+                    <label className="block mb-1.5 text-[12px] font-medium text-stone-500">
+                        Сумма
+                    </label>
+                    <Input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0"
+                        value={amount}
+                        autoFocus
+                        onChange={(e) => setAmount(e.target.value)}
+                        disabled={saving}
+                        className="h-11 text-[16px] md:text-[14px] rounded-lg bg-stone-50 border-stone-200 focus:bg-white"
+                    />
+                </div>
+
+                <div>
+                    <label className="block mb-1.5 text-[12px] font-medium text-stone-500">
+                        Заметка
+                    </label>
+                    <Input
+                        type="text"
+                        placeholder="Необязательно"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        disabled={saving}
+                        maxLength={200}
+                        className="h-11 text-[16px] md:text-[14px] rounded-lg bg-stone-50 border-stone-200 focus:bg-white"
+                    />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                    <Button
+                        type="button"
+                        variant="outline"
                         onClick={() => onOpenChange(false)}
                         disabled={saving}
-                        className="px-4 py-2 rounded-md text-[13px] font-medium
-                                text-stone-600 hover:bg-stone-100 transition-colors
-                                disabled:opacity-50"
+                        className="h-10 px-4 rounded-lg text-[14px]"
                     >
                         Отмена
-                    </button>
+                    </Button>
+
                     <Button
                         onClick={handleSubmit}
                         disabled={saving || !amount}
-                        className="px-4 py-2 bg-[#2C3531] hover:bg-[#3A4540] text-white
-                                text-[13px] font-medium rounded-md
-                                disabled:opacity-50"
+                        className="h-10 px-5 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-[14px]"
                     >
-                        {saving ? (
-                            <>
-                                <i className="bi bi-arrow-repeat animate-spin mr-1" />
-                                Сохранение...
-                            </>
-                        ) : 'Сохранить'}
+                        {saving ? 'Сохранение...' : 'Сохранить'}
                     </Button>
                 </div>
-            </DialogContent>
-        </Dialog>
-    );
+            </div>
+        </DialogContent>
+    </Dialog>
+);
 };
 
 // ============ СОРТИРОВКА (выпадашка) ============
@@ -706,9 +604,10 @@ const Expenses = () => {
     );
 
     const [groupFilter, setGroupFilter] = useState('all');
+    const [categoryFilter, setCategoryFilter] = useState('all');
     const [sortBy, setSortBy] = useState('date_desc');
 
-    const [mobileChart, setMobileChart] = useState('bar');
+    const [mobileView, setMobileView] = useState('list');
 
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
@@ -729,7 +628,7 @@ const Expenses = () => {
 
     // ====== ПЕРЕЗАГРУЗКА ======
     const reloadExpenses = () => {
-        $host.get('/api/expense/getAll', { params: buildParams() })
+        $host.get('api/expense/getAll', { params: buildParams() })
             .then(({ data }) => {
                 setExpenses(data);
                 setVisibleCount(PAGE_SIZE);
@@ -744,7 +643,7 @@ const Expenses = () => {
         setLoading(true);
         setVisibleCount(PAGE_SIZE);
 
-        $host.get('/api/expense/getAll', { params: buildParams() })
+        $host.get('api/expense/getAll', { params: buildParams() })
             .then(({ data }) => setExpenses(data))
             .catch(err => {
                 console.error('Ошибка загрузки:', err);
@@ -773,7 +672,7 @@ const Expenses = () => {
         if (!ok) return;
 
         try {
-            await $host.delete(`/api/expense/delete/${expense.id}`);
+            await $host.delete(`api/expense/delete/${expense.id}`);
             toast.success('Расход удалён');
             reloadExpenses();
         } catch (err) {
@@ -782,11 +681,16 @@ const Expenses = () => {
         }
     };
 
-    // ====== ФИЛЬТР / СОРТИРОВКА ======
-    const filteredExpenses = useMemo(() => {
+    // ====== ФИЛЬТРЫ ГРАФИКОВ / СПИСКА + СОРТИРОВКА ======
+    const chartExpenses = useMemo(() => {
         if (groupFilter === 'all') return expenses;
         return expenses.filter(e => EXPENSE_CATEGORIES[e.category]?.group === groupFilter);
     }, [expenses, groupFilter]);
+
+    const filteredExpenses = useMemo(() => {
+        if (categoryFilter === 'all') return chartExpenses;
+        return chartExpenses.filter(e => e.category === categoryFilter);
+    }, [chartExpenses, categoryFilter]);
 
     const sortedExpenses = useMemo(() => {
         const arr = [...filteredExpenses];
@@ -819,15 +723,18 @@ const Expenses = () => {
     }, [selectedYear, selectedMonth, period]);
 
     // ====== ИТОГО ======
-    const total = filteredExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
-    const totalProduction = filteredExpenses
+    const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    const totalProduction = expenses
         .filter(e => EXPENSE_CATEGORIES[e.category]?.group === 'production')
         .reduce((sum, e) => sum + Number(e.amount), 0);
-    const totalAdmin = filteredExpenses
+    const totalAdmin = expenses
         .filter(e => EXPENSE_CATEGORIES[e.category]?.group === 'admin')
         .reduce((sum, e) => sum + Number(e.amount), 0);
+    const productionPercent = total > 0 ? Math.round(totalProduction / total * 100) : 0;
+    const adminPercent = total > 0 ? Math.round(totalAdmin / total * 100) : 0;
 
-    const hasData = !loading && filteredExpenses.length > 0;
+    const hasData = !loading && expenses.length > 0;
+    const chartHasData = !loading && chartExpenses.length > 0;
 
     // ====== СРЕЗ ДЛЯ ПОКАЗА ======
     const visibleExpenses = sortedExpenses.slice(0, visibleCount);
@@ -835,7 +742,7 @@ const Expenses = () => {
     // ====== СБРОС ПАГИНАЦИИ ПРИ СМЕНЕ ФИЛЬТРОВ ======
     useEffect(() => {
         setVisibleCount(PAGE_SIZE);
-    }, [groupFilter, sortBy]);
+    }, [groupFilter, categoryFilter, sortBy]);
 
     return (
         <div className="flex flex-col min-h-screen bg-stone-100">
@@ -1062,19 +969,19 @@ const Expenses = () => {
                                     <span className="w-2 h-2 rounded-full bg-[#0D9488]" />
                                     <span className="text-[11px] text-stone-500">Произв.</span>
                                     <span className="text-[12.5px] md:text-[13px] font-semibold text-stone-700 tabular-nums">
-                                        {formatMoney(totalProduction)}
+                                        {formatMoney(totalProduction)} <span className="text-stone-400 font-normal">({productionPercent}%)</span>
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="w-2 h-2 rounded-full bg-[#6366f1]" />
                                     <span className="text-[11px] text-stone-500">Админ.</span>
                                     <span className="text-[12.5px] md:text-[13px] font-semibold text-stone-700 tabular-nums">
-                                        {formatMoney(totalAdmin)}
+                                        {formatMoney(totalAdmin)} <span className="text-stone-400 font-normal">({adminPercent}%)</span>
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2 ml-auto text-stone-400">
                                     <i className="bi bi-receipt text-[12px]" />
-                                    <span className="text-[11px]">{filteredExpenses.length} шт.</span>
+                                    <span className="text-[11px]">{expenses.length} шт.</span>
                                 </div>
                             </div>
                         </div>
@@ -1083,109 +990,106 @@ const Expenses = () => {
                     )}
                 </div>
 
-                {/* ============ ФИЛЬТР ГРУППЫ + СОРТИРОВКА ============ */}
-                {hasData && (
-                    <div className="flex items-center gap-2 mb-3 md:mb-4">
-                        <div className="flex gap-1 bg-white border border-stone-200 rounded-lg p-1 flex-1 md:flex-none">
-                            {GROUP_FILTERS.map(({ value, label, icon }) => {
-                                const active = groupFilter === value;
-                                return (
-                                    <button
-                                        key={value}
-                                        onClick={() => setGroupFilter(value)}
+                {/* ============ МЕНЮ ============ */}
+                {expenses.length > 0 && (
+                    <div className="bg-white border border-stone-200 rounded-xl p-2 md:p-2.5 mb-3 md:mb-4">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex gap-1 bg-stone-50 rounded-lg p-1 flex-1 md:flex-none">
+                                {GROUP_FILTERS.map(({ value, label, icon }) => {
+                                    const active = groupFilter === value;
+                                    return (
+                                        <button
+                                            key={value}
+                                            onClick={() => {
+                                                setGroupFilter(value);
+                                                setCategoryFilter('all');
+                                            }}
+                                            disabled={loading}
+                                            className={`flex-1 md:flex-none inline-flex items-center justify-center gap-1.5
+                                                    px-3 py-1.5 rounded-md text-[12px] font-medium whitespace-nowrap
+                                                    transition-colors disabled:cursor-not-allowed
+                                                    ${active
+                                                        ? 'bg-[#0D9488] text-white'
+                                                        : 'text-stone-600 hover:bg-stone-100'
+                                                    }`}
+                                        >
+                                            <i className={`bi ${icon} text-[12px]`} />
+                                            <span>{label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 flex-1 min-w-[170px] md:max-w-[330px]">
+                                <div className="relative flex-1 min-w-0">
+                                    <select
+                                        value={categoryFilter}
+                                        onChange={(e) => setCategoryFilter(e.target.value)}
                                         disabled={loading}
-                                        className={`flex-1 md:flex-none
-                                                inline-flex items-center justify-center gap-1.5
-                                                px-3 py-1.5 rounded-md text-[12px] font-medium
-                                                whitespace-nowrap transition-colors
-                                                disabled:cursor-not-allowed
-                                                ${active
-                                                    ? 'bg-[#0D9488] text-white'
-                                                    : 'text-stone-600 hover:bg-stone-100'
-                                                }`}
+                                        className="appearance-none w-full h-9 pl-9 pr-8
+                                                bg-white border border-stone-200 rounded-lg
+                                                text-[12.5px] font-medium text-stone-700 cursor-pointer
+                                                focus:outline-none focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20
+                                                disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <i className={`bi ${icon} text-[12px]`} />
-                                        <span>{label}</span>
+                                        <option value="all">Все категории</option>
+                                        {Object.entries(EXPENSE_CATEGORIES)
+                                            .filter(([, cat]) => groupFilter === 'all' || cat.group === groupFilter)
+                                            .map(([key, cat]) => (
+                                                <option key={key} value={key}>{cat.name}</option>
+                                            ))}
+                                    </select>
+                                    <i className="bi bi-funnel absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-stone-400 pointer-events-none" />
+                                    <i className="bi bi-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-stone-400 pointer-events-none" />
+                                </div>
+                                {categoryFilter !== 'all' && (
+                                    <button
+                                        onClick={() => setCategoryFilter('all')}
+                                        className="w-9 h-9 rounded-lg border border-stone-200 bg-white
+                                                flex items-center justify-center shrink-0
+                                                text-stone-400 hover:text-stone-700 hover:bg-stone-50 transition-colors"
+                                        title="Сбросить категорию"
+                                    >
+                                        <i className="bi bi-x-lg text-[12px]" />
                                     </button>
-                                );
-                            })}
+                                )}
+                            </div>
+
+                            <div className="ml-auto">
+                                <SortDropdown value={sortBy} onChange={setSortBy} disabled={loading} />
+                            </div>
+
+                            <div className="md:hidden flex gap-1 bg-stone-100 rounded-lg p-1 w-full">
+                                <button
+                                    onClick={() => setMobileView('list')}
+                                    className={`flex-1 h-8 rounded-md flex items-center justify-center gap-2 text-[12px] font-medium transition-colors
+                                            ${mobileView === 'list'
+                                                ? 'bg-white text-[#0D9488] shadow-sm'
+                                                : 'text-stone-500'
+                                            }`}
+                                >
+                                    <i className="bi bi-list-ul text-[13px]" />
+                                    Список
+                                </button>
+                                <button
+                                    onClick={() => setMobileView('chart')}
+                                    className={`flex-1 h-8 rounded-md flex items-center justify-center gap-2 text-[12px] font-medium transition-colors
+                                            ${mobileView === 'chart'
+                                                ? 'bg-white text-[#0D9488] shadow-sm'
+                                                : 'text-stone-500'
+                                            }`}
+                                >
+                                    <i className="bi bi-bar-chart text-[13px]" />
+                                    График
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="ml-auto">
-                            <SortDropdown
-                                value={sortBy}
-                                onChange={setSortBy}
-                                disabled={loading}
-                            />
-                        </div>
                     </div>
                 )}
 
-                {/* ============ ГРАФИКИ ============ */}
-                {hasData && (
-                    <>
-                        <div className="hidden md:grid md:grid-cols-2 gap-4 mb-4">
-                            <div style={{ height: 320 }}>
-                                <CategoryChart expenses={filteredExpenses} />
-                            </div>
-                            <div style={{ height: 320 }}>
-                                <PieChartByCategory expenses={filteredExpenses} />
-                            </div>
-                        </div>
-
-                        <div className="md:hidden mb-3">
-                            <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
-                                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100">
-                                    <span className="w-7 h-7 rounded-md bg-stone-100
-                                                    flex items-center justify-center shrink-0">
-                                        <i className={`bi ${mobileChart === 'bar' ? 'bi-bar-chart' : 'bi-pie-chart'}
-                                                    text-[13px] text-[#0D9488]`} />
-                                    </span>
-                                    <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
-                                        По категориям
-                                    </div>
-
-                                    <div className="ml-auto flex gap-1 bg-stone-100 rounded-md p-0.5">
-                                        <button
-                                            onClick={() => setMobileChart('bar')}
-                                            className={`w-8 h-7 rounded flex items-center justify-center
-                                                    transition-colors
-                                                    ${mobileChart === 'bar'
-                                                        ? 'bg-white text-[#0D9488] shadow-sm'
-                                                        : 'text-stone-400'
-                                                    }`}
-                                            title="Столбцы"
-                                        >
-                                            <i className="bi bi-bar-chart text-[13px]" />
-                                        </button>
-                                        <button
-                                            onClick={() => setMobileChart('pie')}
-                                            className={`w-8 h-7 rounded flex items-center justify-center
-                                                    transition-colors
-                                                    ${mobileChart === 'pie'
-                                                        ? 'bg-white text-[#0D9488] shadow-sm'
-                                                        : 'text-stone-400'
-                                                    }`}
-                                            title="Круг"
-                                        >
-                                            <i className="bi bi-pie-chart text-[13px]" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div style={{ height: 280 }}>
-                                    {mobileChart === 'bar' && (
-                                        <CategoryChart expenses={filteredExpenses} compact hideHeader />
-                                    )}
-                                    {mobileChart === 'pie' && (
-                                        <PieChartByCategory expenses={filteredExpenses} compact hideHeader />
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </>
-                )}
-
+                <div className="md:grid md:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)] md:gap-4 md:items-start">
+                    <div className={mobileView === 'list' ? 'block' : 'hidden md:block'}>
                 {/* ============ СПИСОК РАСХОДОВ ============ */}
                 {loading ? (
                     <ExpensesSkeleton />
@@ -1284,15 +1188,15 @@ const Expenses = () => {
                         {/* Десктоп: таблица */}
                         <div className="hidden md:block bg-white border border-stone-200 rounded-xl overflow-hidden">
                             <div className="overflow-x-auto">
-                                <table className="w-full text-[13px]" style={{ minWidth: 640 }}>
+                                <table className="w-full table-fixed text-[13px]" style={{ minWidth: 640 }}>
                                     <thead>
                                         <tr className="text-[10px] uppercase tracking-wider font-semibold text-stone-500
                                                     border-b border-stone-200 bg-stone-50">
-                                            <th className="text-left px-4 py-3 w-[100px] whitespace-nowrap">Дата</th>
-                                            <th className="text-left px-4 py-3 w-[200px] whitespace-nowrap">Категория</th>
-                                            <th className="text-left px-4 py-3 whitespace-nowrap">Заметка</th>
-                                            <th className="text-right px-4 py-3 w-[130px] whitespace-nowrap">Сумма</th>
-                                            <th className="text-right px-4 py-3 w-[100px] whitespace-nowrap">Действия</th>
+                                            <th className="text-left px-4 py-3 w-[115px] whitespace-nowrap">Дата</th>
+                                            <th className="text-left px-4 py-3 w-[190px] whitespace-nowrap">Категория</th>
+                                            <th className="text-left px-4 py-3">Заметка</th>
+                                            <th className="text-right px-4 py-3 w-[100px] whitespace-nowrap">Сумма</th>
+                                            <th className="text-right px-4 py-3 w-[120px] whitespace-nowrap">Действия</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-stone-100">
@@ -1304,9 +1208,9 @@ const Expenses = () => {
                                                     <td className="px-4 py-3 text-stone-600 tabular-nums whitespace-nowrap">
                                                         {formatDate(expense.createdAt)}
                                                     </td>
-                                                    <td className="px-4 py-3">
+                                                    <td className="px-4 py-3 overflow-hidden">
                                                         {cat ? (
-                                                            <div className="inline-flex items-center gap-2 whitespace-nowrap">
+                                                            <div className="flex items-center gap-2 min-w-0">
                                                                 <span
                                                                     className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
                                                                     style={{ backgroundColor: `${cat.color}20` }}
@@ -1316,20 +1220,22 @@ const Expenses = () => {
                                                                         style={{ color: cat.color }}
                                                                     />
                                                                 </span>
-                                                                <span className="text-stone-700">{cat.name}</span>
+                                                                <span className="text-stone-700 truncate block min-w-0" title={cat.name}>{cat.name}</span>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-stone-400 whitespace-nowrap">{expense.category}</span>
+                                                            <span className="text-stone-400 truncate block" title={expense.category}>{expense.category}</span>
                                                         )}
                                                     </td>
-                                                    <td className="px-4 py-3 text-stone-600 whitespace-nowrap">
-                                                        {expense.title || <span className="text-stone-300">—</span>}
+                                                    <td className="px-4 py-3 text-stone-600 overflow-hidden">
+                                                        <div className="truncate" title={expense.title || ''}>
+                                                            {expense.title || <span className="text-stone-300">—</span>}
+                                                        </div>
                                                     </td>
                                                     <td className="px-4 py-3 text-right font-semibold text-[#2C3531]
                                                                     tabular-nums whitespace-nowrap">
                                                         {formatMoney(expense.amount)} р
                                                     </td>
-                                                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                                                    <td className="px-4 py-3 text-right whitespace-nowrap w-[120px]">
                                                         <div className="inline-flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
                                                             <button
                                                                 onClick={() => handleEditClick(expense)}
@@ -1370,6 +1276,26 @@ const Expenses = () => {
                         />
                     </>
                 )}
+
+                    </div>
+
+                    <div className={mobileView === 'chart' ? 'block' : 'hidden md:block'}>
+                        {chartHasData ? (
+                            <>
+                                <div className="hidden md:block">
+                                    <CategoryChart expenses={chartExpenses} />
+                                </div>
+                                <div className="md:hidden">
+                                    <CategoryChart expenses={chartExpenses} compact />
+                                </div>
+                            </>
+                        ) : !loading ? (
+                            <div className="bg-white border border-stone-200 rounded-xl p-8 text-center text-[13px] text-stone-400">
+                                Нет данных для графика
+                            </div>
+                        ) : null}
+                    </div>
+                </div>
 
             </div>
 

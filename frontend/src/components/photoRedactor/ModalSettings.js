@@ -56,7 +56,7 @@ const ModalSettings = ({ settingsDB, setSettingsDB, setIsModalOpen }) => {
         }
 
         try {
-            await $host.put(`/api/settings/saveFormat`, item);
+            await $host.put(`api/settings/saveFormat`, item);
             setActiveEdit(null);
         } catch (e) {
             alert('Ошибка при сохранении');
@@ -68,7 +68,7 @@ const ModalSettings = ({ settingsDB, setSettingsDB, setIsModalOpen }) => {
         console.log(item)
         if (!window.confirm(`Удалить формат "${item.name}"?`)) return;
         try {
-            await $host.delete(`/api/settings/deleteFormat/${item.id}`);
+            await $host.delete(`api/settings/deleteFormat/${item.id}`);
             setSettingsDB(prev => prev.filter((_, i) => i !== index));
             setActiveEdit(null);
         } catch (e) {
@@ -104,7 +104,7 @@ const ModalSettings = ({ settingsDB, setSettingsDB, setIsModalOpen }) => {
         
 
         try {
-            const { data } = await $host.put('/api/settings/saveFormat', newFormat);
+            const { data } = await $host.put('api/settings/saveFormat', newFormat);
             setSettingsDB(prev => [...prev, data]);
             setNewFormat({
                 name: '', width: '', height: '',

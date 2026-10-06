@@ -5,9 +5,7 @@ import "./DialogEP.css";
 import { Input } from '../../ui/input';
 import {
     Command,
-    CommandDialog,
     CommandEmpty,
-    CommandGroup,
     CommandInput,
     CommandItem,
     CommandList,
@@ -38,7 +36,7 @@ const MyModalComponent = ({ isOpen, closeModal, codeOutside }) => {
             const data1 = { number: codeOutside}
             
             try {
-                const {data} = await $host.post('/api/ep/checkOrder', data1);
+                const {data} = await $host.post('api/ep/checkOrder', data1);
                 
                 setName1(data.Table[0].Name1Reciever)
                 setName2(data.Table[0].Name2Reciever)
@@ -55,13 +53,14 @@ const MyModalComponent = ({ isOpen, closeModal, codeOutside }) => {
         }
 
         DataGet()
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
 
+    
     useEffect(()=>{
         const getListOps = async () => {
             try {
-              const data1 = await $host.get('/api/ep/getListOps');
+              const data1 = await $host.get('api/ep/getListOps');
               setListObs(data1.data.Table)
             } catch (error) {
               console.error('Ошибка при получении JWT:', error);
@@ -76,7 +75,7 @@ const MyModalComponent = ({ isOpen, closeModal, codeOutside }) => {
             name1, name2, phone, ops: opsID, price, number: order.Number
         }
 
-        const {data} = await $host.post('/api/ep/changeOrderEP', dataSend)
+        const {data} = await $host.post('api/ep/changeOrderEP', dataSend)
 
         if(data.Table[0].Result){
             toast({

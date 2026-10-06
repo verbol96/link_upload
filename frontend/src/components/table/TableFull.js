@@ -404,7 +404,7 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                 list: listPayEP
             };
             setIsOpen(false);
-            await $host.post('/api/ep/changeStatusEP', data);
+            await $host.post('api/ep/changeStatusEP', data);
 
             setListPayEP([]);
 

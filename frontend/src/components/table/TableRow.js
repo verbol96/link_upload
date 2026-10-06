@@ -26,7 +26,7 @@ const getDateSentColor = (order) => {
     const sentTime = sentDate.getTime();
     const todayTime = today.getTime();
 
-    if (sentTime === todayTime) return '#956b16';
+    if (sentTime === todayTime) return '#004ba0';
     if (sentTime < todayTime) return '#dc2626';
     return 'darkgreen';
 };
@@ -52,8 +52,9 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
 
     const PaymentWarning = () => {
         const isErip = ['E1', 'R1', 'R2'].includes(order.typePost);
-
-        if (!isErip) return null;
+        if (!isErip) return   <span className={`inline-flex w-[15px] h-[15px] items-center justify-center rounded-[3px] border-[0.5px]`}>
+                <i className="bi bi-currency-dollar text-gray-200 text-[10px]"/>
+            </span>;
 
         const paymentClass = {
             none: 'bg-white border-red-300',
@@ -78,14 +79,12 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
     }
 
     const NotesWarning = () => {
-        if (!order.notes && !order.other) return null;
+        const hasNotes = order.notes || order.other;
 
         return (
-            <span
-                className="inline-flex w-[15px] h-[15px] items-center justify-center"
-                title="Есть заметки или примечания"
-            >
-                <i className="bi bi-exclamation-square-fill text-amber-300 text-[15px] leading-none"/>
+
+            <span className="inline-flex w-[15px] h-[15px]  border-[0.5px] rounded-[3px] border-gray-200 items-center justify-center">
+                <i className={`bi  ${hasNotes ? 'bi-exclamation-square-fill' : 'bi-exclamation'} text-[15px] leading-none ${hasNotes ? 'text-amber-200' : 'text-gray-200'}`}/>
             </span>
         )
     }
@@ -95,7 +94,7 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
         '#D8BFD8',
         '#FDFD96',
         '#98FF98',
-        'DarkGrey',
+        'rgb(210, 210, 210)',
         'white',
         'rgb(243, 243, 243)',
         'rgb(243, 243, 243)'
@@ -130,11 +129,11 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
         }
     }
 
-    const textColor = useMemo(() => {
+    const hasDuplicate = useMemo(() => {
         const ACTIVE_STATUSES = [0, 1, 2, 3, 4, 7, 8];
-        const pretend = orders.filter(el => ACTIVE_STATUSES.includes(el.status));
-        const count = pretend.filter(el => el.phone === order.phone).length;
-        return count > 1 ? 'blue' : 'black';
+        const activeOrders = orders.filter(el => ACTIVE_STATUSES.includes(el.status));
+
+        return activeOrders.filter(el => el.phone === order.phone).length > 1;
     }, [orders, order.phone]);
 
     const isSelected = selectedOrder === order.id;
@@ -153,7 +152,7 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
             <div
                 style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                 onDoubleClick={() => handleDetailsClick(order.id)}
-                className={`grid grid-cols-[40px_120px_70px_minmax(120px,4fr)_minmax(150px,4fr)_minmax(100px,3fr)_minmax(150px,6fr)_28px_80px_28px_90px] max-md:grid-cols-[20px_90px_55px_150px_28px_80px_28px_50px] items-center px-[3px] pl-[10px] py-[3px] min-w-0 ${isSelected ? 'bg-[#6f969d]' : ''}`}
+                className={`grid grid-cols-[40px_120px_70px_minmax(120px,4fr)_minmax(150px,4fr)_minmax(150px,6fr)_40px_40px_80px_40px_90px] max-md:grid-cols-[20px_90px_55px_150px_40px_40px_80px_40px_50px] items-center px-[3px] pl-[10px] py-[3px] min-w-0 ${isSelected ? 'bg-[#6f969d]' : ''}`}
             >
                 <div
                     onClick={() => handleDetailsClick(order.id)}
@@ -180,14 +179,12 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
                 </div>
 
                 <div
-                    className="text-[12px] px-[10px] text-center whitespace-nowrap max-md:hidden"
-                    style={{ color: textColor }}
+                    className="text-[12px] px-[10px] text-center whitespace-nowrap max-md:hidden border-md"
+                    style={{
+                        background: hasDuplicate ? 'rgba(104, 209, 0, 0.09)' : ''
+                    }}
                 >
                     {formatPhoneNumber(order.phone)}
-                </div>
-
-                <div className="text-[12px] px-[10px] text-center whitespace-nowrap overflow-hidden text-ellipsis max-md:hidden">
-                    {order.city}
                 </div>
 
                 <div className="text-[12px] px-[10px] text-center whitespace-nowrap overflow-hidden text-ellipsis max-md:px-[2px]">
@@ -198,7 +195,17 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
                     <NotesWarning/>
                 </div>
 
-                <div className="text-[12px] px-[6px] text-center whitespace-nowrap tabular-nums">
+                <div
+                    className={`w-[15px] h-[15px] rounded-[3px] flex items-center justify-center border-[0.5px] ${
+                        order.codeOutside ? 'border-teal-800' : 'border-gray-200'
+                    }`}
+                >
+                    <i className={`bi bi-check text-[12px] leading-none ${
+                        order.codeOutside ? 'text-teal-800' : 'text-gray-200'
+                    }`}/>
+                </div>
+
+                <div className="text-[12px] px-[6px] text-left whitespace-nowrap tabular-nums">
                     {(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р
                 </div>
 

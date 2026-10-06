@@ -1,7 +1,19 @@
-import Footer from "../components/admin/Footer";
-import { NavBar } from '../components/admin/NavBar';
-
 const HISTORY = [
+    {
+        version: '5.2',
+        date: '06.10.2026',
+        items: [
+            'во вкладке показ страниц',
+            'структура страниц',
+            'переработаны роли и меню',
+            'новая форма заказа',
+            'исправления ошибок в редакторе',
+            'страница инструменты',
+            'новые логи',
+            'значок оплаты в строке заказа',
+            'подключён бот в Telegram'
+        ],
+    },
     {
         version: '5.1',
         date: '20.09.2026',
@@ -181,101 +193,68 @@ const HISTORY = [
 
 const History = () => {
     return (
-        <div className="flex flex-col min-h-screen bg-stone-100">
-
-            <NavBar />
-
-            <div className="flex-1 w-full max-w-3xl mx-auto px-4 py-6 md:py-10">
-
-                {/* Заголовок */}
-                <div className="mb-6 md:mb-8">
-                    <h1 className="text-[24px] md:text-[30px] font-bold text-[#2C3531] leading-tight">
-                        История обновлений
-                    </h1>
-                </div>
-
-                {/* Таймлайн версий */}
-                <div className="relative">
-                    {/* Вертикальная линия таймлайна (только на десктопе) */}
-                    <div className="hidden md:block absolute left-[7px] top-2 bottom-2
-                                    w-px bg-stone-200" />
-
-                    <div className="flex flex-col gap-4 md:gap-5">
-                        {HISTORY.map((v, idx) => (
-                            <div key={v.version} className="relative md:pl-8">
-                                {/* Точка на таймлайне (только на десктопе) */}
-                                <div className="hidden md:flex absolute left-0 top-4
-                                                w-[15px] h-[15px] rounded-full
-                                                bg-white border-2 border-[#0D9488]
-                                                items-center justify-center">
-                                    {idx === 0 && (
-                                        <span className="w-[5px] h-[5px] rounded-full bg-[#0D9488]" />
-                                    )}
-                                </div>
-
-                                {/* Карточка версии */}
-                                <div className="bg-white border border-stone-200 rounded-xl
-                                                overflow-hidden
-                                                hover:border-stone-300 transition-colors">
-                                    {/* Шапка */}
-                                    <div className={`flex items-center gap-3 px-4 py-3
-                                                    border-b border-stone-100
-                                                    ${idx === 0 ? 'bg-[#0D9488]/5' : 'bg-stone-50/50'}`}>
-                                        <span className={`inline-flex items-center justify-center
-                                                        px-2 py-0.5 rounded-md
-                                                        text-[11px] font-bold tracking-wide
-                                                        ${idx === 0
-                                                            ? 'bg-[#0D9488] text-white'
-                                                            : 'bg-stone-200 text-stone-600'
-                                                        }`}>
-                                            v{v.version}
-                                        </span>
-
-                                        <span className="text-[12.5px] text-stone-500 tabular-nums">
-                                            {v.date}
-                                        </span>
-
-                                        {idx === 0 && (
-                                            <span className="ml-auto inline-flex items-center gap-1
-                                                            px-2 py-0.5 rounded-md
-                                                            bg-[#0D9488]/10 text-[#0D9488]
-                                                            text-[10px] font-semibold uppercase tracking-wider">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-[#0D9488] animate-pulse" />
-                                                Актуальная
-                                            </span>
-                                        )}
-
-                                        <span className={`${idx === 0 ? '' : 'ml-auto'}
-                                                        text-[11px] text-stone-400`}>
-                                            {v.items.length} {plural(v.items.length)}
-                                        </span>
-                                    </div>
-
-                                    {/* Список изменений */}
-                                    <ul className="px-4 py-3 flex flex-col gap-1.5">
-                                        {v.items.map((item, i) => (
-                                            <li key={i} className="flex items-start gap-2.5
-                                                                    text-[13px] text-stone-700 leading-snug">
-                                                <i className="bi bi-check2 text-[#0D9488]
-                                                            text-[13px] mt-0.5 shrink-0" />
-                                                <span>{item}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
+        <div className="w-full max-w-3xl mx-auto">
+            <div className="mb-6 md:mb-8">
+                <h1 className="text-[24px] md:text-[30px] font-bold text-[#2C3531] leading-tight">
+                    История обновлений
+                </h1>
             </div>
 
-            <Footer />
+            <div className="relative">
+                <div className="hidden md:block absolute left-[7px] top-2 bottom-2 w-px bg-stone-200"/>
+
+                <div className="flex flex-col gap-4 md:gap-5">
+                    {HISTORY.map((v, idx) => (
+                        <div key={v.version} className="relative md:pl-8">
+                            <div className="hidden md:flex absolute left-0 top-4 w-[15px] h-[15px] rounded-full bg-white border-2 border-[#0D9488] items-center justify-center">
+                                {idx === 0 && (
+                                    <span className="w-[5px] h-[5px] rounded-full bg-[#0D9488]"/>
+                                )}
+                            </div>
+
+                            <div className="bg-white border border-stone-200 rounded-xl overflow-hidden hover:border-stone-300 transition-colors">
+                                <div className={`flex items-center gap-3 px-4 py-3 border-b border-stone-100 ${idx === 0 ? 'bg-[#0D9488]/5' : 'bg-stone-50/50'}`}>
+                                    <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide ${
+                                        idx === 0
+                                            ? 'bg-[#0D9488] text-white'
+                                            : 'bg-stone-200 text-stone-600'
+                                    }`}>
+                                        v{v.version}
+                                    </span>
+
+                                    <span className="text-[12.5px] text-stone-500 tabular-nums">
+                                        {v.date}
+                                    </span>
+
+                                    {idx === 0 && (
+                                        <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#0D9488]/10 text-[#0D9488] text-[10px] font-semibold uppercase tracking-wider">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#0D9488] animate-pulse"/>
+                                            Актуальная
+                                        </span>
+                                    )}
+
+                                    <span className={`${idx === 0 ? '' : 'ml-auto'} text-[11px] text-stone-400`}>
+                                        {v.items.length} {plural(v.items.length)}
+                                    </span>
+                                </div>
+
+                                <ul className="px-4 py-3 flex flex-col gap-1.5">
+                                    {v.items.map((item, i) => (
+                                        <li key={i} className="flex items-start gap-2.5 text-[13px] text-stone-700 leading-snug">
+                                            <i className="bi bi-check2 text-[#0D9488] text-[13px] mt-0.5 shrink-0"/>
+                                            <span>{item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 };
 
-// Склонение слова "изменение"
 const plural = (n) => {
     const mod10 = n % 10;
     const mod100 = n % 100;

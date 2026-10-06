@@ -12,8 +12,6 @@ const fs = require('fs');
 const app = express()
 const PORT = process.env.PORT
 
-const status = 'release'// release, local
-
 app.use(fileUpload({}))
 app.use(bodyParser.json({ limit: '70mb' })); // ограничение на обьем данных в запросе, увеличил для миграциии БД
 app.use(bodyParser.urlencoded({ limit: '70mb', extended: true }));
@@ -21,7 +19,7 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
   credentials: true,
-  origin: status === 'release' 
+  origin: process.env.STATUS === 'release' 
     ? [
         'https://link1.by',
         'https://www.link1.by',
@@ -35,7 +33,7 @@ app.use(cors({
 app.use('/api', router)
 
 let server;
-if (status === 'release') {
+if (process.env.STATUS === 'release') {
   const httpsOptions = {
     key: fs.readFileSync('/etc/nginx/ssl/link1.by-new.key'),
     cert: fs.readFileSync('/etc/nginx/ssl/link1.by-new.crt')
@@ -49,7 +47,7 @@ const start = async () => {
   try {
     await sequelize.authenticate();
     await sequelize.sync();
-    server.listen(PORT, () => console.log(`${status === 'release' ? ' Server' : 'Local server'} started on port ${PORT}`));
+    server.listen(PORT, () => console.log(`${process.env.STATUS === 'release' ? ' Server' : 'Local server'} started on port ${PORT}`));
   } catch (error) {
     console.log(error);
   }

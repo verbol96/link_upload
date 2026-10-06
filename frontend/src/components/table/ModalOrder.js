@@ -447,7 +447,7 @@ const AddInvoices = async () => {
         };
 
         try {
-            const { data } = await $host.post('/api/ep/addInvoicesPay', dataInvoices);
+            const { data } = await $host.post('api/ep/addInvoicesPay', dataInvoices);
 
             if (data) {
                 // Обновляем Redux — синхронизируем с бэком
@@ -476,7 +476,7 @@ const CancelInvoices = async () => {
                 InvoiceNo: order.order_number,
             };
 
-            const { data } = await $host.post('/api/ep/delInvoicesPay', dataAPI);
+            const { data } = await $host.post('api/ep/delInvoicesPay', dataAPI);
 
             if (data) {
                 // Обновляем Redux — синхронизируем с бэком
@@ -496,7 +496,7 @@ const CancelInvoices = async () => {
 
 const CheckInvoices = async () => {
     try {
-        const { data } = await $host.post('/api/ep/getInvoicesPay', {
+        const { data } = await $host.post('api/ep/getInvoicesPay', {
             No: order.order_number,
         });
 

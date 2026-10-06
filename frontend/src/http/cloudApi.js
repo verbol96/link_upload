@@ -2,24 +2,24 @@ import {$host, API_URL} from './index'
 
 
 export const getFiles = async(dirId)=>{
-    const {data} = await $host.get(`/api/file/${dirId===null? '': `?parent=`+dirId}`)
+    const {data} = await $host.get(`api/file/${dirId===null? '': `?parent=`+dirId}`)
     return data
 }
 
 export const getFilesPhotosId = async(id)=>{
-    const {data} = await $host.post(`/api/file/getFilesPhotosId`, {id: id})
+    const {data} = await $host.post(`api/file/getFilesPhotosId`, {id: id})
     return data 
 }
 
 export const getFilesAll = async()=>{
-    const {data} = await $host.get(`/api/file/getFilesAll`)
+    const {data} = await $host.get(`api/file/getFilesAll`)
     return data 
 }
 
 export const createDir = async(nameDir, parentId)=>{
     let obj
     (parentId===undefined)?obj={"name": nameDir, "type": 'dir'} : obj={"name": nameDir, type: 'dir', parent: parentId}
-    const {data} = await $host.post('/api/file/',obj)
+    const {data} = await $host.post('api/file/',obj)
     return data
 }
 
@@ -29,17 +29,17 @@ export const uploadFiles = async(file, parentFile, id)=>{
     formDate.append('file', file.file)
     formDate.append('fileName', file.file.name);
     formDate.append('parent', parentFile)
-    const {data} = await $host.post('/api/file/upload', formDate)
+    const {data} = await $host.post('api/file/upload', formDate)
     return data
 }
 
 export const deleteFile = async(id)=>{
-    const {data} = await $host.delete(`/api/file?id=${id}`)
+    const {data} = await $host.delete(`api/file?id=${id}`)
     return data
 }
 
 export const deleteFileAll = async()=>{
-    const {data} = await $host.delete(`/api/file/all`)
+    const {data} = await $host.delete(`api/file/all`)
     return data
 }
 
@@ -67,7 +67,7 @@ export const downloadFiles = async (file, onProgress, onPartDone) => {
 
         if (response.status === 401) {
             try {
-                const refreshRes = await fetch(`${API_URL}/api/auth/refresh`, {
+                const refreshRes = await fetch(`${API_URL}api/auth/refresh`, {
                     method: 'GET',
                     credentials: 'include',
                 });
@@ -92,7 +92,7 @@ export const downloadFiles = async (file, onProgress, onPartDone) => {
 
     try {
         const { data: partsInfo } = await $host.get(
-            `/api/file/download-parts/`,
+            `api/file/download-parts/`,
             { params: { id: file.id, maxSize: MAX_PART_SIZE } }
         );
         totalParts = Number(partsInfo.totalParts) || 0;
@@ -111,7 +111,7 @@ export const downloadFiles = async (file, onProgress, onPartDone) => {
         let reported = false;
 
         const response = await fetchWithAuth(
-            `${API_URL}/api/file/download/?id=${file.id}&part=${partNumber}&maxSize=${MAX_PART_SIZE}`,
+            `${API_URL}api/file/download/?id=${file.id}&part=${partNumber}&maxSize=${MAX_PART_SIZE}`,
             { method: 'GET' }
         );
 
@@ -200,7 +200,7 @@ export const displayFileImg = async (id) => {
   if (!id) return null;
 
   try {
-    const response = await $host.get(`/api/file/thumb?id=${id}`, {
+    const response = await $host.get(`api/file/thumb?id=${id}`, {
       responseType: 'blob'
     });
 
