@@ -8,6 +8,7 @@ const fileUpload = require('express-fileupload')
 const bodyParser = require('body-parser');
 const https = require('https');
 const fs = require('fs');
+const {startTelegramPolling}=require('./services/telegram');
 
 const app = express()
 const PORT = process.env.PORT
@@ -31,7 +32,6 @@ app.use(cors({
 }));
 
 app.use('/api', router)
-
 let server;
 if (process.env.STATUS === 'release') {
   const httpsOptions = {
@@ -47,7 +47,11 @@ const start = async () => {
   try {
     await sequelize.authenticate();
     await sequelize.sync();
-    server.listen(PORT, () => console.log(`${process.env.STATUS === 'release' ? ' Server' : 'Local server'} started on port ${PORT}`));
+    server.listen(PORT, () => {
+      console.log(`${process.env.STATUS === 'release' ? ' Server' : 'Local server'} started on port ${PORT}`);
+      startTelegramPolling();
+    });
+    
   } catch (error) {
     console.log(error);
   }

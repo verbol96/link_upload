@@ -6,7 +6,7 @@ const {recalculateUserStats} = require('../services/orderService')
 const fs = require('fs/promises');
 const path = require('path');
 const { sequelize } = require('../models/models');
-const {sendTelegramMessage}=require('../services/telegram');
+const {sendTelegramMessage, handleTelegramUpdate}=require('../services/telegram');
 require('dotenv').config()
 
 //для объединения заказов
@@ -174,6 +174,16 @@ class orderController{
         } catch (error) {
             console.error('Ошибка завершения загрузки заказа:', error);
             return res.status(500).json({ message: 'Ошибка завершения загрузки заказа' });
+        }
+    }
+
+    async telegramWebhook(req,res){
+        try{
+            await handleTelegramUpdate(req.body);
+            return res.sendStatus(200);
+        }catch(error){
+            console.error('Telegram webhook error:',error);
+            return res.sendStatus(200);
         }
     }
 

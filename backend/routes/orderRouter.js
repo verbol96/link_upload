@@ -20,5 +20,6 @@ router.get('/ordersUser/:id', orderController.ordersUser)
 router.put('/changeAboutUser/:id', orderController.changeAboutUser)
 router.get('/getMaterialStats', orderController.getMaterialStats);
 router.post('/uploadCompleted/:id', orderController.uploadCompleted)
+router.post('/telegramWebhook', orderController.telegramWebhook)
 
 module.exports = router
