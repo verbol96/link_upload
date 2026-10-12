@@ -24,21 +24,22 @@ export const TableFooter = ({ filteredOrders }) => {
     };
 
     return (
-        <div className="bg-[#a4aeaf] rounded-[5px]
-                        text-[11px] font-medium my-[10px]
-                        flex items-center justify-between">
-            <div className="flex-grow-[4] basis-0 flex justify-start items-center
-                            ml-[9%] min-w-0 px-[10px] py-1">
+        <div className="bg-teal-950/70 rounded-md text-xs text-white font-light my-4
+                        flex items-center justify-between px-[10px] py-1 pl-[5%] pr-[10%]">
+
+            <div>
                 N={countedOrders.length}
             </div>
-            <div className="flex-grow-[2] basis-0 flex justify-start items-center
-                            min-w-0 px-[10px] py-1">
-                {SumFormat()}шт
+
+            <div className="flex items-center gap-6">
+                <div>
+                    {SumFormat()}шт
+                </div>
+                <div>
+                    {SumPrice().toFixed(2)}р
+                </div>
             </div>
-            <div className="flex-grow-[1] basis-0 flex justify-start items-center
-                            min-w-0 px-[10px] py-1">
-                {SumPrice().toFixed(2)}р
-            </div>
+
         </div>
     );
 };

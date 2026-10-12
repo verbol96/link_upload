@@ -57,7 +57,12 @@ const Photo = sequelize.define('photo', {
     format: {type: DataTypes.STRING},
     amount: {type: DataTypes.INTEGER},
     paper: {type: DataTypes.STRING},
-    copies: {type: DataTypes.INTEGER, defaultValue: 1}
+    copies: {type: DataTypes.INTEGER, defaultValue: 1},
+    clientId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      unique: true
+},
 })
 
 const Settings = sequelize.define('settings', {

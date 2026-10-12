@@ -38,9 +38,13 @@ export const deleteSetting = async(id) =>{
     return data
 }
 
-export const updateOrder = async(id, data) =>{
-    const {res} = $host.put(`api/order/updateOrder/${id}`, data)
-    return res
+export const updateOrder = async (id, data) => {
+    const response = await $host.put(
+        `api/order/updateOrder/${id}`,
+        data
+    )
+
+    return response.data
 }
 
 export const updateUserAdress = async(id, data) =>{

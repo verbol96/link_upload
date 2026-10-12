@@ -58,6 +58,7 @@ const Web = () => {
     const [typePost, setTypePost] = useState('E')
     const [city, setCity] = useState('')
     const [adress, setAdress] = useState('')
+    const [oblast,setOblast]=useState('');
     const [postCode, setPostCode] = useState('')
     const [other, setOther] = useState('')
 
@@ -89,6 +90,7 @@ const Web = () => {
             setCity(adressUser.city ?? '');
             setAdress(adressUser.adress ?? '');
             setPostCode(adressUser.postCode ?? '');
+            setOblast(adressUser.oblast??'');
         }
     }, [adressUser, user]);
 
@@ -288,7 +290,7 @@ const Web = () => {
             "price": totalPrice,
             "price_deliver": deliveryPrice,
             "codeOutside": '',
-            "oblast": '',
+            "oblast": typePost==='R'||typePost==='R1'||typePost==='R2'?oblast:'',
             "raion": '',
             'auth': isAuth,
             'phoneUser': user.phone,
@@ -404,10 +406,6 @@ const Web = () => {
             return;
         }
 
-        if (!hasFiles) {
-            toast.error('Добавьте хотя бы одно фото');
-            return;
-        }
 
         upload();
     };
@@ -564,6 +562,7 @@ const Web = () => {
                             adress={adress} setAdress={setAdress}
                             postCode={postCode} setPostCode={setPostCode}
                             adressUser={adressUser}
+                            oblast={oblast} setOblast={setOblast}
                             other={other} setOther={setOther}
                             isValid={isValid}
                             formats={formats}

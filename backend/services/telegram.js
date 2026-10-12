@@ -1,5 +1,11 @@
+
 const {User}=require('../models/models');
 const {createTelegramOrder}=require('./telegramOrderService');
+
+// Локально — Telegram напрямую, на сервере — через Амстердам
+const TELEGRAM_API_BASE=process.env.STATUS==='release'
+    ?'https://tg.link1.by/telegram-api'
+    :'https://api.telegram.org';
 
 const sendTelegramMessage=async(text,replyMarkup=null,targetChatId=null)=>{
     try{
@@ -21,7 +27,7 @@ const sendTelegramMessage=async(text,replyMarkup=null,targetChatId=null)=>{
             body.reply_markup=replyMarkup;
         }
 
-        const response=await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+        const response=await fetch(`${TELEGRAM_API_BASE}/bot${token}/sendMessage`,{
             method:'POST',
             headers:{
                 'Content-Type':'application/json'
@@ -42,7 +48,7 @@ const answerCallbackQuery=async(callbackQueryId)=>{
     try{
         const token=process.env.TELEGRAM_BOT_TOKEN;
 
-        await fetch(`https://api.telegram.org/bot${token}/answerCallbackQuery`,{
+        await fetch(`${TELEGRAM_API_BASE}/bot${token}/answerCallbackQuery`,{
             method:'POST',
             headers:{
                 'Content-Type':'application/json'
@@ -70,7 +76,6 @@ const getTelegramBatch=(chatId)=>{
     if(!telegramBatches.has(chatId)){
         telegramBatches.set(chatId,[]);
     }
-
     return telegramBatches.get(chatId);
 };
 
@@ -96,7 +101,7 @@ const downloadTelegramFile=async(fileId,fileName)=>{
     const token=process.env.TELEGRAM_BOT_TOKEN;
 
     const response=await fetch(
-        `https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`
+        `${TELEGRAM_API_BASE}/bot${token}/getFile?file_id=${fileId}`
     );
 
     const data=await response.json();
@@ -106,7 +111,7 @@ const downloadTelegramFile=async(fileId,fileName)=>{
     }
 
     const fileResponse=await fetch(
-        `https://api.telegram.org/file/bot${token}/${data.result.file_path}`
+        `${TELEGRAM_API_BASE}/file/bot${token}/${data.result.file_path}`
     );
 
     if(!fileResponse.ok){
@@ -249,7 +254,6 @@ const handleTelegramCallback=async(callbackQuery)=>{
                 null,
                 chatId
             );
-
             return;
         }
 
@@ -358,7 +362,6 @@ const handleTelegramUpdate=async(update)=>{
                 null,
                 chatId
             );
-
             return;
         }
 
@@ -386,7 +389,6 @@ const handleTelegramUpdate=async(update)=>{
                 null,
                 chatId
             );
-
             return;
         }
 
@@ -436,7 +438,6 @@ const handleTelegramUpdate=async(update)=>{
                 null,
                 chatId
             );
-
             return;
         }
 
@@ -521,7 +522,7 @@ const startTelegramPolling=async()=>{
     while(true){
         try{
             const response=await fetch(
-                `https://api.telegram.org/bot${token}/getUpdates?timeout=30&offset=${offset}`
+                `${TELEGRAM_API_BASE}/bot${token}/getUpdates?timeout=30&offset=${offset}`
             );
 
             const data=await response.json();

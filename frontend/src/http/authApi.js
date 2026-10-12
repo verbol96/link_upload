@@ -70,38 +70,49 @@ export const deleteUsersWithoutOrders = async()=>{
 }
 
 const getLogSessionId=()=>{
-    let sessionId=sessionStorage.getItem('logSessionId');
+    let sessionId=localStorage.getItem('logVisitorId');
 
     if(!sessionId){
-        if(typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function'){
-            sessionId=crypto.randomUUID();
-        }else{
-            sessionId='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,(c)=>{
-                const r=Math.random()*16|0;
-                const v=c==='x'?r:((r&0x3)|0x8);
-                return v.toString(16);
-            });
+        sessionId=sessionStorage.getItem('logSessionId');
+
+        if(!sessionId){
+            if(typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function'){
+                sessionId=crypto.randomUUID();
+            }else{
+                sessionId='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,(c)=>{
+                    const r=Math.random()*16|0;
+                    const v=c==='x'?r:((r&0x3)|0x8);
+                    return v.toString(16);
+                });
+            }
         }
 
-        sessionStorage.setItem('logSessionId',sessionId);
+        localStorage.setItem('logVisitorId',sessionId);
     }
+
+    sessionStorage.removeItem('logSessionId');
 
     return sessionId;
 };
+
 export const setLogUserData=(user)=>{
     if(!user){
         sessionStorage.removeItem('logUserPhone');
         sessionStorage.removeItem('logUserSurname');
         return;
     }
+
     const surname=user.FIO?.trim().split(/\s+/)[0]||null;
+
     sessionStorage.setItem('logUserPhone',user.phone||'0');
+
     if(surname){
         sessionStorage.setItem('logUserSurname',surname);
     }else{
         sessionStorage.removeItem('logUserSurname');
     }
 };
+
 export const setLogUser=async(eventData={})=>{
     try{
         let browserName='unknown';
@@ -109,9 +120,11 @@ export const setLogUser=async(eventData={})=>{
         let osName='unknown';
         let osVersion='unknown';
         let deviceModel='unknown';
+
         try{
             const parser=new UAParser();
             const result=parser.getResult();
+
             browserName=result.browser?.name||'unknown';
             browserVersion=result.browser?.version||'unknown';
             osName=result.os?.name||'unknown';
@@ -120,8 +133,10 @@ export const setLogUser=async(eventData={})=>{
         }catch(uaError){
             console.warn('UA Parser error:',uaError.message);
         }
+
         const screenWidth=window?.screen?.width||0;
         const screenHeight=window?.screen?.height||0;
+
         const dataLog={
             phone:eventData.phone||sessionStorage.getItem('logUserPhone')||'0',
             surname:eventData.surname||sessionStorage.getItem('logUserSurname')||null,
@@ -139,11 +154,12 @@ export const setLogUser=async(eventData={})=>{
             OS:`${osName} (${osVersion})`,
             screen:`${screenWidth}x${screenHeight}`
         };
+
         const data=await $host.post('api/auth/setLogUser',{dataLog});
         return data;
     }catch(error){
         console.error('setLogUser error:',error.message);
-         throw error;
+        throw error;
     }
 };
 
@@ -162,7 +178,7 @@ export const deleteAllLogs=async()=>{
     return data;
 };
 
-export const getLogUser = async() =>{
-    const {data} = await $host.get('api/auth/getLogUser')
-    return data
-}
+export const getLogUser=async()=>{
+    const {data}=await $host.get('api/auth/getLogUser');
+    return data;
+};

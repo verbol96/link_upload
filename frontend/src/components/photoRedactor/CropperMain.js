@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Cropper from 'react-easy-crop';
-
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../ui/dialog";
 import ModalSettings from './ModalSettings';
 import ListPhoto from './ListPhoto';
 import PhotoCarousel from './PhotoCarousel';
-
 const CropperMain = ({
     photos, setPhotos, onSaveCrop, handleAddPhotos, setActivePhoto, activePhoto,
     savePhotos, saveCurrentPhoto,
@@ -13,7 +11,6 @@ const CropperMain = ({
     settingsDB, setSettingsDB, activeSettings, setActiveSettings,
     pixelsRef, outputFormat, setOutputFormat
 }) => {
-
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [zoomDef, setZoomDef] = useState(1);
@@ -21,13 +18,11 @@ const CropperMain = ({
     const [rotation, setRotation] = useState(0);
     const [fieldsWhite, setFieldsWhite] = useState(false);
     const [media, setMedia] = useState();
-
     const [withFrame, setWithFrame] = useState(false);
-
     const [isModalOpen, setIsModalOpen] = useState(false);
     const cropRef = useRef();
     const isSwitchingRef = useRef(false);
-
+    const switchTimerRef = useRef(null);
     const clearPhotos = useCallback(() => {
         setPhotos([]);
         setCrop({ x: 0, y: 0 });
@@ -39,114 +34,91 @@ const CropperMain = ({
         setNameOrder('');
         pixelsRef.current = {};
     }, [setPhotos, setNameOrder, pixelsRef]);
-
     // функция вычисления pixels из crop, cropSize, zoom, media
     const computePixels = (cropValue) => {
         if (!media || !cropSize) return null;
-
         const displayW = media.width * zoom;
         const displayH = media.height * zoom;
-
         const kX = media.naturalWidth / displayW;
         const kY = media.naturalHeight / displayH;
-
         const pixelsW = cropSize.width * kX;
         const pixelsH = cropSize.height * kY;
-
         const x = (media.naturalWidth - pixelsW) / 2 - cropValue.x * kX;
         const y = (media.naturalHeight - pixelsH) / 2 - cropValue.y * kY;
-
         return { x, y, width: pixelsW, height: pixelsH };
     };
-
     // При загрузке изображения — инициализация
     // если несколько на листе, то изначлаьный кроп по настройкам
-const onMediaLoaded = useCallback((mediaSize) => {
-    setMedia(mediaSize);
-    if (photos[activePhoto]?.cropData?.cropSize !== undefined) {
-        return;
-    }
-    setRotation(0);
-    if (!cropRef.current?.containerRect) return;
-    const containerW = cropRef.current.containerRect.width;
-    const containerH = cropRef.current.containerRect.height;
-    const formatW = Number(activeSettings.width);
-    const formatH = Number(activeSettings.height);
-    const left = Number(activeSettings.left) || 0;
-    const right = Number(activeSettings.right) || 0;
-    const top = Number(activeSettings.top) || 0;
-    const bottom = Number(activeSettings.bottom) || 0;
-    const cardW = formatW + left + right;
-    const cardH = formatH + top + bottom;
-    const sheetW = Number(activeSettings.widthList);
-    const sheetH = Number(activeSettings.heightList);
-    const cols = Math.max(1, Math.floor(sheetW / cardW));
-    const rows = Math.max(1, Math.floor(sheetH / cardH));
-    const perPage = cols * rows;
-    const shouldFixOrientation = perPage > 1;
-    let targetW = formatW;
-    let targetH = formatH;
-    let frameLeft = left;
-    let frameRight = right;
-    let frameTop = top;
-    let frameBottom = bottom;
-    if (!shouldFixOrientation) {
-        const photoIsHorizontal = mediaSize.width > mediaSize.height;
-        const formatIsHorizontal = formatW > formatH;
-        if (photoIsHorizontal !== formatIsHorizontal) {
-            targetW = formatH;
-            targetH = formatW;
-            frameLeft = top;
-            frameRight = bottom;
-            frameTop = left;
-            frameBottom = right;
-        }
-    }
-    const totalW = targetW + frameLeft + frameRight;
-    const totalH = targetH + frameTop + frameBottom;
-    const indexDown = 0.85;
-    const scale = Math.min(
-        (containerW * indexDown) / totalW,
-        (containerH * indexDown) / totalH
-    );
-    const cropW = targetW * scale;
-    const cropH = targetH * scale;
-    const newCropData = {
-        width: cropW,
-        height: cropH
-    };
-    const valueZoom = Math.max(
-        cropW / mediaSize.width,
-        cropH / mediaSize.height
-    );
-    setCropSize(newCropData);
-    requestAnimationFrame(() => {
-        setTimeout(() => {
-            setCrop({ x: 0, y: 0 });
-            setZoom(valueZoom);
-        }, 30);
-        setZoomDef(valueZoom);
+    const onMediaLoaded = useCallback((mediaSize) => {
         setMedia(mediaSize);
-        setFieldsWhite(false);
-        onSaveCrop(photos[activePhoto].id, {
-            zoom: valueZoom,
-            zoomDef: valueZoom,
-            cropSize: newCropData,
-            crop: { x: 0, y: 0 },
-            media: mediaSize,
-            rotation: 0,
-            fieldsWhite: false
+        if (photos[activePhoto]?.cropData?.cropSize !== undefined) {
+            return;
+        }
+        setRotation(0);
+        if (!cropRef.current?.containerRect) return;
+        const containerW = cropRef.current.containerRect.width;
+        const containerH = cropRef.current.containerRect.height;
+        const formatW = Number(activeSettings.width);
+        const formatH = Number(activeSettings.height);
+        const cardW = formatW + Number(activeSettings.left) + Number(activeSettings.right);
+        const cardH = formatH + Number(activeSettings.top) + Number(activeSettings.bottom);
+        const sheetW = Number(activeSettings.widthList);
+        const sheetH = Number(activeSettings.heightList);
+        const cols = Math.max(1, Math.floor(sheetW / cardW));
+        const rows = Math.max(1, Math.floor(sheetH / cardH));
+        const perPage = cols * rows;
+        const shouldFixOrientation = perPage > 1;
+        const maxW = containerW * 0.85;
+        const maxH = containerH * 0.85;
+        let targetW = formatW;
+        let targetH = formatH;
+        if (!shouldFixOrientation) {
+            const photoIsHorizontal = mediaSize.width > mediaSize.height;
+            const formatIsHorizontal = formatW > formatH;
+            if (photoIsHorizontal !== formatIsHorizontal) {
+                targetW = formatH;
+                targetH = formatW;
+            }
+        }
+        const aspect = targetW / targetH;
+        let cropW;
+        let cropH;
+        if (maxW / maxH > aspect) {
+            cropH = maxH;
+            cropW = cropH * aspect;
+        } else {
+            cropW = maxW;
+            cropH = cropW / aspect;
+        }
+        const newCropData = { width: cropW, height: cropH };
+        const valueZoom = Math.max(
+            cropW / mediaSize.width,
+            cropH / mediaSize.height
+        );
+        setCropSize(newCropData);
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                setCrop({ x: 0, y: 0 });
+                setZoom(valueZoom);
+            }, 30);
+            setZoomDef(valueZoom);
+            setMedia(mediaSize);
+            setFieldsWhite(false);
+            onSaveCrop(photos[activePhoto].id, {
+                zoom: valueZoom,
+                zoomDef: valueZoom,
+                cropSize: newCropData,
+                crop: { x: 0, y: 0 },
+                media: mediaSize,
+                rotation: 0,
+                fieldsWhite: false
+            });
         });
-    });
-}, [photos, activePhoto, activeSettings, onSaveCrop]);
-
+    }, [photos, activePhoto, activeSettings, onSaveCrop]);
     const changePhoto = useCallback((index) => {
-        if (index < 0 || index >= photos.length) return;
-        if (index === activePhoto) return;
-
+        if (index < 0 || index >= photos.length || index === activePhoto) return;
         isSwitchingRef.current = true;
-
-        // Сохраняем текущее состояние в cropData (pixels уже в ref)
+        if (switchTimerRef.current) clearTimeout(switchTimerRef.current);
         const currentData = {
             cropSize,
             crop,
@@ -157,57 +129,54 @@ const onMediaLoaded = useCallback((mediaSize) => {
             media,
             pixels: pixelsRef.current[photos[activePhoto]?.id]
         };
-
-        const newPhoto = photos[index];
-        const data = newPhoto?.cropData;
-
+        const data = photos[index]?.cropData;
         setPhotos(prev => prev.map((photo, idx) =>
             idx === activePhoto ? { ...photo, cropData: currentData } : photo
         ));
-
-        if (data) {
+        if (data?.cropSize) {
             setCropSize(data.cropSize);
-            setTimeout(() => {
-                setZoom(data.zoom);
-                setCrop(data.crop);
-            }, 30);
+            setZoom(data.zoom);
+            setCrop(data.crop);
             setZoomDef(data.zoomDef);
             setRotation(data.rotation);
             setFieldsWhite(data.fieldsWhite);
             setMedia(data.media);
+            if (data.pixels) pixelsRef.current[photos[index].id] = data.pixels;
+        } else {
+            setCrop({ x: 0, y: 0 });
+            setZoom(1);
+            setZoomDef(1);
+            setRotation(0);
+            setFieldsWhite(false);
+            setMedia(undefined);
         }
-
         setActivePhoto(index);
-
-        setTimeout(() => {
+        switchTimerRef.current = setTimeout(() => {
             isSwitchingRef.current = false;
         }, 200);
-
     }, [photos, activePhoto, cropSize, crop, zoom, zoomDef, rotation, fieldsWhite, media, setPhotos, setActivePhoto, pixelsRef]);
-
+    useEffect(() => () => {
+        if (switchTimerRef.current) clearTimeout(switchTimerRef.current);
+    }, []);
     // onCropChange — вызывается сразу, вычисляем pixels здесь
     const onCropChange = (newCrop) => {
+        if (isSwitchingRef.current) return;
         setCrop(newCrop);
-
         if (!photos[activePhoto]) return;
-
         const computed = computePixels(newCrop);
         if (computed) {
             pixelsRef.current[photos[activePhoto].id] = computed;
         }
     };
-
     const onZoomChange = (newZoom) => {
+        if (isSwitchingRef.current) return;
         setZoom(newZoom);
     };
-
     // onCropComplete — сохраняем остальные настройки в cropData
     const onCropComplete = useCallback(
         (_croppedArea, croppedAreaPixels) => {
-            if (!photos[activePhoto]) return;
-
+            if (isSwitchingRef.current || !photos[activePhoto]) return;
             pixelsRef.current[photos[activePhoto].id] = croppedAreaPixels;
-
             onSaveCrop(photos[activePhoto].id, {
                 crop,
                 cropSize,
@@ -228,26 +197,20 @@ const onMediaLoaded = useCallback((mediaSize) => {
         },
         [photos, activePhoto, crop, cropSize, zoom, zoomDef, rotation, fieldsWhite, media, onSaveCrop, activeSettings, pixelsRef]
     );
-
     const changeSelect = (value) => {
         const selectedSettings = settingsDB.find(el => el.name === value);
         if (selectedSettings) {
-
             setActiveSettings(selectedSettings);
             setNameFormat(selectedSettings.name);
-
             setPhotos(prev => prev.map(el => ({
                 ...el,
                 cropData: null
             })));
-
             pixelsRef.current = {};
-
             if (photos.length === 1) {
                 clearPhotos();
                 return;
             }
-
             if (activePhoto !== 0) setActivePhoto(0);
             else {
                 setActivePhoto(1);
@@ -255,16 +218,13 @@ const onMediaLoaded = useCallback((mediaSize) => {
                     setActivePhoto(0);
                 }, 150);
             }
-
         }
     };
-
     const addField = useCallback(() => {
         if (!media || !cropSize) return;
         const isRotated90 = rotation === 90 || rotation === 270;
         const eW = isRotated90 ? media.height : media.width;
         const eH = isRotated90 ? media.width : media.height;
-
         if (!fieldsWhite) {
             const value = Math.min(cropSize.width / eW, cropSize.height / eH);
             setTimeout(() => setCrop({ x: 0, y: 0 }), 5);
@@ -278,13 +238,11 @@ const onMediaLoaded = useCallback((mediaSize) => {
         }
         setFieldsWhite(!fieldsWhite);
     }, [media, cropSize, rotation, fieldsWhite, photos, activePhoto, onSaveCrop]);
-
     const minZoom = (currentFieldsWhite) => {
         if (!media || !cropSize) return 0.1;
         const isRotated90 = rotation === 90 || rotation === 270;
         const effectiveMediaW = isRotated90 ? media.height : media.width;
         const effectiveMediaH = isRotated90 ? media.width : media.height;
-
         if (currentFieldsWhite) {
             return Math.min(
                 cropSize.width / effectiveMediaW,
@@ -297,36 +255,27 @@ const onMediaLoaded = useCallback((mediaSize) => {
             );
         }
     };
-
     const maxZoom = () => {
         if (fieldsWhite) return zoomDef;
         else return 3 * zoomDef;
     };
-
     const RotationImg = useCallback((value) => {
         let newRotation = (rotation + 90 * value) % 360;
         if (newRotation < 0) newRotation += 360;
-
         setRotation(newRotation);
-
         if (media && cropSize) {
             const isRotating90 = (newRotation === 90 || newRotation === 270);
-
             const effectiveMediaW = isRotating90 ? media.height : media.width;
             const effectiveMediaH = isRotating90 ? media.width : media.height;
-
             const newZoom = Math.max(
                 cropSize.width / effectiveMediaW,
                 cropSize.height / effectiveMediaH
             );
-
             setCrop({ x: 0, y: 0 });
-
             setTimeout(() => {
                 setZoom(newZoom);
                 setZoomDef(newZoom);
             }, 30);
-
             if (photos[activePhoto]) {
                 onSaveCrop(photos[activePhoto].id, {
                     rotation: newRotation,
@@ -341,7 +290,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
             }
         }
     }, [rotation, media, cropSize, photos, activePhoto, onSaveCrop]);
-
     const RotationAspect = useCallback(() => {
         // Определяем, сколько фото будет на листе
         const cardW = Number(activeSettings.width) + Number(activeSettings.left) + Number(activeSettings.right);
@@ -351,28 +299,21 @@ const onMediaLoaded = useCallback((mediaSize) => {
         const cols = Math.max(1, Math.floor(sheetW / cardW));
         const rows = Math.max(1, Math.floor(sheetH / cardH));
         const perPage = cols * rows;
-
         // Если фото несколько на листе — не даём менять ориентацию
         if (perPage > 1) return;
-
         const x = cropSize.width;
         const y = cropSize.height;
-
         const newCropSize = { width: y, height: x };
         const resetCrop = { x: 0, y: 0 };
-
         const newZoom = media
             ? Math.max(newCropSize.width / media.width, newCropSize.height / media.height)
             : zoom;
-
         setCropSize(newCropSize);
         setCrop(resetCrop);
-
         setTimeout(() => {
             setZoom(newZoom);
             setZoomDef(newZoom);
         }, 30);
-
         onSaveCrop(photos[activePhoto].id, {
             cropSize: newCropSize,
             crop: resetCrop,
@@ -380,31 +321,25 @@ const onMediaLoaded = useCallback((mediaSize) => {
             zoomDef: newZoom
         });
     }, [cropSize, media, zoom, photos, activePhoto, onSaveCrop, activeSettings]);
-    
     const cropCenter = (value) => {
         const position = { ...crop };
-
         if (value === 'x') {
             position.x = 0;
         } else if (value === 'y') {
             position.y = 0;
         }
-
         setCrop(position);
         onSaveCrop(photos[activePhoto].id, { crop: position });
     };
-
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (photos.length === 0) return;
-
             // пробел — белые поля
             if (e.key === ' ') {
                 e.preventDefault();
                 addField();
                 return;
             }
-
             if (e.key === 'ArrowLeft' && activePhoto > 0) {
                 e.preventDefault();
                 changePhoto(activePhoto - 1);
@@ -419,27 +354,20 @@ const onMediaLoaded = useCallback((mediaSize) => {
                 RotationAspect();
             }
         };
-
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [activePhoto, photos.length, changePhoto, addField, RotationAspect, RotationImg]);
-
     const [showPhotoList, setShowPhotoList] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
-
     const touchStartX = useRef(null);
-
     const handleTouchStart = (e) => {
         touchStartX.current = e.touches[0].clientX;
     };
-
     const handleTouchEnd = (e) => {
         if (touchStartX.current === null) return;
-
         const touchEndX = e.changedTouches[0].clientX;
         const diff = touchStartX.current - touchEndX;
         const SWIPE_THRESHOLD = 50;
-
         if (Math.abs(diff) > SWIPE_THRESHOLD) {
             if (diff > 0 && activePhoto < photos.length - 1) {
                 changePhoto(activePhoto + 1);
@@ -447,19 +375,15 @@ const onMediaLoaded = useCallback((mediaSize) => {
                 changePhoto(activePhoto - 1);
             }
         }
-
         touchStartX.current = null;
     };
-
     return (
         <>
             <div className="h-full bg-white flex flex-col md:flex-row">
-
                 {/* СПИСОК ПРЕВЬЮ — на десктопе слева, на мобилке скрыт */}
                 <div className="hidden md:block w-[10%] shrink-0 h-full overflow-auto border-r border-gray-200">
                     <ListPhoto photos={photos} activePhoto={activePhoto} changePhoto={changePhoto} />
                 </div>
-
                 {/* ЦЕНТРАЛЬНЫЙ КРОППЕР */}
                 <div className="flex-1 min-h-0 md:w-[70%] flex flex-col items-center justify-between">
                     {photos.length > 0 && (
@@ -489,10 +413,8 @@ const onMediaLoaded = useCallback((mediaSize) => {
                         </div>
                     ) : (
                         <div className="w-full flex flex-col justify-between h-full my-2 md:my-4 px-2 md:px-0">
-
                             {/* Кроппер + стрелки */}
                             <div className="flex flex-row gap-2 md:gap-10 items-center justify-center w-full flex-1 min-h-0">
-
                                 <button
                                     onClick={() => changePhoto(activePhoto - 1)}
                                     className="hidden md:flex w-16 h-16 
@@ -506,27 +428,22 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                 >
                                     <i className="bi bi-chevron-left text-xl md:text-3xl text-gray-700"></i>
                                 </button>
-
                                 <div className=" relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] 
                                                  border-0 border-gray-300">
                                     <Cropper
                                         className='border-2 border-gray-300'
                                         image={photos[activePhoto].url}
                                         ref={cropRef}
-
                                         crop={crop}
                                         cropSize={cropSize}
                                         zoom={zoom}
                                         rotation={rotation}
-
                                         minZoom={minZoom(fieldsWhite)}
                                         maxZoom={maxZoom()}
-
                                         onCropChange={onCropChange}
                                         onZoomChange={onZoomChange}
                                         onCropComplete={onCropComplete}
                                         onMediaLoaded={onMediaLoaded}
-
                                         zoomWithScroll={false}
                                         restrictPosition={fieldsWhite ? false : true}
                                         showGrid={false}
@@ -539,7 +456,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                                     ${activeSettings.right * cropSize.width / activeSettings.width}px ${activeSettings.bottom * cropSize.height / activeSettings.height}px 0 0 white,
                                                     -${activeSettings.left * cropSize.width / activeSettings.width}px ${activeSettings.bottom * cropSize.height / activeSettings.height}px 0 white,
                                                     -${activeSettings.left * cropSize.width / activeSettings.width}px -${activeSettings.top * cropSize.height / activeSettings.height}px 0 0 white,
-
                                                     ${activeSettings.right * cropSize.width / activeSettings.width + 2}px -${activeSettings.top * cropSize.height / activeSettings.height + 2}px 0 0 black, 
                                                     ${activeSettings.right * cropSize.width / activeSettings.width + 2}px ${activeSettings.bottom * cropSize.height / activeSettings.height + 2}px 0 0 black,
                                                     -${activeSettings.left * cropSize.width / activeSettings.width + 2}px ${activeSettings.bottom * cropSize.height / activeSettings.height + 2}px 0 black,
@@ -557,7 +473,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                                     ${activeSettings.right * cropSize.height / activeSettings.width}px ${activeSettings.bottom * cropSize.width / activeSettings.height}px 0 0 white,
                                                     -${activeSettings.left * cropSize.height / activeSettings.width}px ${activeSettings.bottom * cropSize.width / activeSettings.height}px 0 white,
                                                     -${activeSettings.left * cropSize.height / activeSettings.width}px -${activeSettings.top * cropSize.width / activeSettings.height}px 0 0 white,
-
                                                     ${activeSettings.right * cropSize.height / activeSettings.width + 2}px -${activeSettings.top * cropSize.width / activeSettings.height + 2}px 0 0 black, 
                                                     ${activeSettings.right * cropSize.height / activeSettings.width + 2}px ${activeSettings.bottom * cropSize.width / activeSettings.height + 2}px 0 0 black,
                                                     -${activeSettings.left * cropSize.height / activeSettings.width + 2}px ${activeSettings.bottom * cropSize.width / activeSettings.height + 2}px 0 black,
@@ -571,7 +486,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                         }}
                                     />
                                 </div>
-
                                 <button
                                     onClick={() => changePhoto(activePhoto + 1)}
                                     className="hidden md:flex w-16 h-16 
@@ -586,10 +500,8 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                     <i className="bi bi-chevron-right text-xl md:text-3xl text-gray-700"></i>
                                 </button>
                             </div>
-
                             {/* МОБИЛЬНАЯ ПАНЕЛЬ: 3 кнопки + свайп-зона */}
                             <div className="md:hidden w-full flex flex-col gap-3">
-
                                 <div className="flex justify-center gap-2">
                                     <button
                                         onClick={() => RotationImg(1)}
@@ -619,10 +531,8 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                         <i className="bi bi-view-list rotate-90 text-lg"></i>
                                     </button>
                                 </div>
-
                                 {photos.length > 1 && (
                                     <div className="w-full flex items-center justify-between gap-2">
-
                                         <button
                                             onClick={() => changePhoto(activePhoto - 1)}
                                             disabled={activePhoto === 0}
@@ -633,7 +543,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                         >
                                             <i className="bi bi-chevron-left text-sm text-gray-700"></i>
                                         </button>
-
                                         <div
                                             className="flex-1 h-10 flex items-center justify-center gap-1 select-none cursor-grab active:cursor-grabbing"
                                             onTouchStart={handleTouchStart}
@@ -650,7 +559,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                                 />
                                             ))}
                                         </div>
-
                                         <button
                                             onClick={() => changePhoto(activePhoto + 1)}
                                             disabled={activePhoto === photos.length - 1}
@@ -664,7 +572,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                     </div>
                                 )}
                             </div>
-
                             {/* Панель инструментов */}
                             <div className='hidden md:flex justify-center mt-2 md:mt-0'>
                                 <div className="bg-white/90 backdrop-blur-sm rounded-full shadow-lg p-1.5 md:p-2 flex gap-1 md:gap-2 z-10 items-center overflow-x-auto max-w-full">
@@ -711,14 +618,11 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     )}
                 </div>
-
                 {/* НАСТРОЙКИ СПРАВА — на десктопе, на мобилке скрыто */}
                 <div className='hidden md:flex w-[20%] shrink-0 h-full flex-col justify-between bg-gray-100 border-l border-gray-200'>
-
                     <div className="overflow-auto p-4 flex flex-col gap-12 h-full">
                         <div className="space-y-1">
                             <input
@@ -730,7 +634,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                 value={nameOrder} onChange={(e) => setNameOrder(e.target.value)}
                             />
                         </div>
-
                         <div>
                             <div>
                                 <label className="text-sm font-medium text-teal-900 flex items-center gap-1 ml-1">
@@ -770,7 +673,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                 настройки
                             </button>
                         </div>
-
                         <div className="flex flex-col gap-2 text-sm items-center mb-2">
                             <div className="flex w-full rounded-md border border-gray-300 overflow-hidden text-xs">
                                 <button
@@ -795,15 +697,10 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                 </button>
                             </div>
                         </div>
-
                         <div className="mt-auto pt-1 ">
-
-
                         </div>
-
                         {photos.length > 0 &&
                             <div className="mt-auto pt-1 space-y-1.5">
-
                                 <div className="flex justify-between items-center text-xs text-gray-400 gap-2">
                                     <span
                                         className="truncate cursor-help"
@@ -819,7 +716,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                         style={{ width: `${((activePhoto + 1) / photos.length) * 100}%` }}
                                     />
                                 </div>
-
                                 <div className="flex justify-between text-xs text-gray-400">
                                     <span>Обработано </span>
                                     <span>{photos.filter(p => p.cropData).length} / {photos.length}</span>
@@ -832,10 +728,7 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                 </div>
                             </div>
                         }
-
-
                     </div>
-
                     <div className="p-4 border-t border-gray-200 space-y-2">
                         <div className="flex justify-between items-center gap-1 text-[10px] text-gray-400">
                             <button
@@ -848,7 +741,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                             >
                                 Скачать текущее фото
                             </button>
-
                             <div className="flex items-center gap-1">
                                 <button
                                     onClick={() => setOutputFormat('jpeg')}
@@ -865,7 +757,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                 </button>
                             </div>
                         </div>
-
                         <button
                             className="w-full px-4 py-2.5 bg-teal-700 hover:bg-teal-900 
                                         text-white rounded-lg text-sm font-medium 
@@ -876,7 +767,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                             <i className="bi bi-download text-white"></i>
                             Скачать все
                         </button>
-
                         <button
                             onClick={() => clearPhotos()}
                             className="w-full px-4 py-2.5 bg-gray-100 hover:bg-gray-200 
@@ -889,10 +779,8 @@ const onMediaLoaded = useCallback((mediaSize) => {
                         </button>
                     </div>
                 </div>
-
                 {/* МОБИЛЬНАЯ ПАНЕЛЬ КНОПОК ВНИЗУ */}
                 <div className="md:hidden shrink-0 border-t border-gray-200 bg-white py-3 px-2 flex flex-row gap-2">
-
                     <button
                         onClick={() => setShowSettings(true)}
                         className="flex-1 py-1.5 bg-gray-100 rounded-lg text-sm font-light text-gray-700 flex items-center justify-center gap-2"
@@ -922,9 +810,7 @@ const onMediaLoaded = useCallback((mediaSize) => {
                     >
                         Сохранить
                     </button>
-
                 </div>
-
                 {/* МОДАЛКА: СПИСОК ПРЕВЬЮ (только мобилка) */}
                 {showPhotoList && (
                     <div
@@ -965,7 +851,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                         </div>
                     </div>
                 )}
-
                 {/* МОДАЛКА: НАСТРОЙКИ (только мобилка) */}
                 {showSettings && (
                     <div
@@ -981,7 +866,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                 <button onClick={() => setShowSettings(false)} className="text-gray-500 text-2xl">×</button>
                             </div>
                             <div className="flex-1 overflow-auto p-4 space-y-4">
-
                                 <div>
                                     <input
                                         type="text"
@@ -991,7 +875,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                         onChange={(e) => setNameOrder(e.target.value)}
                                     />
                                 </div>
-
                                 <div>
                                     <label className="text-sm font-medium text-teal-900 flex items-center gap-1">
                                         <i className="bi bi-aspect-ratio"></i>
@@ -1013,7 +896,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                         настройки форматов
                                     </button>
                                 </div>
-
                                 <div className="flex w-full rounded-md border border-gray-300 overflow-hidden text-xs">
                                     <button
                                         type="button"
@@ -1032,7 +914,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                         кадр с рамкой
                                     </button>
                                 </div>
-
                                 {photos.length > 0 && (
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-xs text-gray-400">
@@ -1044,7 +925,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                         </div>
                                     </div>
                                 )}
-
                                 <div className="flex justify-end items-center gap-2 text-xs text-gray-400">
                                     <button
                                         onClick={() => setOutputFormat('jpeg')}
@@ -1061,7 +941,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                                     </button>
                                 </div>
                             </div>
-
                             <div className="p-4 border-t space-y-2">
                                 <button
                                     onClick={saveCurrentPhoto}
@@ -1102,7 +981,6 @@ const onMediaLoaded = useCallback((mediaSize) => {
                     </div>
                 )}
             </div>
-
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="max-w-[80%] h-[80vh] flex flex-col px-4 pb-4 pt-1" onOpenAutoFocus={(e) => e.preventDefault()}>
                     <DialogHeader>
@@ -1110,15 +988,10 @@ const onMediaLoaded = useCallback((mediaSize) => {
                         <DialogDescription className="sr-only">
                         </DialogDescription>
                     </DialogHeader>
-
                     <ModalSettings settingsDB={settingsDB} setSettingsDB={setSettingsDB} setIsModalOpen={setIsModalOpen} />
-
                 </DialogContent>
             </Dialog>
-
         </>
-
     );
 };
-
 export default CropperMain;

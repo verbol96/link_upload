@@ -49,7 +49,7 @@ const start = async () => {
     await sequelize.sync();
     server.listen(PORT, () => {
       console.log(`${process.env.STATUS === 'release' ? ' Server' : 'Local server'} started on port ${PORT}`);
-      startTelegramPolling();
+      //startTelegramPolling();
     });
     
   } catch (error) {

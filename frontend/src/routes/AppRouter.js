@@ -15,6 +15,15 @@ const AppRouter=()=>{
     const[isUserDataLoaded,setUserDataLoaded]=useState(false);
     const initialPage=useRef(location.pathname);
     const visitLogged=useRef(false);
+    const serverErrorShown=useRef(false);
+
+    const showServerError=()=>{
+        if(serverErrorShown.current)return;
+
+        serverErrorShown.current=true;
+
+        window.alert('Не удалось связаться с сервером. Попробуйте обновить страницу или открыть сайт в другом браузере. Если ошибка повторяется, напишите нам в Telegram или Instagram.');
+    };
 
     useEffect(()=>{
         const loadUser=async()=>{
@@ -31,6 +40,7 @@ const AppRouter=()=>{
                     console.error('Ошибка загрузки пользователя:',err);
                     setUserRole('');
                     setLogUserData(null);
+                    showServerError();
                 }finally{
                     setUserDataLoaded(true);
                 }
@@ -55,6 +65,7 @@ const AppRouter=()=>{
             page:initialPage.current
         }).catch(error=>{
             console.error('setLogUser error:',error);
+            showServerError();
         });
     },[isUserDataLoaded]);
 
@@ -72,6 +83,7 @@ const AppRouter=()=>{
             page:location.pathname
         }).catch(error=>{
             console.error('page_view log error:',error);
+            showServerError();
         });
     },[location.pathname,isUserDataLoaded]);
 

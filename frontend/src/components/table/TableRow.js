@@ -5,6 +5,7 @@ import { DescRow } from './DescRow';
 import { CopyToClipboard } from 'react-copy-to-clipboard'
 import { useMemo } from 'react';
 
+
 // ============ ХЕЛПЕР ПОДСВЕТКИ ПО date_sent ============
 const getDateSentColor = (order) => {
     if ([5, 6, 7, 8].includes(Number(order.status))) return '';
@@ -32,7 +33,7 @@ const getDateSentColor = (order) => {
 };
 
 export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, setSelectedOrder,
-    collapsedOrderId, isChanged, setIsChanged }) => {
+    collapsedOrderId, isChanged, setIsChanged, descRowRef }) => {
 
     const dispatch = useDispatch();
 
@@ -233,7 +234,8 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
 
             {isSelected && (
                 <DescRow
-                    key={`${order.id}-${order.status}`}
+                    ref={descRowRef}
+                    key={order.id}
                     orders={orders}
                     order={order}
                     setSelectedOrder={setSelectedOrder}

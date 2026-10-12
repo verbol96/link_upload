@@ -275,3 +275,130 @@
   border-radius: 3px 3px 0 0;
   border-width: 1.5px 1.5px 0 1.5px;
 }
+
+/* Индикатор автосохранения LINK */
+
+.link-save-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+
+    min-width: 155px;
+    height: 36px;
+    padding: 0 15px;
+
+    border: 1px solid transparent;
+    border-radius: 20px;
+
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.2s ease;
+}
+
+.link-save-indicator:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.link-save-indicator.saved {
+    background: #edf8f1;
+    color: #27834d;
+    border-color: #ccebd7;
+}
+
+.link-save-indicator.pending {
+    background: #fff8e6;
+    color: #a87813;
+    border-color: #f3e3b8;
+}
+
+.link-save-indicator.saving {
+    background: #edf4ff;
+    color: #3975bc;
+    border-color: #d4e5ff;
+    cursor: wait;
+}
+
+.link-save-indicator.error {
+    background: #fff0f0;
+    color: #c44343;
+    border-color: #f5cccc;
+}
+
+.link-save-indicator i {
+    font-size: 15px;
+}
+
+.link-save-indicator:disabled {
+    opacity: 1;
+}
+
+.link-save-spinner {
+    width: 15px;
+    height: 15px;
+    border: 2px solid #bdd4f3;
+    border-top-color: #3975bc;
+    border-radius: 50%;
+    animation: link-save-spin 0.8s linear infinite;
+}
+
+.link-save-check {
+    animation: link-save-appear 0.35s ease-out;
+}
+
+@keyframes link-save-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes link-save-appear {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .link-save-spinner,
+    .link-save-check {
+        animation: none;
+    }
+}
+.link-save-indicator.saved {
+    cursor: default;
+}
+
+.link-save-indicator.saved:hover {
+    transform: none;
+}
+.link-save-indicator {
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.link-save-indicator i {
+    font-size: 17px;
+}
+
+.link-save-indicator.saved {
+    cursor: default;
+}
+
+.link-save-indicator.saved:hover {
+    transform: none;
+}

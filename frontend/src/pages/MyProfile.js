@@ -3,8 +3,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateUserAdress } from '../http/dbApi';
 import { setUser } from '../store/privatePageReducer';
 
+
 import Footer from "../components/admin/Footer";
 import { NavBar } from "../components/admin/NavBar";
+
 
 // ============ ХЕЛПЕРЫ ============
 const formatPhoneDisplay = (phone) => {
@@ -19,19 +21,23 @@ const formatPhoneDisplay = (phone) => {
     return phone;
 };
 
+
 const normalizeUserFields = (u) => ({
     FIO: (u?.FIO ?? '').trim(),
     typePost: u?.typePost || 'E',
+    oblast: (u?.oblast ?? '').trim(),
     city: (u?.city ?? '').trim(),
     adress: (u?.adress ?? '').trim(),
     postCode: (u?.postCode ?? '').trim(),
 });
+
 
 const inputClass =
     "w-full px-3 py-1.5 bg-gray-50/50 border border-gray-100 rounded-lg " +
     "text-base text-gray-800 placeholder-gray-400 " +
     "focus:outline-none focus:ring-2 focus:ring-teal-900/50 " +
     "focus:border-teal-600 focus:bg-white transition-all";
+
 
 // ============ FIELD ============
 const Field = memo(function Field({ icon, label, isChanged, children,last=false }) {
@@ -55,34 +61,43 @@ const Field = memo(function Field({ icon, label, isChanged, children,last=false 
     );
 });
 
+
 // ============ СТРАНИЦА ============
 const MyProfile = () => {
     const user = useSelector((state) => state.private.user);
     const dispatch = useDispatch();
 
+
     const [baseline, setBaseline] = useState(() => normalizeUserFields(user));
+
 
     const [FIO, setFIO] = useState(user?.FIO || '');
     const [typePost, setTypePost] = useState(user?.typePost || 'E');
+    const [oblast, setOblast] = useState(user?.oblast || '');
     const [city, setCity] = useState(user?.city || '');
     const [adress, setAdress] = useState(user?.adress || '');
     const [postCode, setPostCode] = useState(user?.postCode || '');
+
 
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
+
     const lastSyncedUserIdRef = useRef(null);
+
 
     useEffect(() => {
         if (!user || !user.id) return;
         if (lastSyncedUserIdRef.current === user.id) return;
+
 
         lastSyncedUserIdRef.current = user.id;
         const n = normalizeUserFields(user);
         setBaseline(n);
         setFIO(n.FIO);
         setTypePost(n.typePost);
+        setOblast(n.oblast);
         setCity(n.city);
         setAdress(n.adress);
         setPostCode(n.postCode);
@@ -90,12 +105,15 @@ const MyProfile = () => {
         setSuccess(false);
     }, [user]);
 
+
     const isDirty =
         FIO !== baseline.FIO ||
         typePost !== baseline.typePost ||
+        oblast !== baseline.oblast ||
         city !== baseline.city ||
         adress !== baseline.adress ||
         postCode !== baseline.postCode;
+
 
     const handleSave = async () => {
         if (!isDirty || isSaving || !user?.id) return;
@@ -103,14 +121,16 @@ const MyProfile = () => {
         setError('');
         setSuccess(false);
 
+
         try {
             const fresh = await updateUserAdress(user.id, {
-                FIO, typePost, city, adress, postCode,
+                FIO, typePost, oblast, city, adress, postCode,
             });
+
 
             if (!fresh || typeof fresh !== 'object' || !fresh.id) {
                 console.warn('[Profile] updateUserAdress вернул не юзера:', fresh);
-                const n = normalizeUserFields({ FIO, typePost, city, adress, postCode });
+                const n = normalizeUserFields({ FIO, typePost, oblast, city, adress, postCode });
                 setBaseline(n);
                 setSuccess(true);
                 setTimeout(() => setSuccess(false), 2500);
@@ -118,20 +138,25 @@ const MyProfile = () => {
                 return;
             }
 
+
             dispatch(setUser(fresh));
+
 
             const n = normalizeUserFields(fresh);
             setBaseline(n);
             setFIO(n.FIO);
             setTypePost(n.typePost);
+        setOblast(n.oblast);
             setCity(n.city);
             setAdress(n.adress);
             setPostCode(n.postCode);
+
 
             try {
                 const el = document?.activeElement;
                 if (el && typeof el.blur === 'function') el.blur();
             } catch (_) { /* ignore */ }
+
 
             setSuccess(true);
             setTimeout(() => setSuccess(false), 2500);
@@ -143,26 +168,34 @@ const MyProfile = () => {
         }
     };
 
+
     const handleCancel = () => {
         setFIO(baseline.FIO);
         setTypePost(baseline.typePost);
+        setOblast(baseline.oblast);
         setCity(baseline.city);
         setAdress(baseline.adress);
         setPostCode(baseline.postCode);
         setError('');
     };
 
+
     const onChangeFIO = (e) => setFIO(e.target.value);
     const onChangeTypePost = (e) => setTypePost(e.target.value);
+    const onChangeOblast = (e) => setOblast(e.target.value);
     const onChangeCity = (e) => setCity(e.target.value);
     const onChangeAdress = (e) => setAdress(e.target.value);
     const onChangePostCode = (e) => setPostCode(e.target.value);
+
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-50">
             <NavBar />
 
+
             <div className="flex-1 w-full max-w-2xl mx-auto px-3 md:px-6 py-4 md:py-6">
+
+
 
 
                 {/* Инфо-плашка */}
@@ -176,10 +209,12 @@ const MyProfile = () => {
                     </div>
                 </div>
 
+
                 {/* Карточка с формой */}
                 <div className="w-full bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden mt-8 py-3">
 
-                  
+
+
 
                     {/* Телефон */}
                     <Field icon="bi-telephone" label="Телефон">
@@ -187,6 +222,7 @@ const MyProfile = () => {
                             {formatPhoneDisplay(user?.phone)}
                         </div>
                     </Field>
+
 
                     {/* ФИО */}
                     <Field icon="bi-person" label="ФИО" isChanged={FIO !== baseline.FIO}>
@@ -200,6 +236,7 @@ const MyProfile = () => {
                         />
                     </Field>
 
+
                     {/* Тип отправки */}
                     <Field icon="bi-truck" label="Тип отправки" isChanged={typePost !== baseline.typePost}>
                         <div className="relative">
@@ -207,7 +244,9 @@ const MyProfile = () => {
                                 <span>{typePost === 'E' ? 'Европочта' : 'Белпочта'}</span>
                             </div>
 
+
                             <i className="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm"></i>
+
 
                             <select
                                 value={typePost}
@@ -219,6 +258,7 @@ const MyProfile = () => {
                             </select>
                         </div>
                     </Field>
+
 
                     {/* Поля для Европочты */}
                     {typePost === 'E' && (
@@ -234,6 +274,7 @@ const MyProfile = () => {
                                 />
                             </Field>
 
+
                             <Field last icon="bi-geo-alt" label="Отделение" isChanged={adress !== baseline.adress}>
                                 <input
                                     spellCheck="false"
@@ -245,6 +286,7 @@ const MyProfile = () => {
                             </Field>
                         </>
                     )}
+
 
                     {/* Поля для Белпочты */}
                     {typePost === 'R' && (
@@ -261,6 +303,25 @@ const MyProfile = () => {
                                 />
                             </Field>
 
+
+                            <Field icon="bi-map" label="Область" isChanged={oblast !== baseline.oblast}>
+                                <div className="relative">
+                                    <select
+                                        value={oblast}
+                                        onChange={onChangeOblast}
+                                        className={`${inputClass} appearance-none pr-9`}
+                                    >
+                                        <option value="">Выберите область</option>
+                                        <option value="Брестская область">Брестская область</option>
+                                        <option value="Витебская область">Витебская область</option>
+                                        <option value="Гомельская область">Гомельская область</option>
+                                        <option value="Гродненская область">Гродненская область</option>
+                                        <option value="Минская область">Минская область</option>
+                                        <option value="Могилёвская область">Могилёвская область</option>
+                                    </select>
+                                    <i className="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm"/>
+                                </div>
+                            </Field>
                             <Field icon="bi-building" label="Город" isChanged={city !== baseline.city}>
                                 <input
                                     spellCheck="false"
@@ -271,6 +332,7 @@ const MyProfile = () => {
                                     className={inputClass}
                                 />
                             </Field>
+
 
                             <Field last icon="bi-geo-alt" label="Адрес" isChanged={adress !== baseline.adress}>
                                 <input
@@ -285,6 +347,7 @@ const MyProfile = () => {
                         </>
                     )}
 
+
                     {/* Ошибка */}
                     {error && (
                         <div className="px-4 md:px-5 py-2 bg-red-50 border-t border-red-100">
@@ -294,6 +357,7 @@ const MyProfile = () => {
                             </div>
                         </div>
                     )}
+
 
                     {/* Успех */}
                     {success && (
@@ -306,7 +370,10 @@ const MyProfile = () => {
                     )}
 
 
+
+
                 </div>
+
 
                                     {/* Кнопки */}
                     <div className="p-3 md:p-4 bg-gray-50 flex items-center gap-2">
@@ -334,6 +401,7 @@ const MyProfile = () => {
                             )}
                         </button>
 
+
                         <button
                             onClick={handleCancel}
                             disabled={!isDirty || isSaving}
@@ -349,9 +417,11 @@ const MyProfile = () => {
                     </div>
             </div>
 
+
             <Footer />
         </div>
     );
 };
+
 
 export default MyProfile;

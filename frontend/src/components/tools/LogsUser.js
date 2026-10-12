@@ -1,9 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { deleteAllLogs, deleteLogSession, deleteOldLogs, getLogUser } from "../../http/authApi";
 import _ from "lodash";
-
 const PAGE_SIZE=100;
-
 const EVENT_INFO={
     visit:{label:"Посещение",shortLabel:"Визит",icon:"bi-box-arrow-in-right",className:"bg-slate-100 text-slate-600"},
     page_view:{label:"Просмотр страницы",shortLabel:"Страница",icon:"bi-file-earmark",className:"bg-slate-50 text-slate-500"},
@@ -17,7 +15,6 @@ const EVENT_INFO={
     format_folder_error:{label:"Ошибка папки формата",shortLabel:"Ошибка",icon:"bi-folder-x",className:"bg-red-50 text-red-600"},
     photo_upload_error:{label:"Ошибка загрузки фото",shortLabel:"Ошибка",icon:"bi-exclamation-triangle",className:"bg-red-50 text-red-600"}
 };
-
 const SESSION_STEPS=[
     "visit",
     "photos_added",
@@ -26,14 +23,12 @@ const SESSION_STEPS=[
     "order_created",
     "order_upload_completed"
 ];
-
 const FILTERS=[
     {id:"all",label:"Все"},
     {id:"errors",label:"Ошибки"},
     {id:"orders",label:"Заказы"},
     {id:"visits",label:"Посещения"}
 ];
-
 const getEventInfo=(event)=>{
     return EVENT_INFO[event]||{
         label:event||"Событие",
@@ -42,59 +37,42 @@ const getEventInfo=(event)=>{
         className:"bg-slate-100 text-slate-600"
     };
 };
-
 const formatDate=(iso)=>{
     if(!iso)return{date:"—",shortDate:"—",time:"—"};
     const value=new Date(iso);
     if(Number.isNaN(value.getTime()))return{date:"—",shortDate:"—",time:"—"};
-
     return{
         date:value.toLocaleDateString("ru-RU"),
         shortDate:value.toLocaleDateString("ru-RU",{day:"2-digit",month:"2-digit"}),
         time:value.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"})
     };
 };
-
 const isMobile=(screen)=>{
     if(!screen||typeof screen!=="string")return false;
     const[w,h]=screen.split("x").map(Number);
     if(!w||!h)return false;
     return w<h;
 };
-
 const formatDuration=(from,to)=>{
     if(!from||!to)return"—";
-
     const start=new Date(from).getTime();
     const end=new Date(to).getTime();
-
     if(!Number.isFinite(start)||!Number.isFinite(end)||end<start)return"—";
-
     const seconds=Math.floor((end-start)/1000);
-
     if(seconds<60)return`${seconds} сек`;
-
     const minutes=Math.floor(seconds/60);
-
     if(minutes<60)return`${minutes} мин`;
-
     const hours=Math.floor(minutes/60);
     const restMinutes=minutes%60;
-
     if(hours<24)return restMinutes?`${hours} ч ${restMinutes} мин`:`${hours} ч`;
-
     const days=Math.floor(hours/24);
     const restHours=hours%24;
-
     return restHours?`${days} д ${restHours} ч`:`${days} д`;
 };
-
 const buildSessions=(logs)=>{
     const map=new Map();
-
     logs.forEach((log,index)=>{
         const key=log.sessionId||`legacy-${log.id||index}`;
-
         if(!map.has(key)){
             map.set(key,{
                 id:key,
@@ -102,10 +80,8 @@ const buildSessions=(logs)=>{
                 events:[]
             });
         }
-
         map.get(key).events.push(log);
     });
-
     return Array.from(map.values()).map(session=>{
         const events=_.orderBy(session.events,"createdAt","asc");
         const firstEvent=events[0]||null;
@@ -124,7 +100,6 @@ const buildSessions=(logs)=>{
         const hasVisit=events.some(el=>el.event==="visit");
         const reachedSteps=SESSION_STEPS.filter(event=>events.some(el=>el.event===event));
         const lastStep=[...SESSION_STEPS].reverse().find(event=>events.some(el=>el.event===event))||firstEvent?.event||null;
-
         return{
             ...session,
             events,
@@ -145,15 +120,14 @@ const buildSessions=(logs)=>{
         };
     }).sort((a,b)=>new Date(b.updatedAt||0)-new Date(a.updatedAt||0));
 };
-
 const LogsUser=()=>{
     const[logs,setLogs]=useState([]);
     const[loading,setLoading]=useState(true);
     const[visibleCount,setVisibleCount]=useState(PAGE_SIZE);
     const[expandedId,setExpandedId]=useState(null);
+    const[showAllHistoryId,setShowAllHistoryId]=useState(null);
     const[filter,setFilter]=useState("all");
     const[search,setSearch]=useState("");
-
     useEffect(()=>{
         const getData=async()=>{
             try{
@@ -166,29 +140,21 @@ const LogsUser=()=>{
                 setLoading(false);
             }
         };
-
         getData();
     },[]);
-
     const sessions=useMemo(()=>buildSessions(logs),[logs]);
-
     const filteredSessions=useMemo(()=>{
         let result=sessions;
-
         if(filter==="errors"){
             result=result.filter(session=>session.hasError);
         }
-
         if(filter==="orders"){
             result=result.filter(session=>session.hasOrder);
         }
-
         if(filter==="visits"){
             result=result.filter(session=>session.hasVisit);
         }
-
         const value=search.trim().toLowerCase();
-
         if(value){
             result=result.filter(session=>{
                 const sessionId=String(session.sessionId||"").toLowerCase();
@@ -196,7 +162,6 @@ const LogsUser=()=>{
                 const phone=String(session.phone||"").toLowerCase();
                 const orderId=String(session.orderId||"").toLowerCase();
                 const format=String(session.format||"").toLowerCase();
-
                 const eventMatch=session.events.some(el=>{
                     const event=String(el.event||"").toLowerCase();
                     const page=String(el.page||"").toLowerCase();
@@ -204,63 +169,53 @@ const LogsUser=()=>{
                     const device=String(el.device||"").toLowerCase();
                     const browser=String(el.browser||"").toLowerCase();
                     const os=String(el.OS||"").toLowerCase();
-
                     return event.includes(value)||page.includes(value)||error.includes(value)||device.includes(value)||browser.includes(value)||os.includes(value);
                 });
-
                 return sessionId.includes(value)||surname.includes(value)||phone.includes(value)||orderId.includes(value)||format.includes(value)||eventMatch;
             });
         }
-
         return result;
     },[sessions,filter,search]);
-
     useEffect(()=>{
         setVisibleCount(PAGE_SIZE);
         setExpandedId(null);
+        setShowAllHistoryId(null);
     },[filter,search]);
-
     const visibleSessions=filteredSessions.slice(0,visibleCount);
     const hasMore=visibleCount<filteredSessions.length;
     const errorsCount=sessions.filter(session=>session.hasError).length;
     const ordersCount=sessions.filter(session=>session.hasOrder).length;
     const visitsCount=sessions.filter(session=>session.hasVisit).length;
-
     const getFilterCount=(id)=>{
         if(id==="errors")return errorsCount;
         if(id==="orders")return ordersCount;
         if(id==="visits")return visitsCount;
         return sessions.length;
     };
-
     const handleDeleteSession=async(session)=>{
         if(!session.sessionId)return;
-
-        if(!window.confirm("Удалить эту сессию со всеми событиями?"))return;
-
+        if(!window.confirm("Удалить всю историю этого посетителя?"))return;
         try{
             await deleteLogSession(session.sessionId);
-
             setLogs(prev=>prev.filter(log=>log.sessionId!==session.sessionId));
             setExpandedId(null);
+        setShowAllHistoryId(null);
         }catch(error){
             console.error("deleteLogSession error:",error);
         }
     };
-
     const handleDeleteAllLogs=async()=>{
         if(!window.confirm("Удалить все логи? Это действие нельзя отменить."))return;
-
         try{
             await deleteAllLogs();
             setLogs([]);
             setExpandedId(null);
+        setShowAllHistoryId(null);
             setVisibleCount(PAGE_SIZE);
         }catch(error){
             console.error("deleteAllLogs error:",error);
         }
     };
-
     return (
         <div className="w-full">
             <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
@@ -270,18 +225,15 @@ const LogsUser=()=>{
                             <span className="w-7 h-7 rounded-md bg-[#eaf4f2] flex items-center justify-center shrink-0">
                                 <i className="bi bi-list-ul text-[12px] text-[#19766d]"/>
                             </span>
-
                             <div>
                                 <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-600">
-                                    Сессии пользователей
+                                    Посетители
                                 </div>
-
                                 <div className="text-[10px] text-slate-400">
-                                    {filteredSessions.length===sessions.length?`${sessions.length} сессий`:`${filteredSessions.length} из ${sessions.length}`}
+                                    {filteredSessions.length===sessions.length?`${sessions.length} посетителей`:`${filteredSessions.length} из ${sessions.length}`}
                                 </div>
                             </div>
                         </div>
-
                         <div className="flex items-center gap-1 overflow-x-auto lg:ml-3">
                             {FILTERS.map(item=>(
                                 <button
@@ -297,19 +249,14 @@ const LogsUser=()=>{
                                 </button>
                             ))}
                         </div>
-
                         <div className="relative lg:ml-auto w-full lg:w-[300px]">
                             <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400"/>
-
-
-
                             <input
                                 value={search}
                                 onChange={e=>setSearch(e.target.value)}
                                 placeholder="Фамилия, телефон, заказ..."
                                 className="w-full h-8 pl-8 pr-8 rounded-md border border-slate-200 bg-white outline-none text-[11px] text-slate-700 placeholder:text-slate-400 focus:border-[#19766d]"
                             />
-
                             {search&&(
                                 <button
                                     type="button"
@@ -319,8 +266,6 @@ const LogsUser=()=>{
                                     <i className="bi bi-x-lg text-[9px]"/>
                                 </button>
                             )}
-
-                            
                         </div>
                         <button
     type="button"
@@ -334,7 +279,6 @@ const LogsUser=()=>{
 </button>
                     </div>
                 </div>
-
                 {loading?(
                     <div className="flex items-center justify-center gap-2 py-12 text-slate-400 text-[13px]">
                         <i className="bi bi-arrow-repeat animate-spin"/>
@@ -343,7 +287,7 @@ const LogsUser=()=>{
                 ):filteredSessions.length===0?(
                     <div className="py-12 text-center text-slate-400 text-[13px]">
                         <i className="bi bi-inbox text-[24px] block mb-2 opacity-50"/>
-                        {sessions.length===0?"Пока нет сессий":"Ничего не найдено"}
+                        {sessions.length===0?"Пока нет посетителей":"Ничего не найдено"}
                     </div>
                 ):(
                     <>
@@ -358,19 +302,17 @@ const LogsUser=()=>{
                                     <col className="w-[80px]"/>
                                     <col className="w-[100px]"/>
                                 </colgroup>
-
                                 <thead>
                                     <tr className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 border-b border-slate-200">
                                         <th className="text-left px-4 py-2">Время</th>
                                         <th className="text-left px-4 py-2">Пользователь</th>
-                                        <th className="text-left px-4 py-2">Сессия</th>
+                                        <th className="text-left px-4 py-2">Действия</th>
                                         <th className="text-left px-4 py-2">Заказ</th>
                                         <th className="text-left px-4 py-2">Формат</th>
                                         <th className="text-right px-4 py-2">Фото</th>
-                                        <th className="text-right px-4 py-2">Время</th>
+                                        <th className="text-right px-4 py-2">Период</th>
                                     </tr>
                                 </thead>
-
                                 <tbody>
                                     {visibleSessions.map((session,index)=>{
                                         const{date,time}=formatDate(session.updatedAt);
@@ -379,7 +321,6 @@ const LogsUser=()=>{
                                         const expanded=expandedId===session.id;
                                         const lastInfo=getEventInfo(session.lastStep);
                                         const duration=formatDuration(session.createdAt,session.updatedAt);
-
                                         return (
                                             <Fragment key={session.id}>
                                                 {isNewDay&&(
@@ -393,15 +334,16 @@ const LogsUser=()=>{
                                                         </td>
                                                     </tr>
                                                 )}
-
                                                 <tr
-                                                    onClick={()=>setExpandedId(prev=>prev===session.id?null:session.id)}
+                                                    onClick={()=>{
+                                                        setExpandedId(prev=>prev===session.id?null:session.id);
+                                                        setShowAllHistoryId(null);
+                                                    }}
                                                     className={`border-b border-slate-100 hover:bg-slate-50/60 transition-colors cursor-pointer ${expanded?"bg-slate-50/70":""}`}
                                                 >
                                                     <td className="px-4 py-2.5 text-slate-500 tabular-nums">
                                                         {time}
                                                     </td>
-
                                                     <td className="px-4 py-2.5">
                                                         {session.surname?(
                                                             <div className="min-w-0">
@@ -411,7 +353,6 @@ const LogsUser=()=>{
                                                                         {session.surname}
                                                                     </span>
                                                                 </div>
-
                                                                 {session.phone&&(
                                                                     <div className="mt-0.5 text-[9px] text-slate-400 truncate">
                                                                         {session.phone}
@@ -425,18 +366,15 @@ const LogsUser=()=>{
                                                             </div>
                                                         )}
                                                     </td>
-
                                                     <td className="px-4 py-2.5">
                                                         <div className="flex items-center gap-1.5 min-w-0">
                                                             {session.reachedSteps.map((event,stepIndex)=>{
                                                                 const info=getEventInfo(event);
-
                                                                 return (
                                                                     <Fragment key={event}>
                                                                         {stepIndex>0&&(
                                                                             <i className="bi bi-chevron-right text-[7px] text-slate-300 shrink-0"/>
                                                                         )}
-
                                                                         <span
                                                                             title={info.label}
                                                                             className={`h-7 px-2 rounded-md inline-flex items-center gap-1.5 shrink-0 ${info.className}`}
@@ -449,11 +387,9 @@ const LogsUser=()=>{
                                                                     </Fragment>
                                                                 );
                                                             })}
-
                                                             {session.hasError&&(
                                                                 <>
                                                                     <i className="bi bi-chevron-right text-[7px] text-slate-300 shrink-0"/>
-
                                                                     <span className="h-7 px-2 rounded-md inline-flex items-center gap-1.5 shrink-0 bg-red-50 text-red-600">
                                                                         <i className="bi bi-exclamation-triangle text-[11px]"/>
                                                                         <span className="text-[10px] font-medium hidden 2xl:inline">
@@ -462,7 +398,6 @@ const LogsUser=()=>{
                                                                     </span>
                                                                 </>
                                                             )}
-
                                                             {session.reachedSteps.length===0&&(
                                                                 <span className={`h-7 px-2 rounded-md inline-flex items-center gap-1.5 ${lastInfo.className}`}>
                                                                     <i className={`bi ${lastInfo.icon} text-[11px]`}/>
@@ -471,49 +406,40 @@ const LogsUser=()=>{
                                                                     </span>
                                                                 </span>
                                                             )}
-
                                                             <i className={`bi ${expanded?"bi-chevron-up":"bi-chevron-down"} ml-auto text-[9px] text-slate-300 shrink-0`}/>
                                                         </div>
                                                     </td>
-
                                                     <td className="px-4 py-2.5 text-slate-600 truncate">
                                                         {session.orderId?`№${session.orderId}`:"—"}
                                                     </td>
-
                                                     <td className="px-4 py-2.5 text-slate-600 truncate">
                                                         {session.format||"—"}
                                                     </td>
-
                                                     <td className="px-4 py-2.5 text-right text-slate-600 tabular-nums">
                                                         {session.photosCount??"—"}
                                                     </td>
-
                                                     <td className="px-4 py-2.5 text-right text-slate-500 tabular-nums">
                                                         {duration}
                                                     </td>
                                                 </tr>
-
                                                 {expanded&&(
                                                     <tr className="bg-slate-50/70 border-b border-slate-200">
                                                         <td colSpan={7} className="px-4 py-4">
                                                             <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                                                                 <div>
                                                                     <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
-                                                                        События сессии
+                                                                        История посетителя
                                                                     </div>
-
                                                                     <div className="mt-0.5 text-[10px] text-slate-400">
                                                                         {session.events.length} событий · {duration}
                                                                     </div>
                                                                 </div>
-
                                                                 <div className="flex items-center gap-3">
                                                                     {session.surname&&(
                                                                         <div className="text-right">
                                                                             <div className="text-[10px] font-medium text-slate-600 capitalize">
                                                                                 {session.surname}
                                                                             </div>
-
                                                                             {session.phone&&(
                                                                                 <div className="text-[9px] text-slate-400">
                                                                                     {session.phone}
@@ -521,18 +447,16 @@ const LogsUser=()=>{
                                                                             )}
                                                                         </div>
                                                                     )}
-
                                                                     {session.sessionId&&(
                                                                         <div className="max-w-[280px] truncate text-[9px] font-mono text-slate-400" title={session.sessionId}>
                                                                             {session.sessionId}
                                                                         </div>
                                                                     )}
-
                                                                     {session.sessionId&&(
                                                                         <button
                                                                             type="button"
                                                                             onClick={()=>handleDeleteSession(session)}
-                                                                            title="Удалить сессию"
+                                                                            title="Удалить посетителя"
                                                                             className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                                                         >
                                                                             <i className="bi bi-trash text-[11px]"/>
@@ -540,57 +464,47 @@ const LogsUser=()=>{
                                                                     )}
                                                                 </div>
                                                             </div>
-
                                                             <div className="relative">
                                                                 <div className="absolute left-[13px] top-3 bottom-3 w-px bg-slate-200"/>
-
                                                                 <div className="space-y-1">
-                                                                    {session.events.map((event,eventIndex)=>{
+                                                                    {(showAllHistoryId===session.id?session.events:session.events.slice(0,20)).map((event,eventIndex)=>{
                                                                         const eventInfo=getEventInfo(event.event);
                                                                         const eventTime=formatDate(event.createdAt);
                                                                         const mobile=isMobile(event.screen);
-
                                                                         return (
                                                                             <div key={event.id||eventIndex} className="relative flex gap-3">
                                                                                 <div className={`relative z-10 w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${eventInfo.className}`}>
                                                                                     <i className={`bi ${eventInfo.icon} text-[11px]`}/>
                                                                                 </div>
-
                                                                                 <div className="min-w-0 flex-1 pb-3">
                                                                                     <div className="flex items-center gap-2 min-h-7">
                                                                                         <span className="text-[11px] font-medium text-slate-700">
                                                                                             {eventInfo.label}
                                                                                         </span>
-
                                                                                         <span className="text-[10px] text-slate-400 tabular-nums shrink-0">
                                                                                             {eventTime.shortDate} {eventTime.time}
                                                                                         </span>
-
                                                                                         {event.page&&(
                                                                                             <span className="text-[10px] font-mono text-[#19766d]">
                                                                                                 {event.page}
                                                                                             </span>
                                                                                         )}
-
                                                                                         {event.orderId&&(
                                                                                             <span className="text-[10px] text-slate-500">
                                                                                                 №{event.orderId}
                                                                                             </span>
                                                                                         )}
-
                                                                                         {event.photosCount!=null&&(
                                                                                             <span className="text-[10px] text-slate-400">
                                                                                                 {event.photosCount} фото
                                                                                             </span>
                                                                                         )}
-
                                                                                         {event.format&&(
                                                                                             <span className="text-[10px] text-slate-400 truncate">
                                                                                                 {event.format}
                                                                                             </span>
                                                                                         )}
                                                                                     </div>
-
                                                                                     {event.error&&(
                                                                                         <div className="mt-1 p-2.5 rounded-lg bg-red-50 border border-red-100">
                                                                                             <div className="text-[11px] leading-relaxed text-red-700 break-words">
@@ -598,7 +512,6 @@ const LogsUser=()=>{
                                                                                             </div>
                                                                                         </div>
                                                                                     )}
-
                                                                                     <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-slate-400">
                                                                                         {event.device&&(
                                                                                             <span>
@@ -606,7 +519,6 @@ const LogsUser=()=>{
                                                                                                 {event.device}
                                                                                             </span>
                                                                                         )}
-
                                                                                         {event.OS&&<span>{event.OS}</span>}
                                                                                         {event.browser&&<span>{event.browser}</span>}
                                                                                         {event.screen&&<span>{event.screen}</span>}
@@ -616,6 +528,11 @@ const LogsUser=()=>{
                                                                         );
                                                                     })}
                                                                 </div>
+                                                                {session.events.length>20&&showAllHistoryId!==session.id&&(
+                                                                    <button type="button" onClick={()=>setShowAllHistoryId(session.id)} className="mt-3 w-full py-2 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-[#19766d] hover:bg-slate-50">
+                                                                        Показать все ({session.events.length} событий)
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -626,7 +543,6 @@ const LogsUser=()=>{
                                 </tbody>
                             </table>
                         </div>
-
                         <div className="md:hidden">
                             {visibleSessions.map((session,index)=>{
                                 const{date,time}=formatDate(session.updatedAt);
@@ -635,7 +551,6 @@ const LogsUser=()=>{
                                 const expanded=expandedId===session.id;
                                 const duration=formatDuration(session.createdAt,session.updatedAt);
                                 const lastInfo=getEventInfo(session.lastStep);
-
                                 return (
                                     <div key={session.id}>
                                         {isNewDay&&(
@@ -645,17 +560,18 @@ const LogsUser=()=>{
                                                 <span className="h-px flex-1 bg-slate-200"/>
                                             </div>
                                         )}
-
                                         <button
                                             type="button"
-                                            onClick={()=>setExpandedId(prev=>prev===session.id?null:session.id)}
+                                            onClick={()=>{
+                                                setExpandedId(prev=>prev===session.id?null:session.id);
+                                                setShowAllHistoryId(null);
+                                            }}
                                             className={`w-full px-3 py-2.5 text-left border-b border-slate-100 ${expanded?"bg-slate-50":"bg-white"}`}
                                         >
                                             <div className="flex items-start gap-2">
                                                 <span className="w-[38px] shrink-0 pt-1 text-[11px] text-slate-400 tabular-nums">
                                                     {time}
                                                 </span>
-
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-1.5 mb-1.5">
                                                         {session.surname?(
@@ -674,17 +590,14 @@ const LogsUser=()=>{
                                                             </>
                                                         )}
                                                     </div>
-
                                                     <div className="flex items-center gap-1 overflow-hidden">
                                                         {session.reachedSteps.map((event,stepIndex)=>{
                                                             const info=getEventInfo(event);
-
                                                             return (
                                                                 <Fragment key={event}>
                                                                     {stepIndex>0&&(
                                                                         <i className="bi bi-chevron-right text-[6px] text-slate-300 shrink-0"/>
                                                                     )}
-
                                                                     <span
                                                                         title={info.label}
                                                                         className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${info.className}`}
@@ -694,24 +607,20 @@ const LogsUser=()=>{
                                                                 </Fragment>
                                                             );
                                                         })}
-
                                                         {session.hasError&&(
                                                             <>
                                                                 <i className="bi bi-chevron-right text-[6px] text-slate-300 shrink-0"/>
-
                                                                 <span className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-red-50 text-red-600">
                                                                     <i className="bi bi-exclamation-triangle text-[11px]"/>
                                                                 </span>
                                                             </>
                                                         )}
-
                                                         {session.reachedSteps.length===0&&(
                                                             <span className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${lastInfo.className}`}>
                                                                 <i className={`bi ${lastInfo.icon} text-[11px]`}/>
                                                             </span>
                                                         )}
                                                     </div>
-
                                                     {(session.orderId||session.format||session.photosCount!=null)&&(
                                                         <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-400 truncate">
                                                             {session.orderId&&<span>№{session.orderId}</span>}
@@ -720,34 +629,29 @@ const LogsUser=()=>{
                                                         </div>
                                                     )}
                                                 </div>
-
                                                 <div className="shrink-0 pt-1 text-right">
                                                     <div className="text-[9px] text-slate-400">{duration}</div>
                                                     <i className={`bi ${expanded?"bi-chevron-up":"bi-chevron-down"} text-[9px] text-slate-300`}/>
                                                 </div>
                                             </div>
                                         </button>
-
                                         {expanded&&(
                                             <div className="px-3 py-3 bg-slate-50/70 border-b border-slate-200">
                                                 <div className="flex items-center justify-between gap-2 mb-3">
                                                     <div>
                                                         <div className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">
-                                                            События сессии
+                                                            История посетителя
                                                         </div>
-
                                                         <div className="text-[9px] text-slate-400">
                                                             {session.events.length} событий · {duration}
                                                         </div>
                                                     </div>
-
                                                     <div className="flex items-center gap-2">
                                                         {session.surname&&(
                                                             <div className="text-right">
                                                                 <div className="text-[10px] font-medium text-slate-600 capitalize">
                                                                     {session.surname}
                                                                 </div>
-
                                                                 {session.phone&&(
                                                                     <div className="text-[9px] text-slate-400">
                                                                         {session.phone}
@@ -755,12 +659,11 @@ const LogsUser=()=>{
                                                                 )}
                                                             </div>
                                                         )}
-
                                                         {session.sessionId&&(
                                                             <button
                                                                 type="button"
                                                                 onClick={()=>handleDeleteSession(session)}
-                                                                title="Удалить сессию"
+                                                                title="Удалить посетителя"
                                                                 className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                                                             >
                                                                 <i className="bi bi-trash text-[11px]"/>
@@ -768,38 +671,31 @@ const LogsUser=()=>{
                                                         )}
                                                     </div>
                                                 </div>
-
                                                 <div className="relative">
                                                     <div className="absolute left-[13px] top-3 bottom-3 w-px bg-slate-200"/>
-
                                                     <div className="space-y-1">
-                                                        {session.events.map((event,eventIndex)=>{
+                                                        {(showAllHistoryId===session.id?session.events:session.events.slice(0,20)).map((event,eventIndex)=>{
                                                             const eventInfo=getEventInfo(event.event);
                                                             const eventTime=formatDate(event.createdAt);
-
                                                             return (
                                                                 <div key={event.id||eventIndex} className="relative flex gap-3">
                                                                     <div className={`relative z-10 w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${eventInfo.className}`}>
                                                                         <i className={`bi ${eventInfo.icon} text-[11px]`}/>
                                                                     </div>
-
                                                                     <div className="min-w-0 flex-1 pb-3">
                                                                         <div className="flex items-center gap-2">
                                                                             <span className="text-[11px] font-medium text-slate-700">
                                                                                 {eventInfo.label}
                                                                             </span>
-
                                                                             <span className="ml-auto shrink-0 text-[10px] text-slate-400 tabular-nums">
                                                                                 {eventTime.shortDate} {eventTime.time}
                                                                             </span>
                                                                         </div>
-
                                                                         {event.page&&(
                                                                             <div className="mt-0.5 text-[9px] font-mono text-[#19766d] break-all">
                                                                                 {event.page}
                                                                             </div>
                                                                         )}
-
                                                                         {(event.orderId||event.format||event.photosCount!=null)&&(
                                                                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[9px] text-slate-400">
                                                                                 {event.orderId&&<span>№{event.orderId}</span>}
@@ -807,7 +703,6 @@ const LogsUser=()=>{
                                                                                 {event.photosCount!=null&&<span>{event.photosCount} фото</span>}
                                                                             </div>
                                                                         )}
-
                                                                         {event.error&&(
                                                                             <div className="mt-1.5 p-2 rounded-lg bg-red-50 border border-red-100">
                                                                                 <div className="text-[10px] leading-relaxed text-red-700 break-words">
@@ -815,20 +710,17 @@ const LogsUser=()=>{
                                                                                 </div>
                                                                             </div>
                                                                         )}
-
                                                                         <div className="mt-1.5 text-[9px] text-slate-400 space-y-0.5">
                                                                             {(event.device||event.OS)&&(
                                                                                 <div>
                                                                                     {[event.device,event.OS].filter(Boolean).join(" · ")}
                                                                                 </div>
                                                                             )}
-
                                                                             {event.browser&&(
                                                                                 <div className="break-all">
                                                                                     {event.browser}
                                                                                 </div>
                                                                             )}
-
                                                                             {event.screen&&<div>{event.screen}</div>}
                                                                         </div>
                                                                     </div>
@@ -836,14 +728,17 @@ const LogsUser=()=>{
                                                             );
                                                         })}
                                                     </div>
+                                                    {session.events.length>20&&showAllHistoryId!==session.id&&(
+                                                        <button type="button" onClick={()=>setShowAllHistoryId(session.id)} className="mt-3 w-full py-2 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-[#19766d] hover:bg-slate-50">
+                                                            Показать все ({session.events.length} событий)
+                                                        </button>
+                                                    )}
                                                 </div>
-
                                                 {session.sessionId&&(
                                                     <div className="mt-1 pt-2 border-t border-slate-200">
                                                         <div className="text-[8px] uppercase tracking-wider font-semibold text-slate-400">
-                                                            Session ID
+                                                            Visitor ID
                                                         </div>
-
                                                         <div className="mt-0.5 text-[9px] font-mono text-slate-400 break-all">
                                                             {session.sessionId}
                                                         </div>
@@ -855,7 +750,6 @@ const LogsUser=()=>{
                                 );
                             })}
                         </div>
-
                         {hasMore&&(
                             <div className="flex justify-center px-4 py-4 border-t border-slate-100">
                                 <button
@@ -877,5 +771,4 @@ const LogsUser=()=>{
         </div>
     );
 };
-
 export default LogsUser;

@@ -280,11 +280,10 @@ export const Order=({order,settings,priceList,expanded,onToggle})=>{
                                 label="Город"
                                 value={`${order.city||'—'}${order.typePost==='R'&&order.postCode?`, ${order.postCode}`:''}`}
                             />
-
                             <OrderInfo
                                 icon="bi-geo-alt"
                                 label="Адрес доставки"
-                                value={order.adress}
+                                value={`${order.adress||''}${order.oblast?` (${order.oblast.replace(/\s+область$/i,' обл.')})`:''}`}
                             />
                         </div>
                     )}
