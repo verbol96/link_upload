@@ -52,10 +52,12 @@ export const updateUserAdress = async(id, data) =>{
     return res
 }
 
-export const deleteOrder = async(id) =>{
-    const {res} = $host.delete(`api/order/deleteOrder/${id}`)
-    return res
-}
+export const deleteOrder=async(id,sessionId)=>{
+    const {data}=await $host.delete(`api/order/deleteOrder/${id}`,{
+        data:{sessionId}
+    });
+    return data;
+};
 
 export const getCopyBD = async () => {
     const { data } = await $host.get('api/settings/getCopyBD')

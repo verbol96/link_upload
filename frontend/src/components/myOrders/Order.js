@@ -67,7 +67,7 @@ export const Order=({order,settings,priceList,expanded,onToggle})=>{
         if(!window.confirm('Вы уверены, что хотите удалить этот заказ?'))return;
 
         try{
-            await deleteOrder(order.id);
+            await deleteOrder(order.id,localStorage.getItem('logVisitorId'));
             dispatch(deleteOrderId(order.id));
 
             if(order.main_dir_id){

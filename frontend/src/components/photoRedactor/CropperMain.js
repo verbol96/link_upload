@@ -9,7 +9,7 @@ const CropperMain = ({
     savePhotos, saveCurrentPhoto,
     nameOrder, setNameOrder, setNameFormat,
     settingsDB, setSettingsDB, activeSettings, setActiveSettings,
-    pixelsRef, outputFormat, setOutputFormat
+    outputFormat, setOutputFormat
 }) => {
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
@@ -21,7 +21,10 @@ const CropperMain = ({
     const [withFrame, setWithFrame] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const cropRef = useRef();
-    const isSwitchingRef = useRef(false);
+
+const cropperContainerRef = useRef(null);
+const transitionOverlayRef = useRef(null);
+
     const switchTimerRef = useRef(null);
     const clearPhotos = useCallback(() => {
         setPhotos([]);
@@ -32,28 +35,55 @@ const CropperMain = ({
         setRotation(0);
         setFieldsWhite(false);
         setNameOrder('');
-        pixelsRef.current = {};
-    }, [setPhotos, setNameOrder, pixelsRef]);
-    // функция вычисления pixels из crop, cropSize, zoom, media
-    const computePixels = (cropValue) => {
-        if (!media || !cropSize) return null;
-        const displayW = media.width * zoom;
-        const displayH = media.height * zoom;
-        const kX = media.naturalWidth / displayW;
-        const kY = media.naturalHeight / displayH;
-        const pixelsW = cropSize.width * kX;
-        const pixelsH = cropSize.height * kY;
-        const x = (media.naturalWidth - pixelsW) / 2 - cropValue.x * kX;
-        const y = (media.naturalHeight - pixelsH) / 2 - cropValue.y * kY;
-        return { x, y, width: pixelsW, height: pixelsH };
-    };
+    }, [setPhotos, setNameOrder]);
+
+    const revealTimerRef = useRef(null);
+const revealFramesRef = useRef([]);
+const [visiblePhotoId, setVisiblePhotoId] = useState(null);
+const activePhotoId = photos[activePhoto]?.id;
+const activePhotoIdRef = useRef(activePhotoId);
+activePhotoIdRef.current = activePhotoId;
+
+
+const revealPhoto = useCallback((photoId) => {
+    if (revealTimerRef.current) {
+        clearTimeout(revealTimerRef.current);
+    }
+
+    revealFramesRef.current.forEach(cancelAnimationFrame);
+    revealFramesRef.current = [];
+
+    const firstFrame = requestAnimationFrame(() => {
+        if (activePhotoIdRef.current !== photoId) return;
+
+        setVisiblePhotoId(photoId);
+
+        const secondFrame = requestAnimationFrame(() => {
+            const thirdFrame = requestAnimationFrame(() => {
+                if (activePhotoIdRef.current === photoId) {
+                    transitionOverlayRef.current?.replaceChildren();
+                }
+            });
+
+            revealFramesRef.current.push(thirdFrame);
+        });
+
+        revealFramesRef.current.push(secondFrame);
+    });
+
+    revealFramesRef.current.push(firstFrame);
+}, []);
+
+
+
     // При загрузке изображения — инициализация
     // если несколько на листе, то изначлаьный кроп по настройкам
     const onMediaLoaded = useCallback((mediaSize) => {
         setMedia(mediaSize);
         if (photos[activePhoto]?.cropData?.cropSize !== undefined) {
-            return;
-        }
+    revealPhoto(photos[activePhoto].id);
+    return;
+}
         setRotation(0);
         if (!cropRef.current?.containerRect) return;
         const containerW = cropRef.current.containerRect.width;
@@ -113,90 +143,114 @@ const CropperMain = ({
                 rotation: 0,
                 fieldsWhite: false
             });
+            revealPhoto(photos[activePhoto].id);
         });
-    }, [photos, activePhoto, activeSettings, onSaveCrop]);
-    const changePhoto = useCallback((index) => {
-        if (index < 0 || index >= photos.length || index === activePhoto) return;
-        isSwitchingRef.current = true;
-        if (switchTimerRef.current) clearTimeout(switchTimerRef.current);
-        const currentData = {
-            cropSize,
-            crop,
-            zoom,
-            zoomDef,
-            rotation,
-            fieldsWhite,
-            media,
-            pixels: pixelsRef.current[photos[activePhoto]?.id]
-        };
-        const data = photos[index]?.cropData;
-        setPhotos(prev => prev.map((photo, idx) =>
-            idx === activePhoto ? { ...photo, cropData: currentData } : photo
-        ));
-        if (data?.cropSize) {
-            setCropSize(data.cropSize);
-            setZoom(data.zoom);
-            setCrop(data.crop);
-            setZoomDef(data.zoomDef);
-            setRotation(data.rotation);
-            setFieldsWhite(data.fieldsWhite);
-            setMedia(data.media);
-            if (data.pixels) pixelsRef.current[photos[index].id] = data.pixels;
-        } else {
-            setCrop({ x: 0, y: 0 });
-            setZoom(1);
-            setZoomDef(1);
-            setRotation(0);
-            setFieldsWhite(false);
-            setMedia(undefined);
+    }, [photos, activePhoto, activeSettings, onSaveCrop, revealPhoto]);
+    
+
+
+const changePhoto = useCallback((index) => {
+    if (
+        index < 0 ||
+        index >= photos.length ||
+        index === activePhoto
+    ) return;
+
+    const overlay = transitionOverlayRef.current;
+
+    if (overlay && !overlay.firstChild) {
+        const currentCropper = cropperContainerRef.current
+            ?.querySelector('.reactEasyCrop_Container');
+
+        if (currentCropper) {
+            overlay.appendChild(currentCropper.cloneNode(true));
         }
-        setActivePhoto(index);
-        switchTimerRef.current = setTimeout(() => {
-            isSwitchingRef.current = false;
-        }, 200);
-    }, [photos, activePhoto, cropSize, crop, zoom, zoomDef, rotation, fieldsWhite, media, setPhotos, setActivePhoto, pixelsRef]);
+    }
+
+    setVisiblePhotoId(null);
+
+
+    if (revealTimerRef.current) {
+        clearTimeout(revealTimerRef.current);
+    }
+
+    revealFramesRef.current.forEach(cancelAnimationFrame);
+    revealFramesRef.current = [];
+
+    const data = photos[index]?.cropData;
+
+    if (data?.cropSize) {
+        setCropSize(data.cropSize);
+        setZoom(data.zoom ?? 1);
+        setCrop(data.crop ?? { x: 0, y: 0 });
+        setZoomDef(data.zoomDef ?? 1);
+        setRotation(data.rotation ?? 0);
+        setFieldsWhite(data.fieldsWhite ?? false);
+        setMedia(data.media);
+    } else {
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+        setZoomDef(1);
+        setRotation(0);
+        setFieldsWhite(false);
+        setMedia(undefined);
+    }
+
+    setActivePhoto(index);
+}, [photos, activePhoto, setActivePhoto]);
+
+
     useEffect(() => () => {
         if (switchTimerRef.current) clearTimeout(switchTimerRef.current);
     }, []);
-    // onCropChange — вызывается сразу, вычисляем pixels здесь
-    const onCropChange = (newCrop) => {
-        if (isSwitchingRef.current) return;
-        setCrop(newCrop);
-        if (!photos[activePhoto]) return;
-        const computed = computePixels(newCrop);
-        if (computed) {
-            pixelsRef.current[photos[activePhoto].id] = computed;
-        }
-    };
-    const onZoomChange = (newZoom) => {
-        if (isSwitchingRef.current) return;
-        setZoom(newZoom);
-    };
-    // onCropComplete — сохраняем остальные настройки в cropData
-    const onCropComplete = useCallback(
-        (_croppedArea, croppedAreaPixels) => {
-            if (isSwitchingRef.current || !photos[activePhoto]) return;
-            pixelsRef.current[photos[activePhoto].id] = croppedAreaPixels;
-            onSaveCrop(photos[activePhoto].id, {
-                crop,
-                cropSize,
-                zoom,
-                zoomDef,
-                rotation,
-                fieldsWhite,
-                media,
-                width: activeSettings?.width,
-                height: activeSettings?.height,
-                top: activeSettings?.top,
-                bottom: activeSettings?.bottom,
-                left: activeSettings?.left,
-                right: activeSettings?.right,
-                widthList: activeSettings?.widthList,
-                heightList: activeSettings?.heightList,
-            });
-        },
-        [photos, activePhoto, crop, cropSize, zoom, zoomDef, rotation, fieldsWhite, media, onSaveCrop, activeSettings, pixelsRef]
-    );
+    // Положение отображается сразу, точные пиксели сохраняет onCropComplete.
+
+
+const onCropChange = useCallback((newCrop) => {
+    setCrop(newCrop);
+
+    if (!activePhotoId) return;
+
+    onSaveCrop(activePhotoId, {
+        crop: newCrop,
+        pixels: null
+    });
+}, [activePhotoId, onSaveCrop]);
+
+const onZoomChange = useCallback((newZoom) => {
+    setZoom(newZoom);
+
+    if (!activePhotoId) return;
+
+    onSaveCrop(activePhotoId, {
+        zoom: newZoom,
+        pixels: null
+    });
+}, [activePhotoId, onSaveCrop]);
+
+const onCropAreaChange = useCallback(
+    (_area, areaPixels) => {
+        if (!activePhotoId || !areaPixels) return;
+
+        onSaveCrop(activePhotoId, {
+            pixels: areaPixels
+        });
+    },
+    [activePhotoId, onSaveCrop]
+);
+
+const onCropComplete = useCallback(
+    (_area, areaPixels) => {
+        if (!activePhotoId || !areaPixels) return;
+
+        onSaveCrop(activePhotoId, {
+            pixels: areaPixels
+        });
+    },
+    [activePhotoId, onSaveCrop]
+);
+
+
     const changeSelect = (value) => {
         const selectedSettings = settingsDB.find(el => el.name === value);
         if (selectedSettings) {
@@ -206,8 +260,7 @@ const CropperMain = ({
                 ...el,
                 cropData: null
             })));
-            pixelsRef.current = {};
-            if (photos.length === 1) {
+                if (photos.length === 1) {
                 clearPhotos();
                 return;
             }
@@ -428,10 +481,23 @@ const CropperMain = ({
                                 >
                                     <i className="bi bi-chevron-left text-xl md:text-3xl text-gray-700"></i>
                                 </button>
-                                <div className=" relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] 
-                                                 border-0 border-gray-300">
-                                    <Cropper
-                                        className='border-2 border-gray-300'
+
+<div
+    ref={cropperContainerRef}
+    className="relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-gray-300 overflow-hidden"
+>
+    <div
+        ref={transitionOverlayRef}
+        className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
+    />
+    <Cropper
+
+                                        
+className={`relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-gray-300 ${
+    visiblePhotoId === activePhotoId ? 'opacity-100' : 'opacity-0'
+}`}
+
+                                         key={activePhotoId}
                                         image={photos[activePhoto].url}
                                         ref={cropRef}
                                         crop={crop}
@@ -443,6 +509,7 @@ const CropperMain = ({
                                         onCropChange={onCropChange}
                                         onZoomChange={onZoomChange}
                                         onCropComplete={onCropComplete}
+                                        onCropAreaChange={onCropAreaChange}
                                         onMediaLoaded={onMediaLoaded}
                                         zoomWithScroll={false}
                                         restrictPosition={fieldsWhite ? false : true}
@@ -610,9 +677,11 @@ const CropperMain = ({
                                             max={maxZoom()}
                                             step={0.01}
                                             aria-labelledby="Zoom"
-                                            onChange={(e) => {
-                                                setZoom(parseFloat(e.target.value));
-                                            }}
+                                            
+onChange={(e) => {
+    onZoomChange(parseFloat(e.target.value));
+}}
+
                                             className="w-20 md:w-auto"
                                         />
                                     </div>

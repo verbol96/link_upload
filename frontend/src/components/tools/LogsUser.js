@@ -9,25 +9,21 @@ const EVENT_INFO={
     checkout_opened:{label:"Открыто оформление",shortLabel:"Оформление",icon:"bi-card-checklist",className:"bg-amber-50 text-amber-700"},
     order_submit:{label:"Отправка заказа",shortLabel:"Отправка",icon:"bi-send",className:"bg-blue-50 text-blue-700"},
     order_created:{label:"Заказ создан",shortLabel:"Создан",icon:"bi-check-circle",className:"bg-cyan-50 text-cyan-700"},
+    order_deleted:{label:"Заказ удалён",shortLabel:"Удалён",icon:"bi-trash3",className:"bg-orange-50 text-orange-700"},
     order_upload_completed:{label:"Заказ загружен",shortLabel:"Готово",icon:"bi-cloud-check",className:"bg-emerald-50 text-emerald-700"},
     order_create_error:{label:"Ошибка создания заказа",shortLabel:"Ошибка",icon:"bi-exclamation-triangle",className:"bg-red-50 text-red-600"},
     order_folder_error:{label:"Ошибка папки заказа",shortLabel:"Ошибка",icon:"bi-folder-x",className:"bg-red-50 text-red-600"},
     format_folder_error:{label:"Ошибка папки формата",shortLabel:"Ошибка",icon:"bi-folder-x",className:"bg-red-50 text-red-600"},
     photo_upload_error:{label:"Ошибка загрузки фото",shortLabel:"Ошибка",icon:"bi-exclamation-triangle",className:"bg-red-50 text-red-600"}
 };
-const SESSION_STEPS=[
-    "visit",
-    "photos_added",
-    "checkout_opened",
-    "order_submit",
-    "order_created",
-    "order_upload_completed"
-];
+const IMPORTANT_EVENTS=new Set(["order_upload_completed","order_deleted","order_create_error","order_folder_error","format_folder_error","photo_upload_error"]);
+const isImportantEvent=event=>IMPORTANT_EVENTS.has(event.event)||event.eventType==="error";
+const isRecentEvent=event=>{const time=new Date(event.createdAt).getTime();return Number.isFinite(time)&&Date.now()-time>=0&&Date.now()-time<86400000;};
+const shortOrderId=id=>String(id).slice(-3);
+
 const FILTERS=[
     {id:"all",label:"Все"},
-    {id:"errors",label:"Ошибки"},
-    {id:"orders",label:"Заказы"},
-    {id:"visits",label:"Посещения"}
+    {id:"orders",label:"Заказы"}
 ];
 const getEventInfo=(event)=>{
     return EVENT_INFO[event]||{
@@ -53,6 +49,25 @@ const isMobile=(screen)=>{
     if(!w||!h)return false;
     return w<h;
 };
+const getDayKey=iso=>{const date=new Date(iso);return Number.isNaN(date.getTime())?null:date.toLocaleDateString("ru-RU");};
+const isPhoneEvent=event=>/iphone|android|mobile|phone|смартфон|телефон/i.test(String(event.device||""))||isMobile(event.screen);
+const buildDayStats=logs=>{
+    const days=new Map();
+    logs.forEach((log,index)=>{
+        const day=getDayKey(log.createdAt);
+        if(!day)return;
+        if(!days.has(day))days.set(day,new Map());
+        const visitors=days.get(day);
+        const id=log.sessionId||`legacy-${log.id||index}`;
+        visitors.set(id,(visitors.get(id)||false)||isPhoneEvent(log));
+    });
+    return new Map(Array.from(days,([day,visitors])=>{
+        const total=visitors.size;
+        const phones=Array.from(visitors.values()).filter(Boolean).length;
+        return[day,{total,phones,percent:total?Math.round(phones/total*100):0}];
+    }));
+};
+const DayStats=({date,stats})=><span className="text-[10px] text-slate-500 tabular-nums">{stats?.total??0} уникальных · с телефона {stats?.percent??0}% ({stats?.phones??0})</span>;
 const formatDuration=(from,to)=>{
     if(!from||!to)return"—";
     const start=new Date(from).getTime();
@@ -95,11 +110,11 @@ const buildSessions=(logs)=>{
         const latestPhotoEvent=[...events].reverse().find(el=>el.photosCount!=null);
         const photosAddedTotal=photoEvents.reduce((sum,el)=>sum+(Number(el.photosCount)||0),0);
         const photosCount=photosAddedTotal>0?photosAddedTotal:(latestPhotoEvent?.photosCount??null);
-        const hasError=events.some(el=>el.eventType==="error");
-        const hasOrder=events.some(el=>(el.event&&el.event.startsWith("order_"))||el.event==="format_folder_error"||el.event==="photo_upload_error");
+        const hasError=events.some(el=>el.eventType==="error"||["order_create_error","order_folder_error","format_folder_error","photo_upload_error"].includes(el.event));
+        const hasOrder=events.some(el=>["order_upload_completed","order_deleted"].includes(el.event));
         const hasVisit=events.some(el=>el.event==="visit");
-        const reachedSteps=SESSION_STEPS.filter(event=>events.some(el=>el.event===event));
-        const lastStep=[...SESSION_STEPS].reverse().find(event=>events.some(el=>el.event===event))||firstEvent?.event||null;
+        const reachedSteps=events.filter(el=>isImportantEvent(el)&&isRecentEvent(el)).reduce((result,el)=>result.includes(el.event)?result:[...result,el.event],[]);
+        const lastStep=reachedSteps[reachedSteps.length-1]||null;
         return{
             ...session,
             events,
@@ -115,6 +130,7 @@ const buildSessions=(logs)=>{
             hasError,
             hasOrder,
             hasVisit,
+            isPhone:events.some(isPhoneEvent),
             reachedSteps,
             lastStep
         };
@@ -143,6 +159,7 @@ const LogsUser=()=>{
         getData();
     },[]);
     const sessions=useMemo(()=>buildSessions(logs),[logs]);
+    const dayStats=useMemo(()=>buildDayStats(logs),[logs]);
     const filteredSessions=useMemo(()=>{
         let result=sessions;
         if(filter==="errors"){
@@ -161,7 +178,7 @@ const LogsUser=()=>{
                 const surname=String(session.surname||"").toLowerCase();
                 const phone=String(session.phone||"").toLowerCase();
                 const orderId=String(session.orderId||"").toLowerCase();
-                const format=String(session.format||"").toLowerCase();
+
                 const eventMatch=session.events.some(el=>{
                     const event=String(el.event||"").toLowerCase();
                     const page=String(el.page||"").toLowerCase();
@@ -171,7 +188,7 @@ const LogsUser=()=>{
                     const os=String(el.OS||"").toLowerCase();
                     return event.includes(value)||page.includes(value)||error.includes(value)||device.includes(value)||browser.includes(value)||os.includes(value);
                 });
-                return sessionId.includes(value)||surname.includes(value)||phone.includes(value)||orderId.includes(value)||format.includes(value)||eventMatch;
+                return sessionId.includes(value)||surname.includes(value)||phone.includes(value)||orderId.includes(value)||eventMatch;
             });
         }
         return result;
@@ -298,7 +315,6 @@ const LogsUser=()=>{
                                     <col className="w-[150px]"/>
                                     <col/>
                                     <col className="w-[130px]"/>
-                                    <col className="w-[170px]"/>
                                     <col className="w-[80px]"/>
                                     <col className="w-[100px]"/>
                                 </colgroup>
@@ -308,7 +324,6 @@ const LogsUser=()=>{
                                         <th className="text-left px-4 py-2">Пользователь</th>
                                         <th className="text-left px-4 py-2">Действия</th>
                                         <th className="text-left px-4 py-2">Заказ</th>
-                                        <th className="text-left px-4 py-2">Формат</th>
                                         <th className="text-right px-4 py-2">Фото</th>
                                         <th className="text-right px-4 py-2">Период</th>
                                     </tr>
@@ -319,16 +334,16 @@ const LogsUser=()=>{
                                         const previousDate=index>0?formatDate(visibleSessions[index-1].updatedAt).date:null;
                                         const isNewDay=index===0||date!==previousDate;
                                         const expanded=expandedId===session.id;
-                                        const lastInfo=getEventInfo(session.lastStep);
                                         const duration=formatDuration(session.createdAt,session.updatedAt);
                                         return (
                                             <Fragment key={session.id}>
                                                 {isNewDay&&(
                                                     <tr>
-                                                        <td colSpan={7} className="px-4 py-1.5 bg-slate-50 border-y border-slate-200">
+                                                        <td colSpan={6} className="px-4 py-1.5 bg-slate-50 border-y border-slate-200">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="w-1.5 h-1.5 rounded-full bg-[#19766d]"/>
                                                                 <span className="text-[10px] font-semibold tracking-wide text-slate-500">{date}</span>
+                                                                 <DayStats date={date} stats={dayStats.get(date)}/>
                                                                 <span className="h-px flex-1 bg-slate-200"/>
                                                             </div>
                                                         </td>
@@ -348,6 +363,7 @@ const LogsUser=()=>{
                                                         {session.surname?(
                                                             <div className="min-w-0">
                                                                 <div className="flex items-center gap-1.5">
+                                                                    <i className={`bi ${session.isPhone?"bi-phone":"bi-laptop"} text-[11px] text-slate-400 shrink-0`} title={session.isPhone?"Телефон":"Компьютер"}/>
                                                                     <i className="bi bi-person text-[11px] text-[#19766d] shrink-0"/>
                                                                     <span className="text-[11px] font-medium text-slate-700 truncate capitalize">
                                                                         {session.surname}
@@ -361,6 +377,7 @@ const LogsUser=()=>{
                                                             </div>
                                                         ):(
                                                             <div className="flex items-center gap-1.5 text-slate-400">
+                                                                <i className={`bi ${session.isPhone?"bi-phone":"bi-laptop"} text-[11px] shrink-0`} title={session.isPhone?"Телефон":"Компьютер"}/>
                                                                 <i className="bi bi-person-x text-[11px] shrink-0"/>
                                                                 <span className="text-[10px]">Не авторизован</span>
                                                             </div>
@@ -387,33 +404,11 @@ const LogsUser=()=>{
                                                                     </Fragment>
                                                                 );
                                                             })}
-                                                            {session.hasError&&(
-                                                                <>
-                                                                    <i className="bi bi-chevron-right text-[7px] text-slate-300 shrink-0"/>
-                                                                    <span className="h-7 px-2 rounded-md inline-flex items-center gap-1.5 shrink-0 bg-red-50 text-red-600">
-                                                                        <i className="bi bi-exclamation-triangle text-[11px]"/>
-                                                                        <span className="text-[10px] font-medium hidden 2xl:inline">
-                                                                            Ошибка
-                                                                        </span>
-                                                                    </span>
-                                                                </>
-                                                            )}
-                                                            {session.reachedSteps.length===0&&(
-                                                                <span className={`h-7 px-2 rounded-md inline-flex items-center gap-1.5 ${lastInfo.className}`}>
-                                                                    <i className={`bi ${lastInfo.icon} text-[11px]`}/>
-                                                                    <span className="text-[10px] font-medium">
-                                                                        {lastInfo.shortLabel}
-                                                                    </span>
-                                                                </span>
-                                                            )}
                                                             <i className={`bi ${expanded?"bi-chevron-up":"bi-chevron-down"} ml-auto text-[9px] text-slate-300 shrink-0`}/>
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-2.5 text-slate-600 truncate">
-                                                        {session.orderId?`№${session.orderId}`:"—"}
-                                                    </td>
-                                                    <td className="px-4 py-2.5 text-slate-600 truncate">
-                                                        {session.format||"—"}
+                                                        {session.orderId?`№${shortOrderId(session.orderId)}`:"—"}
                                                     </td>
                                                     <td className="px-4 py-2.5 text-right text-slate-600 tabular-nums">
                                                         {session.photosCount??"—"}
@@ -424,7 +419,7 @@ const LogsUser=()=>{
                                                 </tr>
                                                 {expanded&&(
                                                     <tr className="bg-slate-50/70 border-b border-slate-200">
-                                                        <td colSpan={7} className="px-4 py-4">
+                                                        <td colSpan={6} className="px-4 py-4">
                                                             <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                                                                 <div>
                                                                     <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
@@ -467,7 +462,7 @@ const LogsUser=()=>{
                                                             <div className="relative">
                                                                 <div className="absolute left-[13px] top-3 bottom-3 w-px bg-slate-200"/>
                                                                 <div className="space-y-1">
-                                                                    {(showAllHistoryId===session.id?session.events:session.events.slice(0,20)).map((event,eventIndex)=>{
+                                                                    {(showAllHistoryId===session.id?session.events.slice().reverse():session.events.slice().reverse().slice(0,20)).map((event,eventIndex)=>{
                                                                         const eventInfo=getEventInfo(event.event);
                                                                         const eventTime=formatDate(event.createdAt);
                                                                         const mobile=isMobile(event.screen);
@@ -491,17 +486,12 @@ const LogsUser=()=>{
                                                                                         )}
                                                                                         {event.orderId&&(
                                                                                             <span className="text-[10px] text-slate-500">
-                                                                                                №{event.orderId}
+                                                                                                №{shortOrderId(event.orderId)}
                                                                                             </span>
                                                                                         )}
                                                                                         {event.photosCount!=null&&(
                                                                                             <span className="text-[10px] text-slate-400">
                                                                                                 {event.photosCount} фото
-                                                                                            </span>
-                                                                                        )}
-                                                                                        {event.format&&(
-                                                                                            <span className="text-[10px] text-slate-400 truncate">
-                                                                                                {event.format}
                                                                                             </span>
                                                                                         )}
                                                                                     </div>
@@ -550,13 +540,14 @@ const LogsUser=()=>{
                                 const isNewDay=index===0||date!==previousDate;
                                 const expanded=expandedId===session.id;
                                 const duration=formatDuration(session.createdAt,session.updatedAt);
-                                const lastInfo=getEventInfo(session.lastStep);
+                                
                                 return (
                                     <div key={session.id}>
                                         {isNewDay&&(
                                             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border-y border-slate-200">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-[#19766d]"/>
                                                 <span className="text-[10px] font-semibold text-slate-500">{date}</span>
+                                                <DayStats date={date} stats={dayStats.get(date)}/>
                                                 <span className="h-px flex-1 bg-slate-200"/>
                                             </div>
                                         )}
@@ -576,6 +567,7 @@ const LogsUser=()=>{
                                                     <div className="flex items-center gap-1.5 mb-1.5">
                                                         {session.surname?(
                                                             <>
+                                                                <i className={`bi ${session.isPhone?"bi-phone":"bi-laptop"} text-[11px] text-slate-400`} title={session.isPhone?"Телефон":"Компьютер"}/>
                                                                 <i className="bi bi-person text-[11px] text-[#19766d]"/>
                                                                 <span className="text-[11px] font-medium text-slate-700 capitalize truncate">
                                                                     {session.surname}
@@ -583,6 +575,7 @@ const LogsUser=()=>{
                                                             </>
                                                         ):(
                                                             <>
+                                                                <i className={`bi ${session.isPhone?"bi-phone":"bi-laptop"} text-[11px] text-slate-400`} title={session.isPhone?"Телефон":"Компьютер"}/>
                                                                 <i className="bi bi-person-x text-[11px] text-slate-400"/>
                                                                 <span className="text-[10px] text-slate-400">
                                                                     Не авторизован
@@ -607,24 +600,10 @@ const LogsUser=()=>{
                                                                 </Fragment>
                                                             );
                                                         })}
-                                                        {session.hasError&&(
-                                                            <>
-                                                                <i className="bi bi-chevron-right text-[6px] text-slate-300 shrink-0"/>
-                                                                <span className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 bg-red-50 text-red-600">
-                                                                    <i className="bi bi-exclamation-triangle text-[11px]"/>
-                                                                </span>
-                                                            </>
-                                                        )}
-                                                        {session.reachedSteps.length===0&&(
-                                                            <span className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${lastInfo.className}`}>
-                                                                <i className={`bi ${lastInfo.icon} text-[11px]`}/>
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    {(session.orderId||session.format||session.photosCount!=null)&&(
+                                                        </div>
+                                                    {(session.orderId||session.photosCount!=null)&&(
                                                         <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-400 truncate">
-                                                            {session.orderId&&<span>№{session.orderId}</span>}
-                                                            {session.format&&<span className="truncate">{session.format}</span>}
+                                                            {session.orderId&&<span>№{shortOrderId(session.orderId)}</span>}
                                                             {session.photosCount!=null&&<span className="shrink-0">{session.photosCount} фото</span>}
                                                         </div>
                                                     )}
@@ -674,7 +653,7 @@ const LogsUser=()=>{
                                                 <div className="relative">
                                                     <div className="absolute left-[13px] top-3 bottom-3 w-px bg-slate-200"/>
                                                     <div className="space-y-1">
-                                                        {(showAllHistoryId===session.id?session.events:session.events.slice(0,20)).map((event,eventIndex)=>{
+                                                        {(showAllHistoryId===session.id?session.events.slice().reverse():session.events.slice().reverse().slice(0,20)).map((event,eventIndex)=>{
                                                             const eventInfo=getEventInfo(event.event);
                                                             const eventTime=formatDate(event.createdAt);
                                                             return (
@@ -696,10 +675,10 @@ const LogsUser=()=>{
                                                                                 {event.page}
                                                                             </div>
                                                                         )}
-                                                                        {(event.orderId||event.format||event.photosCount!=null)&&(
+                                                                        {(event.orderId||event.photosCount!=null)&&(
                                                                             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[9px] text-slate-400">
-                                                                                {event.orderId&&<span>№{event.orderId}</span>}
-                                                                                {event.format&&<span>{event.format}</span>}
+                                                                                {event.orderId&&<span>№{shortOrderId(event.orderId)}</span>}
+                                                                                
                                                                                 {event.photosCount!=null&&<span>{event.photosCount} фото</span>}
                                                                             </div>
                                                                         )}

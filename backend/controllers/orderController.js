@@ -1390,21 +1390,29 @@ savedPhotoResults.push({
 
 
 
-    async deleteOrder(req,res){
 
-        const id = req.params.id
-
-        const order = await Order.findOne({where: {id: id}})
-
-        await Order.destroy({where: {id: id}})
-
-        await Photo.destroy({where: {orderId: id}})
-
-        //await recalculateUserStats(order.userId)
-
-        return res.json(order)
-
+async deleteOrder(req,res){
+    try{
+        const id=req.params.id;
+        const order=await Order.findOne({where:{id}});
+        if(!order)return res.status(404).json({message:"Заказ не найден"});
+        await Order.destroy({where:{id}});
+        await Photo.destroy({where:{orderId:id}});
+await LogUser.create({
+    event:'order_deleted',
+    eventType:'info',
+    sessionId:req.body?.sessionId||null,
+    orderId:String(order.order_number),
+    surname:order.FIO||null,
+    phone:order.phone||'0'
+});
+        return res.json(order);
+    }catch(error){
+        console.error("deleteOrder error:",error);
+        return res.status(500).json({message:"Ошибка удаления заказа"});
     }
+}
+
 
 
 

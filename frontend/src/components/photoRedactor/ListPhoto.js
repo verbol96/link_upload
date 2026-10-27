@@ -1,17 +1,17 @@
 import { useEffect, useRef } from "react";
 
 const ListPhoto = ({ photos, activePhoto, changePhoto }) => {
-    const itemRefs = useRef({});
+const itemRefs = useRef({});
+const activeId = photos[activePhoto]?.id;
 
-    useEffect(() => {
-        const activeId = photos[activePhoto]?.id;
-        if (activeId && itemRefs.current[activeId]) {
-            itemRefs.current[activeId].scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-        }
-    }, [activePhoto, photos]);
+useEffect(() => {
+    if (activeId != null && itemRefs.current[activeId]) {
+        itemRefs.current[activeId].scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+    }
+}, [activeId]);
 
     // Форматирование размера файла
     const formatSize = (bytes) => {

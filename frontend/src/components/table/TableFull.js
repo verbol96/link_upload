@@ -66,35 +66,25 @@ const OrdersSkeleton = ({ rows = 10, mobile = false }) => {
 
 export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, setCollapsedOrderId, handleDetailsClick, isChanged, setIsChanged, descRowRef }) => {
     const dispach = useDispatch()
+    const user = useSelector(state => state.private.user)
+    const userRole = user?.role || 'GUEST'
+    const isAdmin = userRole === 'ADMIN'
 
     const [sortKey, setSortKey] = useState('default')
+    const [onlyGlossy, setOnlyGlossy] = useState(false)
     const [onlyLustre, setOnlyLustre] = useState(false)
     const [onlyHolst, setOnlyHolst] = useState(false)
     const [onlyMagnit, setOnlyMagnit] = useState(false)
     const [onlyA4, setOnlyA4] = useState(false)
+    const [onlyPoster, setOnlyPoster] = useState(false)
+    const [datePickerOpen, setDatePickerOpen] = useState(false)
+    const datePickerRef = useRef(null)
+    const [dateFrom, setDateFrom] = useState('')
+    const [dateTo, setDateTo] = useState('')
 
     let orders = _.orderBy(_.orderBy(useSelector(state => state.order.order), 'createdAt', 'desc'), 'status', 'asc')
 
-    const sortOrders = (orders, sortKey) => {
-        switch (sortKey) {
-            case 'price':
-                return _.orderBy(orders, [item => Number(item.price)], 'desc')
-            case 'data':
-                return _.orderBy(orders, ['createdAt'], 'desc')
-            case 'city':
-                return _.orderBy(orders, [item => item.city.toLowerCase()], 'asc')
-            case 'FIO':
-                return _.orderBy(orders, item => item.user && item.user.FIO ? item.user.FIO.trim() : '', 'asc')
-            default:
-                return orders
-        }
-    }
-
-    orders = sortOrders(orders, sortKey)
-
-    const handleSortChange = (e) => {
-        setSortKey(e.target.value)
-    }
+    if (isAdmin && sortKey === 'price') orders = _.orderBy(orders, item => Number(item.price) || 0, 'desc')
 
     const [isLoading, setIsLoading] = useState(true)
 
@@ -117,7 +107,6 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
 
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedType, setSelectedType] = useState('All')
-    const [origin, setOrigin] = useState('All')
 
     const handleSearchChange = (e) => {
         setSearchQuery(e.target.value)
@@ -127,9 +116,6 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
         setSelectedType(e.target.value)
     }
 
-    const OriginChange = (e) => {
-        setOrigin(e.target.value)
-    }
 
     const AddNewOrder = async () => {
         const data = {
@@ -192,11 +178,6 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
         return order.typePost === selectedType
     })
         .filter((order) => {
-            if (origin === order.origin) return true
-            if (origin === 'All') return true
-            return order.origin === origin
-        })
-        .filter((order) => {
             const data = order.FIO +
                 order.adress +
                 order.city +
@@ -217,7 +198,15 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
         .filter(s => filterCheck.includes(Number(s.status)))
         .filter((order) => {
             const orderDate = new Date(order.createdAt)
+            if (isAdmin && (dateFrom || dateTo)) {
+                const day = order.createdAt.slice(0, 10)
+                return (!dateFrom || day >= dateFrom) && (!dateTo || day <= dateTo)
+            }
             return !startDate || !endDate || (orderDate >= startDate && orderDate <= endDate)
+        })
+        .filter((order) => {
+            if (onlyGlossy) return order.photos.some(el => el.paper === 'glossy')
+            return true
         })
         .filter((order) => {
             if (onlyLustre) return order.photos.some(el => el.paper === 'lustre')
@@ -235,7 +224,16 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
             if (onlyA4) return order.photos.some(el => el.format === 'а4' || el.format === '<а4')
             return true
         })
+        .filter(order => !onlyPoster || (order.photos || []).some(el => el.type === 'poster'))
 
+    useEffect(() => {
+        if (!datePickerOpen) return
+        const closeOnOutside = event => {
+            if (datePickerRef.current && !datePickerRef.current.contains(event.target)) setDatePickerOpen(false)
+        }
+        document.addEventListener('mousedown', closeOnOutside)
+        return () => document.removeEventListener('mousedown', closeOnOutside)
+    }, [datePickerOpen])
     const startDateSet = useRef(false)
 
     useEffect(() => {
@@ -450,16 +448,6 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                             <option value="R">белпочта(налож)</option>
                         </select>
 
-                        <select
-                            className={`${selectClass} max-w-[80px] flex-1 md:w-[130px] md:max-w-none md:flex-none`}
-                            value={origin}
-                            onChange={OriginChange}
-                        >
-                            <option value="All">Сайт и телеграм</option>
-                            <option value="website">только сайт</option>
-                            <option value="telegram">только телеграм</option>
-                        </select>
-
                         <input
                             className="h-[30px] min-w-0 flex-[2] rounded-md border-[1px] border-teal-800/50 bg-white px-2 text-xs font-normal text-slate-700 placeholder:text-slate-400 outline-none transition-colors focus:border-teal-700 focus:ring-1 focus:ring-teal-700 md:h-[32px] md:w-[160px] md:flex-none"
                             type="text"
@@ -468,6 +456,42 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                             onChange={handleSearchChange}
                         />
 
+                        {isAdmin && (
+                            <div className="relative shrink-0 ml-8" ref={datePickerRef}>
+                                <button
+                                    type="button"
+                                    className={`flex h-[32px] items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${dateFrom || dateTo ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'border-teal-800/50 bg-white text-slate-700 hover:border-teal-700'}`}
+                                    onClick={() => setDatePickerOpen(prev => !prev)}
+                                    title="Фильтр заказов по дате"
+                                >
+                                    <i className="bi bi-calendar3" />
+                                    <span className="hidden lg:inline">{dateFrom || dateTo ? 'Период выбран' : 'Период'}</span>
+                                </button>
+                                {datePickerOpen && (
+                                    <div className="absolute right-0 top-full z-30 mt-2 w-[260px] rounded-xl border border-stone-200 bg-white p-3 shadow-xl">
+                                        <div className="mb-3 text-sm font-semibold text-stone-800">Диапазон дат</div>
+                                        <label className="mb-2 block text-xs font-medium text-stone-600">
+                                            С даты
+                                            <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)} className="mt-1 block h-9 w-full rounded-md border border-stone-300 bg-white px-2 text-sm outline-none focus:border-teal-700" />
+                                        </label>
+                                        <label className="block text-xs font-medium text-stone-600">
+                                            По дату (включительно)
+                                            <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)} className="mt-1 block h-9 w-full rounded-md border border-stone-300 bg-white px-2 text-sm outline-none focus:border-teal-700" />
+                                        </label>
+                                        <div className="mt-3 flex items-center justify-between">
+                                            <button type="button" className="text-xs text-stone-500 hover:text-stone-800" onClick={() => { setDateFrom(''); setDateTo('') }}>Сбросить</button>
+                                            <button type="button" className="rounded-md bg-[#2f616b] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#244e56]" onClick={() => setDatePickerOpen(false)}>Готово</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {isAdmin && (
+                            <button type="button" onClick={() => setSortKey(prev => prev === 'price' ? 'default' : 'price')} title={sortKey === 'price' ? 'Вернуть обычную сортировку' : 'Сортировать по цене (от большей к меньшей)'} className={`flex h-[32px] mr-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${sortKey === 'price' ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'border-teal-800/50 bg-white text-slate-700 hover:border-teal-700'}`}>
+                                <i className="bi bi-sort-numeric-down-alt" />
+                                <span className="hidden lg:inline">По цене</span>
+                            </button>
+                        )}
                         <select
                             className={`${selectClass} max-w-[100px] flex-1 md:hidden`}
                             value={filterCheck.length === 1 && filterCheck.includes(5) ? '2' : filterCheck.length === 1 && filterCheck.includes(6) ? '3' : '1'}
@@ -478,20 +502,14 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                             <option value="3">оплаченные</option>
                         </select>
 
-                        <select
-                            className={`${selectClass} hidden md:block md:w-[180px] md:flex-none md:mr-8`}
-                            value={sortKey}
-                            onChange={handleSortChange}
-                        >
-                            <option value="default">по умолчанию</option>
-                            <option value="price">по цене</option>
-                            <option value="data">по дате</option>
-                            <option value="city">по городу</option>
-                            <option value="FIO">по имени</option>
-                        </select>
-
                         <button
-                            className={`${filterButtonClass} md:ml-5 ${onlyLustre ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'bg-white text-slate-700'}`}
+                            className={`${filterButtonClass} md:ml-auto ${onlyGlossy ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'bg-white text-slate-700'}`}
+                            onClick={() => setOnlyGlossy(!onlyGlossy)}
+                        >
+                            glossy
+                        </button>
+                        <button
+                            className={`${filterButtonClass} ${onlyLustre ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'bg-white text-slate-700'}`}
                             onClick={() => setOnlyLustre(!onlyLustre)}
                         >
                             lustre
@@ -518,6 +536,12 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                             A4
                         </button>
 
+                        <button
+                            className={`${filterButtonClass} mr-8 ${onlyPoster ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'bg-white text-slate-700'}`}
+                            onClick={() => setOnlyPoster(prev => !prev)}
+                        >
+                            poster
+                        </button>
                         {selectedType === 'E' && (
                             <button
                                 className={mainButtonClass}
@@ -668,7 +692,7 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                                 ))
                             )}
 
-                            <TableFooter filteredOrders={filteredOrders} />
+                            <TableFooter filteredOrders={filteredOrders} activeFilters={{ glossy: onlyGlossy, lustre: onlyLustre, holst: onlyHolst, magnit: onlyMagnit, A4: onlyA4, poster: onlyPoster }} />
                         </div>
                     )}
                 </div>
@@ -699,7 +723,7 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                 </div>
 
                 {!isLoading && (
-                    <TableFooter filteredOrders={filteredOrders} />
+                    <TableFooter filteredOrders={filteredOrders} activeFilters={{ glossy: onlyGlossy, lustre: onlyLustre, holst: onlyHolst, magnit: onlyMagnit, A4: onlyA4, poster: onlyPoster }} />
                 )}
             </div>
         </div>

@@ -327,7 +327,7 @@ const Web = () => {
 
         let MainDir;
         try{
-            MainDir=await createDir(typePostName()+(userData.order_number%1000));
+            MainDir=await createDir(typePostName()[0]+(userData.order_number%1000));
         }catch(error){
             setLogUser({
                 event:'order_folder_error',
