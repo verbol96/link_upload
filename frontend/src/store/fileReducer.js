@@ -1,3 +1,4 @@
+
 const SET_FILES = "SET_FILES"
 const SET_FILES_ALL = "SET_FILES_ALL"
 const SET_CURRENT_DIR = "SET_CURRENT_DIR"
@@ -7,13 +8,15 @@ const DELETE_FILE = 'DELETE_FILE'
 const CHANGE_PROGRESS = 'CHANGE_PROGRESS'
 const ADD_STACK = 'ADD_STACK'
 const DEL_STACK = 'DEL_STACK'
+const DEL_STACK_DIR = 'DEL_STACK_DIR'
+const CLEAR_NAVIGATION = 'CLEAR_NAVIGATION'
 const DOWNLOAD_DIR = 'DOWNLOAD_DIR'
- 
+
 const defaultState = {
     files: [],
     filesAll: [],
     currentDir: null,
-    stackDir: [ ],
+    stackDir: [],
     stack: [],
     FormatPhoto: [
         '10x15',
@@ -44,30 +47,152 @@ const defaultState = {
 
 export default function fileReducer(state = defaultState, action) {
     switch (action.type) {
-        case SET_FILES: return {...state, files: action.payload}
-        case SET_FILES_ALL: return {...state, filesAll: action.payload}
-        case SET_CURRENT_DIR: return {...state, currentDir: action.payload}
-        case ADD_FILE: return {...state, files:[...state.files, action.payload]}
-        case PUSH_STACK: return {...state, stackDir: [...state.stackDir, action.payload]}
-        case DELETE_FILE: return {...state, files: [...state.files.filter(file=>file.id!==action.payload)]}
-        case CHANGE_PROGRESS: return {...state, progress: action.payload}
-        case DOWNLOAD_DIR: return {...state, files: [...state.files.map(file=>file.id===action.payload ? { ...file, isDownload: true }: file)]}
+        case SET_FILES:
+            return {
+                ...state,
+                files: action.payload
+            }
 
-        case ADD_STACK: return {...state, stack: [...state.stack, action.payload]}
-        case DEL_STACK: return {...state, stack: state.stack.slice(0, -1)}
+        case SET_FILES_ALL:
+            return {
+                ...state,
+                filesAll: action.payload
+            }
+
+        case SET_CURRENT_DIR:
+            return {
+                ...state,
+                currentDir: action.payload
+            }
+
+        case ADD_FILE:
+            return {
+                ...state,
+                files: [...state.files, action.payload]
+            }
+
+        case PUSH_STACK:
+            return {
+                ...state,
+                stackDir: [...state.stackDir, action.payload]
+            }
+
+        case DELETE_FILE:
+            return {
+                ...state,
+                files: state.files.filter(
+                    file => file.id !== action.payload
+                )
+            }
+
+        case CHANGE_PROGRESS:
+            return {
+                ...state,
+                progress: action.payload
+            }
+
+        case DOWNLOAD_DIR:
+            return {
+                ...state,
+                files: state.files.map(file =>
+                    file.id === action.payload
+                        ? { ...file, isDownload: true }
+                        : file
+                )
+            }
+
+        case ADD_STACK:
+            return {
+                ...state,
+                stack: [...state.stack, action.payload]
+            }
+
+        case DEL_STACK:
+            return {
+                ...state,
+                stack: state.stack.slice(0, -1)
+            }
+
+        case DEL_STACK_DIR:
+            return {
+                ...state,
+                stackDir: state.stackDir.slice(0, -1)
+            }
+
+        case CLEAR_NAVIGATION:
+            return {
+                ...state,
+                currentDir: null,
+                stackDir: [],
+                stack: []
+            }
+
         default:
             return state
     }
-}   
+}
 
-export const setFiles = (files) => ({type: SET_FILES, payload: files})
-export const setFilesAll = (files) => ({type: SET_FILES_ALL, payload: files})
-export const setCurrentDir= (dir) => ({type: SET_CURRENT_DIR, payload: dir})
-export const addFile = (file)=>({type: ADD_FILE, payload: file})
-export const pushStack = (dir)=>({type: PUSH_STACK, payload: dir})
-export const deleteFileStore = (fileId)=>({type: DELETE_FILE, payload: fileId})
-export const changeProgress = (value) =>({type: CHANGE_PROGRESS, payload: value})
-export const downloadDir = (fileId) => ({type: DOWNLOAD_DIR, payload: fileId})
+export const setFiles = (files) => ({
+    type: SET_FILES,
+    payload: files
+})
 
-export const addStack = (file)=>({type: ADD_STACK, payload: file})
-export const delStack = ()=>({type: DEL_STACK})
+export const setFilesAll = (files) => ({
+    type: SET_FILES_ALL,
+    payload: files
+})
+
+export const setCurrentDir = (dir) => ({
+    type: SET_CURRENT_DIR,
+    payload: dir
+})
+
+export const addFile = (file) => ({
+    type: ADD_FILE,
+    payload: file
+})
+
+export const pushStack = (dir) => ({
+    type: PUSH_STACK,
+    payload: dir
+})
+
+export const deleteFileStore = (fileId) => ({
+    type: DELETE_FILE,
+    payload: fileId
+})
+
+export const changeProgress = (value) => ({
+    type: CHANGE_PROGRESS,
+    payload: value
+})
+
+export const downloadDir = (fileId) => ({
+    type: DOWNLOAD_DIR,
+    payload: fileId
+})
+
+export const addStack = (file) => ({
+    type: ADD_STACK,
+    payload: file
+})
+
+export const delStack = () => ({
+    type: DEL_STACK
+})
+
+export const delStackDir = () => ({
+    type: DEL_STACK_DIR
+})
+
+export const clearNavigation = () => ({
+    type: CLEAR_NAVIGATION
+})
+
+export const resetNavigation = () => ({
+    type: CLEAR_NAVIGATION
+})
+
+export const popStackDir = () => ({
+    type: DEL_STACK_DIR
+})

@@ -3,131 +3,158 @@ const {Order} = require('../models/models')
 const { Sequelize } = require('sequelize');
 require('dotenv').config()
 
+const epApi = axios.create({
+    baseURL: 'https://api-kassa.evropochta.by',
+    headers: {
+        Token: process.env.TOKEN_EP
+    },
+    timeout: 15000
+});
+
 class euroPostController {
 
-  getJWT = async () => {
-    
-      const { data } = await axios.post('https://api.eurotorg.by:10352/Json', {
-        "CRC": "",
-        "Packet": {
-          "JWT": "null",
-          "MethodName": "GetJWT",
-          "ServiceNumber": "58DDAE9D-545D-4059-9387-8E71C3BCF202",
-          "Data": {
-            "LoginName": "591870601_Verbol'",
-            "Password": "3IOSGZVLTD86JP4",
-            "LoginNameTypeId": "1"
-          }
-        }
-      });
-
-    return data.Table[0].JWT;
-  }
-
   getListOps = async (req, res) => {
-    const jwt = await this.getJWT();
-
-    const response = await axios.post('https://api.eurotorg.by:10352/Json', {
-      "CRC": "",
-      "Packet": {
-        "JWT": jwt,
-        "MethodName": "Postal.OfficesOut",
-        "ServiceNumber": "58DDAE9D-545D-4059-9387-8E71C3BCF202",
-        "Data": {
-          "TypeSender": "2"
-        }
+      try {
+          const { data } = await epApi.get('/api/external/stores');
+          return res.json(data);
+      } catch (error) {
+          return res.status(502).json({
+              error: 'Ошибка получения списка отделений'
+          });
       }
-    });
-
-    return res.json(response.data);
-  }
-
-  getInfo = async (req, res) => {
-    const jwt = await this.getJWT();
-
-    return res.json(jwt);
   }
 
   sendOrder = async (req, res) => {
-    const {sum, OPS, phone, name1, name2} = req.body
+      const { sum, OPS, phone, name1, name2 } = req.body;
 
-    const jwt = await this.getJWT();
-    
-    const {data} = await axios.post('https://api.eurotorg.by:10352/Json', {  
-        "CRC":"",
-        "Packet":{  
-          "JWT": jwt,
-          "MethodName": "Postal.PutOrder",
-          "ServiceNumber": "58DDAE9D-545D-4059-9387-8E71C3BCF202",
-          "Data":  
-          {  
-            "GoodsId": 836884,
-            "PostDeliveryTypeId": 1,
-            "PostalWeightId": 20,
-            "CashOnDeliverySum": sum,
-            "CashOnDeliveryDeclareValueSum": sum,
-            "WarehouseIdStart": 40130050,
-            "WarehouseIdFinish": OPS,
-            "PhoneNumberReciever": phone,
-            "Name1Reciever": name1,
-            "Name2Reciever": name2,
-            "CashOnDeliveryMoneyBackId": 0,
-            "IsRecieverShipping": 1,
-            "IsRecieverCashOnDelivery": 1
-          }
-        }
-    });
+      const payload = {
+          delivery_type: 1,
+          weight: 0.5,
+          is_auto_delivery: false,
 
-    return res.json(data);
+          payment_amount: Number(sum),
+          declared_amount: Number(sum),
+
+          packing_payer: 0,
+          shipment_payer: 1,
+          cash_on_delivery_payer: 1,
+
+          store_id_start: 40130050,
+          store_id_finish: Number(OPS),
+
+          receiver_phone_number: String(phone).replace(/\D/g, ''),
+          receiver_surname: name1,
+          receiver_name: name2
+      };
+
+      try {
+          const { data } = await epApi.post(
+              '/api/external/postal/create',
+              payload
+          );
+
+          return res.json(data);
+      } catch (error) {
+          console.error('Ошибка создания ПчО:', error.response?.data || error.message);
+
+          return res.status(error.response?.status || 502).json({
+              message: error.response?.data?.message || error.message
+          });
+      }
+  }
+
+  getOrderHistory = async (req, res) => {
+    const { number } = req.query;
+
+    if (typeof number !== 'string' || !number.trim()) {
+        return res.status(400).json({
+            message: 'Необходимо передать трек-номер'
+        });
+    }
+
+    try {
+        const { data } = await epApi.get(
+            '/api/external/postal/history',
+            {
+                params: { number: number.trim() }
+            }
+        );
+
+        return res.json(data);
+    } catch (error) {
+        return res.status(error.response?.status || 502).json({
+            message: error.response?.data?.message ||
+                'Ошибка получения истории отправления',
+            details: error.response?.data || error.message
+        });
+    }
   }
 
   checkOrder = async (req, res) => {
-    const {number} = req.body
+      const { number } = req.body;
 
-    const jwt = await this.getJWT();
-    
-    const {data} = await axios.post('https://api.eurotorg.by:10352/Json', {  
-      "CRC":"",
-      "Packet":{  
-         "JWT": jwt,
-         "MethodName": "Postal.OrderInfo",
-         "ServiceNumber": "58DDAE9D-545D-4059-9387-8E71C3BCF202",
-         "Data":  
-         {  
-            "Number":number
-         }
+      try {
+          const { data } = await epApi.get(
+              `/api/external/postal/${encodeURIComponent(number)}`
+          );
+
+          return res.json(data);
+      } catch (error) {
+          return res.status(error.response?.status || 502).json({
+              error: 'Ошибка получения отправления',
+              details: error.response?.data || error.message
+          });
       }
-   });
-
-    return res.json(data);
   }
 
-  changeOrderEP = async (req, res) => {
-    const {name1, name2, phone, ops, price, number} = req.body
+  changeStatusEP = async (req, res) => {
+    const { list } = req.body;
 
-    const jwt = await this.getJWT();
-    
-    const {data} = await axios.post('https://api.eurotorg.by:10352/Json', {  
-      "CRC":"",
-      "Packet":{  
-         "JWT": jwt,
-         "MethodName": "Postal.ChangeOrder",
-         "ServiceNumber": "58DDAE9D-545D-4059-9387-8E71C3BCF202",
-         "Data":  
-         {  
-            "Number":number,
-            "CashOnDeliverySumNew":price,
-            "CashOnDeliveryDeclareValueSumNew":price,
-            "WarehouseIdFinishNew":ops,
-            "PhoneNumberRecieverNew":phone,
-            "Name1RecieverNew":name1,
-            "Name2RecieverNew":name2
-         }
+    if (!Array.isArray(list)) {
+      return res.status(400).json({ error: 'List must be an array' });
+    }
+
+    try {
+      for (const item of list) {
+        await Order.update(
+          { status: 6 }, 
+          { where: { codeOutside: item } } 
+        );
       }
-   });
 
-    return res.json(data);
-  }
+      return res.status(200).json('ok');
+    } catch (error) {
+      console.error('Ошибка обновления статуса:', error);
+      return res.status(500).json({ error: 'Ошибка обновления статуса' });
+    }
+  };
+
+  getLabel = async (req, res) => {
+    const { number } = req.params;
+
+    try {
+        const { data } = await epApi.get(
+            `/api/external/label/thermal/${encodeURIComponent(number)}`,
+            {
+                responseType: 'arraybuffer',
+                headers: {
+                    Accept: 'application/pdf'
+                }
+            }
+        );
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline; filename=label.pdf');
+        return res.send(Buffer.from(data));
+
+    } catch (error) {
+        return res.status(error.response?.status || 500).json({
+            message: 'Ошибка получения ярлыка'
+        });
+    }
+};
+
+
 
   // Функция для получения списка счетов
   getInvoicesPay = async (req, res) => {
@@ -256,28 +283,6 @@ payNotice = async (req, res) => {
     return res.status(200).json('ok');
 };
 
-
-changeStatusEP = async (req, res) => {
-  const { list } = req.body;
-
-  if (!Array.isArray(list)) {
-    return res.status(400).json({ error: 'List must be an array' });
-  }
-
-  try {
-    for (const item of list) {
-      await Order.update(
-        { status: 6 }, 
-        { where: { codeOutside: item } } 
-      );
-    }
-
-    return res.status(200).json('ok');
-  } catch (error) {
-    console.error('Ошибка обновления статуса:', error);
-    return res.status(500).json({ error: 'Ошибка обновления статуса' });
-  }
-};
 
   
   

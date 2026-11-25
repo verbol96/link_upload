@@ -1,11 +1,19 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { ListCloud } from "../components/cloud/ListCloud"
-import { deleteFile, getFiles, getFilesAll } from '../http/cloudApi'
-import { setFiles, setCurrentDir, setFilesAll, delStack, deleteFileStore } from '../store/fileReducer'
-import Footer from "../components/admin/Footer";
+import AdminDrafts from "../components/cloud/AdminDrafts"
+import { deleteFile, getFiles, getFilesAll } from "../http/cloudApi"
+import { getAdminDrafts } from "../http/adminDraftsApi"
+import {
+    setFiles,
+    setCurrentDir,
+    setFilesAll,
+    delStack,
+    popStackDir,
+    resetNavigation,
+    deleteFileStore
+} from "../store/fileReducer"
 import { NavBar } from "../components/admin/NavBar"
-
 
 const Cloud = () => {
     const dispatch = useDispatch()
@@ -14,11 +22,32 @@ const Cloud = () => {
     const stack = useSelector(state => state.files.stack)
     const filesAll = useSelector(state => state.files.filesAll)
     const files = useSelector(state => state.files.files)
+
     const [filesLoaded, setFilesLoaded] = useState(false)
+    const [showDrafts, setShowDrafts] = useState(false)
+    const [draftCount, setDraftCount] = useState(null)
+
+    const loadDraftCount = useCallback(async () => {
+        try {
+            const drafts = await getAdminDrafts()
+            setDraftCount(drafts.length)
+        } catch (error) {
+            console.error("Ошибка получения черновиков:", error)
+            setDraftCount(null)
+        }
+    }, [])
+
+    useEffect(() => {
+        loadDraftCount()
+    }, [loadDraftCount])
+
+    useEffect(() => {
+        if (!showDrafts) loadDraftCount()
+    }, [showDrafts, loadDraftCount])
 
     useEffect(() => {
         async function getFile() {
-            let value = await getFiles(currentDir)
+            const value = await getFiles(currentDir)
             dispatch(setFiles(value))
             setFilesLoaded(true)
         }
@@ -27,144 +56,174 @@ const Cloud = () => {
 
     useEffect(() => {
         async function getFileAll() {
-            let value1 = await getFilesAll()
-            dispatch(setFilesAll(value1))
+            const value = await getFilesAll()
+            dispatch(setFilesAll(value))
         }
         getFileAll()
     }, [dispatch])
 
+    useEffect(() => {
+        const refreshFiles = async () => {
+            try {
+                const [current, all] = await Promise.all([
+                    getFiles(currentDir),
+                    getFilesAll()
+                ])
+                dispatch(setFiles(current))
+                dispatch(setFilesAll(all))
+            } catch (error) {
+                console.error("Ошибка обновления файлов:", error)
+            }
+        }
+        window.addEventListener('link:cloud-files-changed', refreshFiles)
+        return () => window.removeEventListener('link:cloud-files-changed', refreshFiles)
+    }, [currentDir, dispatch])
+
+    const goToRoot = () => {
+        dispatch(resetNavigation())
+    }
+
     const BackClick = () => {
-        const backDir = stackDir.pop()
+        if (!stackDir.length) {
+            dispatch(resetNavigation())
+            return
+        }
+        const backDir = stackDir[stackDir.length - 1]
         dispatch(setCurrentDir(backDir))
+        dispatch(popStackDir())
         dispatch(delStack())
     }
 
-    const getTotalSize = (files) => files.reduce((total, file) => total + file.size, 0) / (1024 * 1024 * 1024);
+    const getTotalSize = files =>
+        files.reduce(
+            (total, file) => total + (Number(file.size) || 0),
+            0
+        ) / (1024 * 1024 * 1024)
 
-    const isDateOlderThan14Days = (dateString) => {
-        const currentDate = new Date();
-        const fourteenDaysAgo = new Date();
-        fourteenDaysAgo.setDate(currentDate.getDate() - 14);
-        const date = new Date(dateString);
-        return date < fourteenDaysAgo;
+    const isDateOlderThan14Days = dateString => {
+        const currentDate = new Date()
+        const fourteenDaysAgo = new Date()
+        fourteenDaysAgo.setDate(currentDate.getDate() - 14)
+        const date = new Date(dateString)
+        return date < fourteenDaysAgo
     }
 
-    const deleteFileClick = async (el) => {
+    const deleteFileClick = async el => {
         await deleteFile(el.id)
         dispatch(deleteFileStore(el.id))
     }
 
     useEffect(() => {
-        if (!filesLoaded) return;
+        if (!filesLoaded) return
 
         const ClearCloud = async () => {
-            const oldFiles = files.filter(el => isDateOlderThan14Days(el.createdAt));
+            const oldFiles = files.filter(el =>
+                isDateOlderThan14Days(el.createdAt)
+            )
 
             for (const el of oldFiles) {
                 try {
-                    await deleteFileClick(el);
+                    await deleteFileClick(el)
                 } catch (error) {
-                    console.error(`Ошибка при удалении файла ${el.name}:`, error);
+                    console.error(
+                        `Ошибка при удалении файла ${el.name}:`,
+                        error
+                    )
                 }
             }
-        };
+        }
 
-        ClearCloud();
+        ClearCloud()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filesLoaded]);
+    }, [filesLoaded])
 
     return (
-        <div className="flex flex-col bg-white min-h-screen">
+        <div className="flex min-h-screen flex-col bg-[#FAFBFD] text-[#334155]">
             <NavBar />
 
-            <div className="flex items-center gap-3 mt-4 mx-6 ">
+            {showDrafts ? (
+                <AdminDrafts
+                    onExit={() => setShowDrafts(false)}
+                    onDraftsChanged={loadDraftCount}
+                />
+            ) : (
+                <div className="mx-auto w-[90%] min-w-0">
+                    <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-white px-3 py-2.5 shadow-sm"
+                        style={{ border: "1.5px solid #bfcbd7" }}>
+                        <button
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E2E8F0] bg-white text-[#64748B] transition-colors ${currentDir
+                                ? 'cursor-pointer hover:border-[#274C77] hover:bg-[#F8FAFC] hover:text-[#274C77]'
+                                : 'cursor-not-allowed opacity-40'}`}
+                            onClick={currentDir ? BackClick : undefined}
+                            disabled={!currentDir}
+                            title="Назад"
+                        >
+                            <i className="bi bi-arrow-left" />
+                        </button>
 
-                {/* Кнопка "Назад" */}
-                <button
-                    className={`
-                        shrink-0 w-9 h-9
-                        bg-white border border-stone-300 rounded-lg
-                        flex items-center justify-center
-                        text-stone-600
-                        transition-colors
-                        ${currentDir
-                            ? 'hover:bg-stone-50 hover:border-stone-400 cursor-pointer'
-                            : 'opacity-40 cursor-not-allowed'}
-                    `}
-                    onClick={currentDir ? BackClick : undefined}
-                    disabled={!currentDir}
-                    title="Назад"
-                >
-                    <i className="bi bi-arrow-left"></i>
-                </button>
+                        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-[13px]">
+                            <button
+                                className={`shrink-0 transition-colors ${currentDir
+                                    ? 'cursor-pointer text-[#64748B] hover:text-[#274C77]'
+                                    : 'font-semibold text-[#334155]'}`}
+                                onClick={currentDir ? goToRoot : undefined}
+                            >
+                                Все файлы
+                            </button>
 
-                {/* Хлебные крошки */}
-                <div className="flex items-center gap-1 min-w-0 text-[13px]">
-                    <button
-                        className={`shrink-0 transition-colors ${
-                            currentDir
-                                ? 'text-stone-500 hover:text-teal-800 cursor-pointer'
-                                : 'text-stone-800 font-semibold'
-                        }`}
-                        onClick={currentDir ? () => {
-                            // Возврат в корень — можно очистить стек
-                            // Если у тебя есть функция "вернуться в корень" — используй её
-                        } : undefined}
-                    >
-                        Все файлы
-                    </button>
+                            {stack.map((el, index) => {
+                                const isLast = index === stack.length - 1
 
-                    {stack.map((el, index) => {
-                        const isLast = index === stack.length - 1;
-                        return (
-                            <span key={index} className="inline-flex items-center gap-1 min-w-0">
-                                <i className="bi bi-chevron-right text-[10px] text-stone-400 shrink-0"></i>
-                                <span
-                                    className={`truncate ${
-                                        isLast
-                                            ? 'text-stone-800 font-semibold'
-                                            : 'text-stone-500'
-                                    }`}
-                                    title={el}
-                                >
-                                    {el}
+                                return (
+                                    <span key={index} className="inline-flex min-w-0 items-center gap-1">
+                                        <i className="bi bi-chevron-right shrink-0 text-[10px] text-[#94A3B8]" />
+                                        <span
+                                            className={`truncate ${isLast
+                                                ? 'font-semibold text-[#334155]'
+                                                : 'text-[#64748B]'}`}
+                                            title={el}
+                                        >
+                                            {el}
+                                        </span>
+                                    </span>
+                                )
+                            })}
+
+                            {currentDir == null && (
+                                <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-[#F8FAFC] px-2 py-1 text-[11px] text-[#64748B]">
+                                    <i className="bi bi-folder2 text-[11px]" />
+                                    Новых файлов: {files.filter(file => !file.isDownload).length}
                                 </span>
+                            )}
+                        </div>
+
+                        <div className="ml-auto hidden shrink-0 items-center gap-2 md:flex">
+                            <span className="whitespace-nowrap text-[11px] text-[#64748B]">Память</span>
+                            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-[#E2E8F0]">
+                                <div
+                                    className="h-full rounded-full bg-[#274C77] transition-all duration-300"
+                                    style={{ width: `${Math.min(100, (getTotalSize(filesAll) / 60) * 100)}%` }}
+                                />
+                            </div>
+                            <span className="whitespace-nowrap text-[11px] font-medium tabular-nums text-[#334155]">
+                                {getTotalSize(filesAll).toFixed(2)} / 60 ГБ
                             </span>
-                        );
-                    })}
+                        </div>
 
-                    {/* Бейдж с количеством файлов */}
-                    <span className="ml-1 shrink-0 inline-flex items-center gap-1 px-2 py-0.5 bg-stone-100 text-stone-600 text-[11px] font-medium rounded-full">
-                        <i className="bi bi-files text-[10px]"></i>
-                        {files.length} {files.length === 1 ? 'файл' : files.length < 5 ? 'файла' : 'файлов'}
-                    </span>
-                </div>
-
-                {/* Память — справа, с прогресс-баром. Скрыта на мобилке */}
-                <div className="hidden md:flex ml-auto shrink-0 items-center gap-2">
-                    <span className="text-[11px] text-stone-500 whitespace-nowrap">
-                        Память
-                    </span>
-                    <div className="w-24 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-teal-700 rounded-full transition-all duration-300"
-                            style={{
-                                width: `${Math.min(100, (getTotalSize(filesAll) / 60) * 100)}%`,
-                            }}
-                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowDrafts(true)}
+                            className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-md ring-1 ring-inset ring-[#E2E8F0] bg-white px-2.5 py-1.5 text-[12px] font-normal text-[#475569] transition-colors hover:ring-[#7890A8]"
+                            title="Просмотреть черновики клиентов"
+                        >
+                            <i className="bi bi-folder2-open text-[14px]" />
+                            <span>Черновики ({draftCount === null ? '—' : draftCount})</span>
+                        </button>
                     </div>
-                    <span className="text-[11px] text-stone-600 tabular-nums font-medium whitespace-nowrap">
-                        {getTotalSize(filesAll).toFixed(2)} / 60 ГБ
-                    </span>
+
+                    <ListCloud />
                 </div>
-            </div>
-
-            <ListCloud />
-
-            <div style={{ marginTop: 'auto' }}>
-                <Footer />
-            </div>
-
+            )}
         </div>
     )
 }

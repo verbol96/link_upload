@@ -90,16 +90,17 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
         )
     }
 
-    const ColorBG = [
-        '#97d0d6',
-        '#D8BFD8',
-        '#FDFD96',
-        '#98FF98',
-        'rgb(210, 210, 210)',
-        'white',
-        'rgb(243, 243, 243)',
-        'rgb(243, 243, 243)'
-    ]
+const ColorBG = [
+    '#eceff3', // новый — серый
+    '#93C5FD', // принят
+    '#a395f6', // обработан
+    '#f2f87e', // в печати
+    '#86EFAC', // упакован
+    '#CBD5E1', // отправлен — зелёный
+    '#CBD5E1', // оплачен — насыщенный зелёный
+    '#CBD5E1', // в ожидании — оранжевый
+    '#CBD5E1'  // ошибка — красный
+];
 
     const ChangeStatus = (event) => {
         $host.put(`api/order/updateStatus/${order.id}`, { 'status': event.target.value })
@@ -123,10 +124,10 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
 
     const ShowOrigin = () => {
         switch (order.origin) {
-            case 'telegram': return <i style={{ color: 'darkgreen' }} className="bi bi-send"></i>
-            case 'website': return <i style={{ color: 'darkgreen' }} className="bi bi-lightning-fill"></i>
-            case 'email': return <i style={{ color: 'darkgreen' }} className="bi bi-envelope"></i>
-            default: return <i style={{ color: 'darkgreen' }} className="bi bi-send"></i>
+            case 'telegram': return <i className="bi bi-send"></i>
+            case 'website': return <i className="bi bi-lightning-fill"></i>
+            case 'email': return <i className="bi bi-envelope"></i>
+            default: return <i className="bi bi-send"></i>
         }
     }
 
@@ -137,52 +138,69 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
         return activeOrders.filter(el => el.phone === order.phone).length > 1;
     }, [orders, order.phone]);
 
+    const orderNumber = Number(order.order_number);
+    const shortNumber = Number.isFinite(orderNumber) ? String(orderNumber % 1000) : '—';
+    const displayOrderNumber = `${order.typePost?.[0] || ''}${shortNumber}`;
+
     const isSelected = selectedOrder === order.id;
+    const isCollapsed = order.id === collapsedOrderId;
 
     return (
         <div
             style={{
-                ...(order.id === collapsedOrderId ? { backgroundColor: '#c5dce0' } : {}),
-                ...((order.status === 7 || order.status === 8) && !isSelected
-                    ? { opacity: 0.3 }
+                ...([7, 8].includes(Number(order.status)) && !isSelected
+                    ? { opacity: 0.45 }
                     : {})
             }}
-            className={`w-full max-md:w-[600px] inline-block rounded-[5px] text-[15px] my-[3px] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] hover:bg-[#f0f0f0] ${isSelected ? 'border-[3px] border-[#6f969d] shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] my-[15px]' : 'border-0'}`}
+            className={`mb-[3px] w-full max-md:w-[600px] overflow-hidden rounded-md border-b bg-white text-[13px] transition-colors duration-150 ${
+                isSelected
+                    ? 'mt-[20px] mb-[20px] border-[2px] border-[#5C7896] text-black ring-1 ring-[#7890A8]/30 shadow-sm'
+                    : isCollapsed
+                        ? 'border-[#B9C9D9] bg-[#F0F5F9]'
+                        : 'border-[#E2E8F0] hover:border-[#C6D2DF] hover:bg-[#F8FAFC]'
+            }`}
             onClick={handleClick}
         >
             <div
                 style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
                 onDoubleClick={() => handleDetailsClick(order.id)}
-                className={`grid grid-cols-[40px_120px_70px_minmax(120px,4fr)_minmax(150px,4fr)_minmax(150px,6fr)_40px_40px_80px_40px_90px] max-md:grid-cols-[20px_90px_55px_150px_40px_40px_80px_40px_50px] items-center px-[3px] pl-[10px] py-[3px] min-w-0 ${isSelected ? 'bg-[#6f969d]' : ''}`}
+                className={`grid grid-cols-[40px_120px_22px_70px_minmax(120px,4fr)_minmax(150px,4fr)_minmax(150px,6fr)_40px_40px_80px_40px_90px] max-md:grid-cols-[20px_90px_18px_55px_150px_40px_40px_80px_40px_50px] items-center min-w-0 px-[3px] pl-[10px] py-[3px] transition-colors ${isSelected ? 'bg-[#5C7896]': ' hover:bg-[#E9EEF3]'}`}
             >
                 <div
                     onClick={() => handleDetailsClick(order.id)}
-                    className="text-[12px] px-[5px] flex items-center justify-center max-md:px-[2px]"
+                    className={`text-[12px] px-[5px] flex items-center justify-center max-md:px-[2px] text-[#274C77] `}
                 >
                     {ShowOrigin()}
                 </div>
 
-                <div className="text-[12px] px-[10px] whitespace-nowrap max-md:px-[2px] max-md:text-center">
+                <div className="text-[12px] text-black px-[10px] whitespace-nowrap max-md:px-[2px] max-md:text-center">
                     {ShowData()}
                 </div>
 
-                <CopyToClipboard text={`${order.typePost?.[0] || ''}${order.order_number % 1000} ${order?.user?.FIO?.split(' ')?.[0] || ''}`.trim()}>
+                <div className="flex items-center justify-center" title={['Новый', 'Принят', 'Обработан', 'В печати', 'Упакован', 'Отправлен', 'Оплачен', 'В ожидании', 'Ошибка'][Number(order.status)] || 'Статус'}>
+                    <span
+                        className="h-[10px] w-[10px] rounded-full border-none "
+                        style={{ backgroundColor: ColorBG[Number(order.status)] || ColorBG[0] }}
+                    />
+                </div>
+
+                <CopyToClipboard text={`${displayOrderNumber} ${order?.user?.FIO?.split(' ')?.[0] || ''}`.trim()}>
                     <div
-                        className="text-[12px] font-bold px-[10px] whitespace-nowrap cursor-pointer max-md:px-[2px] max-md:text-center"
+                        className={`text-[12px] font-semibold px-[5px] rounded-md flex justify-center whitespace-nowrap cursor-pointer max-md:px-[2px] max-md:text-center ${isSelected ? 'bg-[#7890A8]' : 'bg-[#EFF4F8]'} `}
                         style={{ color: getDateSentColor(order) }}
                     >
-                        {order.typePost.split('')[0] + (order.order_number % 1000)}
+                        {displayOrderNumber}
                     </div>
                 </CopyToClipboard>
 
-                <div className="text-[12px] px-[10px] whitespace-nowrap overflow-hidden text-ellipsis max-md:hidden">
+                <div className="text-[12px] font-medium px-[10px]  whitespace-nowrap overflow-hidden text-ellipsis max-md:hidden">
                     {order?.user?.FIO}
                 </div>
 
                 <div
-                    className="text-[12px] px-[10px] text-center whitespace-nowrap max-md:hidden border-md"
+                    className={`text-[12px] px-[10px] text-center whitespace-nowrap max-md:hidden border-md ${hasDuplicate ? 'rounded-md': ''}`}
                     style={{
-                        background: hasDuplicate ? 'rgba(104, 209, 0, 0.09)' : ''
+                        background: hasDuplicate && !isSelected ? '#EFF4F8' : ''
                     }}
                 >
                     {formatPhoneNumber(order.phone)}
@@ -206,7 +224,7 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
                     }`}/>
                 </div>
 
-                <div className="text-[12px] px-[6px] text-left whitespace-nowrap tabular-nums">
+                <div className="text-[12px]  px-[6px] text-left whitespace-nowrap ">
                     {(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р
                 </div>
 
@@ -215,8 +233,8 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
                 </div>
 
                 <select
-                    className="h-[24px] text-[13px] border border-[#298390] px-[10px] appearance-none outline-none max-md:w-[50px] max-md:px-[2px]"
-                    style={{ backgroundColor: ColorBG[order.status - 1] }}
+                    className="h-[26px] w-full rounded-md border border-[#D4DEE8] px-[8px] text-[12px] font-medium  appearance-none outline-none focus:border-[#7890A8] focus:ring-1 focus:ring-[#7890A8]/30 max-md:w-[50px] max-md:px-[2px]"
+                    style={{ backgroundColor: ColorBG[Number(order.status)] || ColorBG[0] }}
                     value={order.status}
                     onChange={ChangeStatus}
                 >
@@ -230,6 +248,8 @@ export const TableRow = ({ orders, order, handleDetailsClick, selectedOrder, set
                     <option value="7">в ожидании</option>
                     <option value="8">ошибка</option>
                 </select>
+
+                
             </div>
 
             {isSelected && (

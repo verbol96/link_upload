@@ -1,24 +1,25 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, forwardRef, useImperativeHandle } from 'react';
-import './DescRow.css';
 import { OneFormat } from './OneFormat';
 import { deleteOrder, getSettings } from '../../http/dbApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsError, updateSmsPay, updateSmsSend } from '../../store/orderReducer';
 import _ from 'lodash';
+import Fuse from 'fuse.js';
 import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
 import { deleteFile } from '../../http/cloudApi';
 import { sendSms } from '../../http/authApi';
 import { $host } from '../../http';
-import style from './DescRow.module.css';
 import { Button } from '../../ui/button';
-import MyModalComponent from './DialogEP';
+import MyModalComponent from './DescRow-infoEP';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../ui/dialog';
 import { toast } from 'sonner';
 import {
     queueOrderSave,
     queueOrderOperation
 } from '../../http/orderSaveQueue';
+import { sendOrderEP, getListOpsEP, getLabelEP } from '../../http/epApi';
+
 const preparePhotos = (photos = []) => {
     return photos.map(item => {
         if (item.id) {
@@ -555,27 +556,85 @@ const SaveData = async () => {
   const handleModalMouseLeaveMain = () => {
     setModalVisibleMain(false);
   };
-  const [listOps, setListObs] = useState([])
-  useEffect(()=>{
-      const getListOps = async () => {
-          try {
-            const {data} = await $host.get('api/ep/getListOps');
-            setListObs(data.Table)
-          } catch (error) {
-            console.error('Ошибка при получении JWT:', error);
-          }
-        };
-      getListOps()
-  },[])
+  const [listOps, setListObs] = useState([]);
+  const [opsLoading, setOpsLoading] = useState(false);
+  const needsOPS = ['E', 'E1'].includes(typePost) && !codeOutside?.trim();
+  useEffect(() => {
+      if (!needsOPS) return;
+      let active = true;
+      setOpsLoading(true);
+      getListOpsEP().then(items => {
+          if (active) setListObs(items);
+      }).catch(error => {
+          if (active) console.error('Ошибка загрузки отделений:', error);
+      }).finally(() => { if (active) setOpsLoading(false); });
+      return () => { active = false; };
+  }, [needsOPS]);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const inputRef  = useRef(null)
   const [inputOPS, setInputOPS] = useState('')
-  const [nameOPS, setNameOPS] = useState('Выберете отделение')
+  const [manualOPS, setManualOPS] = useState(null);
+  const normalizeOPS = value => String(value ?? '')
+      .toLowerCase()
+      .replace(/ё/g, 'е')
+      .replace(/[^а-яa-z0-9]+/gi, ' ')
+      .split(/\s+/)
+      .filter(word => word && !['г', 'город', 'ул', 'улица', 'пр', 'кт', 'проспект', 'д', 'дом', 'отделение', 'опс'].includes(word))
+      .join(' ');
+
+  const opsIndex = useMemo(() => listOps.map(item => ({
+      item,
+      city: normalizeOPS(item.city),
+      street: normalizeOPS(item.street),
+      address: normalizeOPS(`${item.street ?? ''} ${item.house ?? ''}`),
+      name: normalizeOPS(item.ops_name),
+      number: String(item.ops_number ?? '')
+  })), [listOps]);
+
+  const addressKey = JSON.stringify([order.id, city, adress]);
+  const suggestedOPS = useMemo(() => {
+      if (!needsOPS || !opsIndex.length) return null;
+      const cityQuery = normalizeOPS(city);
+      let query = normalizeOPS(adress);
+      if (!query) return null;
+      let candidates = opsIndex;
+      if (cityQuery) {
+          candidates = opsIndex.filter(el => el.city === cityQuery);
+          if (!candidates.length) {
+              const cities = [...new Set(opsIndex.map(el => el.city).filter(Boolean))];
+              const match = new Fuse(cities, { threshold: 0.4, ignoreLocation: true }).search(cityQuery)[0];
+              if (!match) return null;
+              candidates = opsIndex.filter(el => el.city === match.item);
+          }
+          query = query.replace(cityQuery, '').trim();
+      }
+      if (!query) return null;
+      const explicitNumber = String(adress).match(/(?:№|отделение|опс)\s*(\d+)/i)?.[1];
+      const branchNumber = explicitNumber || (/^\d+$/.test(query) ? query : null);
+      if (branchNumber) return candidates.find(el => el.number === branchNumber)?.item ?? null;
+      const words = query.split(' ');
+      const streetWords = words.filter(word => !/^\d/.test(word));
+      const house = words.find(word => /^\d+[а-яa-z]?$/.test(word));
+      if (!streetWords.length) return null;
+      const streetQuery = streetWords.join(' ');
+      const fuse = new Fuse(candidates, {
+          keys: ['street', 'address', 'name'],
+          threshold: 0.5,
+          ignoreLocation: true,
+          includeScore: true
+      });
+      const results = fuse.search(streetQuery);
+      if (!results.length) return null;
+      const matchingHouse = house && results.find(el => normalizeOPS(el.item.item.house) === house);
+      return (matchingHouse || results[0]).item.item;
+  }, [opsIndex, city, adress, needsOPS]);
+
+  const nameOPS = manualOPS?.key === addressKey ? manualOPS.item : suggestedOPS;
   useEffect(()=>{
         if (isOpen) {
             // Если dropdown открыт, устанавливаем фокус на input
-            inputRef.current.focus();
+            inputRef.current?.focus();
           }
     }, [isOpen])
   useEffect(() => {
@@ -589,12 +648,21 @@ const SaveData = async () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-  const filterOPS = listOps.filter(el => {
-    return el.WarehouseName && el.WarehouseName.toLowerCase().includes(inputOPS.toLowerCase());
-    });
+  const filterOPS = useMemo(() => {
+      if (!isOpen) return [];
+      const search = normalizeOPS(inputOPS);
+      const words = search.split(' ').filter(Boolean);
+      const matches = opsIndex.filter(el => words.every(word =>
+          `${el.city} ${el.address} ${el.name} ${el.number}`.includes(word)
+      ));
+      const selected = matches.find(el => el.item.id === nameOPS?.id);
+      const rest = matches.filter(el => el.item.id !== nameOPS?.id);
+      return [...(selected ? [selected] : []), ...rest].map(el => el.item);
+  }, [isOpen, inputOPS, opsIndex, nameOPS]);
   const putNameOPS =(name)=>{
-    setNameOPS(name)
+    setManualOPS({ key: addressKey, item: name })
     setIsOpen(false)
+    setInputOPS('')
   }
   const phoneWithoutPlus = () =>{
       const newPhone = phone.replace('+', '');
@@ -604,18 +672,66 @@ const SaveData = async () => {
       const splitResalt = FIO.split(' ')
       return splitResalt[i]
   }
-  const sendOrderEp = async() =>{
-    const sendConfirmation = window.confirm('sum = '+price + '\nOPS = '+nameOPS.WarehouseId + '\nphone = '+ phoneWithoutPlus() + '\nname1 = '+nameSplit(0) + '\nname2 = '+nameSplit(1));
-    if (sendConfirmation) {
-        const dataSend = {sum: price, OPS: nameOPS.WarehouseId, phone: phoneWithoutPlus(), name1: nameSplit(0), name2: nameSplit(1)}
-        try {
-          const {data} = await $host.post('api/ep/sendOrder', dataSend);
-          setCodeOutside(data.Table[0].Number)
-        } catch (error) {
-          console.error('Ошибка:', error);
-        }
+  const sendOrderEp = async () => {
+      if (!nameOPS?.id) {
+          toast.error('Выберите отделение Европочты');
+          return;
+      }
+      const dataSend = {
+          sum: price,
+          OPS: nameOPS.id,
+          phone: phoneWithoutPlus(),
+          name1: nameSplit(0),
+          name2: nameSplit(1)
+      };
+
+      const sendConfirmation = window.confirm(
+          `Сумма: ${dataSend.sum} руб.\n` +
+          `Отделение: ${nameOPS.ops_name}\n` +
+          `Телефон: ${dataSend.phone}\n` +
+          `Получатель: ${dataSend.name1} ${dataSend.name2}`
+      );
+
+      if (!sendConfirmation) return;
+
+      try {
+          const data = await sendOrderEP(dataSend);
+          setCodeOutside(data.number);
+      } catch (error) {
+          console.error('Ошибка создания отправления:', error);
+      }
+  };  
+  const [printingEP, setPrintingEP] = useState(false);
+  const printLabelEP = async () => {
+    if (!codeOutside?.trim() || printingEP) return;
+    setPrintingEP(true);
+    try {
+      const pdf = await getLabelEP(codeOutside.trim());
+      const url = URL.createObjectURL(pdf);
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;width:0;height:0;border:0';
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+          } catch {
+            window.open(url, '_blank');
+          }
+        }, 500);
+      };
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      setTimeout(() => {
+        iframe.remove();
+        URL.revokeObjectURL(url);
+      }, 300000);
+    } catch (error) {
+      toast.error('Не удалось получить ярлык');
+    } finally {
+      setPrintingEP(false);
     }
-  }
+  };
   const checkOrderEp = async() =>{
     if(!codeOutside) {
       window.alert('нету штрихкода')
@@ -694,20 +810,24 @@ const SaveData = async () => {
     };
     printWindow.print();
 }
-const ShowBtnSms = (smsType, fanc, text) =>{
-  return(
-      smsType ?
-      (
-        <Button className='flex-1' variant='outline' disabled>
-          <i style={{ color: 'gray' }} className="bi bi-check-all"></i> {text}
-        </Button>
-      ) : (
-        <Button className='flex-1' variant='secondary' onClick={fanc}>
-          <i style={{ color: 'white', marginRight: 10 }} className="bi bi-telephone-forward"></i> {text}
-        </Button>
-      )
-  )
-}
+const ShowBtnSms = (smsType, fanc, text) => {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      disabled={smsType}
+      onClick={smsType ? undefined : fanc}
+      className={`min-w-0 flex-1 basis-0 gap-1 px-1.5 text-[11px] sm:px-2 sm:text-xs
+        ${smsType
+          ? 'border-slate-300 bg-slate-100 text-slate-500 opacity-100'
+          : 'border-[#274C77] bg-[#274C77] text-white hover:border-[#1E3A5D] hover:bg-[#1E3A5D] hover:text-white'}`}
+      title={text}
+    >
+      <i className={`shrink-0 bi ${smsType ? 'bi-check-all' : 'bi-telephone-forward'}`} />
+      <span className="min-w-0 truncate">{text}</span>
+    </Button>
+  );
+};
 const AddInvoices = async () => {
     const price = Number(order.price) || 0;
     const priceDeliver = Number(order.price_deliver) || 0;
@@ -949,7 +1069,7 @@ const sendSmsNew = async () => {
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-base">
             Все заказы от{' '}
-            <span className="text-teal-700 font-bold text-xl">
+            <span className="text-[#274C77] font-bold text-xl">
               {order.user.FIO} {' '}
             </span>
             ({order.user.phone})
@@ -1015,7 +1135,7 @@ const sendSmsNew = async () => {
                     <div className="flex justify-center">
                       <button
                         onClick={saveAboutUser}
-                        className={`px-4 py-2 ${order.user.aboutUser === aboutUser ? 'bg-gray-500' : 'bg-green-700'} text-white rounded-lg text-sm transition`}
+                        className={`px-4 py-2 ${order.user.aboutUser === aboutUser ? 'bg-slate-400' : 'bg-[#274C77] hover:bg-[#1E3A5D]'} text-white rounded-lg text-sm transition`}
                       >
                         Сохранить
                       </button>
@@ -1034,7 +1154,7 @@ const sendSmsNew = async () => {
                     <div className="flex justify-center">
                       <button
                         onClick={sendSmsNew}
-                        className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm  transition"
+                        className="px-4 py-2 bg-[#274C77] hover:bg-[#1E3A5D] text-white rounded-lg text-sm transition"
                       >
                         Отправить SMS
                       </button>
@@ -1043,7 +1163,7 @@ const sendSmsNew = async () => {
                 </div>
               </div>
               {/* Нижняя часть — фиксирована */}
-              <div className='h-[50px] mt-4 flex flex-row justify-end gap-3 text-teal-800 '>
+              <div className='h-[50px] mt-4 flex flex-row justify-end gap-3 text-[#274C77] '>
                 <label>Всего заказов: {order.user.orderCount} шт</label>
                 <label>Сумма заказов: {order.user.totalOrderSum} р</label>
               </div>
@@ -1052,18 +1172,19 @@ const sendSmsNew = async () => {
         </DialogHeader>
       </DialogContent>
     </Dialog>
-    <div className="order_details_card">
+    
+    <div className="bg-white flex justify-between px-[10px] py-[10px]">
       {isModalOpen && <MyModalComponent isOpen={isModalOpen} closeModal={closeModal} codeOutside={codeOutside} />}
-      <div className="card_container_admin">
-        <div className="card_admin">
+      <div className="flex gap-[10px] w-full">
+        <div className="bg-white border border-slate-200 rounded-[5px] p-[20px] flex flex-col flex-1 min-w-0 [&>div:first-child]:mb-[25px]">
           <div>
-            <div className='contact_field'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>ФИО:</label>
               <input  style={{marginLeft: 5}} value={FIO} onChange={(e) => setFIO(e.target.value)} />
             </div>
-            <div className='contact_field'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>Телефон:</label>
-              <div className='search_bar'
+              <div className='flex-[2] relative flex flex-col items-stretch [&>input]:outline-none [&>input]:border [&>input]:border-slate-300 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input:hover]:rounded-t-[3px] [&>input:hover]:rounded-b-none [&>input:hover]:border-x-[1.5px] [&>input:hover]:border-t-[1.5px] [&>input:hover]:border-b-0'
                 onMouseEnter={handleModalMouseEnterMain}
                 onMouseLeave={handleModalMouseLeaveMain}
               >
@@ -1077,7 +1198,7 @@ const sendSmsNew = async () => {
                           setAdress={setAdress} setPostCode={setPostCode} setRaion={setRaion} setOblast={setOblast} />
               </div>
             </div>
-            <div className='contact_field'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <select value={typePost} onChange={(e)=>setTypePost(e.target.value)}>
                   <option value={"E"}>Европочта(наложенный)</option>
                   <option value={"E1"}>Европочта(ЕРИП)</option>
@@ -1087,46 +1208,28 @@ const sendSmsNew = async () => {
               </select>
               <label></label>
             </div>
-            <div className='contact_field'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>Город:</label>
               <input value={city} onChange={(e)=>setCity(e.target.value)} />
             </div>
-            <div className='contact_field'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>
                 {typePost === 'R' || typePost === 'R1' || typePost === 'R2' ? 'Адрес:' : 'Отделение:'}
               </label>
               <input value={adress} onChange={(e)=>setAdress(e.target.value)} />
             </div>
-            {(typePost === 'E' || typePost === 'E1') &&
-                <div className=' mt-3'>
-                <div className={style.inputBlock} ref={dropdownRef}>
-                  <button onClick={() => setIsOpen(!isOpen)}>{nameOPS.WarehouseName}</button>
-                  {isOpen && (
-                      <div className={style.inputBlockDetails}>
-                      <input ref={inputRef} value={inputOPS} onChange={(e)=>setInputOPS(e.target.value)} />
-                      {filterOPS.map((el,index)=><div key={index} onClick={()=>putNameOPS(el)}>
-                          {el.WarehouseName}
-                      </div>)}
-                      </div>
-                  )}
-                </div>
-                <div className='flex justify-around mt-1'>
-                  <Button variant='secondary' onClick={()=>{checkOrderEp()}}>проверить</Button>
-                  <Button variant='secondary' onClick={()=>{sendOrderEp()}}>Оформить заявку</Button>
-                </div>
-                </div>
-              }
-            {typePost === 'R' || typePost === 'R1' || typePost === 'R2'?
+
+                        {typePost === 'R' || typePost === 'R1' || typePost === 'R2'?
             <>
-            <div className='contact_field'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>Индекс:</label>
               <input value={postCode} onChange={(e)=>setPostCode(e.target.value)} />
             </div>
-            <div className='contact_field'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>Район:</label>
               <input value={raion} onChange={(e)=>setRaion(e.target.value)} />
             </div>
-            <div className='contact_field'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label style={{flex:1}}>Область:</label>
               <select
                 style={{appearance: 'none', padding: '0px 10px', margin: '0px', flex: 2}}
@@ -1143,11 +1246,99 @@ const sendSmsNew = async () => {
             : null}
               {(typePost==='R' || typePost==='R1' || typePost==='R2') &&
                 <div className='flex justify-end mt-2'>
-                <Button variant='secondary' onClick={()=>{handlePrint()}}><i style={{color: 'white', marginRight: 10}} className="bi bi-printer"></i> печать </Button>
+                <Button className='bg-[#274C77] text-white hover:bg-[#1E3A5D] hover:text-white' variant='secondary' onClick={()=>{handlePrint()}}><i style={{color: 'white', marginRight: 10}} className="bi bi-printer"></i> печать </Button>
                 </div>
               }
+
+
+
+{(typePost === 'E' || typePost === 'E1') && (
+    <div className="mt-3">
+        {codeOutside?.trim() ? (
+            <div className="flex justify-end gap-2">
+                <Button
+                    type="button"
+                    className="bg-[#274C77] text-white hover:bg-[#1E3A5D] hover:text-white"
+                    variant="secondary"
+                    size="sm"
+                    onClick={printLabelEP}
+                    disabled={printingEP}
+                    title="Печать ярлыка"
+                    aria-label="Печать ярлыка"
+                >
+                    <i className={`bi ${printingEP ? 'bi-arrow-repeat animate-spin' : 'bi-printer'}`} />
+                </Button>
+                <Button
+                    className="gap-2 bg-[#274C77] text-white hover:bg-[#1E3A5D] hover:text-white"
+                    variant="secondary"
+                    size="sm"
+                    onClick={checkOrderEp}
+                >
+                    <i className="bi bi-search" />
+                    Проверить
+                </Button>
+            </div>
+        ) : (
+            <>
+                <div className="flex items-center gap-2">
+                <div className="relative flex min-w-0 flex-1 flex-col" ref={dropdownRef}>
+                    <button
+                        type="button"
+                        className="relative h-8 w-full text-left pl-2 overflow-hidden text-ellipsis whitespace-nowrap rounded-[3px] border border-slate-300 bg-white pr-[30px] before:pointer-events-none before:absolute before:right-[10px] before:top-1/2 before:-translate-y-[65%] before:border-[5px] before:border-transparent before:text-[13px] before:content-['⏶'] after:pointer-events-none after:absolute after:right-[10px] after:top-1/2 after:-translate-y-[35%] after:border-[5px] after:border-transparent after:text-[13px] after:content-['⏷']"
+                        onClick={() => setIsOpen(!isOpen)}
+                    >
+                        {nameOPS?.ops_name || (opsLoading ? 'Загрузка отделений...' : 'Выберите отделение')}
+                    </button>
+
+                    {isOpen && (
+                        <div className="absolute top-full left-0 z-50 max-h-[300px] w-full overflow-auto shadow-lg rounded-b-[3px] border border-t-0 border-slate-300 bg-white p-[10px]">
+                            <input
+                                className="h-[30px] w-full border border-slate-400"
+                                ref={inputRef}
+                                value={inputOPS}
+                                onChange={e => setInputOPS(e.target.value)}
+                            />
+
+                            {filterOPS.map(el => (
+                                <div
+                                    key={el.id}
+                                    onClick={() => putNameOPS(el)}
+                                    className={`flex cursor-pointer items-center justify-between gap-2 px-2 py-1 hover:bg-slate-100 ${nameOPS?.id === el.id ? 'bg-blue-50 font-medium text-[#274C77]' : ''}`}
+                                >
+                                    <span>{el.ops_name}</span>
+                                    {nameOPS?.id === el.id && <i className="bi bi-check-lg shrink-0" />}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex shrink-0 justify-end">
+                    <Button
+                        className="h-8 gap-2 bg-[#274C77] text-white hover:bg-[#1E3A5D] hover:text-white"
+                        variant="secondary"
+                        size="sm"
+                        onClick={sendOrderEp}
+                        disabled={!nameOPS?.id}
+                    >
+                        <i className="bi bi-plus-lg" />
+                        Оформить
+                    </Button>
+                </div>
+                </div>
+            </>
+        )}
+    </div>
+)}
+
+                          <div className='flex justify-between mt-4 [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
+              <label>Штрихкод:</label>
+              <input style={{marginLeft: 5}} value={codeOutside} onChange={e=>setCodeOutside(e.target.value)} />
+            </div>
+
+
           </div>
-<div className="card_actions">
+<div className="flex justify-between items-center mt-auto">
     <button
         type="button"
         onClick={SaveData}
@@ -1155,7 +1346,12 @@ const sendSmsNew = async () => {
             saveStatus === 'saving' ||
             saveStatus === 'saved'
         }
-        className={`link-save-indicator ${saveStatus}`}
+        className={`inline-flex items-center justify-center gap-[9px] w-[36px] min-w-[36px] h-[36px] p-0 rounded-full border text-[12px] font-medium cursor-pointer transition-[background,color,border-color,transform] duration-[250ms] hover:enabled:-translate-y-px disabled:opacity-100 [&>i]:text-[17px] ${{
+            saved: 'bg-[#edf8f1] text-[#27834d] border-[#ccebd7] cursor-default hover:transform-none',
+            pending: 'bg-[#fff8e6] text-[#a87813] border-[#f3e3b8]',
+            saving: 'bg-[#edf4ff] text-[#3975bc] border-[#d4e5ff] cursor-wait',
+            error: 'bg-[#fff0f0] text-[#c44343] border-[#f5cccc]'
+        }[saveStatus]}`}
         title={{
             saved: 'Сохранено',
             pending: 'Сохранить изменения',
@@ -1170,13 +1366,13 @@ const sendSmsNew = async () => {
         }[saveStatus]}
     >
         {saveStatus === 'saving' ? (
-            <span className="link-save-spinner" />
+            <span className="w-[15px] h-[15px] border-2 border-[#bdd4f3] border-t-[#3975bc] rounded-full animate-spin motion-reduce:animate-none" />
         ) : saveStatus === 'pending' ? (
             <i className="bi bi-cloud-arrow-up" />
         ) : saveStatus === 'error' ? (
             <i className="bi bi-exclamation-circle" />
         ) : (
-            <i className="bi bi-check-circle-fill link-save-check" />
+            <i className="bi bi-check-circle-fill" />
         )}
     </button>
         <div className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-stone-50 px-1 py-0.5" aria-label="История изменений заказа">
@@ -1190,7 +1386,7 @@ const sendSmsNew = async () => {
     </div>
 </div>
         </div>
-        <div className="card_admin">
+        <div className="bg-white border border-slate-200 rounded-[5px] p-[20px] flex flex-col flex-1 min-w-0 [&>div:first-child]:mb-[25px]">
           <div>
             {/* для обьеденения*/}
             {duplicateOrders.length > 0 && (
@@ -1204,7 +1400,7 @@ const sendSmsNew = async () => {
                                     bg-stone-50 border border-stone-200
                                     text-[12px] font-medium text-stone-700
                                     transition-all
-                                    hover:bg-[#2C3531] hover:border-[#2C3531] hover:text-white
+                                    hover:bg-[#274C77] hover:border-[#274C77] hover:text-white
                                     active:scale-95"
                             title={`Объединить с заказом №${el.order_number}`}
                         >
@@ -1226,8 +1422,8 @@ const sendSmsNew = async () => {
 ))}
               <button style={{marginLeft: '50px', marginTop: '10px'}} type="button" onClick={()=>{AddFormat()}}>добавить</button>
             </div>
-          <div className="card_actions">
-            <button className='copy_button'  onClick={()=>{setPrice((SumTeor()*sale).toFixed(2))}}>{SumTeor()}р</button>
+          <div className="flex justify-between items-center mt-auto">
+            <button className='px-[8px] py-[4px] w-[40%] text-[13px] border border-slate-300 text-[#274C77] rounded-[5px] cursor-pointer bg-slate-100 hover:bg-slate-200'  onClick={()=>{setPrice((SumTeor()*sale).toFixed(2))}}>{SumTeor()}р</button>
             <div  style={{transform: 'scale(0.85)'}}>
             <select style={{appearance: 'none', padding: '0px 10px'}}
                     value={sale}
@@ -1239,13 +1435,13 @@ const sendSmsNew = async () => {
             </select>
             </div>
             <input
-              className='price_input'
+              className='px-[8px] py-[4px] w-[40%] text-[13px] text-center border-[1.5px] border-slate-300 rounded-[5px]'
               type="text"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
             />
             <input
-              className='price_input'
+              className='px-[8px] py-[4px] w-[40%] text-[13px] text-center border-[1.5px] border-slate-300 rounded-[5px]'
               style={{width: '20%', height: '75%', marginLeft: 2}}
               type="text"
               value={price_deliver}
@@ -1253,61 +1449,94 @@ const sendSmsNew = async () => {
             />
           </div>
         </div>
-        <div className="card_admin">
-          <div>
-            <div className='origin'>
-              <label>Отправка ожидается:</label>
-              <input className='inputData' type='date' value={date_sent} onChange={(e)=>setDate_sent(e.target.value)} />
-            </div>
-            <div className='info_other'>
-              <label>Заметки:</label>
-              <textarea rows={numRows1}  value={notes} onChange={(e)=>setNotes(e.target.value)}  />
-            </div>
-            <div className='info_other'>
-              <label>Примечания клиента:</label>
-              <textarea rows={numRows} value={other} onChange={(e)=>setOther(e.target.value)} />
-            </div>
-            <div className='contact_field mt-2'>
-              <label onClick={()=>setPhoneUser(phone)}>Владелец:</label>
-              <div className='search_bar'
-                  onMouseEnter={handleModalMouseEnter}
-                  onMouseLeave={handleModalMouseLeave}
-              >
-                  <input value={phoneUser} onChange={e=>setPhoneUser(e.target.value)} />
-                  <SearchBar  users={users} modalVisible={modalVisible} setModalVisible={setModalVisible}  phoneUser={phoneUser} setPhoneUser={setPhoneUser} />
+        <div className="bg-white border border-slate-200 rounded-[5px] p-[20px] flex flex-col flex-1 min-w-0 [&>div:first-child]:mb-[25px]">
+          <div className="space-y-4 !mb-0">
+            <section className="space-y-2">
+              <div className="flex items-start gap-2">
+                <button type="button" onClick={() => setPhoneUser(phone)} title="Владелец — подставить телефон получателя" className="shrink-0 text-sm text-[#274C77]">
+                  <i className="bi bi-person-circle" /> Владелец:
+                </button>
+                <div className="min-w-0 flex-1">
+                  <div className={`truncate text-sm font-medium ${isUser() ? 'text-slate-800' : 'text-red-600'}`} title={showFIO()}>{showFIO() || 'Владелец не найден'}</div>
+                  <div className="relative mt-1 min-w-0" onMouseEnter={handleModalMouseEnter} onMouseLeave={handleModalMouseLeave}>
+                    <input className="h-7 w-full rounded-md border border-slate-300 px-2 text-xs outline-none focus:border-[#274C77]" value={phoneUser} onChange={e => setPhoneUser(e.target.value)} />
+                    <SearchBar users={users} modalVisible={modalVisible} setModalVisible={setModalVisible} phoneUser={phoneUser} setPhoneUser={setPhoneUser} />
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className='contact_field'>
-              <label></label>
-              <label style={{fontSize: 12, flex: 2, color: !isUser() && 'red'}}>{showFIO()}</label>
-            </div>
-            <div  style={{fontSize: 10}} className='contact_field mt-2'>
-              <label>О клиенте:</label>
-              <label
-                className="flex-3 whitespace-pre-wrap text-left"
-                style={{flex: 2}}
-              >
-                {users.find(user => user.phone === phoneUser)?.aboutUser || "Нет заметок"}
-              </label>
-            </div>
-            <div className='contact_field'>
-              <label>Штрихкод:</label>
-              <input style={{marginLeft: 5}} value={codeOutside} onChange={e=>setCodeOutside(e.target.value)} />
-            </div>
-            <div className='flex flex-row justify-center gap-3 text-xs font-thin mt-3'>
-              <label className=''> Всего заказов: {order.user.orderCount} шт</label>
-              <label className=''>Сумма заказов: {order.user.totalOrderSum} р</label>
-              <button onClick={()=>openModalOrders()} className='px-3 py-0 bg-gray-200 text-gray-800 rounded hover:bg-gray-300'>открыть</button>
-            </div>
+              <div className="flex min-w-0 items-center gap-3 whitespace-nowrap text-xs text-slate-600">
+                  <span className="inline-flex shrink-0 items-center gap-1" title="Количество заказов">
+                    <i className="bi bi-box-seam text-[#274C77]" />
+                    {order.user.orderCount}
+                  </span>
+
+                  <span className="inline-flex shrink-0 items-center gap-1" title="Общая сумма заказов">
+                    <i className="bi bi-wallet2 text-[#274C77]" />
+                    {order.user.totalOrderSum} р
+                  </span>
+
+                  <span
+                    className="inline-flex min-w-0 flex-1 items-center gap-1"
+                    title={users.find(user => user.phone === phoneUser)?.aboutUser || 'Нет заметок'}
+                  >
+                    <i className="bi bi-person-lines-fill shrink-0 text-[#274C77]" />
+                    <span className="truncate text-slate-500">
+                      {users.find(user => user.phone === phoneUser)?.aboutUser || 'Нет заметок'}
+                    </span>
+                  </span>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="ml-auto h-7 w-7 shrink-0 p-0 text-[#274C77]"
+                    title="История заказов"
+                    aria-label="История заказов"
+                    onClick={openModalOrders}
+                  >
+                    <i className="bi bi-list-ul" />
+                  </Button>
+                </div>
+            </section>
+            <section className="space-y-4">
+  <div className="relative mt-8">
+    <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-slate-600">
+      Заметки
+    </label>
+    <textarea
+      className="block w-full rounded-md border border-slate-300 px-2 py-2 text-sm outline-none focus:border-[#274C77]"
+      rows={numRows1}
+      value={notes}
+      onChange={e => setNotes(e.target.value)}
+    />
+  </div>
+
+  <div className="relative">
+    <label className="absolute -top-2 left-2 bg-white px-1 text-xs text-slate-600">
+      Примечания клиента
+    </label>
+    <textarea
+      className="block w-full rounded-md border border-slate-300 px-2 py-2 text-sm outline-none focus:border-[#274C77]"
+      rows={numRows}
+      value={other}
+      onChange={e => setOther(e.target.value)}
+    />
+  </div>
+</section>
           </div>
+          <section className="mt-4">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-700"><i className="bi bi-calendar-event text-[#274C77]" /> Отправка ожидается</label>
+              <input className="h-8 rounded-md border border-slate-300 px-2 text-xs outline-none focus:border-[#274C77]" type="date" value={date_sent} onChange={e => setDate_sent(e.target.value)} />
+            </div>
           {/* === СМС — только для USER === */}
           {order.user?.role === 'USER' && (
               [0, 8].includes(Number(order.status)) ? (
-                  <div className="gap-1 flex justify-start">
+                  <div className="mt-2 gap-1 flex justify-start">
                       {ShowBtnSms(is_sms_error, SmsError, is_sms_error ? 'Ошибка отправлена' : 'Ошибка')}
                   </div>
               ) : (
-                  <div className="relative mt-4 pt-1">
+                  <div className="relative mt-2 pt-1">
                       {/* Подпись «СМС» на рамке */}
                       <span className="absolute -top-2 left-3 px-1.5 bg-white
                                       text-[10px] uppercase tracking-wider font-semibold
@@ -1326,6 +1555,7 @@ const sendSmsNew = async () => {
                   </div>
               )
           )}
+          </section>
           {/* === Блок оплаты — для всех типов ЕРИП, вне зависимости от роли === */}
           {(order.typePost === 'R1' || order.typePost === 'E1' || order.typePost === 'R2') &&
           [1, 2, 3, 4, 5, 7].includes(Number(order.status)) && (
@@ -1367,25 +1597,25 @@ const sendSmsNew = async () => {
                       )}
                       {/* Кнопки — в зависимости от состояния */}
                       {order.isPayment === 'none' && (
-                          <Button variant='outline' size='sm' onClick={() => AddInvoices()}>
+                          <Button className='border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]' variant='outline' size='sm' onClick={() => AddInvoices()}>
                               <i className="bi bi-receipt text-[12px] mr-1" />
                               Выставить счёт
                           </Button>
                       )}
                       {order.isPayment === 'wait' && (
                           <>
-                              <Button variant='outline' size='sm' onClick={() => CancelInvoices()}>
+                              <Button className='border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]' variant='outline' size='sm' onClick={() => CancelInvoices()}>
                                   <i className="bi bi-x-circle text-[12px] mr-1" />
                                   отменить
                               </Button>
-                              <Button variant='outline' size='sm' onClick={() => CheckInvoices()}>
+                              <Button className='border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]' variant='outline' size='sm' onClick={() => CheckInvoices()}>
                                   <i className="bi bi-arrow-clockwise text-[12px] mr-1" />
                                   проверить
                               </Button>
                           </>
                       )}
                       {order.isPayment === 'paid' && (
-                          <Button variant='outline' size='sm' onClick={() => CheckInvoices()}>
+                          <Button className='border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]' variant='outline' size='sm' onClick={() => CheckInvoices()}>
                               <i className="bi bi-arrow-clockwise text-[12px] mr-1" />
                               проверить
                           </Button>
@@ -1393,8 +1623,8 @@ const sendSmsNew = async () => {
                   </div>
               </div>
           )}
-          <div className='flex justify-end mt-3 gap-1' >
-            <Button className='w-[25%]' variant='destructive' size='sm' onClick={()=>DeleteOrder()}>удалить</Button>
+          <div className='flex justify-end mt-auto pt-4 gap-1' >
+            <Button className='w-[25%] bg-slate-100 text-slate-700 border border-slate-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300' variant='outline' size='sm' onClick={()=>DeleteOrder()}>удалить</Button>
           </div>
         </div>
       </div>

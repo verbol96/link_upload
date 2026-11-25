@@ -12,15 +12,19 @@ export const TableFooter = ({ filteredOrders, activeFilters = {} }) => {
     const sumPrice = countedOrders.reduce((sum, order) => sum + (Number(order.price) || 0), 0)
     const sumFormat = countedOrders.reduce((sum, order) => sum + (order.photos || []).reduce((total, photo) => total + (Number(photo.amount) || 0) * (Number(photo.copies) || 0), 0), 0)
     const countMatching = match => countedOrders.reduce((sum, order) => sum + (order.photos || []).reduce((total, photo) => total + (match(photo) ? (Number(photo.amount) || 0) * (Number(photo.copies) || 0) : 0), 0), 0)
+
     return (
-        <div className="bg-teal-950/70 rounded-md text-xs text-white font-light my-4 flex items-center justify-between px-[10px] py-1 pl-[5%] pr-[10%]">
-            <div>N={countedOrders.length}</div>
+        <div
+            className="my-3 flex w-full items-center justify-between gap-2 rounded-xl bg-white px-3 py-2.5 text-xs font-medium text-slate-700 shadow-sm"
+            style={{ border: '1.5px solid #bfcbd7' }}
+        >
+            <div className="shrink-0 tabular-nums">N={countedOrders.length}</div>
             {selected.length ? (
-                <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-1">
-                    {selected.map(filter => <span key={filter.label}>{filter.label} = {countMatching(filter.match)}шт</span>)}
+                <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-6 gap-y-1">
+                    {selected.map(filter => <span className="whitespace-nowrap tabular-nums" key={filter.label}>{filter.label} = {countMatching(filter.match)}шт</span>)}
                 </div>
             ) : (
-                <div className="flex items-center gap-6">
+                <div className="flex shrink-0 items-center gap-6 tabular-nums">
                     <div>{sumFormat}шт</div>
                     <div>{sumPrice.toFixed(2)}р</div>
                 </div>

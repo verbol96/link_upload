@@ -10,8 +10,10 @@ router.delete('', fileController.deleteFile)
 router.delete('/all', fileController.deleteFileAll)
 router.get('/download', fileController.downloadFile)
 router.get('/download-parts', fileController.getDownloadParts)
+router.patch('/:id/download-status', fileController.setDownloadStatus)
 
 router.get('/thumb', fileController.displayFile)
 router.post('/getFilesPhotosId', fileController.getFilesPhotosId)
+
 
 module.exports = router

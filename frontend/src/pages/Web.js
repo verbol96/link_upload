@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { toast } from 'sonner'
 import { uploadFiles, createDir } from "../http/cloudApi"
 import { getSettings, updateOrder } from "../http/dbApi"
-import Footer from "../components/admin/Footer"
 import { NavBar } from "../components/admin/NavBar"
 import { ContactForm } from "../components/web/ContactForm"
 import { PageAfterUpload } from "../components/web/PageAfterUpload"
@@ -21,14 +20,14 @@ const SectionBlock = ({ number, title, children, sectionRef }) => (
                         mt-6 md:mt-4">
         <div className="absolute left-3 md:left-6 top-0 -translate-y-1/2
                         flex items-center gap-2 max-w-[calc(100%-24px)]">
-            <span className="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full bg-[#19766d]
+            <span className="shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full bg-[#274C77]
                             flex items-center justify-center
                             text-[11px] md:text-[12px] font-semibold text-white shadow-sm">
                 {number}
             </span>
             <span className="h-7 md:h-8 flex items-center px-2.5 md:px-3.5 rounded-lg
-                            bg-[#eaf4f2] border border-[#19766d]/15
-                            text-[12px] md:text-[13.5px] font-semibold text-[#285e59]
+                            bg-[#EFF5FB] border border-[#274C77]/15
+                            text-[12px] md:text-[13.5px] font-semibold text-[#274C77]
                             truncate">
                 {title}
             </span>
@@ -78,6 +77,8 @@ const Web = () => {
     const [item, setItem] = useState(0)
     const [isValid, setIsValid] = useState(false)
     const [filesCount, setFilesCount] = useState(0)
+
+    const [uploadError, setUploadError] = useState(null);
 
     const removeNonNumeric = (phoneNumber) => phoneNumber.replace(/[^0-9+]/g, '');
 
@@ -244,154 +245,239 @@ const Web = () => {
         return () => observer.disconnect();
     }, [hasFiles, formats]);
 
-    // ===== ОТПРАВКА =====
-    const upload = async () => {
-        setActiveStep(10)
 
-        const photo = formats.reduce((acc, el) => {
-            const ff = () => {
-                switch (el.type) {
-                    case 'photo': return 'photo'
-                    case 'holst': return 'holst'
-                    case 'magnit': return 'magnit'
-                    case 'poster': return 'poster'
-                    default: return 'photo'
-                }
-            }
-            return [...acc, {
+    //загрузка
+    const upload = async () => {
+        setUploadError(null);
+        setCurrent(0);
+        setActiveStep(10);
+
+        try {
+            const photo = formats.map(el => ({
                 id: el.id,
-                type: ff(),
+                type: ['photo', 'holst', 'magnit', 'poster'].includes(el.type)
+                    ? el.type
+                    : 'photo',
                 format: el.format,
                 amount: el.files.length,
                 paper: el.paper,
                 copies: el.copies
-            }]
-        }, [])
+            }));
 
-        const amount = formats.reduce((acc, el) => acc + el.files.length, 0)
-        setAmountPhoto(amount)
-        setLogUser({
-            event:'order_submit',
-            eventType:'info',
-            photosCount:amount,
-            format:formats.map(el=>el.format).join(', ')
-        });
+            const amount = formats.reduce(
+                (acc, el) => acc + el.files.length, 0
+            );
 
-        const data = {
-            "FIO": FIO.toLowerCase(),
-            "phone": removeNonNumeric(phone),
-            "typePost": typePost,
-            "city": city,
-            "adress": adress,
-            "postCode": postCode,
-            "other": other,
-            "notes": '',
-            "photo": photo,
-            "price": totalPrice,
-            "price_deliver": deliveryPrice,
-            "codeOutside": '',
-            "oblast": typePost==='R'||typePost==='R1'||typePost==='R2'?oblast:'',
-            "raion": '',
-            'auth': isAuth,
-            'phoneUser': user.phone,
-            'status': 0,
-            'origin': 'website'
-        }
+            const formatNames = formats.map(el => el.format).join(', ');
 
-        let userData;
-        try {
-            const response = await $host.post('api/order/addOrder', data);
-            userData = response.data;
-        } catch (error) {
+            setAmountPhoto(amount);
+
             setLogUser({
-                event:'order_create_error',
-                eventType:'error',
-                photosCount:amount,
-                format:formats.map(el=>el.format).join(', '),
-                error:error?.response?.data?.message||error?.message||'Ошибка создания заказа'
+                event: 'order_submit',
+                eventType: 'info',
+                photosCount: amount,
+                format: formatNames
             });
-            throw error;
-        }
-        setLogUser({
-            event:'order_created',
-            eventType:'success',
-            orderId:userData.order_number,
-            photosCount:amount,
-            format:formats.map(el=>el.format).join(', ')
-        });
 
-        const typePostName = () => {
-            if (typePost === 'R' || typePost === 'R1' || typePost === 'R2') return 'R'
-            if (typePost === 'E' || typePost === 'E1') return 'E'
-        }
+            const data = {
+                FIO: FIO.toLowerCase(),
+                phone: removeNonNumeric(phone),
+                typePost: typePost,
+                city: city,
+                adress: adress,
+                postCode: postCode,
+                other: other,
+                notes: '',
+                photo: photo,
+                price: totalPrice,
+                price_deliver: deliveryPrice,
+                codeOutside: '',
+                oblast: ['R', 'R1', 'R2'].includes(typePost) ? oblast : '',
+                raion: '',
+                auth: isAuth,
+                phoneUser: user.phone,
+                status: 0,
+                origin: 'website'
+            };
 
-        let MainDir;
-        try{
-            MainDir=await createDir(typePostName()[0]+(userData.order_number%1000));
-        }catch(error){
-            setLogUser({
-                event:'order_folder_error',
-                eventType:'error',
-                orderId:userData.order_number,
-                photosCount:amount,
-                format:formats.map(el=>el.format).join(', '),
-                error:error?.response?.data?.message||error?.message||'Ошибка создания папки заказа'
-            });
-            throw error;
-        }
+            // ===== Создание заказа =====
 
-        const newUserData = { ...userData }
-        newUserData.main_dir_id = MainDir.id
-        newUserData.phoneUser = userData.user.phone
-        newUserData.photo = userData.photos
-        await updateOrder(userData.id, newUserData)
+            let userData;
 
-        for (const formatOne of formats) {
-            let parentFile;
-            try{
-                parentFile=await createDir(
-                    formatOne.format+'_'+formatOne.paper+'_копий_'+formatOne.copies,
-                    MainDir.id
-                );
-            }catch(error){
+            try {
+                const response = await $host.post('api/order/addOrder', data);
+                userData = response.data;
+            } catch (error) {
                 setLogUser({
-                    event:'format_folder_error',
-                    eventType:'error',
-                    orderId:userData.order_number,
-                    format:formatOne.format,
-                    error:error?.response?.data?.message||error?.message||'Ошибка создания папки формата'
+                    event: 'order_create_error',
+                    eventType: 'error',
+                    photosCount: amount,
+                    format: formatNames,
+                    error: error?.response?.data?.message
+                        || error?.message
+                        || 'Ошибка создания заказа'
                 });
+
                 throw error;
             }
-            const uploadPromises=formatOne.files.map(async(file)=>{
-                try{
-                    await uploadFiles(file,parentFile.id,formatOne.id);
-                    setCurrent((prev)=>prev+1);
-                }catch(error){
+
+            setLogUser({
+                event: 'order_created',
+                eventType: 'success',
+                orderId: userData.order_number,
+                photosCount: amount,
+                format: formatNames
+            });
+
+            // ===== Создание основной папки =====
+
+            const typePostName = () => {
+                if (['R', 'R1', 'R2'].includes(typePost)) return 'R';
+                if (['E', 'E1'].includes(typePost)) return 'E';
+
+                throw new Error('Неизвестный тип доставки');
+            };
+
+            let MainDir;
+
+            try {
+                MainDir = await createDir(
+                    typePostName() + (userData.order_number % 1000)
+                );
+            } catch (error) {
+                setLogUser({
+                    event: 'order_folder_error',
+                    eventType: 'error',
+                    orderId: userData.order_number,
+                    photosCount: amount,
+                    format: formatNames,
+                    error: error?.response?.data?.message
+                        || error?.message
+                        || 'Ошибка создания папки заказа'
+                });
+
+                throw error;
+            }
+
+            // ===== Обновление заказа =====
+
+            const newUserData = {
+                ...userData,
+                main_dir_id: MainDir.id,
+                phoneUser: userData.user.phone,
+                photo: userData.photos
+            };
+
+            await updateOrder(userData.id, newUserData);
+
+            // ===== Загрузка фотографий =====
+
+            const batchSize = 4;
+
+            for (const formatOne of formats) {
+                let parentFile;
+
+                // Создание папки формата
+
+                try {
+                    parentFile = await createDir(
+                        `${formatOne.format}_${formatOne.paper}_копий_${formatOne.copies}`,
+                        MainDir.id
+                    );
+                } catch (error) {
                     setLogUser({
-                        event:'photo_upload_error',
-                        eventType:'error',
-                        orderId:userData.order_number,
-                        format:formatOne.format,
-                        error:error?.response?.data?.message||error?.message||'Ошибка загрузки фотографии'
+                        event: 'format_folder_error',
+                        eventType: 'error',
+                        orderId: userData.order_number,
+                        format: formatOne.format,
+                        error: error?.response?.data?.message
+                            || error?.message
+                            || 'Ошибка создания папки формата'
                     });
+
                     throw error;
                 }
-            });
-            await Promise.all(uploadPromises);
-        }
-        //уведомление в ТГ
-        await $host.post(`api/order/uploadCompleted/${userData.id}`);
 
-        setLogUser({
-            event:'order_upload_completed',
-            eventType:'success',
-            orderId:userData.order_number,
-            photosCount:amount,
-            format:formats.map(el=>el.format).join(', ')
-        });
-        setActiveStep(11)
-    }
+                // Загрузка группами по 4 фотографии
+
+                for (let i = 0; i < formatOne.files.length; i += batchSize) {
+                    const batch = formatOne.files.slice(i, i + batchSize);
+
+                    const results = await Promise.allSettled(
+                        batch.map(async file => {
+                            try {
+                                await uploadFiles(
+                                    file,
+                                    parentFile.id,
+                                    formatOne.id
+                                );
+
+                                setCurrent(prev => prev + 1);
+
+                            } catch (error) {
+                                setLogUser({
+                                    event: 'photo_upload_error',
+                                    eventType: 'error',
+                                    orderId: userData.order_number,
+                                    format: formatOne.format,
+                                    error: error?.response?.data?.message
+                                        || error?.message
+                                        || 'Ошибка загрузки фотографии'
+                                });
+
+                                throw error;
+                            }
+                        })
+                    );
+
+                    // Остановка загрузки при ошибке
+
+                    const failed = results.find(
+                        result => result.status === 'rejected'
+                    );
+
+                    if (failed) {
+                        throw failed.reason;
+                    }
+                }
+            }
+
+            // ===== Завершение загрузки =====
+
+            await $host.post(`api/order/uploadCompleted/${userData.id}`);
+
+            setLogUser({
+                event: 'order_upload_completed',
+                eventType: 'success',
+                orderId: userData.order_number,
+                photosCount: amount,
+                format: formatNames
+            });
+
+            setActiveStep(11);
+
+        } catch (error) {
+            console.error('Ошибка загрузки заказа:', error);
+
+            let message;
+
+            if (!navigator.onLine) {
+                message = 'Отсутствует интернет-соединение.';
+            } else if (
+                error?.code === 'ECONNABORTED' ||
+                error?.code === 'ETIMEDOUT'
+            ) {
+                message = 'Превышено время ожидания загрузки.';
+            } else if (!error?.response) {
+                message = 'Соединение с сервером прервано.';
+            } else {
+                message = 'Произошла ошибка при загрузке заказа.';
+            }
+
+            setUploadError(message);
+        }
+    };
+
 
     // ===== ОБЁРТКА С ВАЛИДАЦИЕЙ =====
     const handleSubmit = () => {
@@ -412,33 +498,35 @@ const Web = () => {
 
     if (activeStep === 10) {
         return (
-            <div className="flex flex-col min-h-screen bg-[#f8f8f7]">
+            <div className="flex flex-col min-h-screen bg-slate-50">
                 <NavBar />
                 <div className="flex-1 w-[94%] mx-auto py-6">
-                    <PageUpload phone={phone} current={current} amountPhoto={amountPhoto} />
+                    <PageUpload
+                        current={current}
+                        amountPhoto={amountPhoto}
+                        uploadError={uploadError}
+                    />
                 </div>
-                <Footer />
             </div>
         )
     }
 
     if (activeStep === 11) {
         return (
-            <div className="flex flex-col min-h-screen bg-[#f8f8f7]">
+            <div className="flex flex-col min-h-screen bg-slate-50">
                 <NavBar />
                 <div className="flex-1 w-[94%] mx-auto py-6">
                     <PageAfterUpload amountPhoto={amountPhoto} phone={phone} />
                 </div>
-                <Footer />
             </div>
         )
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-stone-100">
+        <div className="flex flex-col min-h-screen bg-[#FAFBFD]">
             <NavBar />
 
-            <main className="flex-1 w-[94%] max-w-6xl mx-auto py-4 md:py-6">
+            <main className="flex-1 w-[94%] max-w-6xl mx-auto py-2 md:py-6">
                 <div className="flex flex-col gap-6 md:gap-10 pt-4">
 
                     {/* ===== СЕКЦИЯ 1: ФОТО ===== */}
@@ -468,7 +556,7 @@ const Web = () => {
             >
                 <i className={`bi ${active ? 'bi-folder2-open' : 'bi-folder'}
                             text-[20px] md:text-[25px] shrink-0
-                            ${active ? 'text-[#19766d]' : 'text-slate-400'}`} />
+                            ${active ? 'text-[#274C77]' : 'text-slate-400'}`} />
 
                 <span className="text-[12px] md:text-[13px] font-semibold truncate min-w-0 flex-1">
                     {formatName}
@@ -479,7 +567,7 @@ const Web = () => {
                                     rounded-full flex items-center justify-center
                                     text-[10px] md:text-[11px] font-bold
                                     ${active
-                                        ? 'bg-[#dcecea] text-[#19766d]'
+                                        ? 'bg-[#E7EFF8] text-[#274C77]'
                                         : 'bg-slate-100 text-slate-500'
                                     }`}>
                         {count}
@@ -488,7 +576,7 @@ const Web = () => {
 
                 {active && (
                     <span className="absolute left-0 right-0 bottom-0 h-[3px]
-                                    rounded-b-lg bg-[#19766d]" />
+                                    rounded-b-lg bg-[#274C77]" />
                 )}
             </button>
         );
@@ -500,8 +588,8 @@ const Web = () => {
             onClick={AddFormat}
             className="shrink-0 h-[46px] md:h-[52px] px-3 md:px-4 rounded-lg bg-white
                     flex items-center gap-2
-                    text-[12px] md:text-[13px] font-semibold text-teal-900
-                    hover:text-teal-950
+                    text-[12px] md:text-[13px] font-semibold text-[#274C77]
+                    hover:text-slate-900
                     transition-colors whitespace-nowrap"
         >
             <i className="bi bi-plus-circle text-[16px] md:text-[18px]" />
@@ -511,7 +599,7 @@ const Web = () => {
     )}
 </div>
 
-                        <div className="h-px bg-teal-700 mt-2 mb-4" />
+                        <div className="h-px bg-[#274C77] mt-2 mb-4" />
 
                         <FileForm
                             item={item}
@@ -526,7 +614,7 @@ const Web = () => {
 
                         {/* Итого */}
                         
-                            <div className="mt-4 pt-3 border-t border-teal-700
+                            <div className="mt-4 pt-3 border-t border-[#274C77]
                                             flex items-center justify-between gap-3 flex-wrap">
                                 <span className="text-[11px] md:text-[12px] uppercase tracking-wider
                                                 font-semibold text-slate-400">
@@ -538,7 +626,7 @@ const Web = () => {
                                         {totalPrice} <span className="text-[14px] md:text-[15px] text-slate-400">р</span>
                                     </span>
                                     {ShowDiscount() && (
-                                        <div className="text-[11px] text-teal-700 mt-1 font-medium">
+                                        <div className="text-[11px] text-[#274C77] mt-1 font-medium">
                                             {ShowDiscount()}
                                         </div>
                                     )}
@@ -584,7 +672,6 @@ const Web = () => {
                 </div>
             </main>
 
-            <Footer />
         </div>
     )
 }

@@ -23,7 +23,9 @@ const shortOrderId=id=>String(id).slice(-3);
 
 const FILTERS=[
     {id:"all",label:"Все"},
-    {id:"orders",label:"Заказы"}
+    {id:"orders",label:"Заказы"},
+    {id:"authorized",label:"Авторизованные"},
+    {id:"anonymous",label:"Не авторизованные"}
 ];
 const getEventInfo=(event)=>{
     return EVENT_INFO[event]||{
@@ -51,6 +53,7 @@ const isMobile=(screen)=>{
 };
 const getDayKey=iso=>{const date=new Date(iso);return Number.isNaN(date.getTime())?null:date.toLocaleDateString("ru-RU");};
 const isPhoneEvent=event=>/iphone|android|mobile|phone|смартфон|телефон/i.test(String(event.device||""))||isMobile(event.screen);
+const isAuthorizedEvent=event=>Boolean(String(event.surname||"").trim()||(event.phone&&String(event.phone)!=="0"));
 const buildDayStats=logs=>{
     const days=new Map();
     logs.forEach((log,index)=>{
@@ -59,12 +62,18 @@ const buildDayStats=logs=>{
         if(!days.has(day))days.set(day,new Map());
         const visitors=days.get(day);
         const id=log.sessionId||`legacy-${log.id||index}`;
-        visitors.set(id,(visitors.get(id)||false)||isPhoneEvent(log));
+        const previous=visitors.get(id)||{phone:false,authorized:false};
+        visitors.set(id,{
+            phone:previous.phone||isPhoneEvent(log),
+            authorized:previous.authorized||isAuthorizedEvent(log)
+        });
     });
     return new Map(Array.from(days,([day,visitors])=>{
-        const total=visitors.size;
-        const phones=Array.from(visitors.values()).filter(Boolean).length;
-        return[day,{total,phones,percent:total?Math.round(phones/total*100):0}];
+        const values=Array.from(visitors.values());
+        const total=values.length;
+        const phones=values.filter(value=>value.phone).length;
+        const authorized=values.filter(value=>value.authorized).length;
+        return[day,{total,phones,computers:total-phones,authorized,anonymous:total-authorized,percent:total?Math.round(phones/total*100):0}];
     }));
 };
 const DayStats=({date,stats})=><span className="text-[10px] text-slate-500 tabular-nums">{stats?.total??0} уникальных · с телефона {stats?.percent??0}% ({stats?.phones??0})</span>;
@@ -130,6 +139,7 @@ const buildSessions=(logs)=>{
             hasError,
             hasOrder,
             hasVisit,
+            isAuthorized:Boolean(surname||phone),
             isPhone:events.some(isPhoneEvent),
             reachedSteps,
             lastStep
@@ -143,6 +153,7 @@ const LogsUser=()=>{
     const[expandedId,setExpandedId]=useState(null);
     const[showAllHistoryId,setShowAllHistoryId]=useState(null);
     const[filter,setFilter]=useState("all");
+    const[showStats,setShowStats]=useState(false);
     const[search,setSearch]=useState("");
     useEffect(()=>{
         const getData=async()=>{
@@ -162,15 +173,11 @@ const LogsUser=()=>{
     const dayStats=useMemo(()=>buildDayStats(logs),[logs]);
     const filteredSessions=useMemo(()=>{
         let result=sessions;
-        if(filter==="errors"){
-            result=result.filter(session=>session.hasError);
-        }
         if(filter==="orders"){
             result=result.filter(session=>session.hasOrder);
         }
-        if(filter==="visits"){
-            result=result.filter(session=>session.hasVisit);
-        }
+        if(filter==="authorized")result=result.filter(session=>session.isAuthorized);
+        if(filter==="anonymous")result=result.filter(session=>!session.isAuthorized);
         const value=search.trim().toLowerCase();
         if(value){
             result=result.filter(session=>{
@@ -200,15 +207,18 @@ const LogsUser=()=>{
     },[filter,search]);
     const visibleSessions=filteredSessions.slice(0,visibleCount);
     const hasMore=visibleCount<filteredSessions.length;
-    const errorsCount=sessions.filter(session=>session.hasError).length;
     const ordersCount=sessions.filter(session=>session.hasOrder).length;
-    const visitsCount=sessions.filter(session=>session.hasVisit).length;
-    const getFilterCount=(id)=>{
-        if(id==="errors")return errorsCount;
+    const authorizedCount=sessions.filter(session=>session.isAuthorized).length;
+    const getFilterCount=id=>{
         if(id==="orders")return ordersCount;
-        if(id==="visits")return visitsCount;
+        if(id==="authorized")return authorizedCount;
+        if(id==="anonymous")return sessions.length-authorizedCount;
         return sessions.length;
     };
+    const dailyRows=useMemo(()=>Array.from(dayStats,([date,stats])=>({date,...stats})).sort((a,b)=>{
+        const parse=value=>{const[d,m,y]=value.split(".").map(Number);return new Date(y,m-1,d).getTime();};
+        return parse(b.date)-parse(a.date);
+    }),[dayStats]);
     const handleDeleteSession=async(session)=>{
         if(!session.sessionId)return;
         if(!window.confirm("Удалить всю историю этого посетителя?"))return;
@@ -266,6 +276,10 @@ const LogsUser=()=>{
                                 </button>
                             ))}
                         </div>
+                        <button type="button" onClick={()=>setShowStats(prev=>!prev)} className={`shrink-0 h-8 px-2.5 rounded-md border text-[11px] font-medium transition-colors ${showStats?"bg-[#19766d] border-[#19766d] text-white":"bg-white border-slate-200 text-slate-600 hover:bg-slate-100"}`}>
+                            <i className={`bi ${showStats?"bi-list-ul":"bi-table"} mr-1.5`}/>
+                            {showStats?"К списку":"Статистика по дням"}
+                        </button>
                         <div className="relative lg:ml-auto w-full lg:w-[300px]">
                             <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400"/>
                             <input
@@ -300,6 +314,34 @@ const LogsUser=()=>{
                     <div className="flex items-center justify-center gap-2 py-12 text-slate-400 text-[13px]">
                         <i className="bi bi-arrow-repeat animate-spin"/>
                         Загрузка...
+                    </div>
+                ):showStats?(
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[570px] text-[12px] tabular-nums">
+                            <thead className="bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
+                                <tr className="border-b border-slate-200">
+                                    <th className="text-left px-4 py-3">Дата</th>
+                                    <th className="text-right px-3 py-3">Уникальных</th>
+                                    <th className="text-right px-3 py-3">Телефоны</th>
+                                    <th className="text-right px-3 py-3">Компьютеры</th>
+                                    <th className="text-right px-3 py-3">Авторизованные</th>
+                                    <th className="text-right px-4 py-3">Без авторизации</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {dailyRows.map(day=>(
+                                    <tr key={day.date} className="border-b border-slate-100 hover:bg-slate-50">
+                                        <td className="px-4 py-3 font-medium text-slate-700">{day.date}</td>
+                                        <td className="px-3 py-3 text-right font-semibold text-slate-700">{day.total}</td>
+                                        <td className="px-3 py-3 text-right text-slate-600">{day.phones}</td>
+                                        <td className="px-3 py-3 text-right text-slate-600">{day.computers}</td>
+                                        <td className="px-3 py-3 text-right text-slate-600">{day.authorized}</td>
+                                        <td className="px-4 py-3 text-right text-slate-600">{day.anonymous}</td>
+                                    </tr>
+                                ))}
+                                {dailyRows.length===0&&<tr><td colSpan={6} className="py-10 text-center text-slate-400">Нет данных</td></tr>}
+                            </tbody>
+                        </table>
                     </div>
                 ):filteredSessions.length===0?(
                     <div className="py-12 text-center text-slate-400 text-[13px]">
@@ -540,7 +582,6 @@ const LogsUser=()=>{
                                 const isNewDay=index===0||date!==previousDate;
                                 const expanded=expandedId===session.id;
                                 const duration=formatDuration(session.createdAt,session.updatedAt);
-                                
                                 return (
                                     <div key={session.id}>
                                         {isNewDay&&(

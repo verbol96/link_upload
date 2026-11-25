@@ -13,7 +13,6 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 
-import Footer from "../components/admin/Footer";
 import { NavBar } from "../components/admin/NavBar";
 
 // ============ РОЛИ ============
@@ -204,17 +203,17 @@ const Users = () => {
     };
 
     return (
-        <div className="h-screen flex flex-col">
+        <div className="h-screen flex flex-col bg-[#FAFBFD] text-[#334155]">
             <NavBar />
 
-            <div className="flex-1 min-h-0 flex flex-col p-3 md:p-4 mx-auto w-full">
+            <div className="mx-auto w-[90%] flex-1 min-h-0  flex flex-col p-3 md:p-5 max-w-[1800px]">
 
                 {/* ============ ПАНЕЛЬ ФИЛЬТРОВ ============ */}
                 <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4 shrink-0">
 
                     {/* Заголовок */}
-                    <h1 className="text-[15px] md:text-[16px] font-semibold text-stone-800 whitespace-nowrap">
-                        Клиенты <span className="text-stone-400 font-normal">· {total}</span>
+                    <h1 className="text-[15px] md:text-[16px] font-semibold text-[#274C77] whitespace-nowrap">
+                        Клиенты <span className="text-[#94A3B8] font-normal">· {total}</span>
                     </h1>
 
 
@@ -224,13 +223,13 @@ const Users = () => {
                     {/* Поиск — короткий */}
                     <div className="relative w-[180px] md:w-[220px]">
                         <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2
-                                    text-[12px] text-stone-400 pointer-events-none" />
+                                    text-[12px] text-[#94A3B8] pointer-events-none" />
                         <input
                             className="w-full pl-9 pr-3 py-1.5
-                                    bg-white border border-stone-200 rounded-lg
-                                    text-[13px] text-stone-700
-                                    placeholder:text-stone-400
-                                    focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/20
+                                    bg-white border border-[#DCE5EE] rounded-lg
+                                    text-[13px] text-[#334155]
+                                    placeholder:text-[#94A3B8]
+                                    focus:outline-none focus:border-[#7890A8] focus:ring-2 focus:ring-[#7890A8]/20
                                     transition-colors"
                             placeholder="Поиск..."
                             value={search}
@@ -243,9 +242,9 @@ const Users = () => {
                                 <select
                                     className="appearance-none
                                             pl-3 pr-8 py-1.5
-                                            bg-white border border-stone-200 rounded-lg
-                                            text-[13px] font-medium text-stone-700
-                                            focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/20
+                                            bg-white border border-[#DCE5EE] rounded-lg
+                                            text-[13px] font-medium text-[#334155]
+                                            focus:outline-none focus:border-[#7890A8] focus:ring-2 focus:ring-[#7890A8]/20
                                             cursor-pointer transition-colors"
                                     value={roleFilter}
                                     onChange={(e) => setRoleFilter(e.target.value)}
@@ -258,7 +257,7 @@ const Users = () => {
                                     ))}
                                 </select>
                                 <i className="bi bi-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2
-                                            text-[10px] text-stone-400 pointer-events-none" />
+                                            text-[10px] text-[#94A3B8] pointer-events-none" />
                             </div>
                         )}
 
@@ -267,9 +266,9 @@ const Users = () => {
                             <select
                                 className="appearance-none
                                         pl-3 pr-8 py-1.5
-                                        bg-white border border-stone-200 rounded-lg
-                                        text-[13px] font-medium text-stone-700
-                                        focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/20
+                                        bg-white border border-[#DCE5EE] rounded-lg
+                                        text-[13px] font-medium text-[#334155]
+                                        focus:outline-none focus:border-[#7890A8] focus:ring-2 focus:ring-[#7890A8]/20
                                         cursor-pointer transition-colors"
                                 value={limit}
                                 onChange={(e) => setLimit(e.target.value)}
@@ -281,7 +280,7 @@ const Users = () => {
                                 <option value="100">100</option>
                             </select>
                             <i className="bi bi-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2
-                                        text-[10px] text-stone-400 pointer-events-none" />
+                                        text-[10px] text-[#94A3B8] pointer-events-none" />
                         </div>
 
                         {/* Сортировка */}
@@ -289,9 +288,9 @@ const Users = () => {
                             <select
                                 className="appearance-none
                                         pl-3 pr-8 py-1.5
-                                        bg-white border border-stone-200 rounded-lg
-                                        text-[13px] font-medium text-stone-700
-                                        focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-700/20
+                                        bg-white border border-[#DCE5EE] rounded-lg
+                                        text-[13px] font-medium text-[#334155]
+                                        focus:outline-none focus:border-[#7890A8] focus:ring-2 focus:ring-[#7890A8]/20
                                         cursor-pointer transition-colors"
                                 value={sort}
                                 onChange={(e) => setSort(e.target.value)}
@@ -306,19 +305,19 @@ const Users = () => {
                                 <option value="totalOrderSum-desc">Сумма ↓</option>
                             </select>
                             <i className="bi bi-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2
-                                        text-[10px] text-stone-400 pointer-events-none" />
+                                        text-[10px] text-[#94A3B8] pointer-events-none" />
                         </div>
                     </div>
                 </div>
 
                 {/* ============ ТАБЛИЦА ============ */}
-                <div className="flex-1 min-h-0 overflow-auto border-t border-b border-gray-200 rounded-sm p-1">
+                <div className="flex-1 min-h-0 overflow-auto ">
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[700px]">
-                            <tbody className="divide-y divide-gray-200">
+                        <table className="w-full min-w-[900px] border-collapse text-[12px]">
+                            <tbody className="divide-y divide-[#E8EEF4]">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="9" className="px-6 py-1 text-center text-gray-500">
+                                        <td colSpan="9" className="px-6  py-1 text-center text-[#64748B]">
                                             Загрузка...
                                         </td>
                                     </tr>
@@ -326,55 +325,55 @@ const Users = () => {
                                     data.map((client) => (
                                         <tr
                                             key={client.id}
-                                            className="hover:bg-gray-50 cursor-pointer"
+                                            className="hover:bg-[#E9EEF3] bg-white cursor-pointer transition-colors duration-100"
                                             onDoubleClick={() => handleRowDoubleClick(client)}
                                             title="Двойной клик — открыть карточку"
                                         >
-                                            <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">
+                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
                                                 {client.FIO}
                                             </td>
-                                            <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">
+                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
                                                 {client.phone}
                                             </td>
 
                                             {/* Роль — только для ADMIN */}
                                             {canSeeRole && (
-                                                <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">
+                                                <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
                                                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded
                                                         text-[11px] font-medium
                                                         ${client.role === 'ADMIN'
-                                                            ? 'bg-teal-50 text-teal-700'
+                                                            ? 'bg-[#E6F1F5] text-[#274C77]'
                                                             : client.role === 'WORKER'
-                                                                ? 'bg-indigo-50 text-indigo-700'
+                                                                ? 'bg-[#EAF0FA] text-[#375C90]'
                                                                 : client.role === 'PARTNER'
-                                                                    ? 'bg-amber-50 text-amber-700'
-                                                                    : 'bg-stone-100 text-stone-600'
+                                                                    ? 'bg-[#FFF3DA] text-[#9A6418]'
+                                                                    : 'bg-[#F1F5F9] text-[#64748B]'
                                                         }`}>
                                                         {ROLE_OPTIONS.find(r => r.value === client.role)?.label || client.role}
                                                     </span>
                                                 </td>
                                             )}
 
-                                            <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">
+                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
                                                 {client.orderCount}
                                             </td>
-                                            <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">
+                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
                                                 {client.totalOrderSum}
                                             </td>
-                                            <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">
+                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
                                                 {client.city}
                                             </td>
-                                            <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px]">
+                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
                                                 {client.adress}
                                             </td>
-                                            <td className="px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px] text-gray-600">
+                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] text-[#64748B]">
                                                 {new Date(client.createdAt).toLocaleDateString('ru-RU')}
                                             </td>
                                             <td
-                                                className={`px-6 py-1 text-sm overflow-hidden whitespace-nowrap text-ellipsis max-w-[150px] ${
+                                                className={`px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] ${
                                                     client.lastOrderDate?.split('.')[2] === '2026'
                                                         ? 'text-blue-600'
-                                                        : 'text-gray-600'
+                                                        : 'text-[#64748B]'
                                                 }`}
                                             >
                                                 {client.lastOrderDate}
@@ -388,8 +387,8 @@ const Users = () => {
                 </div>
 
                 {/* ============ ПАГИНАЦИЯ ============ */}
-                <div className="flex items-center justify-between mt-4 md:mt-6 flex-shrink-0 gap-3 flex-wrap">
-                    <div className="text-sm text-gray-600">
+                <div className="flex items-center justify-between mt-3 md:mt-4 flex-shrink-0 gap-3 flex-wrap">
+                    <div className="text-sm text-[#64748B]">
                         Страница {page} из {totalPage}
                     </div>
 
@@ -397,8 +396,8 @@ const Users = () => {
                         <button
                             onClick={() => setPage((p) => p - 1)}
                             disabled={page === 1}
-                            className="px-3 md:px-4 py-2 border rounded-lg text-sm
-                                    disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                            className="px-3 md:px-4 py-2 border border-[#DCE5EE] bg-white rounded-lg text-[12px] text-[#274C77]
+                                    disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#F1F5F9]"
                         >
                             ← Назад
                         </button>
@@ -406,8 +405,8 @@ const Users = () => {
                         <button
                             onClick={() => setPage((p) => p + 1)}
                             disabled={page === totalPage}
-                            className="px-3 md:px-4 py-2 border rounded-lg text-sm
-                                    disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                            className="px-3 md:px-4 py-2 border border-[#DCE5EE] bg-white rounded-lg text-[12px] text-[#274C77]
+                                    disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#F1F5F9]"
                         >
                             Вперёд →
                         </button>
@@ -415,17 +414,15 @@ const Users = () => {
                 </div>
             </div>
 
-            <Footer />
-
             {/* ============ МОДАЛКА ============ */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent
-                    className="max-w-[95%] md:max-w-[90%] w-full h-[90vh] p-0 flex flex-col overflow-hidden"
+                    className="max-w-[95%] md:max-w-[90%] w-full h-[90vh] p-0 flex flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white"
                     onOpenAutoFocus={(e) => e.preventDefault()}
                 >
-                    <div className="px-4 md:px-5 py-3">
+                    <div className="px-4 md:px-5 py-3 border-b border-[#E8EEF4]">
                         <DialogHeader>
-                            <DialogTitle className="text-[15px] md:text-[16px]">
+                            <DialogTitle className="text-[15px] md:text-[16px] text-[#274C77]">
                                 Редактирование клиента
                             </DialogTitle>
                             <DialogDescription className="sr-only">
@@ -435,11 +432,11 @@ const Users = () => {
                     </div>
 
                     {/* ===== Табы — только на телефоне ===== */}
-                    <div className="md:hidden flex gap-1 mx-3 mt-3 p-1 bg-gray-100 rounded-lg shrink-0">
+                    <div className="md:hidden flex gap-1 mx-3 mt-3 p-1 bg-[#EDF2F7] rounded-lg shrink-0">
                         <button
                             onClick={() => setMobileTab('form')}
                             className={`flex-1 py-2 rounded-md text-[13px] font-medium transition-colors
-                                ${mobileTab === 'form' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600'}`}
+                                ${mobileTab === 'form' ? 'bg-white text-gray-900 shadow-sm' : 'text-[#64748B]'}`}
                         >
                             <i className="bi bi-person mr-1.5"></i>
                             Данные
@@ -447,7 +444,7 @@ const Users = () => {
                         <button
                             onClick={() => setMobileTab('orders')}
                             className={`flex-1 py-2 rounded-md text-[13px] font-medium transition-colors
-                                ${mobileTab === 'orders' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600'}`}
+                                ${mobileTab === 'orders' ? 'bg-white text-gray-900 shadow-sm' : 'text-[#64748B]'}`}
                         >
                             <i className="bi bi-receipt mr-1.5"></i>
                             Заказы {ordersModal.length > 0 && `(${ordersModal.length})`}
@@ -460,7 +457,7 @@ const Users = () => {
                         <div
                             className={`
                                 flex-col w-full md:max-w-[300px] md:flex-shrink-0
-                                bg-gray-100 p-3 md:rounded-md
+                                bg-[#F6F9FC] border border-[#E2E8F0] p-3 md:rounded-lg
                                 overflow-y-auto
                                 shrink-0
                                 md:flex md:flex-col
@@ -468,7 +465,7 @@ const Users = () => {
                             `}
                         >
                             <div>
-                                <label className="text-sm font-medium">ФИО</label>
+                                <label className="text-[12px] font-medium text-[#475569]">ФИО</label>
                                 <Input
                                     name="FIO"
                                     value={formData.FIO || ''}
@@ -477,7 +474,7 @@ const Users = () => {
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium">Телефон</label>
+                                <label className="text-[12px] font-medium text-[#475569]">Телефон</label>
                                 <Input
                                     name="phone"
                                     value={formData.phone || ''}
@@ -488,15 +485,15 @@ const Users = () => {
                             {/* Роль — только для ADMIN, выпадающий список */}
                             {canSeeRole && (
                                 <div>
-                                    <label className="text-sm font-medium">Роль</label>
+                                    <label className="text-[12px] font-medium text-[#475569]">Роль</label>
                                     <select
                                         name="role"
                                         value={formData.role || 'USER'}
                                         onChange={handleInputChange}
                                         className="w-full px-3 py-2 mt-1
-                                                bg-white border border-gray-200 rounded-md
-                                                text-[14px] text-stone-800
-                                                focus:outline-none focus:ring-2 focus:ring-teal-900/30 focus:border-teal-700
+                                                bg-white border border-[#E2E8F0] rounded-md
+                                                text-[14px] text-[#274C77]
+                                                focus:outline-none focus:ring-2 focus:ring-[#7890A8]/30 focus:border-[#7890A8]
                                                 cursor-pointer"
                                     >
                                         {ROLE_OPTIONS.map((r) => (
@@ -509,7 +506,7 @@ const Users = () => {
                             )}
 
                             <div>
-                                <label className="text-sm font-medium">Тип почты</label>
+                                <label className="text-[12px] font-medium text-[#475569]">Тип почты</label>
                                 <Input
                                     name="typePost"
                                     value={formData.typePost || ''}
@@ -518,7 +515,7 @@ const Users = () => {
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium">Индекс</label>
+                                <label className="text-[12px] font-medium text-[#475569]">Индекс</label>
                                 <Input
                                     name="postCode"
                                     value={formData.postCode || ''}
@@ -527,7 +524,7 @@ const Users = () => {
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium">Город</label>
+                                <label className="text-[12px] font-medium text-[#475569]">Город</label>
                                 <Input
                                     name="city"
                                     value={formData.city || ''}
@@ -536,7 +533,7 @@ const Users = () => {
                             </div>
 
                             <div>
-                                <label className="text-sm font-medium">Адрес</label>
+                                <label className="text-[12px] font-medium text-[#475569]">Адрес</label>
                                 <Input
                                     name="adress"
                                     value={formData.adress || ''}
@@ -545,7 +542,7 @@ const Users = () => {
                             </div>
 
                             <div className="flex flex-col">
-                                <label className="text-sm font-medium">О клиенте</label>
+                                <label className="text-[12px] font-medium text-[#475569]">О клиенте</label>
                                 <Textarea
                                     name="aboutUser"
                                     value={formData.aboutUser || ''}
@@ -554,13 +551,13 @@ const Users = () => {
                             </div>
 
                             <div className="flex gap-2">
-                                <Button className="mt-4 flex-1 md:flex-none" onClick={handleSave}>
+                                <Button className="mt-4 flex-1 md:flex-none bg-[#274C77] hover:bg-[#1D3D61] text-white" onClick={handleSave}>
                                     Сохранить
                                 </Button>
 
                                 <Button
                                     className="mt-4 flex-1 md:flex-none bg-red-600 hover:bg-red-700 text-white
-                                            disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                                            disabled:bg-gray-300 disabled:text-[#64748B] disabled:cursor-not-allowed"
                                     onClick={handleDeleteClient}
                                     disabled={ordersModal.length > 0}
                                     title={
@@ -584,10 +581,10 @@ const Users = () => {
                             `}
                         >
                             <div className="flex flex-col w-full h-full">
-                                <div className="flex-1 overflow-auto bg-white md:rounded-md border border-gray-200">
+                                <div className="flex-1 overflow-auto bg-white md:rounded-lg border border-[#E2E8F0]">
                                     <div className="w-full text-sm min-w-[700px]">
                                         {/* Заголовки */}
-                                        <div className="sticky bg-white top-0 border-b flex font-semibold text-gray-500 text-[11px] uppercase tracking-wider z-10">
+                                        <div className="sticky bg-[#F8FAFC] top-0 border-b border-[#E2E8F0] flex font-semibold text-[#64748B] text-[11px] uppercase tracking-wider z-10">
                                             <div className="flex-1 py-2 px-3">Дата</div>
                                             <div className="flex-1 py-2 px-3">ФИО</div>
                                             <div className="flex-1 py-2 px-3">Город</div>
@@ -598,7 +595,7 @@ const Users = () => {
                                         </div>
 
                                         {ordersModal.length === 0 ? (
-                                            <div className="py-10 text-center text-gray-400">
+                                            <div className="py-10 text-center text-[#94A3B8]">
                                                 Заказов нет
                                             </div>
                                         ) : (
@@ -606,40 +603,40 @@ const Users = () => {
                                                 <div key={el.order_number}>
                                                     {/* Строка */}
                                                     <div
-                                                        className={`flex border-b cursor-pointer transition-colors
+                                                        className={`flex border-b border-[#E8EEF4] cursor-pointer transition-colors
                                                             ${expandedOrder === el.order_number
-                                                                ? 'bg-blue-50/70'
-                                                                : 'hover:bg-gray-100'
+                                                                ? 'bg-[#EAF1F7]'
+                                                                : 'hover:bg-[#F1F5F9]'
                                                             }`}
                                                         onClick={() => toggleOrder(el.order_number)}
                                                     >
-                                                        <div className="flex-1 py-2 px-3 text-gray-600 tabular-nums">
+                                                        <div className="flex-1 py-2 px-3 text-[#64748B] tabular-nums">
                                                             {new Date(el.createdAt).toLocaleDateString('ru-RU')}
                                                         </div>
-                                                        <div className="flex-1 py-2 px-3 truncate text-gray-800">
+                                                        <div className="flex-1 py-2 px-3 truncate text-[#334155]">
                                                             {el.FIO}
                                                         </div>
-                                                        <div className="flex-1 py-2 px-3 truncate text-gray-600">
+                                                        <div className="flex-1 py-2 px-3 truncate text-[#64748B]">
                                                             {el.city}
                                                         </div>
-                                                        <div className="flex-1 py-2 px-3 text-gray-600">
+                                                        <div className="flex-1 py-2 px-3 text-[#64748B]">
                                                             {el.typePost}
                                                         </div>
-                                                        <div className="flex-1 py-2 px-3 truncate text-gray-600">
+                                                        <div className="flex-1 py-2 px-3 truncate text-[#64748B]">
                                                             {photoLine(el.photos)}
                                                         </div>
-                                                        <div className="flex-1 py-2 px-3 text-right font-semibold text-gray-800 tabular-nums">
+                                                        <div className="flex-1 py-2 px-3 text-right font-semibold text-[#334155] tabular-nums">
                                                             {el.price}{' '}
-                                                            <span className="text-gray-400 font-normal text-[11px]">р</span>
+                                                            <span className="text-[#94A3B8] font-normal text-[11px]">р</span>
                                                         </div>
-                                                        <div className="flex-1 py-2 px-3 text-gray-600">
+                                                        <div className="flex-1 py-2 px-3 text-[#64748B]">
                                                             {el.origin}
                                                         </div>
                                                     </div>
 
                                                     {/* Раскрывающийся блок */}
                                                     {expandedOrder === el.order_number && (
-                                                        <div className="bg-gray-50 p-4 border-b border-gray-200">
+                                                        <div className="bg-[#F8FAFC] p-4 border-b border-[#E2E8F0]">
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5 text-[13px]">
                                                                 <Detail label="ФИО" value={el.FIO} />
                                                                 <Detail label="Телефон" value={el.phone} />
@@ -656,7 +653,7 @@ const Users = () => {
                                                             </div>
 
                                                             {/* Кнопка удаления заказа */}
-                                                            <div className="flex justify-end mt-3 pt-3 border-t border-gray-200">
+                                                            <div className="flex justify-end mt-3 pt-3 border-t border-[#E2E8F0]">
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
@@ -681,7 +678,7 @@ const Users = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-row justify-end gap-5 mt-3 text-sm bg-gray-100 w-full py-1 px-5 rounded-md">
+                                <div className="flex flex-row justify-end gap-5 mt-3 text-[12px] text-[#475569] bg-[#F1F5F9] border border-[#E2E8F0] w-full py-2 px-4 rounded-lg">
                                     <label>Всего заказов: {selectedUser?.orderCount || '0'} шт</label>
                                     <label>Сумма заказов: {selectedUser?.totalOrderSum || '0'} р</label>
                                 </div>
@@ -697,8 +694,8 @@ const Users = () => {
 // ============ ДЕТАЛИ В РАСКРЫТОМ БЛОКЕ ============
 const Detail = ({ label, value }) => (
     <div className="flex gap-2">
-        <span className="text-gray-400 shrink-0 min-w-[110px]">{label}:</span>
-        <span className="text-gray-700 break-words">{value || '—'}</span>
+        <span className="text-[#94A3B8] shrink-0 min-w-[110px]">{label}:</span>
+        <span className="text-[#475569] break-words">{value || '—'}</span>
     </div>
 );
 

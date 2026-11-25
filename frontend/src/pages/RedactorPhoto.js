@@ -1,4 +1,3 @@
-import Footer from "../components/admin/Footer";
 import { NavBar } from "../components/admin/NavBar";
 import Redactor from "../components/photoRedactor/Redactor";
 
@@ -8,9 +7,6 @@ const RedactorPhoto = () => {
       <NavBar />
       <Redactor />
 
-       <div style={{ marginTop: 'auto' }}>
-                <Footer />
-            </div>
     </div>
   );
 }

@@ -6,7 +6,6 @@ import { setUser } from '../../store/privatePageReducer';
 import { useEffect } from 'react';
 
 export const PageAfterUpload = ({ amountPhoto, phone }) => {
-
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const isAuth = useSelector(state => state.auth.auth);
@@ -45,111 +44,52 @@ export const PageAfterUpload = ({ amountPhoto, phone }) => {
     };
 
     return (
-        <div className="flex-1 w-full flex items-center justify-center mt-8 px-1 py-6 md:px-6 md:py-6">
-            <div className="w-full max-w-[560px] md:max-w-[720px] bg-white rounded-2xl
-                            border border-stone-200
-                            shadow-[0_8px_30px_-12px_rgba(44,53,49,0.18)]
-                            px-4 py-7 md:px-10 md:py-10">
-
-                {/* ===== Успешно ===== */}
-                <div className="flex items-center justify-center gap-3 md:gap-5">
-                    <div className="shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#19766d]/10
-                                    flex items-center justify-center">
-                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#19766d]
-                                        flex items-center justify-center
-                                        shadow-[0_5px_18px_-4px_rgba(25,118,109,0.35)]">
-                            <i className="bi bi-check-lg text-white text-[19px] md:text-[22px]" />
-                        </div>
+        <div className="flex w-full flex-1 items-start justify-center px-3 pb-8 pt-7 md:items-center md:px-6 md:py-10">
+            <div className="w-full max-w-[520px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_40px_-24px_rgba(15,23,42,0.3)]">
+                <div className="px-5 pb-6 pt-8 text-center sm:px-8 sm:pt-10">
+                    <div className="relative mx-auto mb-5 flex h-[76px] w-[76px] items-center justify-center">
+                        <div className="absolute inset-[9px] rounded-full border-[1px] border-teal-700 " />
+                        <i className="bi bi-check-lg relative text-[30px] text-teal-700" aria-hidden="true" />
                     </div>
 
-                    <div className="flex flex-col items-start">
-                        <h4 className="text-[17px] md:text-[23px] font-normal text-stone-700 leading-[1.2]">
-                            Успешно отправлено!
-                        </h4>
+                    <h1 className="text-[21px] font-semibold tracking-tight text-black sm:text-[24px]">
+                        Заказ отправлен!
+                    </h1>
+                    <p className="mx-auto mt-2 max-w-[330px] text-[13px] leading-6 text-slate-500 sm:text-sm">
+                        Фотографии успешно переданы в LINK.
+                        Спасибо, что выбрали нас!
+                    </p>
 
-                        <div className="mt-1.5 inline-flex items-center gap-1.5
-                                        bg-[#19766d]/5 text-stone-700
-                                        px-2.5 py-1 rounded-full
-                                        text-[11.5px] md:text-[13px] font-medium">
-                            <i className="bi bi-check-circle-fill text-[11px] md:text-[12px]" />
-                            {amountPhoto === 1
-                                ? 'Загружено 1 фото'
-                                : `Загружено ${amountPhoto} фото`
-                            }
-                        </div>
+                    <div className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-[12px] font-medium text-slate-600">
+                        <i className="bi bi-images text-[14px] text-slate-400" aria-hidden="true" />
+                        {amountPhoto === 1
+                            ? 'Загружено 1 фото'
+                            : `Загружено ${amountPhoto} фото`}
                     </div>
                 </div>
 
-                {/* ===== Личный кабинет ===== */}
-                <div className="mt-10 md:mt-8 pt-4 md:pt-7 border-t border-dashed border-stone-200">
-                    <div className="flex items-center gap-3 md:gap-4 rounded-xl bg-slate-50
-                                    px-3.5 py-3 md:px-5 md:py-4">
-                        <div className="shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#19766d]/10
-                                        flex items-center justify-center">
-                            <i className="bi bi-person text-stone-700 text-[20px] md:text-[23px]" />
-                        </div>
+                <div className="mx-5 border-t border-slate-100 sm:mx-8" />
 
-                        <div className="min-w-0">
-                            <div className="text-[13.5px] md:text-[16px] font-semibold text-stone-700 leading-snug">
-                                Заказ уже в личном кабинете
-                            </div>
-                            <div className="mt-0.5 text-[11.5px] md:text-[13px] text-stone-400 leading-snug">
-                                Там можно проверить его статус и детали
-                            </div>
+                <div className="px-5 pb-6 pt-6 sm:px-8 sm:pb-8">
+                    <div className="flex flex-row justify-center gap-3.5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-[0.5px] border-teal-700">
+                            <i className="bi bi-bag-check text-[18px] text-teal-700" aria-hidden="true" />
+                        </div>
+                        <div className="">
+                            <p className="text-[12px] text-slate-500">
+                                Заказ доступен в личном кабинете. Там можно посмотреть детали и следить за статусом.
+                            </p>
                         </div>
                     </div>
 
                     <button
                         type="button"
                         onClick={openOrder}
-                        className="mt-3 md:mt-4 w-full h-11 md:h-12 rounded-xl 
-                                bg-teal-600 hover:bg-teal-700
-                                text-white text-[13.5px] md:text-[15px] font-medium
-                                flex items-center justify-center gap-2.5
-                                shadow-[0_5px_14px_-7px_rgba(25,118,109,0.6)]
-                                transition-colors"
+                        className="mt-6 flex h-12 w-full items-center justify-center gap-2.5 rounded-xl bg-[#274C77] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#1E3A5D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#274C77] focus-visible:ring-offset-2"
                     >
-                        <i className="bi bi-bag text-[14px] md:text-[16px]" />
                         Посмотреть заказ
-                        <i className="bi bi-arrow-right text-[13px] md:text-[15px] ml-1" />
+                        <i className="bi bi-arrow-right text-[15px]" aria-hidden="true" />
                     </button>
-                </div>
-
-                {/* ===== Соцсети ===== */}
-                <div className="mt-5 md:mt-7 pt-4 md:pt-6 border-t border-dashed border-stone-200">
-                    <div className="text-center text-[11px] md:text-[12.5px] text-stone-400">
-                        Есть вопрос по заказу?
-                    </div>
-
-                    <div className="mt-3 md:mt-4 grid grid-cols-2 gap-2.5 md:gap-4">
-                        <a
-                            href="https://www.instagram.com/link.belarus"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="h-10 md:h-12 rounded-xl bg-slate-50 border border-slate-200
-                                    flex items-center justify-center gap-2
-                                    text-[12.5px] md:text-[14px] font-medium text-stone-700
-                                    hover:text-stone-700
-                                    hover:bg-slate-100 hover:border-slate-300 transition-colors"
-                        >
-                            <i className="bi bi-instagram text-[16px] md:text-[18px] text-[#19766d]" />
-                            Instagram
-                        </a>
-
-                        <a
-                            href="https://www.t.me/link_belarus"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="h-10 md:h-12 rounded-xl bg-slate-50 border border-slate-200
-                                    flex items-center justify-center gap-2
-                                    text-[12.5px] md:text-[14px] font-medium text-stone-700
-                                    hover:text-stone-700
-                                    hover:bg-slate-100 hover:border-slate-300 transition-colors"
-                        >
-                            <i className="bi bi-telegram text-[16px] md:text-[18px] text-[#19766d]" />
-                            Telegram
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>

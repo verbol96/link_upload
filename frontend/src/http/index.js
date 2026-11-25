@@ -1,7 +1,9 @@
 import axios from "axios"
 
-//export const API_URL = `http://${window.location.hostname}:8002/`;
-export const API_URL = `https://link1.by:8002/`;
+
+export const API_URL = window.location.hostname === "link1.by"
+    ? "https://link1.by:8002/"
+    : `http://${window.location.hostname}:8002/`;
 
 export const $host = axios.create({
     withCredentials: true,
@@ -22,7 +24,7 @@ $host.interceptors.response.use(config =>
     }, async(error)=> {
         const originalRequest = error.config;
         
-        if (error.response.status === 401 && error.config && !error.config._isRetry) {
+        if (error.response?.status === 401 && error.config && !error.config._isRetry) {
             originalRequest._isRetry = true;
             try {
                 let response = await $host.get('api/auth/refresh', { withCredentials: true });

@@ -23,15 +23,22 @@ export const createDir = async(nameDir, parentId)=>{
     return data
 }
 
-export const uploadFiles = async(file, parentFile, id)=>{
-    const formDate = new FormData()
-    formDate.append('id', id)
-    formDate.append('file', file.file)
+export const uploadFiles = async (file, parentFile, id) => {
+    const formDate = new FormData();
+
+    formDate.append('id', id);
+    formDate.append('file', file.file);
     formDate.append('fileName', file.file.name);
-    formDate.append('parent', parentFile)
-    const {data} = await $host.post('api/file/upload', formDate)
-    return data
-}
+    formDate.append('parent', parentFile);
+
+    const { data } = await $host.post(
+        'api/file/upload',
+        formDate,
+        { timeout: 120000 }
+    );
+
+    return data;
+};
 
 export const deleteFile = async(id)=>{
     const {data} = await $host.delete(`api/file?id=${id}`)
@@ -217,3 +224,20 @@ export const displayFileImg = async (id) => {
     return null;
   }
 }
+
+export const setFileDownloadStatus = async (id, isDownload) => {
+    const { data } = await $host.patch(
+        `api/file/${id}/download-status`,
+        { isDownload }
+    );
+    return data;
+};
+
+export const displayFileLarge = async (id) => {
+    const { data } = await $host.get('api/file/thumb', {
+        params: { id, size: 'large' },
+        responseType: 'blob'
+    });
+
+    return URL.createObjectURL(data);
+};

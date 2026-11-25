@@ -226,7 +226,7 @@ class authController {
     async deleteOldLogs(req,res){
         try{
             const date=new Date();
-            date.setDate(date.getDate()-7);
+            date.setDate(date.getDate()-14);
 
             const deleted=await LogUser.destroy({
                 where:{

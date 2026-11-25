@@ -1,4 +1,19 @@
-const {Settings, SettingEditor, File, Order, Photo, Token, User, LogUser, Expense} = require('../models/models')
+const {
+    User,
+    Order,
+    Photo,
+    Settings,
+    Token,
+    File,
+    SettingEditor,
+    LogUser,
+    Expense,
+    MyFileDraft,
+    MyFileFolder,
+    MyFileItem,
+    sequelize
+} = require('../models/models');
+
 require('dotenv').config()
 const fs = require('fs');
 
@@ -27,252 +42,166 @@ class settingsController{
         return res.json(responce)
     }
 
-    // сделать бэкап всех БД
+    // Сделать бэкап всех таблиц
     async getCopyBD(req, res) {
-        const file = await File.findAll();
-        const order = await Order.findAll();
-        const photo = await Photo.findAll();
-        const token = await Token.findAll();
-        const user = await User.findAll();
-        const settings = await Settings.findAll();
-        const settingEditor = await SettingEditor.findAll();
-        const expense = await Expense.findAll();
-        const logUser = await LogUser.findAll();
+        try {
+            const models = {
+                file: File,
+                order: Order,
+                photo: Photo,
+                token: Token,
+                user: User,
+                settings: Settings,
+                settingEditor: SettingEditor,
+                expense: Expense,
+                logUser: LogUser,
+                myFileDraft: MyFileDraft,
+                myFileFolder: MyFileFolder,
+                myFileItem: MyFileItem
+            };
 
-        const data = {
-            file,
-            order,
-            photo,
-            token,
-            user,
-            settings,
-            settingEditor,
-            expense,
-            logUser,
-        };
+            const data = await sequelize.transaction(
+                { isolationLevel: 'REPEATABLE READ' },
+                async (transaction) => {
+                    const result = {};
 
-        const jsonString = JSON.stringify(data);
-        const filePath = `${process.env.PATH_BACKUP}/backup/DB.json`;
+                    for (const [key, model] of Object.entries(models)) {
+                        result[key] = await model.findAll({
+                            raw: true,
+                            transaction
+                        });
+                    }
 
-        fs.writeFile(filePath, jsonString, (err) => {
-            if (err) {
-                return res.status(500).send(err);
-            }
-            res.download(filePath);
-        });
+                    return result;
+                }
+            );
+
+            const jsonString = JSON.stringify(data);
+            const backupDir = `${process.env.PATH_BACKUP}/backup`;
+            const filePath = `${backupDir}/DB.json`;
+
+            await fs.promises.mkdir(backupDir, { recursive: true });
+            await fs.promises.writeFile(filePath, jsonString);
+
+            return res.download(filePath);
+
+        } catch (error) {
+            console.error('Ошибка создания бэкапа:', error);
+
+            return res.status(500).json({
+                message: 'Ошибка создания бэкапа'
+            });
+        }
     }
         
-    // очистить все БД и загрузить бэкап
+    // Очистить все таблицы и восстановить бэкап
     async setCopyDB(req, res) {
-        const {
-            file, order, photo, token, user,
-            settings, settingEditor, expense, logUser,
-        } = req.body.file;
+        try {
+            const data = req.body.file;
 
-        // ==========================================
-        // 1. Удаление — от дочерних к родительским
-        // ==========================================
-        await File.destroy({ truncate: true, cascade: true });
-        await Photo.destroy({ truncate: true, cascade: true });
-        await Order.destroy({ truncate: true, cascade: true });
-        await Token.destroy({ truncate: true, cascade: true });
-        await Expense.destroy({ truncate: true, cascade: true });
-        await LogUser.destroy({ truncate: true, cascade: true });
-        await Settings.destroy({ truncate: true, cascade: true });
-        await SettingEditor.destroy({ truncate: true, cascade: true });
-        await User.destroy({ truncate: true, cascade: true });
-
-        // ==========================================
-        // 2. Восстановление — от родительских к дочерним
-        // ==========================================
-
-        // User
-        if (user) {
-            for (let i = 0; i < user.length; i++) {
-                await User.create({
-                    id: user[i].id,
-                    phone: user[i].phone,
-                    FIO: user[i].FIO,
-                    role: user[i].role,
-                    typePost: user[i].typePost,
-                    postCode: user[i].postCode,
-                    city: user[i].city,
-                    adress: user[i].adress,
-                    oblast: user[i].oblast,
-                    raion: user[i].raion,
-                    orderCount: user[i].orderCount || 0,
-                    totalOrderSum: user[i].totalOrderSum || 0,
-                    aboutUser: user[i].aboutUser,
-                    createdAt: user[i].createdAt,
-                    updatedAt: user[i].updatedAt,
+            if (!data || typeof data !== 'object' || Array.isArray(data)) {
+                return res.status(400).json({
+                    message: 'Некорректный файл бэкапа'
                 });
             }
-        }
 
-        // Order
-        if (order) {
-            for (let i = 0; i < order.length; i++) {
-                await Order.create({
-                    id: order[i].id,
-                    order_number: order[i].order_number,
-                    codeOutside: order[i].codeOutside,
-                    price: order[i].price,
-                    other: order[i].other,
-                    notes: order[i].notes,
-                    status: order[i].status,
-                    typePost: order[i].typePost,
-                    postCode: order[i].postCode,
-                    city: order[i].city,
-                    adress: order[i].adress,
-                    oblast: order[i].oblast,
-                    raion: order[i].raion,
-                    FIO: order[i].FIO,
-                    phone: order[i].phone,
-                    price_deliver: order[i].price_deliver,
-                    main_dir_id: order[i].main_dir_id,
-                    origin: order[i].origin,
-                    is_sms_add: order[i].is_sms_add,
-                    is_sms_error: order[i].is_sms_error,
-                    is_sms_send: order[i].is_sms_send,
-                    is_sms_pay: order[i].is_sms_pay,
-                    date_sent: order[i].date_sent,
-                    isPayment: order[i].isPayment,
-                    createdAt: order[i].createdAt,
-                    updatedAt: order[i].updatedAt,
-                    userId: order[i].userId,
-                });
-            }
-        }
+            // Порядок восстановления:
+            // от родительских таблиц к дочерним
+            const models = [
+                ['user', User],
+                ['order', Order],
+                ['photo', Photo],
+                ['file', File],
+                ['token', Token],
+                ['settings', Settings],
+                ['settingEditor', SettingEditor],
+                ['expense', Expense],
+                ['logUser', LogUser],
+                ['myFileDraft', MyFileDraft],
+                ['myFileFolder', MyFileFolder],
+                ['myFileItem', MyFileItem]
+            ];
 
-        // Photo
-        if (photo) {
-            for (let i = 0; i < photo.length; i++) {
-                await Photo.create({
-                    id: photo[i].id,
-                    type: photo[i].type,
-                    format: photo[i].format,
-                    amount: photo[i].amount,
-                    paper: photo[i].paper,
-                    copies: photo[i].copies,
-                    createdAt: photo[i].createdAt,
-                    updatedAt: photo[i].updatedAt,
-                    orderId: photo[i].orderId,
-                });
-            }
-        }
+            // Проверка обязательных таблиц
+            const required = [
+                'user',
+                'order',
+                'photo',
+                'file',
+                'token',
+                'settings',
+                'settingEditor',
+                'expense',
+                'logUser'
+            ];
 
-        // Settings
-        if (settings) {
-            for (let i = 0; i < settings.length; i++) {
-                await Settings.create({
-                    id: settings[i].id,
-                    type: settings[i].type,
-                    title: settings[i].title,
-                    name: settings[i].name,
-                    price: settings[i].price,
-                    createdAt: settings[i].createdAt,
-                    updatedAt: settings[i].updatedAt,
-                });
-            }
-        }
-
-        // SettingEditor
-        if (settingEditor) {
-            for (let i = 0; i < settingEditor.length; i++) {
-                await SettingEditor.create({
-                    id: settingEditor[i].id,
-                    name: settingEditor[i].name,
-                    width: settingEditor[i].width,
-                    height: settingEditor[i].height,
-                    top: settingEditor[i].top,
-                    bottom: settingEditor[i].bottom,
-                    left: settingEditor[i].left,
-                    right: settingEditor[i].right,
-                    widthList: settingEditor[i].widthList,
-                    heightList: settingEditor[i].heightList,
-                    isShow: settingEditor[i].isShow,
-                    createdAt: settingEditor[i].createdAt,
-                    updatedAt: settingEditor[i].updatedAt,
-                });
-            }
-        }
-
-        // Token
-        if (token) {
-            for (let i = 0; i < token.length; i++) {
-                await Token.create({
-                    id: token[i].id,
-                    refreshToken: token[i].refreshToken,
-                    createdAt: token[i].createdAt,
-                    updatedAt: token[i].updatedAt,
-                    userId: token[i].userId,
-                });
-            }
-        }
-
-        // File
-        if (file) {
-            for (let i = 0; i < file.length; i++) {
-                try {
-                    await File.create({
-                        id: file[i].id,
-                        name: file[i].name,
-                        type: file[i].type,
-                        size: file[i].size,
-                        path: file[i].path,
-                        parent: file[i].parent,
-                        createdAt: file[i].createdAt,
-                        updatedAt: file[i].updatedAt,
-                        photoId: file[i].photoId,
-                        isDownload: file[i].isDownload,
+            for (const key of required) {
+                if (!Array.isArray(data[key])) {
+                    return res.status(400).json({
+                        message: `В бэкапе отсутствует таблица ${key}`
                     });
-                } catch (err) {
-                    console.error(`Ошибка создания File ${file[i].id}:`, err.message);
                 }
             }
-        }
 
-        // Expense
-        if (expense) {
-            for (let i = 0; i < expense.length; i++) {
-                await Expense.create({
-                    id: expense[i].id,
-                    category: expense[i].category,
-                    amount: expense[i].amount,
-                    title: expense[i].title,
-                    createdAt: expense[i].createdAt,
-                    updatedAt: expense[i].updatedAt,
-                });
+            // Проверка формата всех переданных таблиц
+            for (const [key] of models) {
+                if (data[key] !== undefined && !Array.isArray(data[key])) {
+                    return res.status(400).json({
+                        message: `Некорректные данные таблицы ${key}`
+                    });
+                }
             }
-        }
 
-        // LogUser
-        if (logUser) {
-            for (let i = 0; i < logUser.length; i++) {
-                await LogUser.create({
-                    id: logUser[i].id,
-                    phone: logUser[i].phone,
-                    surname: logUser[i].surname,
-                    sessionId: logUser[i].sessionId,
-                    event: logUser[i].event,
-                    eventType: logUser[i].eventType,
-                    page: logUser[i].page,
-                    orderId: logUser[i].orderId,
-                    photosCount: logUser[i].photosCount,
-                    format: logUser[i].format,
-                    error: logUser[i].error,
-                    appVersion: logUser[i].appVersion,
-                    device: logUser[i].device,
-                    browser: logUser[i].browser,
-                    OS: logUser[i].OS,
-                    screen: logUser[i].screen,
-                    createdAt: logUser[i].createdAt,
-                    updatedAt: logUser[i].updatedAt,
-                });
-            }
-        }
+            await sequelize.transaction(async (transaction) => {
 
-        return res.json('everything is okey');
+                // 1. Очистка таблиц
+                // От дочерних к родительским
+                for (const [, model] of [...models].reverse()) {
+                    await model.destroy({
+                        where: {},
+                        transaction
+                    });
+                }
+
+                // 2. Восстановление таблиц
+                // От родительских к дочерним
+                for (const [key, model] of models) {
+                    const rows = data[key] || [];
+
+                    if (!rows.length) continue;
+
+                    // Восстанавливаем порциями по 1000 записей
+                    for (let i = 0; i < rows.length; i += 1000) {
+                        await model.bulkCreate(
+                            rows.slice(i, i + 1000),
+                            {
+                                transaction,
+                                validate: true
+                            }
+                        );
+                    }
+                }
+
+                // 3. Восстановление счётчика номеров заказов
+                await sequelize.query(`
+                    SELECT setval(
+                        pg_get_serial_sequence('"orders"', 'order_number'),
+                        COALESCE(MAX("order_number"), 1),
+                        MAX("order_number") IS NOT NULL
+                    )
+                    FROM "orders";
+                `, { transaction });
+            });
+
+            return res.json('everything is okey');
+
+        } catch (error) {
+            console.error('Ошибка восстановления БД:', error);
+
+            return res.status(500).json({
+                message: 'Ошибка восстановления БД'
+            });
+        }
     }
 
 

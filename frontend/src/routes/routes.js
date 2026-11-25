@@ -1,3 +1,4 @@
+
 import Setting from "../pages/Setting"
 import Statistic from "../pages/Statistic"
 import Table from "../pages/Table"
@@ -12,6 +13,8 @@ import MyFiles from "../pages/MyFiles"
 import Tools from "../pages/Tools"
 import MyOrders from "../pages/MyOrders"
 import MyProfile from "../pages/MyProfile"
+import Templates from "../pages/Templates"
+import Contacts from "../pages/Contacts"
 
 // ============================================================
 // Маппинг: путь → компонент.
@@ -23,8 +26,8 @@ export const COMPONENT_MAP = {
     '/redactor':  RedactorPhoto,
     '/users':     Users,
     '/cloud':     Cloud,
-    '/myOrders':   MyOrders,
-    '/myProfile':   MyProfile,
+    '/myOrders':  MyOrders,
+    '/myProfile': MyProfile,
     '/myFiles':   MyFiles,
     '/web':       Web,
     '/expenses':  Expenses,
@@ -32,6 +35,7 @@ export const COMPONENT_MAP = {
     '/setting':   Setting,
     '/history':   History,
     '/auth':      Auth,
-    '/tools':  Tools,
-    
+    '/tools':     Tools,
+    '/templates': Templates,
+    '/contacts':  Contacts,
 };

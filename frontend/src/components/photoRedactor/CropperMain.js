@@ -434,13 +434,13 @@ const onCropComplete = useCallback(
         <>
             <div className="h-full bg-white flex flex-col md:flex-row">
                 {/* СПИСОК ПРЕВЬЮ — на десктопе слева, на мобилке скрыт */}
-                <div className="hidden md:block w-[10%] shrink-0 h-full overflow-auto border-r border-gray-200">
+                <div className="hidden md:block w-[10%] shrink-0 h-full overflow-auto border-r border-[#E2E8F0]">
                     <ListPhoto photos={photos} activePhoto={activePhoto} changePhoto={changePhoto} />
                 </div>
                 {/* ЦЕНТРАЛЬНЫЙ КРОППЕР */}
                 <div className="flex-1 min-h-0 md:w-[70%] flex flex-col items-center justify-between">
                     {photos.length > 0 && (
-                        <div className="md:hidden w-full px-2 pt-4 border-b border-gray-200 bg-white">
+                        <div className="md:hidden w-full px-2 pt-4 border-b border-[#E2E8F0] bg-white">
                             <PhotoCarousel
                                 photos={photos}
                                 activePhoto={activePhoto}
@@ -451,7 +451,7 @@ const onCropComplete = useCallback(
                     {photos[activePhoto] === undefined ? (
                         <div className="relative h-full w-full flex items-center justify-center">
                             <label className="cursor-pointer">
-                                <div className="w-52 h-52 bg-gray-100 rounded-lg flex flex-col items-center justify-center hover:bg-gray-200 transition">
+                                <div className="w-52 h-52 bg-[#F3F5F7] rounded-lg flex flex-col items-center justify-center hover:bg-[#E2E8F0] transition">
                                     <div className="text-4xl text-gray-400">+</div>
                                     <div className="text-sm text-gray-400 mt-2">Выбрать фото</div>
                                 </div>
@@ -475,16 +475,16 @@ const onCropComplete = useCallback(
                                             flex items-center justify-center cursor-pointer
                                             shadow-lg hover:bg-white hover:scale-110 
                                             transition-all duration-200 z-10
-                                            border border-gray-200
+                                            border border-[#E2E8F0]
                                             disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                                     disabled={activePhoto === 0}
                                 >
-                                    <i className="bi bi-chevron-left text-xl md:text-3xl text-gray-700"></i>
+                                    <i className="bi bi-chevron-left text-xl md:text-3xl text-[#334155]"></i>
                                 </button>
 
 <div
     ref={cropperContainerRef}
-    className="relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-gray-300 overflow-hidden"
+    className="relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-[#CBD5E1] overflow-hidden"
 >
     <div
         ref={transitionOverlayRef}
@@ -493,7 +493,7 @@ const onCropComplete = useCallback(
     <Cropper
 
                                         
-className={`relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-gray-300 ${
+className={`relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-[#CBD5E1] ${
     visiblePhotoId === activePhotoId ? 'opacity-100' : 'opacity-0'
 }`}
 
@@ -560,11 +560,11 @@ className={`relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-g
                                             flex items-center justify-center cursor-pointer
                                             shadow-lg hover:bg-white hover:scale-110 
                                             transition-all duration-200 z-10
-                                            border border-gray-200
+                                            border border-[#E2E8F0]
                                             disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                                     disabled={activePhoto === photos.length - 1}
                                 >
-                                    <i className="bi bi-chevron-right text-xl md:text-3xl text-gray-700"></i>
+                                    <i className="bi bi-chevron-right text-xl md:text-3xl text-[#334155]"></i>
                                 </button>
                             </div>
                             {/* МОБИЛЬНАЯ ПАНЕЛЬ: 3 кнопки + свайп-зона */}
@@ -572,16 +572,16 @@ className={`relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-g
                                 <div className="flex justify-center gap-2">
                                     <button
                                         onClick={() => RotationImg(1)}
-                                        className="w-8 h-8 rounded-full bg-white shadow-md border border-gray-200
-                                                flex items-center justify-center text-gray-700
+                                        className="w-8 h-8 rounded-full bg-white shadow-md border border-[#E2E8F0]
+                                                flex items-center justify-center text-[#334155]
                                                 hover:bg-gray-50 active:scale-95 transition-all"
                                     >
                                         <i className="bi bi-arrow-clockwise text-lg"></i>
                                     </button>
                                     <button
                                         onClick={() => RotationAspect()}
-                                        className="w-8 h-8 rounded-full bg-white shadow-md border border-gray-200
-                                                flex items-center justify-center text-gray-700
+                                        className="w-8 h-8 rounded-full bg-white shadow-md border border-[#E2E8F0]
+                                                flex items-center justify-center text-[#334155]
                                                 hover:bg-gray-50 active:scale-95 transition-all"
                                     >
                                         <i className="bi bi-repeat text-lg"></i>
@@ -590,8 +590,8 @@ className={`relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-g
                                         onClick={() => addField()}
                                         className={`w-8 h-8 rounded-full shadow-md border flex items-center justify-center
                                                     active:scale-95 transition-all ${fieldsWhite
-                                                ? 'bg-teal-700 text-white border-teal-700'
-                                                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                                                ? 'bg-[#274C77] text-white border-[#274C77]'
+                                                : 'bg-white text-[#334155] border-[#E2E8F0] hover:bg-gray-50'
                                             }`}
                                         title={fieldsWhite ? 'Убрать поля' : 'Добавить поля'}
                                     >
@@ -603,12 +603,12 @@ className={`relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-g
                                         <button
                                             onClick={() => changePhoto(activePhoto - 1)}
                                             disabled={activePhoto === 0}
-                                            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200
+                                            className="w-8 h-8 rounded-full bg-[#F3F5F7] hover:bg-[#E2E8F0]
                                                     flex items-center justify-center shrink-0
                                                     disabled:opacity-30 disabled:cursor-not-allowed
                                                     transition-colors"
                                         >
-                                            <i className="bi bi-chevron-left text-sm text-gray-700"></i>
+                                            <i className="bi bi-chevron-left text-sm text-[#334155]"></i>
                                         </button>
                                         <div
                                             className="flex-1 h-10 flex items-center justify-center gap-1 select-none cursor-grab active:cursor-grabbing"
@@ -620,8 +620,8 @@ className={`relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-g
                                                     key={i}
                                                     onClick={() => changePhoto(i)}
                                                     className={`rounded-full transition-all duration-200 cursor-pointer ${i === activePhoto
-                                                        ? 'w-6 h-1.5 bg-teal-700'
-                                                        : 'w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400'
+                                                        ? 'w-6 h-1.5 bg-[#274C77]'
+                                                        : 'w-1.5 h-1.5 bg-[#CBD5E1] hover:bg-gray-400'
                                                         }`}
                                                 />
                                             ))}
@@ -629,12 +629,12 @@ className={`relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-g
                                         <button
                                             onClick={() => changePhoto(activePhoto + 1)}
                                             disabled={activePhoto === photos.length - 1}
-                                            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200
+                                            className="w-8 h-8 rounded-full bg-[#F3F5F7] hover:bg-[#E2E8F0]
                                                     flex items-center justify-center shrink-0
                                                     disabled:opacity-30 disabled:cursor-not-allowed
                                                     transition-colors"
                                         >
-                                            <i className="bi bi-chevron-right text-sm text-gray-700"></i>
+                                            <i className="bi bi-chevron-right text-sm text-[#334155]"></i>
                                         </button>
                                     </div>
                                 )}
@@ -642,33 +642,33 @@ className={`relative w-[90vw] h-[90vw] md:w-[38vw] md:h-[38vw] border-0 border-g
                             {/* Панель инструментов */}
                             <div className='hidden md:flex justify-center mt-2 md:mt-0'>
                                 <div className="bg-white/90 backdrop-blur-sm rounded-full shadow-lg p-1.5 md:p-2 flex gap-1 md:gap-2 z-10 items-center overflow-x-auto max-w-full">
-                                    <button onClick={() => RotationImg(-1)} className="hidden md:flex w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700 shrink-0">
+                                    <button onClick={() => RotationImg(-1)} className="hidden md:flex w-8 h-8 rounded-full hover:bg-[#F3F5F7] flex items-center justify-center text-[#334155] shrink-0">
                                         <i className="bi bi-arrow-counterclockwise"></i>
                                     </button>
-                                    <button onClick={() => RotationImg(1)} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700 shrink-0">
+                                    <button onClick={() => RotationImg(1)} className="w-8 h-8 rounded-full hover:bg-[#F3F5F7] flex items-center justify-center text-[#334155] shrink-0">
                                         <i className="bi bi-arrow-clockwise"></i>
                                     </button>
-                                    <div className="w-px h-6 bg-gray-300 mx-0.5 md:mx-1 shrink-0"></div>
-                                    <button onClick={() => RotationAspect()} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700 shrink-0">
+                                    <div className="w-px h-6 bg-[#CBD5E1] mx-0.5 md:mx-1 shrink-0"></div>
+                                    <button onClick={() => RotationAspect()} className="w-8 h-8 rounded-full hover:bg-[#F3F5F7] flex items-center justify-center text-[#334155] shrink-0">
                                         <i className="bi bi-repeat"></i>
                                     </button>
-                                    <div className="w-px h-6 bg-gray-300 mx-0.5 md:mx-1 shrink-0"></div>
+                                    <div className="w-px h-6 bg-[#CBD5E1] mx-0.5 md:mx-1 shrink-0"></div>
                                     <button
                                         onClick={() => addField()}
-                                        className={`w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0 ${fieldsWhite ? 'text-blue-600' : 'text-gray-700'
+                                        className={`w-8 h-8 rounded-full hover:bg-[#F3F5F7] flex items-center justify-center transition-colors shrink-0 ${fieldsWhite ? 'text-[#274C77]' : 'text-[#334155]'
                                             }`}
                                         title={fieldsWhite ? 'Убрать поля' : 'Добавить поля'}
                                     >
-                                        {fieldsWhite ? <i className="bi bi-view-list rotate-90 bg-gray-200 p-2 rounded-full"></i> : <i className="bi bi-view-list rotate-90"></i>}
+                                        {fieldsWhite ? <i className="bi bi-view-list rotate-90 bg-[#E2E8F0] p-2 rounded-full"></i> : <i className="bi bi-view-list rotate-90"></i>}
                                     </button>
-                                    <div className="hidden md:flex w-px h-6 bg-gray-300 mx-0.5 mx-1 shrink-0"></div>
-                                    <button onClick={() => cropCenter('y')} className="hidden md:flex w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700 shrink-0">
+                                    <div className="hidden md:flex w-px h-6 bg-[#CBD5E1] mx-0.5 mx-1 shrink-0"></div>
+                                    <button onClick={() => cropCenter('y')} className="hidden md:flex w-8 h-8 rounded-full hover:bg-[#F3F5F7] flex items-center justify-center text-[#334155] shrink-0">
                                         <i className="bi bi-arrows-collapse"></i>
                                     </button>
-                                    <button onClick={() => cropCenter('x')} className="hidden md:flex w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-700 shrink-0">
+                                    <button onClick={() => cropCenter('x')} className="hidden md:flex w-8 h-8 rounded-full hover:bg-[#F3F5F7] flex items-center justify-center text-[#334155] shrink-0">
                                         <i className="bi bi-arrows-collapse-vertical"></i>
                                     </button>
-                                    <div className="hidden md:flex w-px h-6 bg-gray-300 mx-0.5 mx-1 shrink-0"></div>
+                                    <div className="hidden md:flex w-px h-6 bg-[#CBD5E1] mx-0.5 mx-1 shrink-0"></div>
                                     <div className='hidden md:flex items-center shrink-0'>
                                         <input
                                             type="range"
@@ -691,28 +691,28 @@ onChange={(e) => {
                     )}
                 </div>
                 {/* НАСТРОЙКИ СПРАВА — на десктопе, на мобилке скрыто */}
-                <div className='hidden md:flex w-[20%] shrink-0 h-full flex-col justify-between bg-gray-100 border-l border-gray-200'>
+                <div className='hidden md:flex w-[20%] shrink-0 h-full flex-col justify-between bg-[#F3F5F7] border-l border-[#E2E8F0]'>
                     <div className="overflow-auto p-4 flex flex-col gap-12 h-full">
                         <div className="space-y-1">
                             <input
                                 type="text"
                                 placeholder="номер заказа"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm 
-                                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                                className="w-full px-3 py-2 border border-[#CBD5E1] rounded-lg text-sm 
+                                        focus:outline-none focus:ring-2 focus:ring-[#274C77] focus:border-transparent
                                         transition-all"
                                 value={nameOrder} onChange={(e) => setNameOrder(e.target.value)}
                             />
                         </div>
                         <div>
                             <div>
-                                <label className="text-sm font-medium text-teal-900 flex items-center gap-1 ml-1">
-                                    <i className="bi bi-aspect-ratio text-teal-900"></i>
+                                <label className="text-sm font-medium text-[#274C77] flex items-center gap-1 ml-1">
+                                    <i className="bi bi-aspect-ratio text-[#274C77]"></i>
                                     Выбор размера:
                                 </label>
                                 <select
-                                    className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg text-sm 
+                                    className="w-full mt-2 px-3 py-2 border border-[#CBD5E1] rounded-lg text-sm 
                                         bg-white cursor-pointer appearance-none pr-8
-                                        focus:outline-none focus:ring-1 focus:ring-teal-700 focus:border-transparent 
+                                        focus:outline-none focus:ring-1 focus:ring-[#274C77] focus:border-transparent 
                                         transition-all"
                                     style={{
                                         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
@@ -734,22 +734,22 @@ onChange={(e) => {
                                 </select>
                             </div>
                             <button onClick={() => { setIsModalOpen(true); }}
-                                className="w-full mt-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 
-                                            rounded-lg text-xs font-medium text-gray-700 
+                                className="w-full mt-2 px-4 py-2 bg-[#F3F5F7] hover:bg-[#E2E8F0] 
+                                            rounded-lg text-xs font-medium text-[#334155] 
                                             transition-colors flex items-center justify-center gap-2
-                                            border-[1px] border-gray-200 text-teal-900">
-                                <i className="bi bi-gear-fill text-teal-900"></i>
+                                            border-[1px] border-[#E2E8F0] text-[#274C77]">
+                                <i className="bi bi-gear-fill text-[#274C77]"></i>
                                 настройки
                             </button>
                         </div>
                         <div className="flex flex-col gap-2 text-sm items-center mb-2">
-                            <div className="flex w-full rounded-md border border-gray-300 overflow-hidden text-xs">
+                            <div className="flex w-full rounded-md border border-[#CBD5E1] overflow-hidden text-xs">
                                 <button
                                     type="button"
                                     onClick={() => setWithFrame(false)}
                                     className={`flex-1 py-1 transition-colors ${!withFrame
-                                        ? 'bg-teal-800 text-white font-light'
-                                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                                        ? 'bg-[#274C77] text-white font-light'
+                                        : 'bg-white text-[#64748B] hover:bg-gray-50'
                                         }`}
                                 >
                                     только кадр
@@ -757,9 +757,9 @@ onChange={(e) => {
                                 <button
                                     type="button"
                                     onClick={() => setWithFrame(true)}
-                                    className={`flex-1 py-1 border-l border-gray-300 transition-colors ${withFrame
-                                        ? 'bg-teal-800 text-white font-light'
-                                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                                    className={`flex-1 py-1 border-l border-[#CBD5E1] transition-colors ${withFrame
+                                        ? 'bg-[#274C77] text-white font-light'
+                                        : 'bg-white text-[#64748B] hover:bg-gray-50'
                                         }`}
                                 >
                                     кадр с рамкой
@@ -779,9 +779,9 @@ onChange={(e) => {
                                     </span>
                                     <span className="shrink-0">{activePhoto + 1} / {photos.length}</span>
                                 </div>
-                                <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="w-full h-1 bg-[#F3F5F7] rounded-full overflow-hidden">
                                     <div
-                                        className="h-1 bg-teal-700 rounded-full transition-all duration-500"
+                                        className="h-1 bg-[#274C77] rounded-full transition-all duration-500"
                                         style={{ width: `${((activePhoto + 1) / photos.length) * 100}%` }}
                                     />
                                 </div>
@@ -789,21 +789,21 @@ onChange={(e) => {
                                     <span>Обработано </span>
                                     <span>{photos.filter(p => p.cropData).length} / {photos.length}</span>
                                 </div>
-                                <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="w-full h-1 bg-[#F3F5F7] rounded-full overflow-hidden">
                                     <div
-                                        className="h-1 bg-teal-700 rounded-full transition-all duration-500"
+                                        className="h-1 bg-[#274C77] rounded-full transition-all duration-500"
                                         style={{ width: `${(photos.filter(p => p.cropData).length / photos.length) * 100}%` }}
                                     />
                                 </div>
                             </div>
                         }
                     </div>
-                    <div className="p-4 border-t border-gray-200 space-y-2">
+                    <div className="p-4 border-t border-[#E2E8F0] space-y-2">
                         <div className="flex justify-between items-center gap-1 text-[10px] text-gray-400">
                             <button
                                 onClick={saveCurrentPhoto}
                                 disabled={!photos[activePhoto]?.cropData}
-                                className="text-gray-900 hover:text-teal-700 font-xs
+                                className="text-gray-900 hover:text-[#274C77] font-xs
                                         transition-colors
                                         disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Скачать только текущее фото"
@@ -813,21 +813,21 @@ onChange={(e) => {
                             <div className="flex items-center gap-1">
                                 <button
                                     onClick={() => setOutputFormat('jpeg')}
-                                    className={outputFormat === 'jpeg' ? 'text-teal-800 font-medium' : 'hover:text-gray-600'}
+                                    className={outputFormat === 'jpeg' ? 'text-[#274C77] font-medium' : 'hover:text-[#64748B]'}
                                 >
                                     JPEG
                                 </button>
-                                <span className="text-gray-300">·</span>
+                                <span className="text-[#CBD5E1]">·</span>
                                 <button
                                     onClick={() => setOutputFormat('png')}
-                                    className={outputFormat === 'png' ? 'text-teal-800 font-medium' : 'hover:text-gray-600'}
+                                    className={outputFormat === 'png' ? 'text-[#274C77] font-medium' : 'hover:text-[#64748B]'}
                                 >
                                     PNG
                                 </button>
                             </div>
                         </div>
                         <button
-                            className="w-full px-4 py-2.5 bg-teal-700 hover:bg-teal-900 
+                            className="w-full px-4 py-2.5 bg-[#274C77] hover:bg-[#1E3A5D] 
                                         text-white rounded-lg text-sm font-medium 
                                         transition-colors flex items-center justify-center gap-2
                                         shadow-sm"
@@ -838,10 +838,10 @@ onChange={(e) => {
                         </button>
                         <button
                             onClick={() => clearPhotos()}
-                            className="w-full px-4 py-2.5 bg-gray-100 hover:bg-gray-200 
-                                    text-gray-700 rounded-lg text-sm font-medium 
+                            className="w-full px-4 py-2.5 bg-[#F3F5F7] hover:bg-[#E2E8F0] 
+                                    text-[#334155] rounded-lg text-sm font-medium 
                                     transition-colors flex items-center justify-center gap-2
-                                    border border-gray-200"
+                                    border border-[#E2E8F0]"
                         >
                             <i className="bi bi-trash3"></i>
                             Очистить всё
@@ -849,32 +849,32 @@ onChange={(e) => {
                     </div>
                 </div>
                 {/* МОБИЛЬНАЯ ПАНЕЛЬ КНОПОК ВНИЗУ */}
-                <div className="md:hidden shrink-0 border-t border-gray-200 bg-white py-3 px-2 flex flex-row gap-2">
+                <div className="md:hidden shrink-0 border-t border-[#E2E8F0] bg-white py-3 px-2 flex flex-row gap-2">
                     <button
                         onClick={() => setShowSettings(true)}
-                        className="flex-1 py-1.5 bg-gray-100 rounded-lg text-sm font-light text-gray-700 flex items-center justify-center gap-2"
+                        className="flex-1 py-1.5 bg-[#F3F5F7] rounded-lg text-sm font-light text-[#334155] flex items-center justify-center gap-2"
                     >
-                        <i className="bi bi-gear-fill text-teal-900"></i>
+                        <i className="bi bi-gear-fill text-[#274C77]"></i>
                     </button>
                     <button
                         onClick={() => setShowPhotoList(true)}
-                        className="flex-[3] py-1.5 bg-gray-100 rounded-lg text-sm font-light text-gray-700 
+                        className="flex-[3] py-1.5 bg-[#F3F5F7] rounded-lg text-sm font-light text-[#334155] 
                                 flex items-center justify-center gap-2 
-                                hover:bg-gray-200 transition-colors relative"
+                                hover:bg-[#E2E8F0] transition-colors relative"
                     >
                         <i className="bi bi-images"></i>
                         Фото
                         {photos.length > 0 && (
                             <span className="text-xs text-gray-500">{activePhoto + 1}/{photos.length}</span>
                         )}
-                        <i className="bi bi-chevron-up text-md  absolute right-2 text-teal-800 "></i>
+                        <i className="bi bi-chevron-up text-md  absolute right-2 text-[#274C77] "></i>
                     </button>
                     <button
                         onClick={savePhotos}
                         disabled={photos.length === 0}
-                        className="flex-[3] py-1.5 bg-gray-100 rounded-lg text-sm font-light text-gray-700 
+                        className="flex-[3] py-1.5 bg-[#F3F5F7] rounded-lg text-sm font-light text-[#334155] 
                                 flex items-center justify-center gap-2
-                                hover:bg-gray-200 transition-colors
+                                hover:bg-[#E2E8F0] transition-colors
                                 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Сохранить
@@ -892,9 +892,9 @@ onChange={(e) => {
                         >
                             <div className="flex justify-between items-center p-3 border-b">
                                 <h3 className="font-semibold">Фото ({photos.length})</h3>
-                                <button onClick={() => setShowPhotoList(false)} ><i className="bi bi-chevron-down text-md text-teal-800 "></i></button>
+                                <button onClick={() => setShowPhotoList(false)} ><i className="bi bi-chevron-down text-md text-[#274C77] "></i></button>
                             </div>
-                            <div className="flex-1 overflow-auto p-2">
+                            <div className="flex-1 overflow-auto mt-4 p-2">
                                 <ListPhoto
                                     photos={photos}
                                     activePhoto={activePhoto}
@@ -905,7 +905,7 @@ onChange={(e) => {
                                 />
                             </div>
                             <div className="p-4 border-t">
-                                <label className="cursor-pointer w-full py-2 bg-teal-700 text-white rounded-lg flex items-center justify-center gap-2">
+                                <label className="cursor-pointer w-full py-2 bg-[#274C77] text-white rounded-lg flex items-center justify-center gap-2">
                                     <i className="bi bi-plus-lg"></i>
                                     Добавить фото
                                     <input
@@ -939,18 +939,18 @@ onChange={(e) => {
                                     <input
                                         type="text"
                                         placeholder="номер заказа"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                        className="w-full px-3 py-2 border border-[#CBD5E1] rounded-lg text-sm"
                                         value={nameOrder}
                                         onChange={(e) => setNameOrder(e.target.value)}
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-teal-900 flex items-center gap-1">
+                                    <label className="text-sm font-medium text-[#274C77] flex items-center gap-1">
                                         <i className="bi bi-aspect-ratio"></i>
                                         Размер:
                                     </label>
                                     <select
-                                        className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+                                        className="w-full mt-2 px-3 py-2 border border-[#CBD5E1] rounded-lg text-sm bg-white"
                                         onChange={(e) => changeSelect(e.target.value)}
                                     >
                                         {settingsDB.filter(el => el.isShow).map((el, index) => (
@@ -959,17 +959,17 @@ onChange={(e) => {
                                     </select>
                                     <button
                                         onClick={() => setIsModalOpen(true)}
-                                        className="w-full mt-2 px-4 py-2 bg-gray-100 rounded-lg text-xs font-medium text-teal-900 flex items-center justify-center gap-2 border border-gray-200"
+                                        className="w-full mt-2 px-4 py-2 bg-[#F3F5F7] rounded-lg text-xs font-medium text-[#274C77] flex items-center justify-center gap-2 border border-[#E2E8F0]"
                                     >
                                         <i className="bi bi-gear-fill"></i>
                                         настройки форматов
                                     </button>
                                 </div>
-                                <div className="flex w-full rounded-md border border-gray-300 overflow-hidden text-xs">
+                                <div className="flex w-full rounded-md border border-[#CBD5E1] overflow-hidden text-xs">
                                     <button
                                         type="button"
                                         onClick={() => setWithFrame(false)}
-                                        className={`flex-1 py-2 transition-colors ${!withFrame ? 'bg-teal-800 text-white' : 'bg-white text-gray-600'
+                                        className={`flex-1 py-2 transition-colors ${!withFrame ? 'bg-[#274C77] text-white' : 'bg-white text-[#64748B]'
                                             }`}
                                     >
                                         только кадр
@@ -977,7 +977,7 @@ onChange={(e) => {
                                     <button
                                         type="button"
                                         onClick={() => setWithFrame(true)}
-                                        className={`flex-1 py-2 border-l border-gray-300 transition-colors ${withFrame ? 'bg-teal-800 text-white' : 'bg-white text-gray-600'
+                                        className={`flex-1 py-2 border-l border-[#CBD5E1] transition-colors ${withFrame ? 'bg-[#274C77] text-white' : 'bg-white text-[#64748B]'
                                             }`}
                                     >
                                         кадр с рамкой
@@ -989,22 +989,22 @@ onChange={(e) => {
                                             <span className="truncate">{photos[activePhoto]?.name}</span>
                                             <span>{activePhoto + 1} / {photos.length}</span>
                                         </div>
-                                        <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
-                                            <div className="h-1 bg-teal-700 rounded-full" style={{ width: `${(photos.filter(p => p.cropData).length / photos.length) * 100}%` }} />
+                                        <div className="w-full h-1 bg-[#F3F5F7] rounded-full overflow-hidden">
+                                            <div className="h-1 bg-[#274C77] rounded-full" style={{ width: `${(photos.filter(p => p.cropData).length / photos.length) * 100}%` }} />
                                         </div>
                                     </div>
                                 )}
                                 <div className="flex justify-end items-center gap-2 text-xs text-gray-400">
                                     <button
                                         onClick={() => setOutputFormat('jpeg')}
-                                        className={outputFormat === 'jpeg' ? 'text-teal-800 font-medium' : ''}
+                                        className={outputFormat === 'jpeg' ? 'text-[#274C77] font-medium' : ''}
                                     >
                                         JPEG
                                     </button>
                                     <span>·</span>
                                     <button
                                         onClick={() => setOutputFormat('png')}
-                                        className={outputFormat === 'png' ? 'text-teal-800 font-medium' : ''}
+                                        className={outputFormat === 'png' ? 'text-[#274C77] font-medium' : ''}
                                     >
                                         PNG
                                     </button>
@@ -1015,8 +1015,8 @@ onChange={(e) => {
                                     onClick={saveCurrentPhoto}
                                     disabled={!photos[activePhoto]?.cropData}
                                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5
-                                            bg-white hover:bg-teal-50
-                                            text-teal-900 border border-teal-900
+                                            bg-white hover:bg-[#F1F5F9]
+                                            text-[#274C77] border border-[#274C77]
                                             rounded-lg text-sm font-medium
                                             transition-colors
                                             disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1026,7 +1026,7 @@ onChange={(e) => {
                                     Скачать это фото
                                 </button>
                                 <button
-                                    className="w-full px-4 py-2.5 bg-teal-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2"
+                                    className="w-full px-4 py-2.5 bg-[#274C77] text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2"
                                     onClick={() => {
                                         savePhotos();
                                         setShowSettings(false);
@@ -1040,7 +1040,7 @@ onChange={(e) => {
                                         clearPhotos();
                                         setShowSettings(false);
                                     }}
-                                    className="w-full px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium flex items-center justify-center gap-2 border border-gray-200"
+                                    className="w-full px-4 py-2.5 bg-[#F3F5F7] text-[#334155] rounded-lg text-sm font-medium flex items-center justify-center gap-2 border border-[#E2E8F0]"
                                 >
                                     <i className="bi bi-trash3"></i>
                                     Очистить всё
@@ -1053,7 +1053,7 @@ onChange={(e) => {
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent className="max-w-[80%] h-[80vh] flex flex-col px-4 pb-4 pt-1" onOpenAutoFocus={(e) => e.preventDefault()}>
                     <DialogHeader>
-                        <DialogTitle className='text-green-900'></DialogTitle>
+                        <DialogTitle className='text-[#274C77]'></DialogTitle>
                         <DialogDescription className="sr-only">
                         </DialogDescription>
                     </DialogHeader>

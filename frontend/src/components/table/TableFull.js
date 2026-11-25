@@ -71,12 +71,14 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
     const isAdmin = userRole === 'ADMIN'
 
     const [sortKey, setSortKey] = useState('default')
-    const [onlyGlossy, setOnlyGlossy] = useState(false)
-    const [onlyLustre, setOnlyLustre] = useState(false)
-    const [onlyHolst, setOnlyHolst] = useState(false)
-    const [onlyMagnit, setOnlyMagnit] = useState(false)
-    const [onlyA4, setOnlyA4] = useState(false)
-    const [onlyPoster, setOnlyPoster] = useState(false)
+    const [activeProductFilter, setActiveProductFilter] = useState(null)
+    const onlyGlossy = activeProductFilter === 'glossy'
+    const onlyLustre = activeProductFilter === 'lustre'
+    const onlyHolst = activeProductFilter === 'holst'
+    const onlyMagnit = activeProductFilter === 'magnit'
+    const onlyA4 = activeProductFilter === 'A4'
+    const onlyPoster = activeProductFilter === 'poster'
+    const toggleProductFilter = type => setActiveProductFilter(prev => prev === type ? null : type)
     const [datePickerOpen, setDatePickerOpen] = useState(false)
     const datePickerRef = useRef(null)
     const [dateFrom, setDateFrom] = useState('')
@@ -395,11 +397,11 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
         }
     }
 
-    const selectClass = 'h-[30px] min-w-0 rounded-md border-[1px] border-teal-800/50 bg-white px-2 text-xs font-normal text-slate-700 outline-none transition-colors focus:border-teal-700 focus:ring-1 focus:ring-teal-700 md:h-[32px] md:text-xs'
+    const selectClass = 'h-[30px] min-w-0 rounded-md border-[1px] ring-1 ring-inset ring-[#E2E8F0] bg-white px-2 text-xs font-normal text-slate-700 outline-none transition-colors focus:ring-1 focus:ring-[#7890A8] md:h-[32px] md:text-xs'
 
-    const filterButtonClass = 'hidden md:flex h-[32px] min-w-[60px] items-center justify-center rounded-md border-[1px] border-teal-800/50 px-3 text-xs font-medium cursor-pointer transition-colors hover:border-slate-400'
+    const filterButtonClass = 'hidden md:flex h-[32px] min-w-[60px] items-center justify-center rounded-md border-[1px] ring-1 ring-inset ring-[#E2E8F0] px-3 text-xs font-medium cursor-pointer transition-colors hover:ring-[#7890A8]'
 
-    const mainButtonClass = 'hidden md:flex h-[32px] w-[50px] shrink-0 items-center justify-center rounded-md border-0 bg-[#2f616b] text-white transition-colors hover:bg-[#434343]'
+    const mainButtonClass = 'hidden md:flex h-[32px] w-[50px] shrink-0 items-center justify-center rounded-md bg-[#274C77] text-white transition-colors hover:bg-[#1E3A5D]'
 
     return (
         <div className="font-sans text-base font-medium text-black antialiased">
@@ -425,10 +427,10 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
             </Dialog>
 
             {!activeModal && (
-                <div className="flex w-full items-center bg-teal-800/10 gap-2 px-2 py-2 my-3 border-[1px] border-teal-800/20 rounded-md ">
+                <div className="flex w-full items-center bg-white gap-2 px-3 py-2.5 my-3 rounded-xl shadow-sm" style={{ border: "1px solid #97a8b9", boxSizing: "border-box" }}>
                     <div className="flex w-full min-w-0 items-center gap-1 md:flex-1 md:gap-2.5">
                         <button
-                            className='hidden md:flex h-[32px] w-[50px] shrink-0 items-center justify-center rounded-md bg-white border-[1px] border-teal-800/50 text-teal-800 transition-colors hover:bg-[#434343] md:mr-6'
+                            className='hidden md:flex h-[32px] w-[50px] shrink-0 items-center justify-center rounded-md bg-white ring-1 ring-inset ring-[#E2E8F0] text-slate-600 transition-colors hover:bg-slate-100 hover:text-[#274C77] md:mr-2'
                             onClick={AddNewOrder}
                         >
                             <i className="bi bi-folder-plus text-sm"></i>
@@ -449,7 +451,7 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                         </select>
 
                         <input
-                            className="h-[30px] min-w-0 flex-[2] rounded-md border-[1px] border-teal-800/50 bg-white px-2 text-xs font-normal text-slate-700 placeholder:text-slate-400 outline-none transition-colors focus:border-teal-700 focus:ring-1 focus:ring-teal-700 md:h-[32px] md:w-[160px] md:flex-none"
+                            className="h-[30px] min-w-0 flex-[2] rounded-md ring-1 ring-inset ring-[#E2E8F0] bg-white px-2 text-xs font-normal text-slate-700 placeholder:text-slate-400 outline-none transition-colors focus:border-[#274C77] focus:ring-1 focus:ring-[#274C77]/15 md:h-[32px] md:w-[160px] md:flex-none"
                             type="text"
                             placeholder="Поиск"
                             value={searchQuery}
@@ -457,10 +459,10 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                         />
 
                         {isAdmin && (
-                            <div className="relative shrink-0 ml-8" ref={datePickerRef}>
+                            <div className="relative shrink-0 ml-1" ref={datePickerRef}>
                                 <button
                                     type="button"
-                                    className={`flex h-[32px] items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${dateFrom || dateTo ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'border-teal-800/50 bg-white text-slate-700 hover:border-teal-700'}`}
+                                    className={`flex h-[32px] items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${dateFrom || dateTo ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'ring-1 ring-inset ring-[#E2E8F0] bg-white text-slate-700 hover:ring-[#7890A8]'}`}
                                     onClick={() => setDatePickerOpen(prev => !prev)}
                                     title="Фильтр заказов по дате"
                                 >
@@ -468,26 +470,26 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                                     <span className="hidden lg:inline">{dateFrom || dateTo ? 'Период выбран' : 'Период'}</span>
                                 </button>
                                 {datePickerOpen && (
-                                    <div className="absolute right-0 top-full z-30 mt-2 w-[260px] rounded-xl border border-stone-200 bg-white p-3 shadow-xl">
+                                    <div className="absolute right-0 top-full z-30 mt-2 w-[260px] rounded-xl ring-1 ring-inset ring-[#E2E8F0] bg-white p-3 shadow-xl">
                                         <div className="mb-3 text-sm font-semibold text-stone-800">Диапазон дат</div>
                                         <label className="mb-2 block text-xs font-medium text-stone-600">
                                             С даты
-                                            <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)} className="mt-1 block h-9 w-full rounded-md border border-stone-300 bg-white px-2 text-sm outline-none focus:border-teal-700" />
+                                            <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)} className="mt-1 block h-9 w-full rounded-md border border-stone-300 bg-white px-2 text-sm outline-none focus:border-[#274C77]" />
                                         </label>
                                         <label className="block text-xs font-medium text-stone-600">
                                             По дату (включительно)
-                                            <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)} className="mt-1 block h-9 w-full rounded-md border border-stone-300 bg-white px-2 text-sm outline-none focus:border-teal-700" />
+                                            <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)} className="mt-1 block h-9 w-full rounded-md border border-stone-300 bg-white px-2 text-sm outline-none focus:border-[#274C77]" />
                                         </label>
                                         <div className="mt-3 flex items-center justify-between">
                                             <button type="button" className="text-xs text-stone-500 hover:text-stone-800" onClick={() => { setDateFrom(''); setDateTo('') }}>Сбросить</button>
-                                            <button type="button" className="rounded-md bg-[#2f616b] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#244e56]" onClick={() => setDatePickerOpen(false)}>Готово</button>
+                                            <button type="button" className="rounded-md bg-[#274C77] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1E3A5D]" onClick={() => setDatePickerOpen(false)}>Готово</button>
                                         </div>
                                     </div>
                                 )}
                             </div>
                         )}
                         {isAdmin && (
-                            <button type="button" onClick={() => setSortKey(prev => prev === 'price' ? 'default' : 'price')} title={sortKey === 'price' ? 'Вернуть обычную сортировку' : 'Сортировать по цене (от большей к меньшей)'} className={`flex h-[32px] mr-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${sortKey === 'price' ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'border-teal-800/50 bg-white text-slate-700 hover:border-teal-700'}`}>
+                            <button type="button" onClick={() => setSortKey(prev => prev === 'price' ? 'default' : 'price')} title={sortKey === 'price' ? 'Вернуть обычную сортировку' : 'Сортировать по цене (от большей к меньшей)'} className={`flex h-[32px] mr-2 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${sortKey === 'price' ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'ring-1 ring-inset ring-[#E2E8F0] bg-white text-slate-700 hover:ring-[#7890A8]'}`}>
                                 <i className="bi bi-sort-numeric-down-alt" />
                                 <span className="hidden lg:inline">По цене</span>
                             </button>
@@ -503,42 +505,42 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                         </select>
 
                         <button
-                            className={`${filterButtonClass} md:ml-auto ${onlyGlossy ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'bg-white text-slate-700'}`}
-                            onClick={() => setOnlyGlossy(!onlyGlossy)}
+                            className={`${filterButtonClass} md:ml-auto ${onlyGlossy ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            onClick={() => toggleProductFilter('glossy')}
                         >
                             glossy
                         </button>
                         <button
-                            className={`${filterButtonClass} ${onlyLustre ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'bg-white text-slate-700'}`}
-                            onClick={() => setOnlyLustre(!onlyLustre)}
+                            className={`${filterButtonClass} ${onlyLustre ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            onClick={() => toggleProductFilter('lustre')}
                         >
                             lustre
                         </button>
 
                         <button
-                            className={`${filterButtonClass} ${onlyHolst ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'bg-white text-slate-700'}`}
-                            onClick={() => setOnlyHolst(!onlyHolst)}
+                            className={`${filterButtonClass} ${onlyHolst ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            onClick={() => toggleProductFilter('holst')}
                         >
                             holst
                         </button>
 
                         <button
-                            className={`${filterButtonClass} ${onlyMagnit ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'bg-white text-slate-700'}`}
-                            onClick={() => setOnlyMagnit(!onlyMagnit)}
+                            className={`${filterButtonClass} ${onlyMagnit ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            onClick={() => toggleProductFilter('magnit')}
                         >
                             magnit
                         </button>
 
                         <button
-                            className={`${filterButtonClass} ${onlyA4 ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'bg-white text-slate-700'}`}
-                            onClick={() => setOnlyA4(!onlyA4)}
+                            className={`${filterButtonClass} ${onlyA4 ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            onClick={() => toggleProductFilter('A4')}
                         >
                             A4
                         </button>
 
                         <button
-                            className={`${filterButtonClass} mr-8 ${onlyPoster ? 'border-[#2f616b] bg-[#2f616b] text-white' : 'bg-white text-slate-700'}`}
-                            onClick={() => setOnlyPoster(prev => !prev)}
+                            className={`${filterButtonClass} mr-2 ${onlyPoster ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            onClick={() => toggleProductFilter('poster')}
                         >
                             poster
                         </button>
@@ -562,10 +564,10 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                         </button>
 
                         {statusFilterVisible && (
-                            <div className="absolute top-full right-0 z-10 flex w-[180px] flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
+                            <div className="absolute top-full right-0 z-10 flex w-[180px] flex-col gap-2 rounded-lg border ring-1 ring-inset ring-[#E2E8F0] bg-white p-3 shadow-lg">
                                 <label className="flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 text-xs font-normal text-slate-700 hover:bg-slate-50">
                                     <input
-                                        className="h-4 w-4 accent-teal-700"
+                                        className="h-4 w-4 accent-[#274C77]"
                                         type="checkbox"
                                         checked={[0, 1, 2, 3, 4, 7, 8].every(id => filterCheck.includes(id))}
                                         onChange={e => Check(e.target.checked, [0, 1, 2, 3, 4, 7, 8])}
@@ -575,7 +577,7 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
 
                                 <label className="flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 text-xs font-normal text-slate-700 hover:bg-slate-50">
                                     <input
-                                        className="h-4 w-4 accent-teal-700"
+                                        className="h-4 w-4 accent-[#274C77]"
                                         type="checkbox"
                                         checked={filterCheck.includes(5)}
                                         onChange={e => Check(e.target.checked, [5])}
@@ -585,7 +587,7 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
 
                                 <label className="flex cursor-pointer items-center gap-2 rounded px-1 py-1.5 text-xs font-normal text-slate-700 hover:bg-slate-50">
                                     <input
-                                        className="h-4 w-4 accent-teal-700"
+                                        className="h-4 w-4 accent-[#274C77]"
                                         type="checkbox"
                                         checked={filterCheck.includes(6)}
                                         onChange={e => Check(e.target.checked, [6])}
@@ -595,7 +597,7 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
 
                                 <div className="flex flex-col gap-2 border-t border-slate-100 pt-2">
                                     <button
-                                        className="text-left text-xs font-medium text-slate-600 hover:text-teal-700"
+                                        className="text-left text-xs font-medium text-slate-600 hover:text-[#274C77]"
                                         onClick={DownloadArchive}
                                     >
                                         загрузить архив
@@ -603,12 +605,12 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
 
                                     <div className="flex w-full gap-2">
                                         <input
-                                            className="w-0 flex-1 rounded border border-slate-300 px-1.5 py-1 text-xs font-normal outline-none focus:border-teal-700"
+                                            className="w-0 flex-1 rounded border border-slate-300 px-1.5 py-1 text-xs font-normal outline-none focus:border-[#274C77]"
                                             value={startArchive}
                                             onChange={e => setStartArchive(e.target.value)}
                                         />
                                         <input
-                                            className="w-0 flex-1 rounded border border-slate-300 px-1.5 py-1 text-xs font-normal outline-none focus:border-teal-700"
+                                            className="w-0 flex-1 rounded border border-slate-300 px-1.5 py-1 text-xs font-normal outline-none focus:border-[#274C77]"
                                             value={endArchive}
                                             onChange={e => setEndArchive(e.target.value)}
                                         />

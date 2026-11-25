@@ -101,7 +101,7 @@ class fileController {
                 count++;
             }
 
-            file.mv(filePath);
+            await file.mv(filePath);
             const type = file.name.split('.').pop()
             
             const dbFile = {
@@ -174,6 +174,49 @@ class fileController {
         } catch (error) {
             console.log(error)
             return res.status(400).json({message: "ошибка при удалении"})
+        }
+    }
+
+    async setDownloadStatus(req, res) {
+        try {
+            const { id } = req.params;
+            const { isDownload } = req.body;
+
+            if (typeof isDownload !== 'boolean') {
+                return res.status(400).json({
+                    message: 'isDownload должен быть boolean'
+                });
+            }
+
+            const file = await File.findOne({
+                where: { id }
+            });
+
+            if (!file) {
+                return res.status(404).json({
+                    message: 'файл не найден'
+                });
+            }
+
+            if (file.type !== 'dir') {
+                return res.status(400).json({
+                    message: 'доступно только для папок'
+                });
+            }
+
+            await file.update({ isDownload });
+
+            return res.json({
+                id: file.id,
+                isDownload: file.isDownload
+            });
+
+        } catch (error) {
+            console.error('setDownloadStatus error:', error);
+
+            return res.status(500).json({
+                message: 'ошибка изменения статуса'
+            });
         }
     }
 
@@ -415,48 +458,48 @@ class fileController {
         }
     }
     
-   async displayFile(req, res) {
+    async displayFile(req, res) {
         try {
-            const file = await File.findOne({ where: { id: req.query.id } });
-            if (!file) {
-            return res.status(404).json({ message: "Файл не найден" });
+            const file = await File.findOne({
+                where: { id: req.query.id }
+            });
+
+            if (!file || file.type === 'dir') {
+                return res.status(404).json({ message: 'Файл не найден' });
             }
 
             const filePath = path.join(process.env.FILEPATH, file.path, file.name);
 
-            // Проверка существования файла
             if (!fs.existsSync(filePath)) {
-            return res.status(200).json({ error: 'no file' });
+                return res.status(404).json({ message: 'Файл отсутствует на диске' });
             }
 
-            if (file.type !== 'dir') {
-            const contentType = mime.contentType(path.extname(filePath)) || 'application/octet-stream';
-            res.contentType(contentType);
+            const size = req.query.size === 'large' ? 2000 : 200;
 
-            // Проверка, что файл является изображением
-            const mimeType = mime.lookup(filePath);
-            if (mimeType && mimeType.startsWith('image/')) {
-                try {
-                const data = await sharp(filePath)
-                    .resize(200)
-                    .toBuffer();
-                res.end(data);
-                } catch (sharpError) {
-                console.error('Sharp error:', sharpError);
-                // Если sharp не смог обработать — отправляем оригинал
-                res.sendFile(filePath);
-                }
-            } else {
-                res.sendFile(filePath);
-            }
-            } else {
-            res.status(400).json({ message: "Невозможно отобразить директорию" });
-            }
+            const data = await sharp(filePath)
+                .rotate()
+                .resize({
+                    width: size,
+                    height: size,
+                    fit: 'inside',
+                    withoutEnlargement: true
+                })
+                .jpeg({ quality: size === 200 ? 75 : 88 })
+                .toBuffer();
+
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Cache-Control', 'private, max-age=3600');
+            res.setHeader('X-Preview-Size', String(size));
+
+            return res.send(data);
+
         } catch (error) {
             console.error('displayFile error:', error);
-            res.status(500).json({ message: "Ошибка при попытке отобразить файл" });
+            return res.status(500).json({
+                message: 'Не удалось создать миниатюру'
+            });
         }
-        }
+    }
 
     async getFilesPhotosId(req,res){
         const id = req.body.id

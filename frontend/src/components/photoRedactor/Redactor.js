@@ -988,12 +988,12 @@ const onSaveCrop = useCallback((photoId, newData) => {
             {/* Конвертация HEIC */}
             {convertingCount > 0 && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg flex flex-col items-center gap-4">
+                    <div className="bg-white border border-[#E2E8F0] p-6 rounded-xl flex flex-col items-center gap-4">
                         <div className="text-lg font-medium">
                             Упс, heic попался. Конвертирую...
                         </div>
                         <div className="flex items-center gap-2 text-gray-500">
-                            <i className="bi bi-arrow-repeat animate-spin text-teal-700 text-xl" />
+                            <i className="bi bi-arrow-repeat animate-spin text-[#274C77] text-xl" />
                         </div>
                     </div>
                 </div>
@@ -1002,17 +1002,17 @@ const onSaveCrop = useCallback((photoId, newData) => {
             {/* Создание миниатюр */}
             {processingTotal > 0 && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-2 min-w-[300px]">
-                        <div className="text-base font-medium text-gray-700">
+                    <div className="bg-white rounded-xl border border-[#E2E8F0] shadow-xl px-10 py-8 flex flex-col items-center gap-2 min-w-[300px]">
+                        <div className="text-base font-medium text-[#334155]">
                             Добавление фото в редактор...
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                        <div className="w-full bg-[#F3F5F7] rounded-full h-2.5 overflow-hidden">
                             <div
-                                className="bg-teal-600 h-2.5 rounded-full"
+                                className="bg-[#274C77] h-2.5 rounded-full"
                                 style={{ width: `${processingPercent}%` }}
                             />
                         </div>
-                        <div className="text-sm text-gray-400">
+                        <div className="text-sm text-[#64748B]">
                             {processingTotal - processingCount} / {processingTotal} фото
                         </div>
                     </div>
@@ -1034,22 +1034,22 @@ const onSaveCrop = useCallback((photoId, newData) => {
             {/* Скачивание */}
             {isDownloading && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-2 min-w-[300px]">
+                    <div className="bg-white rounded-xl border border-[#E2E8F0] shadow-xl px-10 py-8 flex flex-col items-center gap-2 min-w-[300px]">
                         {!downloadDone ? (
                             <>
-                                <div className="text-base font-medium text-gray-700">
+                                <div className="text-base font-medium text-[#334155]">
                                     Подготовка файлов...
                                 </div>
-                                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                <div className="w-full bg-[#F3F5F7] rounded-full h-2.5 overflow-hidden">
                                     <div
-                                        className="bg-blue-600 h-2.5 rounded-full"
+                                        className="bg-[#274C77] h-2.5 rounded-full"
                                         style={{ width: `${progressPercent}%` }}
                                     />
                                 </div>
-                                <div className="text-sm text-gray-400">
+                                <div className="text-sm text-[#64748B]">
                                     {loadingCount} / {totalSteps} {progressUnit}
                                 </div>
-                                <div className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                                <div className="text-xs text-[#64748B] flex items-center gap-1 mt-0.5">
                                     <i className="bi bi-stopwatch" />
                                     {formatElapsed(downloadElapsed)}
                                 </div>
@@ -1059,19 +1059,19 @@ const onSaveCrop = useCallback((photoId, newData) => {
                                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-100">
                                     <i className="bi bi-check-lg text-green-600 text-2xl" />
                                 </div>
-                                <div className="text-base font-medium text-gray-700 text-center mt-4">
+                                <div className="text-base font-medium text-[#334155] text-center mt-4">
                                     {photos.length} файлов
                                 </div>
-                                <div className="text-base font-light text-gray-700 text-center">
+                                <div className="text-base font-light text-[#334155] text-center">
                                     Все фото обработаны и скачаны
                                 </div>
-                                <div className="text-xs text-gray-400 flex items-center gap-1">
+                                <div className="text-xs text-[#64748B] flex items-center gap-1">
                                     <i className="bi bi-stopwatch" />
                                     Заняло {formatElapsed(downloadElapsed)}
                                 </div>
                                 <button
                                     onClick={handleDoneClose}
-                                    className="px-6 py-2 mt-4 bg-teal-700 text-white rounded-lg hover:bg-teal-900 transition-colors text-sm font-medium"
+                                    className="px-6 py-2 mt-4 bg-[#274C77] text-white rounded-md hover:bg-[#1E3A5D] transition-colors text-sm font-medium"
                                 >
                                     ОК
                                 </button>

@@ -44,161 +44,137 @@ class orderController{
 
 
 
-    async addOrder(req,res) {
 
-        const {phone, FIO, typePost, firstClass, postCode, city, adress,
-
-             oblast, raion, codeOutside, price, price_deliver, other, notes, photo, auth, phoneUser, status, origin} = req.body
-
-
+    async addOrder(req, res) {
+        const {
+            phone, FIO, typePost, firstClass, postCode, city, adress,
+            oblast, raion, codeOutside, price, price_deliver, other,
+            notes, photo, auth, phoneUser, status, origin
+        } = req.body;
 
         // === Расчёт даты отправки ===
-
         const dateSent = new Date();
-
         dateSent.setHours(0, 0, 0, 0);
-
-        dateSent.setDate(dateSent.getDate() + 2);   // +2 дня от сегодня
-
-
-
-        // Если попали на воскресенье — сдвигаем ВПЕРЁД
+        dateSent.setDate(dateSent.getDate() + 2);
 
         if (dateSent.getDay() === 0) {
-
             const isEuropePost = typePost === 'E' || typePost === 'E1';
-
-            // E/E1 → вторник (+2), остальные → понедельник (+1)
-
             dateSent.setDate(dateSent.getDate() + (isEuropePost ? 2 : 1));
-
-        }
-
-        // Если Европочта попала на понедельник — сдвигаем на вторник
-
-        else if (dateSent.getDay() === 1 && (typePost === 'E' || typePost === 'E1')) {
-
+        } else if (
+            dateSent.getDay() === 1 &&
+            (typePost === 'E' || typePost === 'E1')
+        ) {
             dateSent.setDate(dateSent.getDate() + 1);
-
-        }
-
-        // Если попали на субботу — сдвигаем НАЗАД на пятницу
-
-        else if (dateSent.getDay() === 6) {
-
+        } else if (dateSent.getDay() === 6) {
             dateSent.setDate(dateSent.getDate() - 1);
-
         }
 
+        // === Данные для сохранения в Users ===
+        const userData = {
+            FIO,
+            typePost,
+            postCode,
+            city,
+            adress,
+            oblast,
+            raion
+        };
 
+        // === Поиск или создание клиента ===
+        let user;
 
-        let order
+        if (auth) {
+            user = await User.findOne({
+                where: { phone: phoneUser }
+            });
 
-        if(auth){
+            if (!user) {
+                return res.status(404).json({
+                    message: 'Пользователь не найден'
+                });
+            }
+        } else {
+            user = await User.findOne({
+                where: { phone }
+            });
 
-            const user = await User.findOne({where: {phone: phoneUser}})
+            if (!user) {
+                user = await User.create({
+                    phone,
+                    ...userData
+                });
+            }
+        }
 
-            order = await Order.create({codeOutside,price,price_deliver,other,notes, status, typePost,firstClass,
+        // === Создание заказа ===
+        const order = await Order.create({
+            codeOutside,
+            price,
+            price_deliver,
+            other,
+            notes,
+            status,
+            typePost,
+            firstClass,
+            postCode,
+            city,
+            adress,
+            oblast,
+            raion,
+            FIO,
+            phone,
+            userId: user.id,
+            origin,
+            date_sent: dateSent
+        });
 
-                postCode,city,adress,oblast,raion,FIO,phone,userId: user.id, origin, date_sent: dateSent
-
+        // === Сохранение фотографий заказа ===
+        await Promise.all(
+            photo.map(async el => {
+                await Photo.create({
+                    id: el.id,
+                    type: el.type,
+                    format: el.format,
+                    amount: el.amount,
+                    copies: el.copies,
+                    paper: el.paper,
+                    orderId: order.id
+                });
             })
+        );
 
-            if(user.role === 'USER'){
-
-              await User.update({FIO, typePost, postCode, city, adress },
-
-                {where: 
-
-                  {id: user.id}
-
-                })
-
-            }
-
-
-
-        }else{
-
-            const pretendent = await User.findOne({where: {phone: phone}})
-
-            if(pretendent===null){
-
-                const user = await User.create({phone, FIO, typePost, postCode,city,adress,oblast,raion})
-
-                order = await Order.create({codeOutside,price,price_deliver,other,notes, status, typePost,firstClass,
-
-                    postCode,city,adress,oblast,raion,FIO,phone,userId: user.id, origin, date_sent: dateSent
-
-                })
-
-            }else{
-
-                order = await Order.create({codeOutside,price,price_deliver,other,notes, status, typePost,firstClass,
-
-                    postCode,city,adress,oblast,raion,FIO,phone, userId: pretendent.id, origin, date_sent: dateSent
-
-                })
-
-            }
-
+        // === Обновление актуальных данных клиента ===
+        // Только после успешного создания заказа и сохранения фотографий.
+        // Не изменяем данные администратора или сотрудника.
+        if (user.role === 'USER') {
+            await User.update(userData, {
+                where: { id: user.id }
+            });
         }
 
-
-
-        await Promise.all(photo.map(async el => {
-
-          await Photo.create({id: el.id, type: el.type, format: el.format, amount: el.amount, copies: el.copies, paper: el.paper, orderId: order.id });
-
-        }));
-
-
-
+        // === Получение созданного заказа ===
         let response = await Order.findOne({
-
-          where: { id: order.id },
-
-          include: [
-
-            {
-
-              model: User,
-
-            },
-
-            {
-
-              model: Photo,
-
-            },
-
-          ],
-
+            where: { id: order.id },
+            include: [
+                { model: User },
+                { model: Photo }
+            ]
         });
 
         if (response) {
-
-
-
-          response =  {
-
-            ...response.toJSON(),
-
-            createdAt: moment(response.createdAt).tz('Europe/Moscow').format()
-
-          }
-
+            response = {
+                ...response.toJSON(),
+                createdAt: moment(response.createdAt)
+                    .tz('Europe/Moscow')
+                    .format()
+            };
         }
 
-
-
-        await recalculateUserStats(response.userId)
-
-
+        await recalculateUserStats(response.userId);
 
         return res.json(response);
-
     }
+
 
 
 
@@ -1391,27 +1367,27 @@ savedPhotoResults.push({
 
 
 
-async deleteOrder(req,res){
-    try{
-        const id=req.params.id;
-        const order=await Order.findOne({where:{id}});
-        if(!order)return res.status(404).json({message:"Заказ не найден"});
-        await Order.destroy({where:{id}});
-        await Photo.destroy({where:{orderId:id}});
-await LogUser.create({
-    event:'order_deleted',
-    eventType:'info',
-    sessionId:req.body?.sessionId||null,
-    orderId:String(order.order_number),
-    surname:order.FIO||null,
-    phone:order.phone||'0'
-});
-        return res.json(order);
-    }catch(error){
-        console.error("deleteOrder error:",error);
-        return res.status(500).json({message:"Ошибка удаления заказа"});
+    async deleteOrder(req,res){
+        try{
+            const id=req.params.id;
+            const order=await Order.findOne({where:{id}});
+            if(!order)return res.status(404).json({message:"Заказ не найден"});
+            await Order.destroy({where:{id}});
+            await Photo.destroy({where:{orderId:id}});
+    await LogUser.create({
+        event:'order_deleted',
+        eventType:'info',
+        sessionId:req.body?.sessionId||null,
+        orderId:String(order.order_number),
+        surname:order.FIO||null,
+        phone:order.phone||'0'
+    });
+            return res.json(order);
+        }catch(error){
+            console.error("deleteOrder error:",error);
+            return res.status(500).json({message:"Ошибка удаления заказа"});
+        }
     }
-}
 
 
 

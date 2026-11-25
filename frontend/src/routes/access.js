@@ -1,17 +1,10 @@
-// ============================================================
-// ЕДИНЫЙ ИСТОЧНИК ПРАВ ДОСТУПА
-// Меняешь здесь — синхронно меняются и роуты, и меню.
-// ============================================================
+
+ // ============================================================
+ // ЕДИНЫЙ ИСТОЧНИК ПРАВ ДОСТУПА
+ // Меняешь здесь — синхронно меняются и роуты, и меню.
+ // ============================================================
 
 export const MENU_GROUPS = [
-   {
-        title: 'Меню',
-        roles: ['GUEST'],
-        items: [
-            { label: 'Оформление заказа', path: '/web',  icon: 'bi-cart' },
-            { label: 'Вход',         path: '/auth', icon: 'bi-box-arrow-in-right' },
-        ],
-    },
     {
         title: 'Работа',
         roles: ['ADMIN', 'WORKER'],
@@ -24,26 +17,36 @@ export const MENU_GROUPS = [
     },
     {
         title: 'Личный кабинет',
-        roles: ['ADMIN', 'WORKER', 'PARTNER', 'USER'],
+        roles: ['GUEST', 'WORKER', 'PARTNER', 'USER'],
         items: [
-            { label: 'История заказов', path: '/myOrders',  icon: 'bi-bag' },
-            { label: 'Личные данные',   path: '/myProfile',  icon: 'bi-person-badge' },
-            { label: 'Мои файлы',       path: '/myFiles',  icon: 'bi-folder' },
-            { label: 'Оформить заказ',  path: '/web',      icon: 'bi-plus' },
+            { label: 'История заказов', path: '/myOrders', icon: 'bi-bag' },
+            //{ label: 'Личные данные',   path: '/myProfile', icon: 'bi-person-badge' },
+            //{ label: 'Редактор',       path: '/templates', icon: 'bi-grid-1x2' },
+            { label: 'Мои файлы',       path: '/myFiles', icon: 'bi-folder' },
+            { label: 'Оформить заказ',  path: '/web', icon: 'bi-plus' },
+        ],
+    },
+    {
+        title: 'Личный кабинет',
+        roles: ['ADMIN'],
+        items: [
+            { label: 'История заказов', path: '/myOrders', icon: 'bi-bag' },
+            //{ label: 'Личные данные',   path: '/myProfile', icon: 'bi-person-badge' },
+            { label: 'Редактор',       path: '/templates', icon: 'bi-grid-1x2' },
+            { label: 'Мои файлы',       path: '/myFiles', icon: 'bi-folder' },
+            { label: 'Оформить заказ',  path: '/web', icon: 'bi-plus' },
         ],
     },
     {
         title: 'Root-доступ',
         roles: ['ADMIN'],
         items: [
-            { label: 'Журнал расходов', path: '/expenses',  icon: 'bi-cash-stack' },
+            { label: 'Журнал расходов', path: '/expenses', icon: 'bi-cash-stack' },
             { label: 'Статистика',      path: '/statistic', icon: 'bi-bar-chart' },
-           { label: 'Инструменты', path: '/tools', icon: 'bi-tools' },
-            { label: 'Настройки',       path: '/setting',   icon: 'bi-gear' },
-            
+            { label: 'Инструменты',     path: '/tools', icon: 'bi-tools' },
+            { label: 'Настройки',       path: '/setting', icon: 'bi-gear' },
         ],
     },
-
 ];
 
 // Дополнительные страницы, которые нужны в роутере, но не показываются в меню.
@@ -56,8 +59,15 @@ export const EXTRA_ROUTES = [
 export const PUBLIC_ROUTES = [
     { path: '/web', roles: ['*'] },
     { path: '/auth', roles: ['*'] },
+    { path: '/contacts', roles: ['*'] },
 ];
 
+// Страницы, видимые гостям в меню, но требующие авторизации
+export const GUEST_PROTECTED_ROUTES = [
+    '/myOrders',
+    '/myFiles',
+    '/templates'
+];
 
 export const getMenuForRole = (role) => {
     // Если роль не передана — это гость
@@ -74,7 +84,11 @@ export const getMenuForRole = (role) => {
  * @param {string} role
  */
 export const getRoutesForRole = (role) => {
-    const paths = new Set();
+    if (!role || role === 'GUEST') {
+        return getPublicRoutes();
+    }
+
+    const paths = new Set(getPublicRoutes());
 
     MENU_GROUPS.forEach((group) => {
         if (!group.roles || group.roles.includes(role)) {
@@ -103,6 +117,9 @@ export const getPublicRoutes = () => {
  * Ищет по всем MENU_GROUPS — берёт label первого совпадающего пункта.
  */
 export const getSectionTitle = (pathname) => {
+    if (pathname === '/contacts') return 'Контакты';
+    if (pathname === '/auth') return 'Вход';
+
     for (const group of MENU_GROUPS) {
         const item = group.items.find(
             (i) => pathname === i.path || pathname.startsWith(i.path + '/')

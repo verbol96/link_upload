@@ -1,139 +1,295 @@
+
 const sequelize = require('../db');
-const { DataTypes, UUIDV4 } = require('sequelize'); 
+const { DataTypes, UUIDV4 } = require('sequelize');
 
 const User = sequelize.define('user', {
-  id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
   phone: { type: DataTypes.STRING, unique: true },
   FIO: { type: DataTypes.STRING },
   role: { type: DataTypes.STRING, defaultValue: 'USER' },
-  typePost: {type: DataTypes.STRING},
-  postCode: {type: DataTypes.STRING},
-  city: {type: DataTypes.STRING},
-  adress: {type: DataTypes.STRING},
-  oblast: {type: DataTypes.STRING},
-  raion: {type: DataTypes.STRING},
-  orderCount: {type: DataTypes.INTEGER},
+  typePost: { type: DataTypes.STRING },
+  postCode: { type: DataTypes.STRING },
+  city: { type: DataTypes.STRING },
+  adress: { type: DataTypes.STRING },
+  oblast: { type: DataTypes.STRING },
+  raion: { type: DataTypes.STRING },
+  orderCount: { type: DataTypes.INTEGER },
   totalOrderSum: { type: DataTypes.FLOAT },
-  aboutUser: {type: DataTypes.STRING},
+  aboutUser: { type: DataTypes.STRING }
 });
 
 const Order = sequelize.define('order', {
-  id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
-  order_number: { type: DataTypes.INTEGER, autoIncrement: true},
-  codeOutside: {type: DataTypes.STRING },
-  price: {type: DataTypes.STRING},
-  other: {type: DataTypes.STRING }, 
-  notes: {type: DataTypes.STRING }, 
-  status: {type: DataTypes.INTEGER},
-  typePost: {type: DataTypes.STRING},
-  postCode: {type: DataTypes.STRING},
-  city: {type: DataTypes.STRING},
-  adress: {type: DataTypes.STRING},
-  oblast: {type: DataTypes.STRING},
-  raion: {type: DataTypes.STRING},
-  FIO: {type: DataTypes.STRING},
-  phone: {type: DataTypes.STRING},
-  price_deliver: {type: DataTypes.STRING},
-  main_dir_id: { type: DataTypes.UUID},
-  origin: {type: DataTypes.STRING},
-  is_sms_add: {type: DataTypes.BOOLEAN},
-  is_sms_error: {type: DataTypes.BOOLEAN},
-  is_sms_send: {type: DataTypes.BOOLEAN},
-  is_sms_pay: {type: DataTypes.BOOLEAN},
-  date_sent: {type: DataTypes.DATEONLY},
-  isPayment: { type: DataTypes.STRING, defaultValue: 'none'}
-})
-
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
+  order_number: { type: DataTypes.INTEGER, autoIncrement: true },
+  codeOutside: { type: DataTypes.STRING },
+  price: { type: DataTypes.STRING },
+  other: { type: DataTypes.STRING },
+  notes: { type: DataTypes.STRING },
+  status: { type: DataTypes.INTEGER },
+  typePost: { type: DataTypes.STRING },
+  postCode: { type: DataTypes.STRING },
+  city: { type: DataTypes.STRING },
+  adress: { type: DataTypes.STRING },
+  oblast: { type: DataTypes.STRING },
+  raion: { type: DataTypes.STRING },
+  FIO: { type: DataTypes.STRING },
+  phone: { type: DataTypes.STRING },
+  price_deliver: { type: DataTypes.STRING },
+  main_dir_id: { type: DataTypes.UUID },
+  origin: { type: DataTypes.STRING },
+  is_sms_add: { type: DataTypes.BOOLEAN },
+  is_sms_error: { type: DataTypes.BOOLEAN },
+  is_sms_send: { type: DataTypes.BOOLEAN },
+  is_sms_pay: { type: DataTypes.BOOLEAN },
+  date_sent: { type: DataTypes.DATEONLY },
+  isPayment: { type: DataTypes.STRING, defaultValue: 'none' }
+});
 
 const Token = sequelize.define('token', {
-  id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
-  refreshToken:{type: DataTypes.STRING}
-})
-
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
+  refreshToken: { type: DataTypes.STRING }
+});
 
 const Photo = sequelize.define('photo', {
-    id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
-    type: {type: DataTypes.STRING},
-    format: {type: DataTypes.STRING},
-    amount: {type: DataTypes.INTEGER},
-    paper: {type: DataTypes.STRING},
-    copies: {type: DataTypes.INTEGER, defaultValue: 1},
-    clientId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      unique: true
-},
-})
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
+  type: { type: DataTypes.STRING },
+  format: { type: DataTypes.STRING },
+  amount: { type: DataTypes.INTEGER },
+  paper: { type: DataTypes.STRING },
+  copies: { type: DataTypes.INTEGER, defaultValue: 1 },
+  clientId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    unique: true
+  }
+});
 
 const Settings = sequelize.define('settings', {
-    id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
-    type:{type: DataTypes.STRING},
-    title:{type: DataTypes.STRING},
-    name:{type: DataTypes.STRING},
-    price:{type: DataTypes.STRING},
-
-})
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
+  type: { type: DataTypes.STRING },
+  title: { type: DataTypes.STRING },
+  name: { type: DataTypes.STRING },
+  price: { type: DataTypes.STRING }
+});
 
 const SettingEditor = sequelize.define('settingEditor', {
-  id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
-  name:{type: DataTypes.STRING},
-  width:{type: DataTypes.STRING},
-  height:{type: DataTypes.STRING},
-  top:{type: DataTypes.STRING},
-  bottom:{type: DataTypes.STRING},
-  left:{type: DataTypes.STRING},
-  right:{type: DataTypes.STRING},
-  widthList:{type: DataTypes.STRING},
-  heightList:{type: DataTypes.STRING},
-  isShow: {type: DataTypes.BOOLEAN}
-})
-
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
+  name: { type: DataTypes.STRING },
+  width: { type: DataTypes.STRING },
+  height: { type: DataTypes.STRING },
+  top: { type: DataTypes.STRING },
+  bottom: { type: DataTypes.STRING },
+  left: { type: DataTypes.STRING },
+  right: { type: DataTypes.STRING },
+  widthList: { type: DataTypes.STRING },
+  heightList: { type: DataTypes.STRING },
+  isShow: { type: DataTypes.BOOLEAN }
+});
 
 const File = sequelize.define('file', {
-    id: { type: DataTypes.UUID, primaryKey: true,defaultValue: UUIDV4 },
-    name:{type: DataTypes.STRING},
-    type:{type: DataTypes.STRING},
-    size:{type: DataTypes.INTEGER, defaultValue: 0},
-    path:{type: DataTypes.STRING, defaultValue: ''},
-    parent:{type: DataTypes.UUID},
-    isDownload:{type: DataTypes.BOOLEAN, defaultValue: false}
-})
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
+  name: { type: DataTypes.STRING },
+  type: { type: DataTypes.STRING },
+  size: { type: DataTypes.INTEGER, defaultValue: 0 },
+  path: { type: DataTypes.STRING, defaultValue: '' },
+  parent: { type: DataTypes.UUID },
+  isDownload: { type: DataTypes.BOOLEAN, defaultValue: false }
+});
 
-const LogUser = sequelize.define('logUser',{
-    id:{type:DataTypes.UUID,primaryKey:true,defaultValue:UUIDV4},
-    phone:{type:DataTypes.STRING,defaultValue:'0'},
-    surname:{type:DataTypes.STRING,allowNull:true},
-    sessionId:{type:DataTypes.UUID,allowNull:true},
-    event:{type:DataTypes.STRING,defaultValue:'visit'},
-    eventType:{type:DataTypes.STRING,defaultValue:'info'},
-    page:{type:DataTypes.STRING,allowNull:true},
-    orderId:{type:DataTypes.STRING,allowNull:true},
-    photosCount:{type:DataTypes.INTEGER,allowNull:true},
-    format:{type:DataTypes.STRING,allowNull:true},
-    error:{type:DataTypes.TEXT,allowNull:true},
-    appVersion:{type:DataTypes.STRING,allowNull:true},
-    device:{type:DataTypes.STRING},
-    browser:{type:DataTypes.STRING},
-    OS:{type:DataTypes.STRING},
-    screen:{type:DataTypes.STRING}
+const LogUser = sequelize.define('logUser', {
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
+  phone: { type: DataTypes.STRING, defaultValue: '0' },
+  surname: { type: DataTypes.STRING, allowNull: true },
+  sessionId: { type: DataTypes.UUID, allowNull: true },
+  event: { type: DataTypes.STRING, defaultValue: 'visit' },
+  eventType: { type: DataTypes.STRING, defaultValue: 'info' },
+  page: { type: DataTypes.STRING, allowNull: true },
+  orderId: { type: DataTypes.STRING, allowNull: true },
+  photosCount: { type: DataTypes.INTEGER, allowNull: true },
+  format: { type: DataTypes.STRING, allowNull: true },
+  error: { type: DataTypes.TEXT, allowNull: true },
+  appVersion: { type: DataTypes.STRING, allowNull: true },
+  device: { type: DataTypes.STRING },
+  browser: { type: DataTypes.STRING },
+  OS: { type: DataTypes.STRING },
+  screen: { type: DataTypes.STRING }
 });
 
 const Expense = sequelize.define('expense', {
-    id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
-    category: { type: DataTypes.STRING, allowNull: false },
-    amount: { type: DataTypes.FLOAT, allowNull: false },
-    title: { type: DataTypes.STRING, allowNull: true },
+  id: { type: DataTypes.UUID, primaryKey: true, defaultValue: UUIDV4 },
+  category: { type: DataTypes.STRING, allowNull: false },
+  amount: { type: DataTypes.FLOAT, allowNull: false },
+  title: { type: DataTypes.STRING, allowNull: true }
 });
 
-User.hasMany(Order)
-Order.belongsTo(User)
+User.hasMany(Order);
+Order.belongsTo(User);
 
-Order.hasMany(Photo)
-Photo.belongsTo(Order) 
+Order.hasMany(Photo);
+Photo.belongsTo(Order);
 
-Token.belongsTo(User)
+Token.belongsTo(User);
 
-Photo.hasMany(File)
-File.belongsTo(Photo)
+Photo.hasMany(File);
+File.belongsTo(Photo);
 
-module.exports = {User, Order, Photo, Settings, Token, File, SettingEditor, LogUser, Expense, sequelize}
+const MyFileDraft = sequelize.define('myFileDraft', {
+  id: {
+    type: DataTypes.UUID,
+    primaryKey: true,
+    defaultValue: UUIDV4
+  },
+  status: {
+    type: DataTypes.ENUM('active', 'completed', 'expired'),
+    allowNull: false,
+    defaultValue: 'active'
+  },
+  startedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  expiresAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  }
+});
+
+const MyFileFolder = sequelize.define('myFileFolder', {
+  id: {
+    type: DataTypes.UUID,
+    primaryKey: true,
+    defaultValue: UUIDV4
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  type: {
+    type: DataTypes.ENUM(
+      'photo',
+      'holst',
+      'magnit',
+      'poster',
+      'template'
+    ),
+    allowNull: false,
+    defaultValue: 'photo'
+  },
+  format: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  settingId: {
+    type: DataTypes.UUID,
+    allowNull: true
+  },
+  note: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    defaultValue: ''
+  },
+  cropMode: {
+    type: DataTypes.ENUM('link', 'no_crop', 'manual'),
+    allowNull: true
+  },
+  position: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  },
+  paperType: {
+  type: DataTypes.ENUM('glossy', 'lustre'),
+  allowNull: true,
+  defaultValue: 'glossy'
+},
+});
+
+const MyFileItem = sequelize.define('myFileItem', {
+  id: {
+    type: DataTypes.UUID,
+    primaryKey: true,
+    defaultValue: UUIDV4
+  },
+  originalName: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  storedName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  path: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  size: {
+    type: DataTypes.BIGINT,
+    allowNull: true
+  },
+  mimeType: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  uploadStatus: {
+    type: DataTypes.ENUM('pending', 'uploaded', 'error'),
+    allowNull: false,
+    defaultValue: 'pending'
+  },
+  cropData: {
+    type: DataTypes.JSONB,
+    allowNull: true
+  },
+  cropConfirmed: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  position: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  }
+});
+
+User.hasMany(MyFileDraft, {
+  foreignKey: { name: 'userId', allowNull: false },
+  onDelete: 'CASCADE'
+});
+
+MyFileDraft.belongsTo(User, {
+  foreignKey: { name: 'userId', allowNull: false }
+});
+
+MyFileDraft.hasMany(MyFileFolder, {
+  foreignKey: { name: 'draftId', allowNull: false },
+  onDelete: 'CASCADE'
+});
+
+MyFileFolder.belongsTo(MyFileDraft, {
+  foreignKey: { name: 'draftId', allowNull: false }
+});
+
+MyFileFolder.hasMany(MyFileItem, {
+  foreignKey: { name: 'folderId', allowNull: false },
+  onDelete: 'CASCADE'
+});
+
+MyFileItem.belongsTo(MyFileFolder, {
+  foreignKey: { name: 'folderId', allowNull: false }
+});
+
+module.exports = {
+  User,
+  Order,
+  Photo,
+  Settings,
+  Token,
+  File,
+  SettingEditor,
+  LogUser,
+  Expense,
+  MyFileDraft,
+  MyFileFolder,
+  MyFileItem,
+  sequelize
+};

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteFile, displayFileImg } from '../../http/cloudApi';
+import { deleteFile, displayFileImg, setFileDownloadStatus } from '../../http/cloudApi';
 import { deleteFileStore, pushStack, setCurrentDir, addStack } from '../../store/fileReducer';
 import { addDownload } from '../../store/downloadsReducer';
 
@@ -9,6 +9,30 @@ export const ListRow = ({ el }) => {
     const currentDir = useSelector(state => state.files.currentDir);
     const [thumb, setThumb] = useState('');
     const [imgLoading, setImgLoading] = useState(el.type !== 'dir');
+    const [isDownloaded, setIsDownloaded] = useState(Boolean(el.isDownload));
+    const [statusSaving, setStatusSaving] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef(null);
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const closeMenu = (event) => {
+            if (!menuRef.current?.contains(event.target)) setMenuOpen(false);
+        };
+        const closeOnEscape = (event) => {
+            if (event.key === 'Escape') setMenuOpen(false);
+        };
+        document.addEventListener('pointerdown', closeMenu);
+        document.addEventListener('keydown', closeOnEscape);
+        return () => {
+            document.removeEventListener('pointerdown', closeMenu);
+            document.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [menuOpen]);
+
+    useEffect(() => {
+        setIsDownloaded(Boolean(el.isDownload));
+    }, [el.id, el.isDownload]);
 
     useEffect(() => {
         const displayFile = async (fileId) => {
@@ -32,6 +56,7 @@ export const ListRow = ({ el }) => {
 
     const deleteFileClick = async (e) => {
         e.stopPropagation();
+        setMenuOpen(false);
         const confirmation = window.confirm('Вы уверены, что хотите удалить этот файл?');
         if (confirmation) {
             await deleteFile(el.id);
@@ -47,6 +72,27 @@ export const ListRow = ({ el }) => {
             name: el.name,
             type: el.type,
         }));
+        setIsDownloaded(true);
+    };
+
+    const toggleViewed = async (e) => {
+        e.stopPropagation();
+        setMenuOpen(false);
+        if (statusSaving) return;
+        const previous = isDownloaded;
+        const next = !previous;
+        setIsDownloaded(next);
+        setStatusSaving(true);
+        try {
+            await setFileDownloadStatus(el.id, next);
+            window.dispatchEvent(new Event('link:cloud-files-changed'));
+        } catch (error) {
+            setIsDownloaded(previous);
+            console.error('Ошибка изменения статуса папки:', error);
+            alert('Не удалось изменить статус папки');
+        } finally {
+            setStatusSaving(false);
+        }
     };
 
     const files = useSelector(state => state.files.filesAll);
@@ -81,78 +127,84 @@ export const ListRow = ({ el }) => {
     return (
         <div
             className={`
-                group relative aspect-square
-                bg-gray-400/5 rounded-xl overflow-hidden
-                border border-gray-200
-                hover:border-gray-500 hover:shadow-md
-                transition-all duration-200
-                select-none
+                group relative aspect-square rounded-xl ring-1 ring-inset
+                transition-all duration-200 select-none
+                hover:shadow-[0_1px_4px_rgba(39,76,119,0.05)]
+                ${isDownloaded ? 'bg-[#FAFBFD] ring-[#E2E8F0]' : 'bg-white ring-[#7890A8] hover:ring-[#647D97]'}
                 ${isFolder ? 'cursor-pointer' : ''}
-                ${el.isDownload ? ' bg-white' : ''}
             `}
             onClick={isFolder ? openFile : undefined}
         >
-            {/* Имя + время */}
-            <div className="h-[28px] px-3 py-1.5 flex items-center justify-between gap-2 text-[12px]">
-                <span
-                    className="font-light text-yellow-950 truncate flex-1"
-                    title={el.name}
-                >
+            {/* Верх: название и меню */}
+            <div className="absolute inset-x-0 top-0 z-20 flex h-9 items-center gap-1 px-3">
+                <span className={`min-w-0 flex-1 truncate text-[12px] font-normal ${isDownloaded ? 'text-[#94A3B8]' : 'text-[#475569]'}`} title={el.name}>
                     {el.name}
                 </span>
-                {isFolder && (
-                    <span className="text-[10px] text-yellow-950 shrink-0 tabular-nums">
-                        {ShowData()}
-                    </span>
-                )}
+                <div ref={menuRef} className="relative shrink-0">
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setMenuOpen(open => !open); }}
+                        className={`flex h-6 w-6 items-center justify-center rounded-md transition-colors ${isDownloaded ? 'text-[#94A3B8] hover:bg-[#F1F3F5]' : menuOpen ? 'bg-[#F1F3F5] text-[#7890A8]' : 'text-[#7890A8] hover:bg-[#F1F3F5]'}`}
+                        title="Свойства"
+                        aria-label="Свойства"
+                        aria-expanded={menuOpen}
+                    >
+                        <i className="bi bi-three-dots text-[15px]"></i>
+                    </button>
+                    {menuOpen && (
+                        <div
+                            className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-lg border border-[#E2E8F0] bg-white py-1 shadow-md"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="border-b border-[#E2E8F0] px-3 py-2 text-[11px] text-[#475569]">
+                                <i className="bi bi-clock mr-2"></i>{ShowData()}
+                            </div>
+                            {isFolder && (
+                                <button
+                                    type="button"
+                                    onClick={toggleViewed}
+                                    disabled={statusSaving}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-[#475569] hover:bg-[#F3F5F7] disabled:opacity-50"
+                                >
+                                    <i className={`bi ${isDownloaded ? 'bi-eye' : 'bi-eye-slash'} text-[#64748B]`}></i>
+                                    {isDownloaded ? 'Вернуть в новые' : 'Отметить просмотренной'}
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={deleteFileClick}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-[#475569] hover:bg-red-50"
+                            >
+                                <i className="bi bi-trash"></i>Удалить
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Превью */}
-            <div className="w-full h-[calc(100%-58px)] flex items-center justify-center px-2">
+            <div className="absolute inset-x-0 bottom-10 top-9 flex items-center justify-center px-2">
                 {isFolder ? (
-                    <i className={`bi bi-folder-fill text-5xl ${el.isDownload ? ' text-yellow-600/30' : 'text-yellow-600'}`}></i>
+                    <i className={`bi bi-folder text-[42px] ${isDownloaded ? 'text-[#B5BEC9]' : 'text-[#7890A8]'}`}></i>
                 ) : imgLoading ? (
-                    <div className="w-5 h-5 border-2 border-gray-200 border-t-teal-700 rounded-full animate-spin"></div>
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#E2E8F0] border-t-[#7890A8]"></div>
                 ) : thumb ? (
-                    <img
-                        className="w-full h-full object-contain"
-                        src={thumb}
-                        alt={el.name}
-                        loading="lazy"
-                    />
+                    <img className="h-full w-full object-contain" src={thumb} alt={el.name} loading="lazy" />
                 ) : (
-                    <i className="bi bi-image text-2xl text-gray-300"></i>
+                    <i className="bi bi-image text-2xl text-[#94A3B8]"></i>
                 )}
             </div>
 
-            {/* Кнопки */}
-            <div className="h-[30px] flex items-center gap-1 px-2 pb-2">
+            {/* Скачивание на всю ширину карточки */}
+            <div className="absolute inset-x-0 bottom-0 z-10 px-2 pb-2">
                 <button
+                    type="button"
                     onClick={downloadFile}
-                    className={`
-                        flex-1 h-6 rounded-md
-                         text-yellow-950 text-[10px] font-light
-                         border-[0.8px] border-bg-gray-900/50
-                        flex items-center justify-center gap-1
-                        transition-colors
-                        ${el.isDownload ? ' bg-gray-300/5 hover:bg-gray-300/10' : 'bg-gray-500/5 hover:bg-gray-500/10'}`}
-                    
+                    className={`flex h-7 w-full items-center justify-center gap-1.5 rounded-md ring-1 ring-inset text-[11px] font-normal transition-colors ${isDownloaded ? 'ring-[#E2E8F0] bg-transparent text-[#94A3B8] hover:bg-white/50' : 'ring-[#7890A8] bg-white text-[#475569] hover:bg-[#F3F6FA]'}`}
                     title="Скачать"
                 >
-                    <i className="bi bi-download text-[10px]"></i>
-                    <span className="truncate">{formatSize(size)}</span>
-                </button>
-                <button
-                    onClick={deleteFileClick}
-                    className="
-                        w-7 h-7 rounded-lg shrink-0
-                        text-gray-400 hover:text-red-500 hover:bg-red-50/30
-                        flex items-center justify-center
-                        transition-colors
-                    "
-                    title="Удалить"
-                >
-                    <i className="bi bi-x-lg text-[11px]"></i>
+                    <i className="bi bi-download text-[12px]"></i>
+                    <span>Скачать · {formatSize(size)}</span>
                 </button>
             </div>
         </div>

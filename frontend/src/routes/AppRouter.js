@@ -1,50 +1,86 @@
+
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
 import { setLogUser, setLogUserData, whoAmI } from '../http/authApi';
 import { setUser } from '../store/privatePageReducer';
 import { getOneUser } from '../http/dbApi';
+
 import { COMPONENT_MAP } from './routes';
-import { getRoutesForRole, getPublicRoutes } from './access';
+import {
+    getRoutesForRole,
+    getPublicRoutes,
+    GUEST_PROTECTED_ROUTES,
+} from './access';
 
-const AppRouter=()=>{
-    const dispatch=useDispatch();
-    const location=useLocation();
-    const isAuth=useSelector((state)=>state.auth.auth);
-    const[userRole,setUserRole]=useState('');
-    const[isUserDataLoaded,setUserDataLoaded]=useState(false);
-    const initialPage=useRef(location.pathname);
-    const visitLogged=useRef(false);
-    const serverErrorShown=useRef(false);
+const AppRouter = () => {
+    const dispatch = useDispatch();
+    const location = useLocation();
 
-    const showServerError=()=>{
-        if(serverErrorShown.current)return;
+    useEffect(() => {
+        window.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: 'instant',
+        });
+    }, [location.pathname]);
 
-        serverErrorShown.current=true;
+    const isAuth = useSelector((state) => state.auth.auth);
+    const reduxUser = useSelector((state) => state.private.user);
 
-        window.alert('Не удалось связаться с сервером. Попробуйте обновить страницу или открыть сайт в другом браузере. Если ошибка повторяется, напишите нам в Telegram или Instagram.');
+    const [userRole, setUserRole] = useState('');
+    const [isUserDataLoaded, setUserDataLoaded] = useState(false);
+
+    const initialPage = useRef(location.pathname);
+    const visitLogged = useRef(false);
+    const serverErrorShown = useRef(false);
+
+    const showServerError = () => {
+        if (serverErrorShown.current) return;
+
+        serverErrorShown.current = true;
+
+        window.alert(
+            'Не удалось связаться с сервером. Попробуйте обновить страницу или открыть сайт в другом браузере. Если ошибка повторяется, напишите нам в Telegram или Instagram.'
+        );
     };
 
-    useEffect(()=>{
-        const loadUser=async()=>{
-            if(localStorage.getItem('token')){
-                try{
-                    const user=await whoAmI();
-                    setUserRole(user.role);
-                    dispatch({type:'authStatus',paylods:true});
+    useEffect(() => {
+        let cancelled = false;
 
-                    const data=await getOneUser(user.phone);
+        const loadUser = async () => {
+            if (localStorage.getItem('token')) {
+                try {
+                    const user = await whoAmI();
+
+                    if (cancelled) return;
+
+                    setUserRole(user.role);
+                    dispatch({ type: 'authStatus', paylods: true });
+
+                    const data = await getOneUser(user.phone);
+
+                    if (cancelled) return;
+
                     dispatch(setUser(data));
                     setLogUserData(data.user);
-                }catch(err){
-                    console.error('Ошибка загрузки пользователя:',err);
+                } catch (err) {
+                    if (cancelled) return;
+
+                    console.error('Ошибка загрузки пользователя:', err);
+
                     setUserRole('');
                     setLogUserData(null);
                     showServerError();
-                }finally{
-                    setUserDataLoaded(true);
+                } finally {
+                    if (!cancelled) {
+                        setUserDataLoaded(true);
+                    }
                 }
-            }else{
+            } else {
+                if (cancelled) return;
+
                 setUserRole('');
                 setLogUserData(null);
                 setUserDataLoaded(true);
@@ -52,67 +88,122 @@ const AppRouter=()=>{
         };
 
         loadUser();
-    },[dispatch,isAuth]);
 
-    useEffect(()=>{
-        if(!isUserDataLoaded||visitLogged.current)return;
+        return () => {
+            cancelled = true;
+        };
+    }, [dispatch, isAuth]);
 
-        visitLogged.current=true;
+    useEffect(() => {
+        if (!isUserDataLoaded || visitLogged.current) return;
+
+        visitLogged.current = true;
 
         setLogUser({
-            event:'visit',
-            eventType:'info',
-            page:initialPage.current
-        }).catch(error=>{
-            console.error('setLogUser error:',error);
+            event: 'visit',
+            eventType: 'info',
+            page: initialPage.current,
+        }).catch((error) => {
+            console.error('setLogUser error:', error);
             showServerError();
         });
-    },[isUserDataLoaded]);
+    }, [isUserDataLoaded]);
 
-    useEffect(()=>{
-        if(!isUserDataLoaded||!visitLogged.current)return;
+    useEffect(() => {
+        if (!isUserDataLoaded || !visitLogged.current) return;
 
-        if(location.pathname===initialPage.current){
-            initialPage.current=null;
+        if (location.pathname === initialPage.current) {
+            initialPage.current = null;
             return;
         }
 
         setLogUser({
-            event:'page_view',
-            eventType:'info',
-            page:location.pathname
-        }).catch(error=>{
-            console.error('page_view log error:',error);
+            event: 'page_view',
+            eventType: 'info',
+            page: location.pathname,
+        }).catch((error) => {
+            console.error('page_view log error:', error);
             showServerError();
         });
-    },[location.pathname,isUserDataLoaded]);
+    }, [location.pathname, isUserDataLoaded]);
 
-    const allowedPaths=useMemo(()=>{
-        if(!isAuth)return getPublicRoutes();
-        if(!userRole)return getPublicRoutes();
+    // Redux позволяет получить роль сразу после входа,
+    // не дожидаясь повторного запроса whoAmI.
+    const effectiveRole = isAuth
+        ? (reduxUser?.role || userRole)
+        : '';
 
-        return getRoutesForRole(userRole);
-    },[isAuth,userRole]);
+    const allowedPaths = useMemo(() => {
+        if (!isAuth) {
+            return getPublicRoutes();
+        }
 
-    const fallbackPath=useMemo(()=>{
-        if(!isAuth)return'/web';
-        if(userRole==='ADMIN'||userRole==='WORKER')return'/table';
+        if (!effectiveRole) {
+            return getPublicRoutes();
+        }
 
-        return'/myOrders';
-    },[isAuth,userRole]);
+        return getRoutesForRole(effectiveRole);
+    }, [isAuth, effectiveRole]);
 
-    if(!isUserDataLoaded)return null;
+    const fallbackPath = useMemo(() => {
+        if (!isAuth) return '/web';
+
+        if (
+            effectiveRole === 'ADMIN' ||
+            effectiveRole === 'WORKER'
+        ) {
+            return '/table';
+        }
+
+        return '/myOrders';
+    }, [isAuth, effectiveRole]);
+
+    if (!isUserDataLoaded) return null;
+
+    // Не перенаправляем пользователя, пока после входа
+    // ещё определяется его роль.
+    if (isAuth && !effectiveRole) return null;
 
     return (
         <Routes>
-            {allowedPaths.map((path)=>{
-                const Component=COMPONENT_MAP[path];
+            {allowedPaths.map((path) => {
+                const Component = COMPONENT_MAP[path];
 
-                if(!Component)return null;
+                if (!Component) return null;
 
-                return <Route key={path} path={path} element={<Component />}/>;
+                return (
+                    <Route
+                        key={path}
+                        path={path}
+                        element={<Component />}
+                    />
+                );
             })}
-            <Route path="*" element={<Navigate to={fallbackPath} replace />}/>
+
+            {!isAuth &&
+                GUEST_PROTECTED_ROUTES.map((path) => (
+                    <Route
+                        key={path}
+                        path={path}
+                        element={
+                            <Navigate
+                                to="/auth"
+                                replace
+                                state={{ from: path }}
+                            />
+                        }
+                    />
+                ))}
+
+            <Route
+                path="*"
+                element={
+                    <Navigate
+                        to={fallbackPath}
+                        replace
+                    />
+                }
+            />
         </Routes>
     );
 };

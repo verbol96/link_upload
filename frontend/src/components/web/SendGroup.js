@@ -95,7 +95,7 @@ export const SendGroup = ({ phone, upload, isAuth, setIsValid }) => {
                     type="button"
                     onClick={ClickBtn}
                     className="w-full md:w-auto md:min-w-[220px] h-11 px-6 rounded-lg
-                            bg-[#19766d] hover:bg-[#155f58] text-white
+                            bg-[#274C77] hover:bg-[#1E3A5D] text-white
                             text-[13px] font-medium transition-colors"
                 >
                     Отправить заказ
@@ -127,9 +127,9 @@ export const SendGroup = ({ phone, upload, isAuth, setIsValid }) => {
                         </button>
 
                         <div className="flex items-center gap-3 pr-8">
-                            <div className="shrink-0 w-10 h-10 rounded-full bg-[#19766d]/10
+                            <div className="shrink-0 w-10 h-10 rounded-full bg-slate-100
                                             flex items-center justify-center">
-                                <i className="bi bi-phone text-[18px] text-black" />
+                                <i className="bi bi-phone text-[18px] text-[#274C77]" />
                             </div>
 
                             <div>
@@ -146,7 +146,7 @@ export const SendGroup = ({ phone, upload, isAuth, setIsValid }) => {
                             <div className="text-[11px] text-slate-400">
                                 мы отправили код на номер:
                             </div>
-                            <div className="mt-0.5 text-[15px] font-medium text-slate-700">
+                            <div className="mt-0.5 text-[15px] font-medium text-[#274C77]">
                                 {phone}
                             </div>
                         </div>
@@ -168,15 +168,15 @@ export const SendGroup = ({ phone, upload, isAuth, setIsValid }) => {
                                             text-[16px] md:text-[14px] font-normal text-slate-800 outline-none
                                             placeholder:text-slate-300 transition tracking-[0.15em]
                                             ${isCodeValid
-                                                ? 'border-[#19766d] focus:border-[#19766d] focus:ring-2 focus:ring-[#19766d]/10'
-                                                : 'border-slate-200 focus:border-[#19766d] focus:ring-2 focus:ring-[#19766d]/10'
+                                                ? 'border-[#274C77] focus:border-[#274C77] focus:ring-2 focus:ring-[#274C77]/10'
+                                                : 'border-slate-200 focus:border-[#274C77] focus:ring-2 focus:ring-[#274C77]/10'
                                             }`}
                                 />
 
                                 {codeCheck !== '' && (
                                     <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                                         <i className={`bi ${isCodeValid
-                                            ? 'bi-check-circle-fill text-[#19766d]'
+                                            ? 'bi-check-circle-fill text-[#274C77]'
                                             : 'bi-x-circle text-red-400'
                                             } text-[16px]`} />
                                     </span>
@@ -189,7 +189,7 @@ export const SendGroup = ({ phone, upload, isAuth, setIsValid }) => {
                             disabled={!isCodeValid}
                             onClick={ClickBtn}
                             className="mt-3 w-full h-12 rounded-lg
-                                    bg-[#19766d] hover:bg-[#155f58] text-white
+                                    bg-[#274C77] hover:bg-[#1E3A5D] text-white
                                     text-[14px] font-medium transition
                                     disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                         >

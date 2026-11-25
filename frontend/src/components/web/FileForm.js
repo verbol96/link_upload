@@ -339,7 +339,7 @@ export const FileForm = ({ item, filesPrev, setFilesPrev, setFormats, formats, n
                 {/* Тип ===== */}
                 <div className="relative w-[30%] md:w-[180px] shrink-0 md:flex-initial">
                     <select
-                        className="w-full h-9 rounded-md border border-slate-200 bg-white pl-2 md:pl-3 pr-5 md:pr-8 text-[11px] md:text-[13px] font-normal text-slate-700 outline-none appearance-none focus:border-[#19766d] focus:ring-0 transition"
+                        className="w-full h-9 rounded-md border border-slate-200 bg-white pl-2 md:pl-3 pr-5 md:pr-8 text-[11px] md:text-[13px] font-normal text-slate-700 outline-none appearance-none focus:border-slate-700 focus:ring-0 transition"
                         value={currentFormat.type}
                         onChange={ChangeType}
                     >
@@ -347,13 +347,13 @@ export const FileForm = ({ item, filesPrev, setFilesPrev, setFormats, formats, n
                             <option value={el} key={el}>{ShowType(el)}</option>
                         ))}
                     </select>
-                    <i className="bi bi-chevron-down absolute right-1 md:right-2.5 top-1/2 -translate-y-1/2 text-[9px] md:text-[10px] text-[#53658f] pointer-events-none" />
+                    <i className="bi bi-chevron-down absolute right-1 md:right-2.5 top-1/2 -translate-y-1/2 text-[9px] md:text-[10px] text-[#64748b] pointer-events-none" />
                 </div>
 
                 {/* Размер ===== */}
                 <div className="relative w-[40%] md:w-[205px] shrink-0 md:flex-initial">
                     <select
-                        className="w-full h-9 rounded-md border border-slate-200 bg-white pl-2 md:pl-3 pr-5 md:pr-8 text-[11px] md:text-[13px] font-normal text-slate-700 outline-none appearance-none focus:border-[#19766d] focus:ring-0 transition"
+                        className="w-full h-9 rounded-md border border-slate-200 bg-white pl-2 md:pl-3 pr-5 md:pr-8 text-[11px] md:text-[13px] font-normal text-slate-700 outline-none appearance-none focus:border-slate-700 focus:ring-0 transition"
                         value={currentFormat.format}
                         onChange={ChangeSize}
                     >
@@ -362,21 +362,21 @@ export const FileForm = ({ item, filesPrev, setFilesPrev, setFormats, formats, n
                             : null
                         )}
                     </select>
-                    <i className="bi bi-chevron-down absolute right-1 md:right-2.5 top-1/2 -translate-y-1/2 text-[9px] md:text-[10px] text-[#53658f] pointer-events-none" />
+                    <i className="bi bi-chevron-down absolute right-1 md:right-2.5 top-1/2 -translate-y-1/2 text-[9px] md:text-[10px] text-[#64748b] pointer-events-none" />
                 </div>
 
                 {/* Бумага ===== */}
                 {currentFormat.type === 'photo' && (
                     <div className="relative w-[27%] md:w-[155px] shrink-0 md:flex-initial">
                         <select
-                            className="w-full h-9 rounded-md border border-slate-200 bg-white pl-2 md:pl-3 pr-5 md:pr-8 text-[11px] md:text-[13px] font-normal text-slate-700 outline-none appearance-none focus:border-[#19766d] focus:ring-0 transition"
+                            className="w-full h-9 rounded-md border border-slate-200 bg-white pl-2 md:pl-3 pr-5 md:pr-8 text-[11px] md:text-[13px] font-normal text-slate-700 outline-none appearance-none focus:border-slate-700 focus:ring-0 transition"
                             value={currentFormat.paper}
                             onChange={ChangePaper}
                         >
                             <option value="glossy">Глянец</option>
                             <option value="lustre">Люстр</option>
                         </select>
-                        <i className="bi bi-chevron-down absolute right-1 md:right-2.5 top-1/2 -translate-y-1/2 text-[9px] md:text-[10px] text-[#53658f] pointer-events-none" />
+                        <i className="bi bi-chevron-down absolute right-1 md:right-2.5 top-1/2 -translate-y-1/2 text-[9px] md:text-[10px] text-[#64748b] pointer-events-none" />
                     </div>
                 )}
 
@@ -388,7 +388,7 @@ export const FileForm = ({ item, filesPrev, setFilesPrev, setFormats, formats, n
                             type="button"
                             onClick={() => ChangeCopies(-1)}
                             disabled={Number(currentFormat.copies || 1) <= 1}
-                            className="h-full px-1.5 text-[16px] text-slate-500 hover:text-[#19766d] disabled:text-slate-300 transition-colors"
+                            className="h-full px-1.5 text-[16px] text-slate-500 hover:text-slate-700 disabled:text-slate-300 transition-colors"
                         >
                             −
                         </button>
@@ -398,7 +398,7 @@ export const FileForm = ({ item, filesPrev, setFilesPrev, setFormats, formats, n
                         <button
                             type="button"
                             onClick={() => ChangeCopies(1)}
-                            className="h-full px-1.5 text-[16px] text-slate-500 hover:text-[#19766d] transition-colors"
+                            className="h-full px-1.5 text-[16px] text-slate-500 hover:text-slate-700 transition-colors"
                         >
                             +
                         </button>
@@ -479,7 +479,7 @@ export const FileForm = ({ item, filesPrev, setFilesPrev, setFormats, formats, n
                     type="button"
                     onClick={() => fileInput.current?.click()}
                     disabled={load.isLoad}
-                    className="aspect-square rounded-xl border-2 border-dashed border-slate-200 bg-white flex flex-col items-center justify-center gap-2 text-[#53658f] hover:border-[#19766d] hover:bg-teal-50/40 hover:text-[#19766d] active:scale-[0.98] transition disabled:opacity-60"
+                    className="aspect-square rounded-xl border-2 border-dashed border-slate-200 bg-white flex flex-col items-center justify-center gap-2 text-[#64748b] hover:border-slate-700 hover:bg-slate-50 hover:text-slate-700 active:scale-[0.98] transition disabled:opacity-60"
                 >
                     {load.isLoad ? (
                         <>

@@ -1,6 +1,6 @@
+
 import { TableFull } from "../components/table/TableFull"
 import { useState, useRef } from 'react'
-import Footer from "../components/admin/Footer"
 import { NavBar } from "../components/admin/NavBar"
 
 const Table = () => {
@@ -10,80 +10,78 @@ const Table = () => {
     const [isChanged, setIsChanged] = useState(false);
     const descRowRef = useRef(null);
 
-const [isSwitching, setIsSwitching] = useState(false)
-const switchingRef = useRef(false)
+    const switchingRef = useRef(false);
 
-const saveBeforeClose = async () => {
-    if (!descRowRef.current) return true
+    const saveBeforeClose = async () => {
+        if (!descRowRef.current) return true;
 
-    try {
-        await descRowRef.current.saveNow()
-        return true
-    } catch (error) {
-        console.error('Не удалось сохранить заказ:', error)
-        alert('Не удалось сохранить заказ. Проверьте соединение и попробуйте ещё раз.')
-        return false
-    }
-}
+        try {
+            await descRowRef.current.saveNow();
+            return true;
+        } catch (error) {
+            console.error('Не удалось сохранить заказ:', error);
+            alert('Не удалось сохранить заказ. Проверьте соединение и попробуйте ещё раз.');
+            return false;
+        }
+    };
 
     const handleDetailsClick = async (orderId) => {
-        if (switchingRef.current) return
+        if (switchingRef.current) return;
 
-        switchingRef.current = true
-        setIsSwitching(true)
+        switchingRef.current = true;
 
         try {
             if (selectedOrder !== null) {
-                const saved = await saveBeforeClose()
-                if (!saved) return
+                const saved = await saveBeforeClose();
+                if (!saved) return;
             }
 
             setSelectedOrder(
                 orderId === 'save' || selectedOrder === orderId
                     ? null
                     : orderId
-            )
+            );
 
-            setIsChanged(false)
+            setIsChanged(false);
 
             if (orderId !== 'save') {
-                setCollapsedOrderId(orderId)
+                setCollapsedOrderId(orderId);
 
                 setTimeout(() => {
-                    setCollapsedOrderId(null)
-                }, 3000)
+                    setCollapsedOrderId(null);
+                }, 3000);
             }
         } finally {
-            switchingRef.current = false
-            setIsSwitching(false)
+            switchingRef.current = false;
         }
-    }
+    };
 
     const CloseOrder = async () => {
-        if (selectedOrder === null || switchingRef.current) return
+        if (selectedOrder === null || switchingRef.current) return;
 
-        switchingRef.current = true
-        setIsSwitching(true)
+        switchingRef.current = true;
 
         try {
-            const saved = await saveBeforeClose()
-            if (!saved) return
+            const saved = await saveBeforeClose();
+            if (!saved) return;
 
-            setSelectedOrder(null)
-            setIsChanged(false)
+            setSelectedOrder(null);
+            setIsChanged(false);
         } finally {
-            switchingRef.current = false
-            setIsSwitching(false)
+            switchingRef.current = false;
         }
-    }
+    };
 
     return (
-        <div className="flex flex-col min-h-screen bg-stone-100">
+        <div className="flex flex-col min-h-screen bg-[#FAFBFD]">
 
             <NavBar />
 
             {/* Обёртка контента — растягивается на всё доступное место */}
-            <div className="flex-1 w-full flex justify-center" onClick={() => CloseOrder()}>
+            <div
+                className="flex-1 w-full flex justify-center"
+                onClick={() => CloseOrder()}
+            >
                 <div className="w-full md:w-[91.5%]">
                     <TableFull
                         selectedOrder={selectedOrder}
@@ -97,8 +95,6 @@ const saveBeforeClose = async () => {
                     />
                 </div>
             </div>
-
-            <Footer />
         </div>
     );
 };
