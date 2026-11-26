@@ -1139,230 +1139,193 @@ savedPhotoResults.push({
 
 
 
-    async toJoinOrder(req, res) {
+async toJoinOrder(req, res) {
+    const { id, idJoin, other, price } = req.body;
+    const FILEPATH = process.env.FILEPATH;
 
-        const { id, idJoin, other, price } = req.body;
+    let emptyJoinDir = null;
 
-        const FILEPATH = process.env.FILEPATH;
+    try {
+        await sequelize.transaction(async (t) => {
 
+            // 1. Обновляем заказ
 
+            await Order.update(
+                { other, price },
+                { where: { id }, transaction: t }
+            );
 
-        try {
+            // 2. Получаем заказы и их папки
 
-            await sequelize.transaction(async (t) => {
-
-
-
-                // 1. Обновляем other
-
-                await Order.update(
-
-                    { other, price },
-
-                    { where: { id }, transaction: t }
-
-                );
-
-
-
-                // 2. Заказы и их папки
-
-                const mainOrder = await Order.findByPk(id, { transaction: t });
-
-                const joinOrder = await Order.findByPk(idJoin, { transaction: t });
-
-
-
-                const mainDir = await File.findByPk(mainOrder.main_dir_id, { transaction: t });
-
-                const joinDir = await File.findByPk(joinOrder.main_dir_id, { transaction: t });
-
-
-
-                // 3. Все подпапки второго заказа
-
-                const joinSubdirs = await File.findAll({
-
-                    where: { parent: joinDir.id, type: 'dir' },
-
-                    transaction: t,
-
-                });
-
-
-
-                const physicalMainDir = path.join(FILEPATH, mainDir.name);
-
-                const physicalJoinDir = path.join(FILEPATH, joinDir.name);
-
-
-
-                // 4. Переносим каждую подпапку
-
-                for (const subdir of joinSubdirs) {
-
-
-
-                    // 4.1 Новое имя с префиксом + проверка коллизий
-
-                    let newSubdirName = `${subdir.name}_${joinOrder.order_number}`;
-
-                    let counter = 1;
-
-
-
-                    // Проверяем коллизии и по диску, и по БД
-
-                    while (
-
-                        await pathExists(path.join(physicalMainDir, newSubdirName)) ||
-
-                        await File.findOne({
-
-                            where: { parent: mainDir.id, name: newSubdirName },
-
-                            transaction: t,
-
-                        })
-
-                    ) {
-
-                        newSubdirName = `${joinOrder.order_number}_${subdir.name}(${counter})`;
-
-                        counter++;
-
-                    }
-
-
-
-                    // 4.2 Физически перемещаем папку
-
-                    const physicalOldPath = path.join(physicalJoinDir, subdir.name);
-
-                    const physicalNewPath = path.join(physicalMainDir, newSubdirName);
-
-
-
-                    await fs.rename(physicalOldPath, physicalNewPath);
-
-
-
-                    // 4.3 Обновляем саму подпапку
-
-                    await subdir.update({
-
-                        name: newSubdirName,
-
-                        parent: mainDir.id,
-
-                        path: mainDir.name,
-
-                    }, { transaction: t });
-
-
-
-                    // 4.4 Обновляем path у файлов внутри (parent НЕ трогаем)
-
-                    await File.update(
-
-                        { path: `${mainDir.name}/${newSubdirName}` },
-
-                        { where: { parent: subdir.id }, transaction: t }
-
-                    );
-
-                }
-
-
-
-                // 5. Удаляем папку второго заказа, если пуста
-
-                const remaining = await File.findAll({
-
-                    where: { parent: joinDir.id },
-
-                    transaction: t,
-
-                });
-
-
-
-                if (remaining.length === 0) {
-
-                    try {
-
-                        // Не удаляем папку рекурсивно внутри транзакции:
-                        // там могут находиться файлы, отсутствующие в таблице File.
-                        // Очистка пустых папок выполняется отдельно после проверки.
-
-                    } catch (e) {
-
-                        console.warn('Не удалить папку заказа:', e.message);
-
-                    }
-
-                    // Оставляем запись каталога для безопасной ручной очистки.
-                    // Удаление файлов внутри SQL-транзакции не откатывается.
-
-                } else {
-
-                    console.warn(
-
-                        `⚠️ В папке заказа ${joinOrder.order_number} осталось:`,
-
-                        remaining.map(f => f.name)
-
-                    );
-
-                }
-
-
-
-                // 6. Перепривязываем фото
-
-                await Photo.update(
-
-                    { orderId: id },
-
-                    { where: { orderId: idJoin }, transaction: t }
-
-                );
-
-
-
-                // 7. Удаляем второй заказ
-
-                await Order.destroy({ where: { id: idJoin }, transaction: t });
-
+            const mainOrder = await Order.findByPk(id, {
+                transaction: t
             });
 
+            const joinOrder = await Order.findByPk(idJoin, {
+                transaction: t
+            });
 
+            const mainDir = await File.findByPk(mainOrder.main_dir_id, {
+                transaction: t
+            });
 
-            // 8. Пересчёт статистики
+            const joinDir = await File.findByPk(joinOrder.main_dir_id, {
+                transaction: t
+            });
 
-            const mainOrder = await Order.findByPk(id);
+            // 3. Получаем все подпапки второго заказа
 
-            if (mainOrder) await recalculateUserStats(mainOrder.userId);
+            const joinSubdirs = await File.findAll({
+                where: {
+                    parent: joinDir.id,
+                    type: 'dir'
+                },
+                transaction: t
+            });
 
+            const physicalMainDir = path.join(FILEPATH, mainDir.name);
+            const physicalJoinDir = path.join(FILEPATH, joinDir.name);
 
+            // 4. Переносим каждую подпапку
 
-            // 9. Возвращаем обновлённый заказ
+            for (const subdir of joinSubdirs) {
 
-            const updatedOrder = await Order.findByPk(id, { include: [Photo] });
+                // 4.1 Формируем новое имя и проверяем коллизии
 
-            return res.json(updatedOrder);
+                let newSubdirName = `${subdir.name}_${joinOrder.order_number}`;
+                let counter = 1;
 
+                while (
+                    await pathExists(path.join(physicalMainDir, newSubdirName)) ||
+                    await File.findOne({
+                        where: {
+                            parent: mainDir.id,
+                            name: newSubdirName
+                        },
+                        transaction: t
+                    })
+                ) {
+                    newSubdirName = `${joinOrder.order_number}_${subdir.name}(${counter})`;
+                    counter++;
+                }
 
+                // 4.2 Физически перемещаем папку
 
-        } catch (err) {
+                const physicalOldPath = path.join(
+                    physicalJoinDir,
+                    subdir.name
+                );
 
-            console.error('toJoinOrder error:', err);
+                const physicalNewPath = path.join(
+                    physicalMainDir,
+                    newSubdirName
+                );
 
-            return res.status(500).json({ error: err.message });
+                await fs.rename(physicalOldPath, physicalNewPath);
 
+                // 4.3 Обновляем запись подпапки
+
+                await subdir.update({
+                    name: newSubdirName,
+                    parent: mainDir.id,
+                    path: mainDir.name
+                }, {
+                    transaction: t
+                });
+
+                // 4.4 Обновляем пути файлов внутри подпапки
+
+                await File.update(
+                    {
+                        path: `${mainDir.name}/${newSubdirName}`
+                    },
+                    {
+                        where: { parent: subdir.id },
+                        transaction: t
+                    }
+                );
+            }
+
+            // 5. Проверяем, остались ли файлы второго заказа
+
+            const remaining = await File.findAll({
+                where: { parent: joinDir.id },
+                transaction: t
+            });
+
+            if (remaining.length === 0) {
+                emptyJoinDir = {
+                    id: joinDir.id,
+                    path: physicalJoinDir
+                };
+            } else {
+                console.warn(
+                    `В папке заказа ${joinOrder.order_number} осталось:`,
+                    remaining.map(f => f.name)
+                );
+            }
+
+            // 6. Перепривязываем фотографии
+
+            await Photo.update(
+                { orderId: id },
+                {
+                    where: { orderId: idJoin },
+                    transaction: t
+                }
+            );
+
+            // 7. Удаляем второй заказ
+
+            await Order.destroy({
+                where: { id: idJoin },
+                transaction: t
+            });
+        });
+
+        // 8. Удаляем пустую папку после завершения транзакции
+
+        if (emptyJoinDir) {
+            try {
+                await fs.rmdir(emptyJoinDir.path);
+
+                await File.destroy({
+                    where: { id: emptyJoinDir.id }
+                });
+
+            } catch (error) {
+                console.warn(
+                    'Не удалось удалить папку объединённого заказа:',
+                    emptyJoinDir.path,
+                    error.message
+                );
+            }
         }
 
+        // 9. Пересчитываем статистику клиента
+
+        const mainOrder = await Order.findByPk(id);
+
+        if (mainOrder) {
+            await recalculateUserStats(mainOrder.userId);
+        }
+
+        // 10. Возвращаем обновлённый заказ
+
+        const updatedOrder = await Order.findByPk(id, {
+            include: [Photo]
+        });
+
+        return res.json(updatedOrder);
+
+    } catch (err) {
+        console.error('toJoinOrder error:', err);
+
+        return res.status(500).json({
+            error: err.message
+        });
     }
+}
 
 
 

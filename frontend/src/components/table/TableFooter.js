@@ -16,7 +16,7 @@ export const TableFooter = ({ filteredOrders, activeFilters = {} }) => {
     return (
         <div
             className="my-3 flex w-full items-center justify-between gap-2 rounded-xl bg-white px-3 py-2.5 text-xs font-medium text-slate-700 shadow-sm"
-            style={{ border: '1.5px solid #bfcbd7' }}
+            style={{ border: "1px solid #97a8b9", boxSizing: "border-box" }}
         >
             <div className="shrink-0 tabular-nums">N={countedOrders.length}</div>
             {selected.length ? (

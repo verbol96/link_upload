@@ -172,32 +172,53 @@ class authController {
         return res.json(response.data)
     }
 
-    async setLogUser(req,res){
-        try{
-            const{dataLog={}}=req.body;
-            const log=await LogUser.create({
-                phone:dataLog.phone||'0',
-                surname:dataLog.surname||null,
-                sessionId:dataLog.sessionId||null,
-                event:dataLog.event||'visit',
-                eventType:dataLog.eventType||'info',
-                page:dataLog.page||null,
-                orderId:dataLog.orderId||null,
-                photosCount:dataLog.photosCount??null,
-                format:dataLog.format||null,
-                error:dataLog.error?String(dataLog.error).slice(0,2000):null,
-                appVersion:dataLog.appVersion||null,
-                device:dataLog.device||'unknown',
-                browser:dataLog.browser||'unknown',
-                OS:dataLog.OS||'unknown',
-                screen:dataLog.screen||'unknown'
-            });
-            return res.json({status:'ok',id:log.id});
-        }catch(error){
-            console.error('setLogUser error:',error);
-            return res.status(500).json({message:'Ошибка записи лога'});
-        }
+async setLogUser(req, res) {
+    try {
+        const { dataLog = {} } = req.body;
+
+        const eventDate = dataLog.createdAt
+            ? new Date(dataLog.createdAt)
+            : new Date();
+
+        const createdAt = Number.isFinite(eventDate.getTime())
+            && eventDate.getTime() <= Date.now()
+            ? eventDate
+            : new Date();
+
+        const log = await LogUser.create({
+            phone: dataLog.phone || '0',
+            surname: dataLog.surname || null,
+            sessionId: dataLog.sessionId || null,
+            event: dataLog.event || 'visit',
+            eventType: dataLog.eventType || 'info',
+            page: dataLog.page || null,
+            orderId: dataLog.orderId || null,
+            photosCount: dataLog.photosCount ?? null,
+            format: dataLog.format || null,
+            error: dataLog.error
+                ? String(dataLog.error).slice(0, 2000)
+                : null,
+            appVersion: dataLog.appVersion || null,
+            device: dataLog.device || 'unknown',
+            browser: dataLog.browser || 'unknown',
+            OS: dataLog.OS || 'unknown',
+            screen: dataLog.screen || 'unknown',
+            createdAt
+        });
+
+        return res.json({
+            status: 'ok',
+            id: log.id
+        });
+
+    } catch (error) {
+        console.error('setLogUser error:', error);
+
+        return res.status(500).json({
+            message: 'Ошибка записи лога'
+        });
     }
+}
 
     async getLogUser(req, res) {
     // Вычисляем дату месяц назад

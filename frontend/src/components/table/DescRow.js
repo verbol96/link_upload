@@ -702,36 +702,68 @@ const SaveData = async () => {
       }
   };  
   const [printingEP, setPrintingEP] = useState(false);
-  const printLabelEP = async () => {
+const printLabelEP = async () => {
     if (!codeOutside?.trim() || printingEP) return;
     setPrintingEP(true);
+
     try {
-      const pdf = await getLabelEP(codeOutside.trim());
-      const url = URL.createObjectURL(pdf);
-      const iframe = document.createElement('iframe');
-      iframe.style.cssText = 'position:fixed;width:0;height:0;border:0';
-      iframe.onload = () => {
-        setTimeout(() => {
-          try {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-          } catch {
-            window.open(url, '_blank');
-          }
-        }, 500);
-      };
-      iframe.src = url;
-      document.body.appendChild(iframe);
-      setTimeout(() => {
-        iframe.remove();
-        URL.revokeObjectURL(url);
-      }, 300000);
+        const pdf = await getLabelEP(codeOutside.trim());
+        const url = URL.createObjectURL(pdf);
+
+        const iframe = document.createElement('iframe');
+
+        iframe.style.cssText = `
+            position: fixed;
+            left: -10000px;
+            top: -10000px;
+            width: 1px;
+            height: 1px;
+            border: 0;
+            opacity: 0;
+            pointer-events: none;
+        `;
+
+        let cleanupTimer;
+
+        const cleanup = () => {
+            clearTimeout(cleanupTimer);
+            window.removeEventListener('afterprint', cleanup);
+            iframe.remove();
+            URL.revokeObjectURL(url);
+        };
+
+        iframe.onload = () => {
+            iframe.onload = null;
+
+            setTimeout(() => {
+                if (!iframe.isConnected) return;
+
+                try {
+                    window.addEventListener('afterprint', cleanup);
+                    iframe.contentWindow.addEventListener(
+                        'afterprint', cleanup
+                    );
+
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch (error) {
+                    cleanup();
+                    toast.error('Не удалось открыть печать');
+                }
+            }, 500);
+        };
+
+        iframe.src = url;
+        document.body.appendChild(iframe);
+
+        cleanupTimer = setTimeout(cleanup, 300000);
+
     } catch (error) {
-      toast.error('Не удалось получить ярлык');
+        toast.error('Не удалось получить ярлык');
     } finally {
-      setPrintingEP(false);
+        setPrintingEP(false);
     }
-  };
+};
   const checkOrderEp = async() =>{
     if(!codeOutside) {
       window.alert('нету штрихкода')
@@ -1567,60 +1599,93 @@ const sendSmsNew = async () => {
                       Оплата
                   </span>
                   {/* Внутренний блок с рамкой */}
-                  <div className="flex items-center gap-1.5 px-3 py-2
-                                  border border-stone-200 rounded-lg
-                                  whitespace-nowrap">
-                      {/* Статус оплаты — 3 варианта */}
-                      {order.isPayment === 'paid' && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
-                                          text-[12px] font-medium whitespace-nowrap
-                                          bg-green-50 text-green-700 border border-green-200">
-                              <i className="bi bi-check-circle-fill text-[11px]" />
-                              Оплачен
-                          </div>
-                      )}
-                      {order.isPayment === 'wait' && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
-                                          text-[12px] font-medium whitespace-nowrap
-                                          bg-amber-50 text-amber-700 border border-amber-200">
-                              <i className="bi bi-clock-fill text-[11px]" />
-                              Ожидает оплаты
-                          </div>
-                      )}
-                      {order.isPayment === 'none' && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
-                                          text-[12px] font-medium whitespace-nowrap
-                                          bg-stone-50 text-stone-500 border border-stone-200">
-                              <i className="bi bi-dash-circle text-[11px]" />
-                              Счёт не выставлен
-                          </div>
-                      )}
-                      {/* Кнопки — в зависимости от состояния */}
-                      {order.isPayment === 'none' && (
-                          <Button className='border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]' variant='outline' size='sm' onClick={() => AddInvoices()}>
-                              <i className="bi bi-receipt text-[12px] mr-1" />
-                              Выставить счёт
-                          </Button>
-                      )}
-                      {order.isPayment === 'wait' && (
-                          <>
-                              <Button className='border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]' variant='outline' size='sm' onClick={() => CancelInvoices()}>
-                                  <i className="bi bi-x-circle text-[12px] mr-1" />
-                                  отменить
-                              </Button>
-                              <Button className='border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]' variant='outline' size='sm' onClick={() => CheckInvoices()}>
-                                  <i className="bi bi-arrow-clockwise text-[12px] mr-1" />
-                                  проверить
-                              </Button>
-                          </>
-                      )}
-                      {order.isPayment === 'paid' && (
-                          <Button className='border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]' variant='outline' size='sm' onClick={() => CheckInvoices()}>
-                              <i className="bi bi-arrow-clockwise text-[12px] mr-1" />
-                              проверить
-                          </Button>
-                      )}
-                  </div>
+                  <div className="flex min-w-0 items-center gap-1 px-2 py-2
+                border border-stone-200 rounded-lg whitespace-nowrap
+                [&>button]:min-w-0
+                [&>button]:flex-initial
+                [&>button]:gap-1
+                [&>button]:px-1.5
+                [&>button]:text-[11px]">
+
+                {/* Статус оплаты */}
+                {order.isPayment === 'paid' && (
+                    <div className="inline-flex min-w-0 items-center gap-1 px-1.5 py-1
+                                    rounded-md text-[11px] font-medium
+                                    bg-green-50 text-green-700 border border-green-200">
+                        <i className="bi bi-check-circle-fill shrink-0" />
+                        <span className="truncate">Оплачен</span>
+                    </div>
+                )}
+
+                {order.isPayment === 'wait' && (
+                    <div className="inline-flex min-w-0 items-center gap-1 px-1.5 py-1
+                                    rounded-md text-[11px] font-medium
+                                    bg-amber-50 text-amber-700 border border-amber-200"
+                        title="Ожидает оплаты">
+                        <i className="bi bi-clock-fill shrink-0" />
+                        <span className="truncate">Ожидает оплаты</span>
+                    </div>
+                )}
+
+                {order.isPayment === 'none' && (
+                    <div className="inline-flex min-w-0 items-center gap-1 px-1.5 py-1
+                                    rounded-md text-[11px] font-medium
+                                    bg-stone-50 text-stone-500 border border-stone-200"
+                        title="Счёт не выставлен">
+                        <i className="bi bi-dash-circle shrink-0" />
+                        <span className="truncate">Счёт не выставлен</span>
+                    </div>
+                )}
+
+                {/* Кнопки оплаты */}
+                {order.isPayment === 'none' && (
+                    <Button
+                        className="border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]"
+                        variant="outline"
+                        size="sm"
+                        onClick={AddInvoices}
+                        title="Выставить счёт">
+                        <i className="bi bi-receipt shrink-0" />
+                        <span className="min-w-0 truncate">Выставить счёт</span>
+                    </Button>
+                )}
+
+                {order.isPayment === 'wait' && (
+                    <>
+                        <Button
+                            className="border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]"
+                            variant="outline"
+                            size="sm"
+                            onClick={CancelInvoices}
+                            title="Отменить">
+                            <i className="bi bi-x-circle shrink-0" />
+                            <span className="min-w-0 truncate">Отменить</span>
+                        </Button>
+
+                        <Button
+                            className="border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]"
+                            variant="outline"
+                            size="sm"
+                            onClick={CheckInvoices}
+                            title="Проверить">
+                            <i className="bi bi-arrow-clockwise shrink-0" />
+                            <span className="min-w-0 truncate">Проверить</span>
+                        </Button>
+                    </>
+                )}
+
+                {order.isPayment === 'paid' && (
+                    <Button
+                        className="border-slate-300 text-[#274C77] hover:bg-slate-100 hover:text-[#1E3A5D]"
+                        variant="outline"
+                        size="sm"
+                        onClick={CheckInvoices}
+                        title="Проверить">
+                        <i className="bi bi-arrow-clockwise shrink-0" />
+                        <span className="min-w-0 truncate">Проверить</span>
+                    </Button>
+                )}
+            </div>
               </div>
           )}
           <div className='flex justify-end mt-auto pt-4 gap-1' >

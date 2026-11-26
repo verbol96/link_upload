@@ -113,55 +113,119 @@ export const setLogUserData=(user)=>{
     }
 };
 
-export const setLogUser=async(eventData={})=>{
-    try{
-        let browserName='unknown';
-        let browserVersion='unknown';
-        let osName='unknown';
-        let osVersion='unknown';
-        let deviceModel='unknown';
+const LOG_QUEUE_KEY = 'link_pending_logs';
 
-        try{
-            const parser=new UAParser();
-            const result=parser.getResult();
+let isSendingLogs = false;
 
-            browserName=result.browser?.name||'unknown';
-            browserVersion=result.browser?.version||'unknown';
-            osName=result.os?.name||'unknown';
-            osVersion=result.os?.version||'unknown';
-            deviceModel=result.device?.model||result.device?.type||'unknown';
-        }catch(uaError){
-            console.warn('UA Parser error:',uaError.message);
-        }
-
-        const screenWidth=window?.screen?.width||0;
-        const screenHeight=window?.screen?.height||0;
-
-        const dataLog={
-            phone:eventData.phone||sessionStorage.getItem('logUserPhone')||'0',
-            surname:eventData.surname||sessionStorage.getItem('logUserSurname')||null,
-            sessionId:getLogSessionId(),
-            event:eventData.event||'visit',
-            eventType:eventData.eventType||'info',
-            page:eventData.page||window.location.pathname,
-            orderId:eventData.orderId??null,
-            photosCount:eventData.photosCount??null,
-            format:eventData.format??null,
-            error:eventData.error??null,
-            appVersion:eventData.appVersion??null,
-            device:deviceModel,
-            browser:`${browserName} (${browserVersion})`,
-            OS:`${osName} (${osVersion})`,
-            screen:`${screenWidth}x${screenHeight}`
-        };
-
-        const data=await $host.post('api/auth/setLogUser',{dataLog});
-        return data;
-    }catch(error){
-        console.error('setLogUser error:',error.message);
-        throw error;
+const getPendingLogs = () => {
+    try {
+        return JSON.parse(localStorage.getItem(LOG_QUEUE_KEY) || '[]');
+    } catch {
+        return [];
     }
 };
+
+const savePendingLogs = logs => {
+    localStorage.setItem(LOG_QUEUE_KEY, JSON.stringify(logs));
+};
+
+export const flushPendingLogs = async () => {
+    if (isSendingLogs || !navigator.onLine) return;
+
+    isSendingLogs = true;
+
+    try {
+        while (navigator.onLine) {
+            const logs = getPendingLogs();
+
+            if (!logs.length) break;
+
+            const log = logs[0];
+
+            await $host.post('api/auth/setLogUser', {
+                dataLog: log.dataLog
+            });
+
+            savePendingLogs(
+                getPendingLogs().filter(item => item.id !== log.id)
+            );
+        }
+    } catch (error) {
+        console.warn('Отправка логов отложена:', error.message);
+    } finally {
+        isSendingLogs = false;
+    }
+};
+
+export const setLogUser = async (eventData = {}) => {
+    try {
+        let browserName = 'unknown';
+        let browserVersion = 'unknown';
+        let osName = 'unknown';
+        let osVersion = 'unknown';
+        let deviceModel = 'unknown';
+
+        try {
+            const parser = new UAParser();
+            const result = parser.getResult();
+
+            browserName = result.browser?.name || 'unknown';
+            browserVersion = result.browser?.version || 'unknown';
+            osName = result.os?.name || 'unknown';
+            osVersion = result.os?.version || 'unknown';
+            deviceModel = result.device?.model
+                || result.device?.type
+                || 'unknown';
+        } catch (uaError) {
+            console.warn('UA Parser error:', uaError.message);
+        }
+
+        const screenWidth = window.screen?.width || 0;
+        const screenHeight = window.screen?.height || 0;
+
+        const dataLog = {
+            phone: eventData.phone || sessionStorage.getItem('logUserPhone') || '0',
+            surname: eventData.surname || sessionStorage.getItem('logUserSurname') || null,
+            sessionId: getLogSessionId(),
+            event: eventData.event || 'visit',
+            eventType: eventData.eventType || 'info',
+            page: eventData.page || window.location.pathname,
+            orderId: eventData.orderId ?? null,
+            photosCount: eventData.photosCount ?? null,
+            format: eventData.format ?? null,
+            error: eventData.error ?? null,
+            appVersion: eventData.appVersion ?? null,
+            device: deviceModel,
+            browser: `${browserName} (${browserVersion})`,
+            OS: `${osName} (${osVersion})`,
+            screen: `${screenWidth}x${screenHeight}`,
+            createdAt: new Date().toISOString()
+        };
+
+        const logs = getPendingLogs();
+
+        logs.push({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            dataLog
+        });
+
+        savePendingLogs(logs);
+
+        await flushPendingLogs();
+
+    } catch (error) {
+        console.error('setLogUser error:', error.message);
+    }
+};
+
+// Восстановление интернет-соединения
+window.addEventListener('online', flushPendingLogs);
+
+// Повторное открытие сайта
+flushPendingLogs();
+
+// Повторная попытка каждые 30 секунд
+setInterval(flushPendingLogs, 30000);
 
 export const deleteOldLogs=async()=>{
     const data=await $host.delete('api/auth/deleteOldLogs');

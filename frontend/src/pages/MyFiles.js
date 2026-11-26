@@ -148,15 +148,15 @@ function FolderIcon() {
       <path
         d="M12 28 Q12 19 21 19 H47 L57 29 H99 Q108 29 108 38 V78 Q108 87 99 87 H21 Q12 87 12 78Z"
         fill="#B0C1D2"
-        stroke="#677C93"
-        strokeWidth="1.7"
+        stroke="#9DAFC1"
+        strokeWidth="1.2"
         strokeLinejoin="round"
       />
       <path
         d="M12 46 Q12 39 20 39 H100 Q108 39 108 47 V79 Q108 87 100 87 H20 Q12 87 12 79Z"
         fill="#D7E1EB"
-        stroke="#677C93"
-        strokeWidth="1.7"
+        stroke="#9DAFC1"
+        strokeWidth="1.2"
         strokeLinejoin="round"
       />
     </svg>
@@ -232,20 +232,30 @@ function FolderModal({ folder, settings, busy, onClose, onSave }) {
     >
       <form
         onSubmit={submit}
-        className="w-full max-w-[400px] max-h-[calc(100dvh-24px)] overflow-y-auto rounded-xl border border-[#E2E5E9] bg-white shadow-xl"
+        className="w-full max-w-[400px] max-h-[calc(100dvh-24px)] overflow-y-auto rounded-xl bg-white shadow-xl"
       >
         {/* Заголовок */}
-        <div className="flex items-center justify-between border-b border-[#EDF0F2] px-4 py-4">
-          <h2 className="text-[15px] font-semibold text-[#334155]">
-            {folder ? 'Настройки папки' : 'Создание папки'}
-          </h2>
+        <div className="flex items-center bg-[#274C77] justify-between px-4 py-3">
+          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-white">
+            {folder ? (
+                <>
+                    <i className="bi bi-gear" />
+                    Настройки папки
+                </>
+            ) : (
+                <>
+                    <i className="bi bi-folder-plus" />
+                    Создание папки
+                </>
+            )}
+        </h2>
 
           <button
             type="button"
             onClick={onClose}
             disabled={busy}
             aria-label="Закрыть"
-            className="flex h-7 w-7 items-center justify-center rounded-md text-[#94A3B8] transition-colors hover:bg-[#F1F3F6] hover:text-[#475569] disabled:opacity-40"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-white transition-colors disabled:opacity-40"
           >
             <Icon name="bi-x-lg" className="text-[13px]" />
           </button>
@@ -378,7 +388,7 @@ function FolderModal({ folder, settings, busy, onClose, onSave }) {
         </div>
 
         {/* Кнопки */}
-        <div className="flex items-center justify-end gap-2 border-t border-[#EDF0F2] px-5 py-3.5">
+        <div className="flex items-center justify-end gap-2 border-t border-[#EDF0F2] px-4 py-2">
           <button
             type="button"
             onClick={onClose}
@@ -1424,31 +1434,62 @@ const validateCheckout = async () => {
 
     <div className="flex flex-col gap-6 md:gap-10 pt-4">
       {/* Информация о заказе */}
-      <section className="relative rounded-xl border border-slate-200/80 bg-white shadow-md">
-        <div className="absolute left-3 top-0 flex -translate-y-1/2 items-center gap-2 md:left-6">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#274C77] text-xs font-semibold text-white md:h-8 md:w-8">
-            1
-          </span>
-          <span className="flex h-7 items-center rounded-lg border border-[#E2E8F0] bg-[#F1F5F9] px-3 text-[12px] font-semibold text-[#334155] md:h-8 md:text-[13.5px]">
-            Информация о заказе
-          </span>
-        </div>
+<section className="relative rounded-xl border border-slate-200/80 bg-white shadow-md">
+  <div className="absolute left-3 top-0 flex -translate-y-1/2 items-center gap-2 md:left-6">
+    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#274C77] text-xs font-semibold text-white md:h-8 md:w-8">
+      1
+    </span>
+    <span className="flex h-7 items-center rounded-lg border border-[#E2E8F0] bg-[#F1F5F9] px-3 text-[12px] font-semibold text-[#334155] md:h-8 md:text-[13.5px]">
+      Информация о заказе
+    </span>
+  </div>
 
-        <div className="space-y-3 p-4 pt-8 text-[13px] text-slate-700 md:p-6 md:pt-9">
-          <div className="flex justify-between gap-3 mt-2">
-            <span>Заказ (Всего файлов: {fileCount} )</span>
-            <span>{money(totalPrice)}</span>
+  <div className="space-y-3 p-4 pt-8 text-[13px] text-slate-700 md:p-6 md:pt-9">
+    {draft.folders.map(folder => {
+      const total = folderTotal(folder, settings);
+      const count = folder.items?.length || 0;
+
+      return (
+        <div key={folder.id} className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <i className="bi bi-folder-fill shrink-0 text-[24px] text-[#B0C1D2]" />
+
+            <div className="min-w-0">
+              <div className="font-medium text-[#334155]">
+                {folder.type === 'template'
+                  ? 'Фотополоски'
+                  : folderTypeLabel(folder)}
+              </div>
+
+              <div className="mt-0.5 text-[12px] text-slate-500">
+                {findSetting(folder, settings)?.name || folder.format}
+                {' · '}
+                {count} шт.
+              </div>
+            </div>
           </div>
-          <div className="flex justify-between gap-3">
-            <span>Пересылка</span>
-            <span>{money(deliveryPrice)}</span>
-          </div>
-          <div className="flex justify-between gap-3 border-t border-slate-200 pt-3 text-base font-semibold">
-            <span>Итого</span>
-            <span>{money(totalPrice + deliveryPrice)}</span>
-          </div>
+
+          <span className="shrink-0 whitespace-nowrap font-medium">
+            {total === null ? '—' : money(total)}
+          </span>
         </div>
-      </section>
+      );
+    })}
+
+    <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
+      <div>
+        <div className="text-base font-semibold">Итого</div>
+        <div className="text-[11px] text-slate-400">
+          Всего файлов: {fileCount}
+        </div>
+      </div>
+
+      <span className="text-base font-semibold text-[#274C77]">
+        {money(totalPrice)}
+      </span>
+    </div>
+  </div>
+</section>
 
       {/* Данные для отправки */}
       <section className="relative rounded-xl border border-slate-200/80 bg-white shadow-md">
@@ -1722,7 +1763,7 @@ const validateCheckout = async () => {
                       type="button"
                       onClick={() => setModal({ type: 'create' })}
                       disabled={busy || !settings.length}
-                      className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg  bg-[#274C77] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[#F1F3F6] disabled:cursor-not-allowed disabled:opacity-40"
+                      className="mt-6 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg  bg-[#274C77] px-5 text-[14px] font-medium text-white transition-colors hover:bg-[#1E3A5D] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Icon
                         name="bi-folder-plus"

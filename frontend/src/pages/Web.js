@@ -247,236 +247,228 @@ const Web = () => {
 
 
     //загрузка
-    const upload = async () => {
-        setUploadError(null);
-        setCurrent(0);
-        setActiveStep(10);
+const upload = async () => {
+    setUploadError(null);
+    setCurrent(0);
+    setActiveStep(10);
 
-        try {
-            const photo = formats.map(el => ({
-                id: el.id,
-                type: ['photo', 'holst', 'magnit', 'poster'].includes(el.type)
-                    ? el.type
-                    : 'photo',
-                format: el.format,
-                amount: el.files.length,
-                paper: el.paper,
-                copies: el.copies
-            }));
+    let stage = 'order_prepare';
+    let orderNumber = null;
+    let amount = 0;
+    let formatNames = '';
+    let currentFormat = null;
+    let uploadedCount = 0;
 
-            const amount = formats.reduce(
-                (acc, el) => acc + el.files.length, 0
+    try {
+        const photo = formats.map(el => ({
+            id: el.id,
+            type: ['photo', 'holst', 'magnit', 'poster'].includes(el.type)
+                ? el.type
+                : 'photo',
+            format: el.format,
+            amount: el.files.length,
+            paper: el.paper,
+            copies: el.copies
+        }));
+
+        amount = formats.reduce(
+            (acc, el) => acc + el.files.length, 0
+        );
+
+        formatNames = formats.map(el => el.format).join(', ');
+
+        setAmountPhoto(amount);
+
+        setLogUser({
+            event: 'order_submit',
+            eventType: 'info',
+            photosCount: amount,
+            format: formatNames
+        });
+
+        const data = {
+            FIO: FIO.toLowerCase(),
+            phone: removeNonNumeric(phone),
+            typePost: typePost,
+            city: city,
+            adress: adress,
+            postCode: postCode,
+            other: other,
+            notes: '',
+            photo: photo,
+            price: totalPrice,
+            price_deliver: deliveryPrice,
+            codeOutside: '',
+            oblast: ['R', 'R1', 'R2'].includes(typePost) ? oblast : '',
+            raion: '',
+            auth: isAuth,
+            phoneUser: user.phone,
+            status: 0,
+            origin: 'website'
+        };
+
+        // ===== Создание заказа =====
+
+        stage = 'order_create';
+
+        const response = await $host.post('api/order/addOrder', data);
+        const userData = response.data;
+
+        orderNumber = userData.order_number;
+
+        setLogUser({
+            event: 'order_created',
+            eventType: 'success',
+            orderId: orderNumber,
+            photosCount: amount,
+            format: formatNames
+        });
+
+        // ===== Создание основной папки =====
+
+        stage = 'order_folder';
+
+        const typePostName = () => {
+            if (['R', 'R1', 'R2'].includes(typePost)) return 'R';
+            if (['E', 'E1'].includes(typePost)) return 'E';
+
+            throw new Error('Неизвестный тип доставки');
+        };
+
+        const MainDir = await createDir(
+            typePostName() + (orderNumber % 1000)
+        );
+
+        // ===== Обновление заказа =====
+
+        stage = 'order_update';
+
+        const newUserData = {
+            ...userData,
+            main_dir_id: MainDir.id,
+            phoneUser: userData.user.phone,
+            photo: userData.photos
+        };
+
+        await updateOrder(userData.id, newUserData);
+
+        // ===== Загрузка фотографий =====
+
+        const batchSize = 4;
+
+        for (const formatOne of formats) {
+            currentFormat = formatOne.format;
+
+            // Создание папки формата
+
+            stage = 'format_folder';
+
+            const parentFile = await createDir(
+                `${formatOne.format}_${formatOne.paper}_копий_${formatOne.copies}`,
+                MainDir.id
             );
 
-            const formatNames = formats.map(el => el.format).join(', ');
+            // Загрузка группами по 4 фотографии
 
-            setAmountPhoto(amount);
+            stage = 'photo_upload';
 
-            setLogUser({
-                event: 'order_submit',
-                eventType: 'info',
-                photosCount: amount,
-                format: formatNames
-            });
+            for (let i = 0; i < formatOne.files.length; i += batchSize) {
+                const batch = formatOne.files.slice(i, i + batchSize);
 
-            const data = {
-                FIO: FIO.toLowerCase(),
-                phone: removeNonNumeric(phone),
-                typePost: typePost,
-                city: city,
-                adress: adress,
-                postCode: postCode,
-                other: other,
-                notes: '',
-                photo: photo,
-                price: totalPrice,
-                price_deliver: deliveryPrice,
-                codeOutside: '',
-                oblast: ['R', 'R1', 'R2'].includes(typePost) ? oblast : '',
-                raion: '',
-                auth: isAuth,
-                phoneUser: user.phone,
-                status: 0,
-                origin: 'website'
-            };
+                const results = await Promise.allSettled(
+                    batch.map(async file => {
+                        await uploadFiles(
+                            file,
+                            parentFile.id,
+                            formatOne.id
+                        );
 
-            // ===== Создание заказа =====
-
-            let userData;
-
-            try {
-                const response = await $host.post('api/order/addOrder', data);
-                userData = response.data;
-            } catch (error) {
-                setLogUser({
-                    event: 'order_create_error',
-                    eventType: 'error',
-                    photosCount: amount,
-                    format: formatNames,
-                    error: error?.response?.data?.message
-                        || error?.message
-                        || 'Ошибка создания заказа'
-                });
-
-                throw error;
-            }
-
-            setLogUser({
-                event: 'order_created',
-                eventType: 'success',
-                orderId: userData.order_number,
-                photosCount: amount,
-                format: formatNames
-            });
-
-            // ===== Создание основной папки =====
-
-            const typePostName = () => {
-                if (['R', 'R1', 'R2'].includes(typePost)) return 'R';
-                if (['E', 'E1'].includes(typePost)) return 'E';
-
-                throw new Error('Неизвестный тип доставки');
-            };
-
-            let MainDir;
-
-            try {
-                MainDir = await createDir(
-                    typePostName() + (userData.order_number % 1000)
+                        setCurrent(prev => prev + 1);
+                    })
                 );
-            } catch (error) {
-                setLogUser({
-                    event: 'order_folder_error',
-                    eventType: 'error',
-                    orderId: userData.order_number,
-                    photosCount: amount,
-                    format: formatNames,
-                    error: error?.response?.data?.message
-                        || error?.message
-                        || 'Ошибка создания папки заказа'
-                });
 
-                throw error;
-            }
+                // Подсчёт успешно загруженных фотографий
 
-            // ===== Обновление заказа =====
+                uploadedCount += results.filter(
+                    result => result.status === 'fulfilled'
+                ).length;
 
-            const newUserData = {
-                ...userData,
-                main_dir_id: MainDir.id,
-                phoneUser: userData.user.phone,
-                photo: userData.photos
-            };
+                // Остановка загрузки при ошибке
 
-            await updateOrder(userData.id, newUserData);
+                const failed = results.find(
+                    result => result.status === 'rejected'
+                );
 
-            // ===== Загрузка фотографий =====
-
-            const batchSize = 4;
-
-            for (const formatOne of formats) {
-                let parentFile;
-
-                // Создание папки формата
-
-                try {
-                    parentFile = await createDir(
-                        `${formatOne.format}_${formatOne.paper}_копий_${formatOne.copies}`,
-                        MainDir.id
-                    );
-                } catch (error) {
-                    setLogUser({
-                        event: 'format_folder_error',
-                        eventType: 'error',
-                        orderId: userData.order_number,
-                        format: formatOne.format,
-                        error: error?.response?.data?.message
-                            || error?.message
-                            || 'Ошибка создания папки формата'
-                    });
-
-                    throw error;
-                }
-
-                // Загрузка группами по 4 фотографии
-
-                for (let i = 0; i < formatOne.files.length; i += batchSize) {
-                    const batch = formatOne.files.slice(i, i + batchSize);
-
-                    const results = await Promise.allSettled(
-                        batch.map(async file => {
-                            try {
-                                await uploadFiles(
-                                    file,
-                                    parentFile.id,
-                                    formatOne.id
-                                );
-
-                                setCurrent(prev => prev + 1);
-
-                            } catch (error) {
-                                setLogUser({
-                                    event: 'photo_upload_error',
-                                    eventType: 'error',
-                                    orderId: userData.order_number,
-                                    format: formatOne.format,
-                                    error: error?.response?.data?.message
-                                        || error?.message
-                                        || 'Ошибка загрузки фотографии'
-                                });
-
-                                throw error;
-                            }
-                        })
-                    );
-
-                    // Остановка загрузки при ошибке
-
-                    const failed = results.find(
-                        result => result.status === 'rejected'
-                    );
-
-                    if (failed) {
-                        throw failed.reason;
-                    }
+                if (failed) {
+                    throw failed.reason;
                 }
             }
-
-            // ===== Завершение загрузки =====
-
-            await $host.post(`api/order/uploadCompleted/${userData.id}`);
-
-            setLogUser({
-                event: 'order_upload_completed',
-                eventType: 'success',
-                orderId: userData.order_number,
-                photosCount: amount,
-                format: formatNames
-            });
-
-            setActiveStep(11);
-
-        } catch (error) {
-            console.error('Ошибка загрузки заказа:', error);
-
-            let message;
-
-            if (!navigator.onLine) {
-                message = 'Отсутствует интернет-соединение.';
-            } else if (
-                error?.code === 'ECONNABORTED' ||
-                error?.code === 'ETIMEDOUT'
-            ) {
-                message = 'Превышено время ожидания загрузки.';
-            } else if (!error?.response) {
-                message = 'Соединение с сервером прервано.';
-            } else {
-                message = 'Произошла ошибка при загрузке заказа.';
-            }
-
-            setUploadError(message);
         }
-    };
+
+        // ===== Завершение загрузки =====
+
+        stage = 'order_upload_complete';
+        currentFormat = null;
+
+        await $host.post(`api/order/uploadCompleted/${userData.id}`);
+
+        setLogUser({
+            event: 'order_upload_completed',
+            eventType: 'success',
+            orderId: orderNumber,
+            photosCount: amount,
+            format: formatNames
+        });
+
+        setActiveStep(11);
+
+    } catch (error) {
+        console.error('Ошибка загрузки заказа:', error);
+
+        let message;
+
+        if (!navigator.onLine) {
+            message = 'Отсутствует интернет-соединение.';
+        } else if (
+            error?.code === 'ECONNABORTED' ||
+            error?.code === 'ETIMEDOUT'
+        ) {
+            message = 'Превышено время ожидания загрузки.';
+        } else if (!error?.response) {
+            message = 'Соединение с сервером прервано.';
+        } else {
+            message = 'Произошла ошибка при загрузке заказа.';
+        }
+
+        // Отображение ошибки клиенту
+
+        setUploadError(message);
+
+        // Сохранение ошибки в журнале
+
+        const errorDetails =
+            error?.response?.data?.message ||
+            error?.message ||
+            message;
+
+        setLogUser({
+            event: `${stage}_error`,
+            eventType: 'error',
+            orderId: orderNumber,
+            photosCount: amount,
+            format: currentFormat || formatNames,
+            error: [
+                errorDetails,
+                `Загружено: ${uploadedCount}/${amount}`,
+                `Интернет: ${navigator.onLine ? 'есть' : 'нет'}`,
+                error?.code ? `Код: ${error.code}` : null,
+                error?.response?.status
+                    ? `HTTP: ${error.response.status}`
+                    : null
+            ].filter(Boolean).join(' | ')
+        });
+    }
+};
 
 
     // ===== ОБЁРТКА С ВАЛИДАЦИЕЙ =====
