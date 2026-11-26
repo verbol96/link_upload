@@ -72,6 +72,34 @@ const answerCallbackQuery=async(callbackQueryId)=>{
     }
 };
 
+// Удаление сообщений от нажатия кнопок
+const deleteTelegramMessage=async(chatId,messageId)=>{
+    try{
+        const token=process.env.TELEGRAM_BOT_TOKEN;
+
+        const response=await fetch(
+            `${TELEGRAM_API_BASE}/bot${token}/deleteMessage`,
+            {
+                method:'POST',
+                headers:{
+                    'Content-Type':'application/json'
+                },
+                body:JSON.stringify({
+                    chat_id:chatId,
+                    message_id:messageId
+                }),
+                signal:AbortSignal.timeout(5000)
+            }
+        );
+
+        if(!response.ok){
+            console.error('Telegram deleteMessage:',await response.text());
+        }
+    }catch(error){
+        console.error('Telegram deleteMessage:',error.message);
+    }
+};
+
 const escapeHTML=value=>String(value??'')
     .replace(/&/g,'&amp;')
     .replace(/</g,'&lt;')
@@ -507,11 +535,24 @@ const handleTelegramUpdate=async(update)=>{
 
     const s=getSession(id);
 
-    if(s.step==='creating')return;
-
     const command=m.forward_origin||m.forward_date
         ?null
         :m.text?.trim();
+
+    // Удаление сообщений от нажатия основных кнопок
+    if([
+        '➤',
+        '+📁',
+        'ℹ️',
+        'ℹ',
+        '🗑️',
+        '🗑'
+    ].includes(command)){
+        void deleteTelegramMessage(id,m.message_id);
+    }
+
+    // Во время создания заказа команды не выполняются
+    if(s.step==='creating')return;
 
     // Отображение клавиатуры
     if(command==='/start'){
