@@ -245,12 +245,12 @@ const LogsUser=()=>{
     };
     return (
         <div className="w-full">
-            <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
+            <div className="bg-white border border-slate-200/80 rounded-lg overflow-hidden ">
                 <div className="px-3 sm:px-4 py-3 bg-slate-50 border-b border-slate-200/80">
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                         <div className="flex items-center gap-2 shrink-0">
-                            <span className="w-7 h-7 rounded-md bg-[#eaf4f2] flex items-center justify-center shrink-0">
-                                <i className="bi bi-list-ul text-[12px] text-[#19766d]"/>
+                            <span className="w-7 h-7 rounded-md bg-[#F0F3F6] flex items-center justify-center shrink-0">
+                                <i className="bi bi-list-ul text-[12px] text-[#526B83]"/>
                             </span>
                             <div>
                                 <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-600">
@@ -261,13 +261,13 @@ const LogsUser=()=>{
                                 </div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-1 overflow-x-auto lg:ml-3">
+                        <div className="flex items-center gap-1 overflow-x-auto max-w-full min-w-0 lg:ml-3">
                             {FILTERS.map(item=>(
                                 <button
                                     key={item.id}
                                     type="button"
                                     onClick={()=>setFilter(item.id)}
-                                    className={`shrink-0 h-8 px-2.5 rounded-md text-[11px] font-medium transition-colors ${filter===item.id?"bg-[#19766d] text-white":"bg-white border border-slate-200 text-slate-500 hover:bg-slate-100"}`}
+                                    className={`shrink-0 h-8 px-2.5 rounded-md text-[11px] font-medium transition-colors ${filter===item.id?"bg-[#526B83] text-white":"bg-white border border-slate-200 text-slate-500 hover:bg-slate-100"}`}
                                 >
                                     {item.label}
                                     <span className={`ml-1.5 text-[9px] ${filter===item.id?"text-white/70":"text-slate-400"}`}>
@@ -276,17 +276,17 @@ const LogsUser=()=>{
                                 </button>
                             ))}
                         </div>
-                        <button type="button" onClick={()=>setShowStats(prev=>!prev)} className={`shrink-0 h-8 px-2.5 rounded-md border text-[11px] font-medium transition-colors ${showStats?"bg-[#19766d] border-[#19766d] text-white":"bg-white border-slate-200 text-slate-600 hover:bg-slate-100"}`}>
+                        <button type="button" onClick={()=>setShowStats(prev=>!prev)} className={`shrink-0 h-8 px-2.5 rounded-md border text-[11px] font-medium transition-colors ${showStats?"bg-[#526B83] border-[#526B83] text-white":"bg-white border-slate-200 text-slate-600 hover:bg-slate-100"}`}>
                             <i className={`bi ${showStats?"bi-list-ul":"bi-table"} mr-1.5`}/>
                             {showStats?"К списку":"Статистика по дням"}
                         </button>
-                        <div className="relative lg:ml-auto w-full lg:w-[300px]">
+                        <div className="relative lg:ml-auto flex-1 min-w-[140px] lg:max-w-[300px]">
                             <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400"/>
                             <input
                                 value={search}
                                 onChange={e=>setSearch(e.target.value)}
                                 placeholder="Фамилия, телефон, заказ..."
-                                className="w-full h-8 pl-8 pr-8 rounded-md border border-slate-200 bg-white outline-none text-[11px] text-slate-700 placeholder:text-slate-400 focus:border-[#19766d]"
+                                className="w-full h-8 pl-8 pr-8 rounded-md border border-slate-200 bg-white outline-none text-[11px] text-slate-700 placeholder:text-slate-400 focus:border-[#526B83]"
                             />
                             {search&&(
                                 <button
@@ -306,7 +306,7 @@ const LogsUser=()=>{
     className="shrink-0 h-8 px-2.5 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
 >
     <i className="bi bi-trash3 mr-1.5"/>
-    Очистить все
+    <span className="hidden sm:inline">Очистить все</span>
 </button>
                     </div>
                 </div>
@@ -383,7 +383,7 @@ const LogsUser=()=>{
                                                     <tr>
                                                         <td colSpan={6} className="px-4 py-1.5 bg-slate-50 border-y border-slate-200">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-[#19766d]"/>
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-[#526B83]"/>
                                                                 <span className="text-[10px] font-semibold tracking-wide text-slate-500">{date}</span>
                                                                  <DayStats date={date} stats={dayStats.get(date)}/>
                                                                 <span className="h-px flex-1 bg-slate-200"/>
@@ -406,7 +406,7 @@ const LogsUser=()=>{
                                                             <div className="min-w-0">
                                                                 <div className="flex items-center gap-1.5">
                                                                     <i className={`bi ${session.isPhone?"bi-phone":"bi-laptop"} text-[11px] text-slate-400 shrink-0`} title={session.isPhone?"Телефон":"Компьютер"}/>
-                                                                    <i className="bi bi-person text-[11px] text-[#19766d] shrink-0"/>
+                                                                    <i className="bi bi-person text-[11px] text-[#526B83] shrink-0"/>
                                                                     <span className="text-[11px] font-medium text-slate-700 truncate capitalize">
                                                                         {session.surname}
                                                                     </span>
@@ -460,7 +460,7 @@ const LogsUser=()=>{
                                                     </td>
                                                 </tr>
                                                 {expanded&&(
-                                                    <tr className="bg-slate-50/70 border-b border-slate-200">
+                                                    <tr className="bg-white border-b border-slate-200">
                                                         <td colSpan={6} className="px-4 py-4">
                                                             <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                                                                 <div>
@@ -522,7 +522,7 @@ const LogsUser=()=>{
                                                                                             {eventTime.shortDate} {eventTime.time}
                                                                                         </span>
                                                                                         {event.page&&(
-                                                                                            <span className="text-[10px] font-mono text-[#19766d]">
+                                                                                            <span className="text-[10px] font-mono text-[#526B83]">
                                                                                                 {event.page}
                                                                                             </span>
                                                                                         )}
@@ -561,7 +561,7 @@ const LogsUser=()=>{
                                                                     })}
                                                                 </div>
                                                                 {session.events.length>20&&showAllHistoryId!==session.id&&(
-                                                                    <button type="button" onClick={()=>setShowAllHistoryId(session.id)} className="mt-3 w-full py-2 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-[#19766d] hover:bg-slate-50">
+                                                                    <button type="button" onClick={()=>setShowAllHistoryId(session.id)} className="mt-3 w-full py-2 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-[#526B83] hover:bg-slate-50">
                                                                         Показать все ({session.events.length} событий)
                                                                     </button>
                                                                 )}
@@ -586,7 +586,7 @@ const LogsUser=()=>{
                                     <div key={session.id}>
                                         {isNewDay&&(
                                             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border-y border-slate-200">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-[#19766d]"/>
+                                                <span className="w-1.5 h-1.5 rounded-full bg-[#526B83]"/>
                                                 <span className="text-[10px] font-semibold text-slate-500">{date}</span>
                                                 <DayStats date={date} stats={dayStats.get(date)}/>
                                                 <span className="h-px flex-1 bg-slate-200"/>
@@ -609,7 +609,7 @@ const LogsUser=()=>{
                                                         {session.surname?(
                                                             <>
                                                                 <i className={`bi ${session.isPhone?"bi-phone":"bi-laptop"} text-[11px] text-slate-400`} title={session.isPhone?"Телефон":"Компьютер"}/>
-                                                                <i className="bi bi-person text-[11px] text-[#19766d]"/>
+                                                                <i className="bi bi-person text-[11px] text-[#526B83]"/>
                                                                 <span className="text-[11px] font-medium text-slate-700 capitalize truncate">
                                                                     {session.surname}
                                                                 </span>
@@ -656,7 +656,7 @@ const LogsUser=()=>{
                                             </div>
                                         </button>
                                         {expanded&&(
-                                            <div className="px-3 py-3 bg-slate-50/70 border-b border-slate-200">
+                                            <div className="px-3 py-3 bg-white border-b border-slate-200">
                                                 <div className="flex items-center justify-between gap-2 mb-3">
                                                     <div>
                                                         <div className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">
@@ -712,7 +712,7 @@ const LogsUser=()=>{
                                                                             </span>
                                                                         </div>
                                                                         {event.page&&(
-                                                                            <div className="mt-0.5 text-[9px] font-mono text-[#19766d] break-all">
+                                                                            <div className="mt-0.5 text-[9px] font-mono text-[#526B83] break-all">
                                                                                 {event.page}
                                                                             </div>
                                                                         )}
@@ -749,7 +749,7 @@ const LogsUser=()=>{
                                                         })}
                                                     </div>
                                                     {session.events.length>20&&showAllHistoryId!==session.id&&(
-                                                        <button type="button" onClick={()=>setShowAllHistoryId(session.id)} className="mt-3 w-full py-2 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-[#19766d] hover:bg-slate-50">
+                                                        <button type="button" onClick={()=>setShowAllHistoryId(session.id)} className="mt-3 w-full py-2 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-[#526B83] hover:bg-slate-50">
                                                             Показать все ({session.events.length} событий)
                                                         </button>
                                                     )}

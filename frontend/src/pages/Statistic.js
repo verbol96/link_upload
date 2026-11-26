@@ -1,14 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import { $host } from "../http";
 import { NavBar } from "../components/admin/NavBar";
-import Footer from "../components/admin/Footer";
 import { toast } from 'sonner';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
     ResponsiveContainer, BarChart, Bar,
 } from 'recharts';
 import MaterialTab from "../components/statistic/MaterialTab";
-import { MONTHS_SHORT, WEEKDAYS_SHORT, MONTHS_RU, PERIOD_OPTIONS, YEAR_COLORS, ORIGIN_COLORS, ORIGIN_LABELS, formatNumber, getPeriodRange, OriginPercentTooltip, SummaryCard, StatSkeleton, TABS, FancySelect, NewClientsTable } from "../components/statistic/StatisticCommon";
+import { MONTHS_SHORT, WEEKDAYS_SHORT, MONTHS_RU, PERIOD_OPTIONS, YEAR_COLORS, ORIGIN_COLORS, ORIGIN_LABELS, formatNumber, getPeriodRange, OriginPercentTooltip, TABS, FancySelect, NewClientsTable } from "../components/statistic/StatisticCommon";
 
 
 // ============ ГЛАВНЫЙ КОМПОНЕНТ ============
@@ -22,6 +21,12 @@ const Statistic = () => {
     const [startYear, setStartYear] = useState(String(now.getFullYear()));
     const [startMonth, setStartMonth] = useState(String(now.getMonth() + 1).padStart(2, '0'));
     const [period, setPeriod] = useState('1');
+    const changeTab = value => {
+        setType(value);
+        if (value === 'month') {
+            setPeriod('all');
+        }
+    };
 
     const years = useMemo(() => {
         const currentYear = new Date().getFullYear();
@@ -60,14 +65,6 @@ const Statistic = () => {
         return set.size;
     }, [filteredOrder]);
     const avgCheck = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-    const daysSinceStart = useMemo(() => {
-        if (!filteredOrder.length) return 0;
-        const firstDate = filteredOrder.reduce((min, o) => {
-            const d = new Date(o.createdAt);
-            return d < min ? d : min;
-        }, new Date());
-        return Math.floor((Date.now() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
-    }, [filteredOrder]);
     // ============ ГРАФИК ПО МЕСЯЦАМ ============
     const monthlySum = useMemo(() => {
         const grouped = filteredOrder.reduce((acc, curr) => {
@@ -395,70 +392,60 @@ const Statistic = () => {
     }, [dailyStats]);
 
     return (
-        <div className="flex flex-col min-h-screen bg-stone-100">
+        <div className="flex flex-col min-h-screen bg-[#F7F7F8]">
             <NavBar />
-            <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-6">
-                {/* Заголовок */}
-                <div className="mb-6">
-                    <h1 className="text-[24px] md:text-[30px] font-bold text-[#2C3531] leading-tight">
-                        Статистика
-                    </h1>
-                </div>
+            <div className="flex-1 w-full min-w-0 mx-auto px-2 py-3 md:w-[90%] md:px-0 md:py-4">
                 {/* Сводка */}
-                {loading ? (
-                    <div className="mb-6"><StatSkeleton /></div>
-                ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-                        <SummaryCard
-                            title="Выручка"
-                            value={`${formatNumber(totalRevenue, 2)} р`}
-                            sub={showPeriodPanel ? 'за период' : 'за всё время'}
-                            icon="bi-currency-dollar"
-                        />
-                        <SummaryCard
-                            title="Заказов"
-                            value={formatNumber(totalOrders)}
-                            sub={showPeriodPanel ? 'за период' : 'за всё время'}
-                            icon="bi-receipt"
-                        />
-                        <SummaryCard
-                            title="Клиентов"
-                            value={formatNumber(totalClients)}
-                            sub="уникальных"
-                            icon="bi-people"
-                        />
-                        <SummaryCard
-                            title="Средний чек"
-                            value={`${formatNumber(avgCheck, 2)} р`}
-                            sub="на заказ"
-                            icon="bi-calculator"
-                        />
-                        <SummaryCard
-                            title="Дней статистики"
-                            value={formatNumber(daysSinceStart)}
-                            sub="с первого заказа"
-                            icon="bi-calendar-check"
-                        />
-                    </div>
-                )}
-
+                <div className="mb-4 grid grid-cols-4 gap-0 overflow-hidden rounded-xl border border-[#E2E5E9] bg-white p-0 md:grid-cols-4 md:gap-3 md:border-0 md:bg-transparent md:p-0">
+                    {[
+                        ['Выручка', `${formatNumber(totalRevenue, 2)} р`, 'bi-currency-dollar'],
+                        ['Заказов', formatNumber(totalOrders), 'bi-receipt'],
+                        ['Клиентов', formatNumber(totalClients), 'bi-people'],
+                        ['Средний чек', `${formatNumber(avgCheck, 2)} р`, 'bi-calculator'],
+                    ].map(([label, value, icon], index) => (
+                        <div key={label} title={label} className="min-w-0 border-r border-[#E8EBEF] last:border-r-0 px-1 py-2 text-center md:rounded-xl md:border md:border-[#E2E5E9] md:bg-white md:p-4 md:text-left">
+                            <div className="flex items-center justify-center gap-1.5 text-[13px] text-[#6B7280] md:justify-start">
+                                <i className={`bi ${icon} text-[#7890A8]`} /><span className="hidden md:inline">{label}</span>
+                            </div>
+                            <div className="mt-1 whitespace-nowrap text-[10px] font-semibold tabular-nums text-[#374151] sm:text-[13px] md:text-[24px]">
+                                {loading ? '—' : value}
+                            </div>
+                        </div>
+                    ))}
+                </div>
 
                 {/* ============ ТАБЫ + ПАНЕЛЬ ПЕРИОДА (в одну строку) ============ */}
-                <div className="mb-6 flex flex-wrap items-center gap-3">
+                <div className="mb-4 flex w-full min-w-0 flex-col gap-2 rounded-xl border border-[#E2E5E9] bg-white p-2 md:hidden">
+                    <select aria-label="Раздел" value={type} onChange={e => changeTab(e.target.value)} disabled={loading} className="w-full min-w-0 rounded-lg border border-[#E2E5E9] bg-[#F7F7F8] px-2 py-2 text-[13px] text-[#374151]">
+                        {TABS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    </select>
+                    {showPeriodPanel && <div className="grid grid-cols-[1fr_1fr_1.4fr] gap-1.5">
+                        <select aria-label="Месяц" value={startMonth} onChange={e => setStartMonth(e.target.value)} className="w-full min-w-0 rounded-md border border-[#E2E5E9] bg-white px-1.5 py-2 text-[12px] text-[#4B5563]">
+                            {MONTHS_RU.map((m, i) => <option key={i} value={String(i + 1).padStart(2, '0')}>{m.slice(0, 3)}</option>)}
+                        </select>
+                        <select aria-label="Год" value={startYear} onChange={e => setStartYear(e.target.value)} className="w-full min-w-0 rounded-md border border-[#E2E5E9] bg-white px-1.5 py-2 text-[12px] text-[#4B5563]">
+                            {years.map(y => <option key={y}>{y}</option>)}
+                        </select>
+                        <select aria-label="Период" value={period} onChange={e => setPeriod(e.target.value)} className="w-full min-w-0 rounded-md border border-[#E2E5E9] bg-white px-1.5 py-2 text-[12px] text-[#4B5563]">
+                            {PERIOD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.value === 'all' ? 'Всё' : o.label}</option>)}
+                        </select>
+                    </div>}
+                </div>
+                <div className="mb-4 hidden flex-wrap items-center gap-3 md:flex">
                     {/* Табы */}
-                    <div className="flex flex-wrap gap-1.5 bg-white border border-stone-200 rounded-lg p-1">
+                    <div className="flex flex-nowrap max-w-full overflow-x-auto gap-1 bg-white border border-[#E2E5E9] rounded-lg p-1 md:flex-wrap">
                         {TABS.map(({ value, label, icon }) => {
                             const active = type === value;
                             return (
                                 <button
                                     key={value}
-                                    onClick={() => setType(value)}
+                                    onClick={() => changeTab(value)}
                                     disabled={loading}
-                                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-md
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 md:px-3.5 md:py-2 rounded-md
                                             text-[12.5px] font-medium whitespace-nowrap
                                             transition-colors disabled:cursor-not-allowed
                                             ${active
-                                                ? 'bg-[#2C3531] text-white'
+                                                ? 'bg-[#EEF1F4] text-[#52677D]'
                                                 : 'text-stone-600 hover:bg-stone-100'
                                             }`}
                                 >
@@ -471,7 +458,7 @@ const Statistic = () => {
 
                     {/* Панель периода — справа, в одну строку с табами */}
                     {!loading && showPeriodPanel && (
-                        <div className="bg-white border border-stone-200 rounded-lg p-1
+                        <div className="bg-white border border-[#E2E5E9] rounded-lg p-1 max-w-full
                                         flex items-center gap-2
                                         md:ml-auto
                                         overflow-x-auto">
@@ -519,10 +506,10 @@ const Statistic = () => {
                 {type === 'graphic' && (
                     <div className="flex flex-col gap-4">
                         {/* Доход по месяцам — столбиками */}
-                        <div className="bg-white border border-stone-200 rounded-xl p-4">
+                        <div className="bg-white border border-[#E2E5E9] rounded-xl p-4">
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                                    <i className="bi bi-bar-chart-fill text-[13px] text-[#0D9488]" />
+                                    <i className="bi bi-bar-chart-fill text-[13px] text-[#7890A8]" />
                                 </span>
                                 <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
                                     Доход по месяцам
@@ -561,7 +548,7 @@ const Statistic = () => {
                                         <Legend wrapperStyle={{ fontSize: 12 }} />
                                         <Bar
                                             dataKey="total"
-                                            fill="#0D9488"
+                                            fill="#7890A8"
                                             name="Фактический доход"
                                             radius={[4, 4, 0, 0]}
                                         />
@@ -581,10 +568,10 @@ const Statistic = () => {
                             </div>
                         </div>
                         {/* Источники заказов — % по месяцам (stacked bar) */}
-                        <div className="bg-white border border-stone-200 rounded-xl p-4">
+                        <div className="bg-white border border-[#E2E5E9] rounded-xl p-4">
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                                    <i className="bi bi-pie-chart text-[13px] text-[#0D9488]" />
+                                    <i className="bi bi-pie-chart text-[13px] text-[#7890A8]" />
                                 </span>
                                 <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
                                     Источники заказов — доля в % по месяцам (без партнеров)
@@ -639,10 +626,10 @@ const Statistic = () => {
                             </div>
                         </div>
                         {/* Новые клиенты vs Заказы */}
-                        <div className="bg-white border border-stone-200 rounded-xl p-4">
+                        <div className="bg-white border border-[#E2E5E9] rounded-xl p-4">
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                                    <i className="bi bi-people text-[13px] text-[#0D9488]" />
+                                    <i className="bi bi-people text-[13px] text-[#7890A8]" />
                                 </span>
                                 <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
                                     Новые клиенты vs Заказы по месяцам
@@ -676,7 +663,7 @@ const Statistic = () => {
                                             }}
                                         />
                                         <Legend wrapperStyle={{ fontSize: 12 }} />
-                                        <Bar dataKey="clients" fill="#0D9488" name="Новые клиенты" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="clients" fill="#7890A8" name="Новые клиенты" radius={[4, 4, 0, 0]} />
                                         <Bar dataKey="orders" fill="#a8a29e" name="Все заказы" radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -688,10 +675,10 @@ const Statistic = () => {
                 {type === 'graphic' && (
                     <div className="flex flex-col gap-4">
                         {/* Доход по месяцам — столбиками (партнеры) */}
-                        <div className="bg-white border border-stone-200 rounded-xl p-4">
+                        <div className="bg-white border border-[#E2E5E9] rounded-xl p-4">
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                                    <i className="bi bi-bar-chart-fill text-[13px] text-[#0D9488]" />
+                                    <i className="bi bi-bar-chart-fill text-[13px] text-[#7890A8]" />
                                 </span>
                                 <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
                                     Доход по месяцам  (партнеры)
@@ -730,7 +717,7 @@ const Statistic = () => {
                                         <Legend wrapperStyle={{ fontSize: 12 }} />
                                         <Bar
                                             dataKey="total"
-                                            fill="#0D9488"
+                                            fill="#7890A8"
                                             name="Фактический доход"
                                             radius={[4, 4, 0, 0]}
                                         />
@@ -755,10 +742,10 @@ const Statistic = () => {
                 {type === 'month' && (
                     <div className="flex flex-col gap-4">
                         {/* Таблица */}
-                        <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
-                            <div className="flex items-center gap-2 px-4 py-3 bg-stone-50 border-b border-stone-200">
+                        <div className="bg-white border border-[#E2E5E9] rounded-xl overflow-hidden">
+                            <div className="hidden md:flex items-center gap-2 px-4 py-3 bg-stone-50 border-b border-stone-200">
                                 <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                                    <i className="bi bi-calendar-month text-[13px] text-[#0D9488]" />
+                                    <i className="bi bi-calendar-month text-[13px] text-[#7890A8]" />
                                 </span>
                                 <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
                                     Суммы по месяцам за каждый год
@@ -779,7 +766,7 @@ const Statistic = () => {
                                     <tbody className="divide-y divide-stone-100">
                                         {ordersByYear.map(y => (
                                             <tr key={y.year} className="hover:bg-stone-50/60 transition-colors">
-                                                <td className="px-4 py-2 font-bold text-[#2C3531] sticky left-0 bg-white">
+                                                <td className="px-4 py-2 font-bold text-[#374151] sticky left-0 bg-white">
                                                     {y.year}
                                                 </td>
                                                 {Array.from({ length: 12 }, (_, i) => {
@@ -798,7 +785,7 @@ const Statistic = () => {
                                                         </td>
                                                     );
                                                 })}
-                                                <td className="px-4 py-2 text-right font-bold text-[#2C3531] tabular-nums
+                                                <td className="px-4 py-2 text-right font-bold text-[#374151] tabular-nums
                                                                 bg-stone-50/40">
                                                     {formatNumber(Math.round(y.total))}
                                                 </td>
@@ -816,10 +803,10 @@ const Statistic = () => {
                             </div>
                         </div>
                         {/* LineChart: сравнение по месяцам за разные годы */}
-                        <div className="bg-white border border-stone-200 rounded-xl p-4">
+                        <div className="hidden bg-white border border-[#E2E5E9] rounded-xl p-4 md:block">
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                                    <i className="bi bi-activity text-[13px] text-[#0D9488]" />
+                                    <i className="bi bi-activity text-[13px] text-[#7890A8]" />
                                 </span>
                                 <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
                                     Сравнение по месяцам за разные годы
@@ -873,11 +860,11 @@ const Statistic = () => {
                             </div>
                         </div>
                         {/* === Графики === */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <div className="bg-white border border-stone-200 rounded-xl p-4">
+                        <div className="hidden grid-cols-1 lg:grid-cols-2 gap-4 md:grid">
+                            <div className="hidden bg-white border border-[#E2E5E9] rounded-xl p-4 md:block">
                                 <div className="flex items-center gap-2 mb-4">
                                     <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                                        <i className="bi bi-bar-chart-fill text-[13px] text-[#0D9488]" />
+                                        <i className="bi bi-bar-chart-fill text-[13px] text-[#7890A8]" />
                                     </span>
                                     <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
                                         Суммы по годам
@@ -909,16 +896,16 @@ const Statistic = () => {
                                                 formatter={(v, name) => [`${formatNumber(v, 2)} р`, name]}
                                             />
                                             <Legend wrapperStyle={{ fontSize: 12 }} />
-                                            <Bar dataKey="total" fill="#0D9488" name="Выручка" radius={[6, 6, 0, 0]} />
+                                            <Bar dataKey="total" fill="#7890A8" name="Выручка" radius={[6, 6, 0, 0]} />
                                             <Bar dataKey="projected" fill="#a8a29e" fillOpacity={0.5} name="Прогноз" radius={[6, 6, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
-                            <div className="bg-white border border-stone-200 rounded-xl p-4">
+                            <div className="hidden bg-white border border-[#E2E5E9] rounded-xl p-4 md:block">
                                 <div className="flex items-center gap-2 mb-4">
                                     <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                                        <i className="bi bi-receipt text-[13px] text-[#0D9488]" />
+                                        <i className="bi bi-receipt text-[13px] text-[#7890A8]" />
                                     </span>
                                     <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
                                         Количество заказов по годам
@@ -949,7 +936,7 @@ const Statistic = () => {
                                                 formatter={(v, name) => [v, name]}
                                             />
                                             <Legend wrapperStyle={{ fontSize: 12 }} />
-                                            <Bar dataKey="orders" fill="#2C3531" name="Заказов" radius={[6, 6, 0, 0]} />
+                                            <Bar dataKey="orders" fill="#646D78" name="Заказов" radius={[6, 6, 0, 0]} />
                                             <Bar dataKey="projected" fill="#a8a29e" fillOpacity={0.5} name="Прогноз" radius={[6, 6, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
@@ -960,62 +947,62 @@ const Statistic = () => {
                 )}
                 {/* ============ ПО ДНЯМ ============ */}
                 {type === 'day' && (
-                    <div className="bg-white border border-stone-200 rounded-xl p-3 md:p-5">
-                        <div className="flex items-center justify-between gap-3 mb-4 md:mb-5 flex-wrap">
+                    <div className="bg-white border border-[#E2E5E9] rounded-xl p-3 md:p-5">
+                        <div className="hidden md:flex items-center justify-between gap-3 mb-4 md:mb-5 flex-wrap">
                             <div className="flex items-center gap-2">
                                 <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                                    <i className="bi bi-calendar-day text-[13px] text-[#0D9488]" />
+                                    <i className="bi bi-calendar-day text-[13px] text-[#7890A8]" />
                                 </span>
                                 <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
                                     Календарь дохода по дням
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3 text-[11px] text-stone-500 flex-wrap">
+                            <div className="hidden items-center gap-3 text-[11px] text-stone-500 flex-wrap md:flex">
                                 <div className="flex items-center gap-1.5">
                                     <span className="w-3.5 h-3.5 rounded bg-stone-100 border border-stone-200" />
                                     пусто
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="w-3.5 h-3.5 rounded bg-[#0D9488]/15" />
+                                    <span className="w-3.5 h-3.5 rounded bg-[#7890A8]/15" />
                                     до {formatNumber(Math.round(intensityThresholds[0]))}
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="w-3.5 h-3.5 rounded bg-[#0D9488]/40" />
+                                    <span className="w-3.5 h-3.5 rounded bg-[#7890A8]/40" />
                                     до {formatNumber(Math.round(intensityThresholds[1]))}
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="w-3.5 h-3.5 rounded bg-[#0D9488]/70" />
+                                    <span className="w-3.5 h-3.5 rounded bg-[#7890A8]/70" />
                                     до {formatNumber(Math.round(intensityThresholds[2]))}
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="w-3.5 h-3.5 rounded bg-[#0D9488]" />
+                                    <span className="w-3.5 h-3.5 rounded bg-[#7890A8]" />
                                     больше
                                 </div>
                             </div>
                         </div>
-                        <div className="overflow-x-auto -mx-3 md:mx-0 px-3 md:px-0">
-                            <div className="min-w-[640px]">
-                                <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_110px] gap-1.5 mb-1.5">
+                        <div className="w-full min-w-0 md:overflow-x-auto">
+                            <div className="min-w-0 md:min-w-[640px]">
+                                <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,1.45fr)] gap-0.5 md:grid-cols-[repeat(7,minmax(0,1fr))_110px] md:gap-1.5 mb-1.5">
                                     {WEEKDAYS_SHORT.map(d => (
                                         <div key={d} className="text-center py-1
-                                                                text-[11px] uppercase tracking-wider font-semibold text-stone-400">
+                                                                text-[9px] md:text-[11px] uppercase font-semibold text-stone-400">
                                             {d}
                                         </div>
                                     ))}
                                     <div className="text-center py-1
                                                     text-[11px] uppercase tracking-wider font-semibold text-stone-400">
-                                        Итог недели
+                                        <span className="md:hidden">Итог</span><span className="hidden md:inline">Итог недели</span>
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-1.5">
                                     {visibleWeeks.map((week, wi) => (
                                         <div
                                             key={wi}
-                                            className="grid grid-cols-[repeat(7,minmax(0,1fr))_110px] gap-1.5"
+                                            className="grid grid-cols-[repeat(7,minmax(0,1fr))_minmax(0,1.45fr)] gap-0.5 md:grid-cols-[repeat(7,minmax(0,1fr))_110px] md:gap-1.5"
                                         >
                                             {week.days.map((day, di) => {
                                                 if (day.empty) {
-                                                    return <div key={di} className="aspect-square rounded-lg bg-transparent" />;
+                                                    return <div key={di} className="h-11 md:h-auto md:aspect-square rounded-md md:rounded-lg bg-transparent" />;
                                                 }
                                                 const intensity =
                                                     day.total === 0 ? 0 :
@@ -1024,10 +1011,10 @@ const Statistic = () => {
                                                     day.total < intensityThresholds[2] ? 3 : 4;
                                                 const bgClass = [
                                                     'bg-stone-50 hover:bg-stone-100 border border-stone-100',
-                                                    'bg-[#0D9488]/15 border border-[#0D9488]/20',
-                                                    'bg-[#0D9488]/35 border border-[#0D9488]/40',
-                                                    'bg-[#0D9488]/65 border border-[#0D9488]/70',
-                                                    'bg-[#0D9488] border border-[#0D9488]',
+                                                    'bg-[#7890A8]/15 border border-[#7890A8]/20',
+                                                    'bg-[#7890A8]/35 border border-[#7890A8]/40',
+                                                    'bg-[#7890A8]/65 border border-[#7890A8]/70',
+                                                    'bg-[#7890A8] border border-[#7890A8]',
                                                 ][intensity];
                                                 const textClass = intensity >= 3 ? 'text-white' : 'text-stone-800';
                                                 const subClass = intensity >= 3 ? 'text-white/80' : 'text-stone-500';
@@ -1035,7 +1022,7 @@ const Statistic = () => {
                                                     <div
                                                         key={di}
                                                         title={`${day.date.toLocaleDateString('ru-RU')}: ${formatNumber(day.total, 2)} р`}
-                                                        className={`aspect-square rounded-lg ${bgClass}
+                                                        className={`h-11 min-w-0 md:h-auto md:aspect-square rounded-md md:rounded-lg ${bgClass}
                                                                 flex flex-col items-center justify-center
                                                                 transition-colors cursor-default`}
                                                     >
@@ -1043,22 +1030,22 @@ const Statistic = () => {
                                                             {day.date.getDate()}
                                                         </span>
                                                         {day.total > 0 && (
-                                                            <span className={`mt-0.5 md:mt-1 text-[12px] md:text-[15px] font-bold leading-none tabular-nums ${textClass}`}>
+                                                            <span className={`mt-0.5 md:mt-1 text-[9px] sm:text-[11px] md:text-[15px] font-semibold md:font-bold leading-none tabular-nums ${textClass}`}>
                                                                 {formatNumber(Math.round(day.total))}
                                                             </span>
                                                         )}
                                                     </div>
                                                 );
                                             })}
-                                            <div className="aspect-square rounded-lg bg-[#2C3531]
+                                            <div className="h-11 min-w-0 md:h-auto md:aspect-square rounded-md md:rounded-lg bg-[#525A64]
                                                             flex flex-col items-center justify-center text-white">
-                                                <span className="text-[9px] md:text-[10px] uppercase tracking-wider opacity-50">
+                                                <span className="text-[8px] md:text-[10px] uppercase md:tracking-wider opacity-50">
                                                     {week.weekStart?.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
                                                 </span>
-                                                <span className="text-[14px] md:text-[17px] font-bold mt-1 tabular-nums leading-none">
+                                                <span className="text-[10px] md:text-[17px] font-bold mt-0.5 md:mt-1 tabular-nums leading-none">
                                                     {formatNumber(Math.round(week.weekTotal))}
                                                 </span>
-                                                <span className="text-[9px] md:text-[10px] opacity-60 mt-0.5">р</span>
+                                                <span className="hidden md:inline text-[10px] opacity-60 mt-0.5">р</span>
                                             </div>
                                         </div>
                                     ))}
@@ -1085,11 +1072,11 @@ const Statistic = () => {
                 {/* ============ НОВЫЕ КЛИЕНТЫ ============ */}
                 {type === 'newClientsMonth' && (
                     <div className="flex flex-col gap-4">
-                        <NewClientsTable newClientsByMonth={newClientsByMonth} />
-                        <div className="bg-white border border-stone-200 rounded-xl p-4">
+                        <div className="min-w-0 overflow-x-auto max-md:[&_table]:w-full max-md:[&_*:has(>table)>div:not(:has(table))]:hidden max-md:[&_*:has(>div>table)>div:not(:has(table))]:hidden"><NewClientsTable newClientsByMonth={newClientsByMonth} /></div>
+                        <div className="hidden bg-white border border-[#E2E5E9] rounded-xl p-4 md:block">
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                                    <i className="bi bi-bar-chart text-[13px] text-[#0D9488]" />
+                                    <i className="bi bi-bar-chart text-[13px] text-[#7890A8]" />
                                 </span>
                                 <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
                                     Новые клиенты по месяцам
@@ -1122,7 +1109,7 @@ const Statistic = () => {
                                                 fontSize: 12,
                                             }}
                                         />
-                                        <Bar dataKey="clients" fill="#0D9488" name="Новые клиенты" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="clients" fill="#7890A8" name="Новые клиенты" radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
@@ -1133,7 +1120,6 @@ const Statistic = () => {
                     <MaterialTab startYear={startYear} startMonth={startMonth} period={period} />
                 )}
             </div>
-            <Footer />
         </div>
     );
 };

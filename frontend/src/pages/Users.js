@@ -23,6 +23,14 @@ const ROLE_OPTIONS = [
     { value: 'ADMIN',   label: 'Администратор' },
 ];
 
+const shortDate = (value) => {
+    if (!value) return '—';
+    const match = String(value).match(/^(\d{2})\.(\d{2})\.(\d{2}|\d{4})$/);
+    if (match) return `${match[1]}.${match[2]}.${match[3].slice(-2)}`;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' });
+};
+
 const Users = () => {
     const user = useSelector((state) => state.private.user);
 
@@ -203,25 +211,28 @@ const Users = () => {
     };
 
     return (
-        <div className="h-screen flex flex-col bg-[#FAFBFD] text-[#334155]">
+        <div className="h-screen max-md:h-[100dvh] flex flex-col bg-[#FAFBFD] text-[#334155]">
             <NavBar />
 
-            <div className="mx-auto w-[90%] flex-1 min-h-0  flex flex-col p-3 md:p-5 max-w-[1800px]">
+            <div className="mx-auto w-full md:w-[90%] min-w-0 flex-1 min-h-0  flex flex-col p-2 md:p-5 max-w-[1800px]">
 
                 {/* ============ ПАНЕЛЬ ФИЛЬТРОВ ============ */}
-                <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4 shrink-0  mt-2">
 
                     {/* Заголовок */}
-                    <h1 className="text-[15px] md:text-[16px] font-semibold text-[#274C77] whitespace-nowrap">
+                    <h1 className="hidden md:block text-[15px] md:text-[16px] font-semibold text-[#274C77] whitespace-nowrap">
                         Клиенты <span className="text-[#94A3B8] font-normal">· {total}</span>
                     </h1>
 
 
 
                     {/* === Селекты — прижаты к правому краю === */}
-                    <div className="flex items-center gap-2 md:gap-3 ml-auto">
+                    <div className="flex items-center w-full min-w-0 gap-1 md:flex md:w-auto md:items-center md:gap-3 md:ml-auto">
+                        <span className="md:hidden flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#DCE5EE] bg-white px-2 text-[13px] font-semibold tabular-nums text-[#274C77]" title="Всего клиентов">
+                            {total}
+                        </span>
                     {/* Поиск — короткий */}
-                    <div className="relative w-[180px] md:w-[220px]">
+                    <div className="relative min-w-0 flex-1 md:flex-none md:w-[220px]">
                         <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2
                                     text-[12px] text-[#94A3B8] pointer-events-none" />
                         <input
@@ -231,16 +242,17 @@ const Users = () => {
                                     placeholder:text-[#94A3B8]
                                     focus:outline-none focus:border-[#7890A8] focus:ring-2 focus:ring-[#7890A8]/20
                                     transition-colors"
-                            placeholder="Поиск..."
+                            placeholder="Поиск..." aria-label="Поиск клиентов"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
                         {/* Роль — только для ADMIN */}
                         {canSeeRole && (
-                            <div className="relative">
-                                <select
-                                    className="appearance-none
+                            <div className="relative max-md:w-9 max-md:h-9 max-md:shrink-0 max-md:rounded-lg max-md:border max-md:border-[#DCE5EE] max-md:bg-white">
+                                <i className="bi bi-person-badge md:hidden absolute inset-0 flex items-center justify-center text-[#274C77] pointer-events-none" />
+                                <select aria-label="Роль" title="Роль"
+                                    className="appearance-none max-md:absolute max-md:inset-0 max-md:opacity-0 max-md:w-full max-md:h-full max-md:min-w-0
                                             pl-3 pr-8 py-1.5
                                             bg-white border border-[#DCE5EE] rounded-lg
                                             text-[13px] font-medium text-[#334155]
@@ -256,15 +268,16 @@ const Users = () => {
                                         </option>
                                     ))}
                                 </select>
-                                <i className="bi bi-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2
+                                <i className="bi bi-chevron-down max-md:hidden absolute right-2.5 top-1/2 -translate-y-1/2
                                             text-[10px] text-[#94A3B8] pointer-events-none" />
                             </div>
                         )}
 
                         {/* Лимит */}
-                        <div className="relative">
-                            <select
-                                className="appearance-none
+                        <div className="relative max-md:w-9 max-md:h-9 max-md:shrink-0 max-md:rounded-lg max-md:border max-md:border-[#DCE5EE] max-md:bg-white">
+                                <i className="bi bi-list-ol md:hidden absolute inset-0 flex items-center justify-center text-[#274C77] pointer-events-none" />
+                            <select aria-label="Количество клиентов" title="Количество клиентов"
+                                className="appearance-none max-md:absolute max-md:inset-0 max-md:opacity-0 max-md:w-full max-md:h-full max-md:min-w-0
                                         pl-3 pr-8 py-1.5
                                         bg-white border border-[#DCE5EE] rounded-lg
                                         text-[13px] font-medium text-[#334155]
@@ -279,14 +292,15 @@ const Users = () => {
                                 <option value="50">50</option>
                                 <option value="100">100</option>
                             </select>
-                            <i className="bi bi-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2
+                            <i className="bi bi-chevron-down max-md:hidden absolute right-2.5 top-1/2 -translate-y-1/2
                                         text-[10px] text-[#94A3B8] pointer-events-none" />
                         </div>
 
                         {/* Сортировка */}
-                        <div className="relative">
-                            <select
-                                className="appearance-none
+                        <div className="relative max-md:w-9 max-md:h-9 max-md:shrink-0 max-md:rounded-lg max-md:border max-md:border-[#DCE5EE] max-md:bg-white">
+                                <i className="bi bi-sort-down md:hidden absolute inset-0 flex items-center justify-center text-[#274C77] pointer-events-none" />
+                            <select aria-label="Сортировка" title="Сортировка"
+                                className="appearance-none max-md:absolute max-md:inset-0 max-md:opacity-0 max-md:w-full max-md:h-full max-md:min-w-0
                                         pl-3 pr-8 py-1.5
                                         bg-white border border-[#DCE5EE] rounded-lg
                                         text-[13px] font-medium text-[#334155]
@@ -304,7 +318,7 @@ const Users = () => {
                                 <option value="totalOrderSum-asc">Сумма ↑</option>
                                 <option value="totalOrderSum-desc">Сумма ↓</option>
                             </select>
-                            <i className="bi bi-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2
+                            <i className="bi bi-chevron-down max-md:hidden absolute right-2.5 top-1/2 -translate-y-1/2
                                         text-[10px] text-[#94A3B8] pointer-events-none" />
                         </div>
                     </div>
@@ -312,9 +326,9 @@ const Users = () => {
 
                 {/* ============ ТАБЛИЦА ============ */}
                 <div className="flex-1 min-h-0 overflow-auto ">
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[900px] border-collapse text-[12px]">
-                            <tbody className="divide-y divide-[#E8EEF4]">
+                    <div className="md:overflow-x-auto">
+                        <table className="w-full md:min-w-[900px] max-md:block border-collapse text-[12px]">
+                            <tbody className="md:divide-y md:divide-[#E8EEF4] max-md:block">
                                 {loading ? (
                                     <tr>
                                         <td colSpan="9" className="px-6  py-1 text-center text-[#64748B]">
@@ -325,20 +339,21 @@ const Users = () => {
                                     data.map((client) => (
                                         <tr
                                             key={client.id}
-                                            className="hover:bg-[#E9EEF3] bg-white cursor-pointer transition-colors duration-100"
-                                            onDoubleClick={() => handleRowDoubleClick(client)}
+                                            className="md:hover:bg-[#E9EEF3] bg-white cursor-pointer transition-colors duration-100 max-md:grid max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-x-2 max-md:gap-y-0 max-md:border max-md:border-[#D4DEE8] max-md:rounded-lg max-md:px-2 max-md:py-1 max-md:mb-1"
+                                            onClick={() => { if (window.matchMedia('(max-width: 767px)').matches) handleRowDoubleClick(client); }}
+                                            onDoubleClick={() => { if (window.matchMedia('(min-width: 768px)').matches) handleRowDoubleClick(client); }}
                                             title="Двойной клик — открыть карточку"
                                         >
-                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
-                                                {client.FIO}
+                                            <td className="md:px-4 md:py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] max-md:!p-0 max-md:max-w-none max-md:col-start-1 max-md:row-start-1 max-md:font-semibold max-md:text-[#274C77] max-md:text-[13px]">
+                                                <span className="hidden md:inline">{client.FIO}</span><span className="md:hidden">{client.FIO || 'Без имени'}</span>
                                             </td>
-                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
+                                            <td className="md:px-4 md:py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] max-md:!p-0 max-md:max-w-none max-md:hidden">
                                                 {client.phone}
                                             </td>
 
                                             {/* Роль — только для ADMIN */}
                                             {canSeeRole && (
-                                                <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
+                                                <td className={`md:px-4 md:py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] max-md:hidden`}>
                                                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded
                                                         text-[11px] font-medium
                                                         ${client.role === 'ADMIN'
@@ -354,29 +369,31 @@ const Users = () => {
                                                 </td>
                                             )}
 
-                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
-                                                {client.orderCount}
+                                            <td className="md:px-4 md:py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] max-md:!p-0 max-md:max-w-none max-md:col-start-2 max-md:row-start-2 max-md:text-right">
+                                                <span className="md:hidden">Заказов: </span>{client.orderCount}
                                             </td>
-                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
-                                                {client.totalOrderSum}
+                                            <td className="md:px-4 md:py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] max-md:!p-0 max-md:max-w-none max-md:col-start-2 max-md:row-start-1 max-md:text-right max-md:font-semibold">
+                                                {client.totalOrderSum}<span className="md:hidden"> р</span>
                                             </td>
-                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
+                                            <td className="md:px-4 md:py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] max-md:!p-0 max-md:max-w-none max-md:hidden">
                                                 {client.city}
                                             </td>
-                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px]">
+                                            <td className="md:px-4 md:py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] max-md:!p-0 max-md:max-w-none max-md:hidden">
                                                 {client.adress}
                                             </td>
-                                            <td className="px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] text-[#64748B]">
-                                                {new Date(client.createdAt).toLocaleDateString('ru-RU')}
+                                            <td className="md:px-4 md:py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] text-[#64748B] max-md:!p-0 max-md:max-w-none max-md:col-start-1 max-md:row-start-2 max-md:text-[10px]">
+                                                <span className="hidden md:inline">{new Date(client.createdAt).toLocaleDateString('ru-RU')}</span>
+                                                <span className="md:hidden">Рег. {shortDate(client.createdAt)} · Посл. {shortDate(client.lastOrderDate)}</span>
                                             </td>
                                             <td
-                                                className={`px-3 md:px-4 py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] ${
+                                                className={`md:px-4 md:py-2 text-[12px] overflow-hidden whitespace-nowrap text-ellipsis max-w-[180px] max-md:hidden ${
                                                     client.lastOrderDate?.split('.')[2] === '2026'
                                                         ? 'text-blue-600'
                                                         : 'text-[#64748B]'
                                                 }`}
                                             >
-                                                {client.lastOrderDate}
+                                                <span className="hidden md:inline">{client.lastOrderDate || '—'}</span>
+                                                <span className="md:hidden">Посл.: {shortDate(client.lastOrderDate)}</span>
                                             </td>
                                         </tr>
                                     ))
@@ -404,7 +421,7 @@ const Users = () => {
 
                         <button
                             onClick={() => setPage((p) => p + 1)}
-                            disabled={page === totalPage}
+                            disabled={page >= totalPage}
                             className="px-3 md:px-4 py-2 border border-[#DCE5EE] bg-white rounded-lg text-[12px] text-[#274C77]
                                     disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#F1F5F9]"
                         >
@@ -417,7 +434,7 @@ const Users = () => {
             {/* ============ МОДАЛКА ============ */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogContent
-                    className="max-w-[95%] md:max-w-[90%] w-full h-[90vh] p-0 flex flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white"
+                    className="max-w-[95%] md:max-w-[90%] w-full h-[90vh] max-md:h-[92dvh] p-0 flex flex-col overflow-hidden rounded-xl border border-[#E2E8F0] bg-white"
                     onOpenAutoFocus={(e) => e.preventDefault()}
                 >
                     <div className="px-4 md:px-5 py-3 border-b border-[#E8EEF4]">
@@ -582,9 +599,9 @@ const Users = () => {
                         >
                             <div className="flex flex-col w-full h-full">
                                 <div className="flex-1 overflow-auto bg-white md:rounded-lg border border-[#E2E8F0]">
-                                    <div className="w-full text-sm min-w-[700px]">
+                                    <div className="w-full min-w-0 text-sm md:min-w-[700px]">
                                         {/* Заголовки */}
-                                        <div className="sticky bg-[#F8FAFC] top-0 border-b border-[#E2E8F0] flex font-semibold text-[#64748B] text-[11px] uppercase tracking-wider z-10">
+                                        <div className="hidden md:flex sticky bg-[#F8FAFC] top-0 border-b border-[#E2E8F0] font-semibold text-[#64748B] text-[11px] uppercase tracking-wider z-10">
                                             <div className="flex-1 py-2 px-3">Дата</div>
                                             <div className="flex-1 py-2 px-3">ФИО</div>
                                             <div className="flex-1 py-2 px-3">Город</div>
@@ -603,29 +620,29 @@ const Users = () => {
                                                 <div key={el.order_number}>
                                                     {/* Строка */}
                                                     <div
-                                                        className={`flex border-b border-[#E8EEF4] cursor-pointer transition-colors
+                                                        className={`flex max-md:grid max-md:grid-cols-[minmax(0,1fr)_auto] max-md:p-2 max-md:gap-y-1 border-b border-[#E8EEF4] cursor-pointer transition-colors
                                                             ${expandedOrder === el.order_number
                                                                 ? 'bg-[#EAF1F7]'
                                                                 : 'hover:bg-[#F1F5F9]'
                                                             }`}
                                                         onClick={() => toggleOrder(el.order_number)}
                                                     >
-                                                        <div className="flex-1 py-2 px-3 text-[#64748B] tabular-nums">
+                                                        <div className="flex-1 py-2 px-3 text-[#64748B] tabular-nums max-md:p-0 max-md:text-[11px] max-md:row-start-1 max-md:col-start-1">
                                                             {new Date(el.createdAt).toLocaleDateString('ru-RU')}
                                                         </div>
-                                                        <div className="flex-1 py-2 px-3 truncate text-[#334155]">
+                                                        <div className="flex-1 py-2 px-3 truncate text-[#334155] max-md:p-0 max-md:row-start-2 max-md:col-start-1 max-md:font-semibold">
                                                             {el.FIO}
                                                         </div>
-                                                        <div className="flex-1 py-2 px-3 truncate text-[#64748B]">
+                                                        <div className="flex-1 py-2 px-3 truncate text-[#64748B] max-md:hidden">
                                                             {el.city}
                                                         </div>
-                                                        <div className="flex-1 py-2 px-3 text-[#64748B]">
+                                                        <div className="flex-1 py-2 px-3 text-[#64748B] max-md:p-0 max-md:row-start-2 max-md:col-start-2 max-md:text-right">
                                                             {el.typePost}
                                                         </div>
-                                                        <div className="flex-1 py-2 px-3 truncate text-[#64748B]">
+                                                        <div className="flex-1 py-2 px-3 truncate text-[#64748B] max-md:p-0 max-md:col-span-2 max-md:row-start-3 max-md:text-[11px]">
                                                             {photoLine(el.photos)}
                                                         </div>
-                                                        <div className="flex-1 py-2 px-3 text-right font-semibold text-[#334155] tabular-nums">
+                                                        <div className="flex-1 py-2 px-3 text-right font-semibold text-[#334155] tabular-nums max-md:p-0 max-md:row-start-1 max-md:col-start-2">
                                                             {el.price}{' '}
                                                             <span className="text-[#94A3B8] font-normal text-[11px]">р</span>
                                                         </div>
@@ -678,7 +695,7 @@ const Users = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-row justify-end gap-5 mt-3 text-[12px] text-[#475569] bg-[#F1F5F9] border border-[#E2E8F0] w-full py-2 px-4 rounded-lg">
+                                <div className="flex flex-row flex-wrap justify-end gap-5 max-md:gap-2 mt-3 text-[12px] text-[#475569] bg-[#F1F5F9] border border-[#E2E8F0] w-full py-2 px-4 rounded-lg">
                                     <label>Всего заказов: {selectedUser?.orderCount || '0'} шт</label>
                                     <label>Сумма заказов: {selectedUser?.totalOrderSum || '0'} р</label>
                                 </div>
@@ -694,8 +711,8 @@ const Users = () => {
 // ============ ДЕТАЛИ В РАСКРЫТОМ БЛОКЕ ============
 const Detail = ({ label, value }) => (
     <div className="flex gap-2">
-        <span className="text-[#94A3B8] shrink-0 min-w-[110px]">{label}:</span>
-        <span className="text-[#475569] break-words">{value || '—'}</span>
+        <span className="text-[#94A3B8] shrink-0 min-w-[110px] max-md:min-w-[85px]">{label}:</span>
+        <span className="text-[#475569] min-w-0 break-words">{value || '—'}</span>
     </div>
 );
 

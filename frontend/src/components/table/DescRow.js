@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, forwardRef, useImperativeHandle } from 'react';
-import { OneFormat } from './OneFormat';
 import { deleteOrder, getSettings } from '../../http/dbApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteOrderId, updateOrderAction, updateSmsAdd, updateSmsError, updateSmsPay, updateSmsSend } from '../../store/orderReducer';
@@ -7,7 +6,7 @@ import _ from 'lodash';
 import Fuse from 'fuse.js';
 import SearchBar from './SearchBar';
 import SearchBarMain from './SearchBarMain';
-import { deleteFile } from '../../http/cloudApi';
+import { deleteFile, getFilesPhotosId } from '../../http/cloudApi';
 import { sendSms } from '../../http/authApi';
 import { $host } from '../../http';
 import { Button } from '../../ui/button';
@@ -47,6 +46,43 @@ const buildHistorySnapshot = value => ({
     phoneUser: value.user?.phone || value.phoneUser || '', notes: value.notes || '',
     codeOutside: value.codeOutside || '', origin: value.origin || '', date_sent: value.date_sent || ''
 })
+const OneFormat = ({ el, setPhoto, index, DeleteFormat }) => {
+    const settings = useSelector(state => state.order.settings) || [];
+    const types = ['photo', 'holst', 'magnit', 'poster'];
+    const update = (event, prop) => {
+        const value = event.target.value;
+        const defaults = { photo: 'а6', holst: '30x40', magnit: '5x8', poster: 'poster3040' };
+        setPhoto(previous => previous.map((item, i) => i !== index ? item : prop === 'type'
+            ? { ...item, type: value, format: defaults[value] || 'а6', amount: '1', copies: 1, paper: 'glossy' }
+            : { ...item, [prop]: value }));
+    };
+    const [checkAmount, setCheckAmount] = useState(-1);
+    useEffect(() => {
+        let cancelled = false;
+        if (!el.id) { setCheckAmount(0); return; }
+        setCheckAmount(-1);
+        getFilesPhotosId(el.id).then(data => {
+            if (!cancelled) setCheckAmount(data.filter(item => item.size > 0).length);
+        }).catch(error => {
+            console.error('Ошибка получения файлов:', error);
+            if (!cancelled) setCheckAmount(0);
+        });
+        return () => { cancelled = true; };
+    }, [el.id]);
+    const field = 'h-8 w-full min-w-0 rounded-md border border-slate-300 bg-white px-1 text-center text-xs outline-none focus:border-[#274C77]';
+    return (
+        <div className="mb-2 grid min-w-0 items-center gap-1 grid-cols-[28px_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1.5fr)_minmax(0,0.7fr)_minmax(0,1.4fr)_28px]">
+            <button type="button" disabled title="Количество файлов" className="h-8 rounded-md bg-slate-100 text-xs text-slate-400">{checkAmount === -1 ? <i className="bi bi-arrow-repeat animate-spin" /> : checkAmount}</button>
+            <input className={field} value={el.amount} inputMode="numeric" title="Количество" onChange={e => update(e, 'amount')} />
+            <select className={field} value={el.type} onChange={e => update(e, 'type')}>{types.map(type => <option key={type} value={type}>{type}</option>)}</select>
+            <select className={field} value={el.format} onChange={e => update(e, 'format')}>{settings.filter(item => item.type === el.type).map(item => <option key={item.title} value={item.title}>{item.title}</option>)}</select>
+            <input className={field} value={el.copies} inputMode="numeric" title="Копии" onChange={e => update(e, 'copies')} />
+            <select className={field} value={el.paper} onChange={e => update(e, 'paper')}><option value="lustre">люстр</option><option value="glossy">глянец</option></select>
+            <button type="button" onClick={() => DeleteFormat(index)} title="Удалить формат" aria-label="Удалить формат" className="h-8 rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"><i className="bi bi-trash" /></button>
+        </div>
+    );
+};
+
 export const DescRow = forwardRef(({
     orders, order, setSelectedOrder,
     handleDetailsClick, isChanged, setIsChanged
@@ -1095,7 +1131,7 @@ const sendSmsNew = async () => {
       <DialogContent
        onOpenAutoFocus={(e) => e.preventDefault()}
         aria-describedby={undefined}
-        className="max-w-[80vw] max-h-[90vh] w-[80vw] h-[90vh] p-3"
+        className="max-w-[95vw] max-h-[90vh] w-[95vw] md:w-[80vw] overflow-y-auto p-3"
         style={{ maxWidth: '90vw', maxHeight: '90vh' }}
       >
         <DialogHeader className="flex-shrink-0">
@@ -1108,7 +1144,7 @@ const sendSmsNew = async () => {
           </DialogTitle>
          <DialogDescription className='h-full overflow-hidden' asChild>
           <div>
-              <div className='flex h-[calc(100%-50px)] flex-col justify-between gap-10'>
+              <div className='flex flex-col justify-between gap-4'>
                 <div className="flex-[3] max-h-[400px] overflow-auto mt-4 ">
                                 <table className="w-full text-sm">
                                   <thead className="sticky top-0 bg-gray-50">
@@ -1153,9 +1189,9 @@ const sendSmsNew = async () => {
                                   </tbody>
                                 </table>
                 </div>
-                <div className='flex-[2] flex flex-row justify-between gap-10 '>
+                <div className='flex-[2] flex flex-col md:flex-row justify-between gap-3 md:gap-10 '>
                   {/* Поле "О клиенте" */}
-                  <div className="flex-1 flex-col gap-1">
+                  <div className="flex-1 min-w-0 flex-col gap-1">
                     <label className="text-sm font-medium text-gray-700">О клиенте</label>
                     <textarea
                       value={aboutUser}
@@ -1174,7 +1210,7 @@ const sendSmsNew = async () => {
                     </div>
                   </div>
                   {/* Поле для SMS */}
-                  <div className="flex-1 flex-col gap-1">
+                  <div className="flex-1 min-w-0 flex-col gap-1">
                     <label className="text-sm font-medium text-gray-700">Текст SMS</label>
                     <textarea
                       value={smsText}
@@ -1195,7 +1231,7 @@ const sendSmsNew = async () => {
                 </div>
               </div>
               {/* Нижняя часть — фиксирована */}
-              <div className='h-[50px] mt-4 flex flex-row justify-end gap-3 text-[#274C77] '>
+              <div className='mt-4 flex flex-wrap justify-end gap-3 text-[#274C77] '>
                 <label>Всего заказов: {order.user.orderCount} шт</label>
                 <label>Сумма заказов: {order.user.totalOrderSum} р</label>
               </div>
@@ -1205,19 +1241,19 @@ const sendSmsNew = async () => {
       </DialogContent>
     </Dialog>
     
-    <div className="bg-white flex justify-between px-[10px] py-[10px]">
+    <div className="bg-white flex min-w-0 justify-between p-2 sm:p-[10px]">
       {isModalOpen && <MyModalComponent isOpen={isModalOpen} closeModal={closeModal} codeOutside={codeOutside} />}
-      <div className="flex gap-[10px] w-full">
-        <div className="bg-white border border-slate-200 rounded-[5px] p-[20px] flex flex-col flex-1 min-w-0 [&>div:first-child]:mb-[25px]">
+      <div className="grid w-full min-w-0 grid-cols-1 gap-[10px] xl:grid-cols-3">
+        <div className="bg-white border border-slate-200 rounded-[5px] p-3 xl:p-[20px] flex flex-col min-w-0 [&>div:first-child]:mb-[25px]">
           <div>
-            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:min-w-0 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:min-w-0 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>ФИО:</label>
               <input  style={{marginLeft: 5}} value={FIO} onChange={(e) => setFIO(e.target.value)} />
             </div>
-            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:min-w-0 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:min-w-0 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>Телефон:</label>
-              <div className='flex-[2] relative flex flex-col items-stretch [&>input]:outline-none [&>input]:border [&>input]:border-slate-300 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input:hover]:rounded-t-[3px] [&>input:hover]:rounded-b-none [&>input:hover]:border-x-[1.5px] [&>input:hover]:border-t-[1.5px] [&>input:hover]:border-b-0'
-                onMouseEnter={handleModalMouseEnterMain}
+              <div className='flex-[2] min-w-0 relative flex flex-col items-stretch [&>input]:outline-none [&>input]:border [&>input]:border-slate-300 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input:hover]:rounded-t-[3px] [&>input:hover]:rounded-b-none [&>input:hover]:border-x-[1.5px] [&>input:hover]:border-t-[1.5px] [&>input:hover]:border-b-0'
+                onFocus={handleModalMouseEnterMain} onMouseEnter={handleModalMouseEnterMain}
                 onMouseLeave={handleModalMouseLeaveMain}
               >
                 <input
@@ -1230,7 +1266,7 @@ const sendSmsNew = async () => {
                           setAdress={setAdress} setPostCode={setPostCode} setRaion={setRaion} setOblast={setOblast} />
               </div>
             </div>
-            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:min-w-0 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:min-w-0 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <select value={typePost} onChange={(e)=>setTypePost(e.target.value)}>
                   <option value={"E"}>Европочта(наложенный)</option>
                   <option value={"E1"}>Европочта(ЕРИП)</option>
@@ -1240,11 +1276,11 @@ const sendSmsNew = async () => {
               </select>
               <label></label>
             </div>
-            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:min-w-0 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:min-w-0 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>Город:</label>
               <input value={city} onChange={(e)=>setCity(e.target.value)} />
             </div>
-            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:min-w-0 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:min-w-0 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>
                 {typePost === 'R' || typePost === 'R1' || typePost === 'R2' ? 'Адрес:' : 'Отделение:'}
               </label>
@@ -1253,15 +1289,15 @@ const sendSmsNew = async () => {
 
                         {typePost === 'R' || typePost === 'R1' || typePost === 'R2'?
             <>
-            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:min-w-0 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:min-w-0 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>Индекс:</label>
               <input value={postCode} onChange={(e)=>setPostCode(e.target.value)} />
             </div>
-            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:min-w-0 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:min-w-0 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>Район:</label>
               <input value={raion} onChange={(e)=>setRaion(e.target.value)} />
             </div>
-            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
+            <div className='flex justify-between [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:min-w-0 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:min-w-0 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label style={{flex:1}}>Область:</label>
               <select
                 style={{appearance: 'none', padding: '0px 10px', margin: '0px', flex: 2}}
@@ -1363,14 +1399,14 @@ const sendSmsNew = async () => {
     </div>
 )}
 
-                          <div className='flex justify-between mt-4 [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
+                          <div className='flex justify-between mt-4 [&>label]:flex-1 [&>label]:my-[3px] [&>label]:font-medium [&>label]:font-[Montserrat,sans-serif] [&>input]:flex-[2] [&>input]:min-w-0 [&>input]:my-[3px] [&>input]:rounded-[3px] [&>input]:border [&>input]:border-slate-300 [&>input]:px-[5px] [&>input]:py-[2px] [&>input]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>input[type=checkbox]]:h-[20px] [&>select]:flex-1 [&>select]:min-w-0 [&>select]:appearance-none [&>select]:bg-white [&>select]:border-[1.7px] [&>select]:border-slate-300 [&>select]:rounded-[3px] [&>select]:px-[5px] [&>select]:py-[2px] [&>select]:mt-[20px] [&>select]:mb-[3px] [&>select]:shadow-[0_6px_6px_rgba(0,0,0,0.18),0_1px_2px_rgba(0,0,0,0.14)] [&>select:focus]:outline-none [&>select:focus]:shadow-none'>
               <label>Штрихкод:</label>
               <input style={{marginLeft: 5}} value={codeOutside} onChange={e=>setCodeOutside(e.target.value)} />
             </div>
 
 
           </div>
-<div className="flex justify-between items-center mt-auto">
+<div className="flex min-w-0 gap-1 justify-between items-center mt-auto">
     <button
         type="button"
         onClick={SaveData}
@@ -1418,7 +1454,7 @@ const sendSmsNew = async () => {
     </div>
 </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-[5px] p-[20px] flex flex-col flex-1 min-w-0 [&>div:first-child]:mb-[25px]">
+        <div className="bg-white border border-slate-200 rounded-[5px] p-3 xl:p-[20px] flex flex-col min-w-0 [&>div:first-child]:mb-[25px]">
           <div>
             {/* для обьеденения*/}
             {duplicateOrders.length > 0 && (
@@ -1454,8 +1490,8 @@ const sendSmsNew = async () => {
 ))}
               <button style={{marginLeft: '50px', marginTop: '10px'}} type="button" onClick={()=>{AddFormat()}}>добавить</button>
             </div>
-          <div className="flex justify-between items-center mt-auto">
-            <button className='px-[8px] py-[4px] w-[40%] text-[13px] border border-slate-300 text-[#274C77] rounded-[5px] cursor-pointer bg-slate-100 hover:bg-slate-200'  onClick={()=>{setPrice((SumTeor()*sale).toFixed(2))}}>{SumTeor()}р</button>
+          <div className="flex min-w-0 gap-1 justify-between items-center mt-auto">
+            <button className='px-[8px] py-[4px] w-[40%] min-w-0 text-[13px] border border-slate-300 text-[#274C77] rounded-[5px] cursor-pointer bg-slate-100 hover:bg-slate-200'  onClick={()=>{setPrice((SumTeor()*sale).toFixed(2))}}>{SumTeor()}р</button>
             <div  style={{transform: 'scale(0.85)'}}>
             <select style={{appearance: 'none', padding: '0px 10px'}}
                     value={sale}
@@ -1467,13 +1503,13 @@ const sendSmsNew = async () => {
             </select>
             </div>
             <input
-              className='px-[8px] py-[4px] w-[40%] text-[13px] text-center border-[1.5px] border-slate-300 rounded-[5px]'
+              className='px-[8px] py-[4px] w-[40%] min-w-0 text-[13px] text-center border-[1.5px] border-slate-300 rounded-[5px]'
               type="text"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
             />
             <input
-              className='px-[8px] py-[4px] w-[40%] text-[13px] text-center border-[1.5px] border-slate-300 rounded-[5px]'
+              className='px-[8px] py-[4px] w-[40%] min-w-0 text-[13px] text-center border-[1.5px] border-slate-300 rounded-[5px]'
               style={{width: '20%', height: '75%', marginLeft: 2}}
               type="text"
               value={price_deliver}
@@ -1481,7 +1517,7 @@ const sendSmsNew = async () => {
             />
           </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-[5px] p-[20px] flex flex-col flex-1 min-w-0 [&>div:first-child]:mb-[25px]">
+        <div className="bg-white border border-slate-200 rounded-[5px] p-3 xl:p-[20px] flex flex-col min-w-0 [&>div:first-child]:mb-[25px]">
           <div className="space-y-4 !mb-0">
             <section className="space-y-2">
               <div className="flex items-start gap-2">
@@ -1490,7 +1526,7 @@ const sendSmsNew = async () => {
                 </button>
                 <div className="min-w-0 flex-1">
                   <div className={`truncate text-sm font-medium ${isUser() ? 'text-slate-800' : 'text-red-600'}`} title={showFIO()}>{showFIO() || 'Владелец не найден'}</div>
-                  <div className="relative mt-1 min-w-0" onMouseEnter={handleModalMouseEnter} onMouseLeave={handleModalMouseLeave}>
+                  <div className="relative mt-1 min-w-0" onFocus={handleModalMouseEnter} onMouseEnter={handleModalMouseEnter} onMouseLeave={handleModalMouseLeave}>
                     <input className="h-7 w-full rounded-md border border-slate-300 px-2 text-xs outline-none focus:border-[#274C77]" value={phoneUser} onChange={e => setPhoneUser(e.target.value)} />
                     <SearchBar users={users} modalVisible={modalVisible} setModalVisible={setModalVisible} phoneUser={phoneUser} setPhoneUser={setPhoneUser} />
                   </div>
@@ -1689,7 +1725,7 @@ const sendSmsNew = async () => {
               </div>
           )}
           <div className='flex justify-end mt-auto pt-4 gap-1' >
-            <Button className='w-[25%] bg-slate-100 text-slate-700 border border-slate-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300' variant='outline' size='sm' onClick={()=>DeleteOrder()}>удалить</Button>
+            <Button className='min-w-[90px] w-[25%] bg-slate-100 text-slate-700 border border-slate-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300' variant='outline' size='sm' onClick={()=>DeleteOrder()}>удалить</Button>
           </div>
         </div>
       </div>

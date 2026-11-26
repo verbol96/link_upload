@@ -4,49 +4,21 @@ import { useDispatch, useSelector } from 'react-redux'
 import _ from 'lodash'
 import { $host } from '../../http/index'
 import { TableRow } from './TableRow'
-import { addOrder, saveOrders, saveSettings, saveUsers, updateOrderStatus } from '../../store/orderReducer'
+import { addOrder, saveOrders, saveSettings, saveUsers } from '../../store/orderReducer'
 import { TableFooter } from './TableFooter'
-import { ModalOrder } from './ModalOrder'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog'
 import Papa from 'papaparse'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 
-const OrdersSkeleton = ({ rows = 10, mobile = false }) => {
-    if (mobile) {
-        return (
-            <div className="flex flex-col gap-2 px-2 pt-3">
-                {Array.from({ length: rows }).map((_, i) => (
-                    <div
-                        key={i}
-                        className="flex flex-col gap-2 rounded-lg border border-stone-200 bg-white p-3"
-                        style={{
-                            animation: 'fadeIn 0.4s ease-out both',
-                            animationDelay: `${i * 60}ms`
-                        }}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div className="h-3 w-24 animate-pulse rounded bg-stone-200" />
-                            <div className="h-3 w-16 animate-pulse rounded bg-stone-200" />
-                        </div>
-                        <div className="h-3 w-3/4 animate-pulse rounded bg-stone-200" />
-                        <div className="mt-1 flex items-center justify-between">
-                            <div className="h-3 w-1/3 animate-pulse rounded bg-stone-200" />
-                            <div className="h-6 w-20 animate-pulse rounded bg-stone-200" />
-                        </div>
-                    </div>
-                ))}
-            </div>
-        )
-    }
-
+const OrdersSkeleton = ({ rows = 10 }) => {
     return (
         <div className="px-2 pt-3">
             <div className="flex flex-col gap-1.5">
                 {Array.from({ length: rows }).map((_, i) => (
                     <div
                         key={i}
-                        className="flex items-center gap-3 rounded-lg border border-stone-200 bg-white px-3 py-3"
+                        className="flex flex-wrap md:flex-nowrap items-center gap-3 rounded-lg border border-stone-200 bg-white px-3 py-3"
                         style={{
                             animation: 'fadeIn 0.4s ease-out both',
                             animationDelay: `${i * 60}ms`
@@ -149,13 +121,7 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
 
     const [statusFilterVisible, setStatusFilterVisible] = useState(false)
 
-    const handleStatusFilterMouseEnter = () => {
-        setStatusFilterVisible(true)
-    }
 
-    const handleStatusFilterMouseLeave = () => {
-        setStatusFilterVisible(false)
-    }
 
     const [filterCheck, setFilterCheck] = useState([0, 1, 2, 3, 4, 7, 8])
 
@@ -271,94 +237,6 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
             })
     }
 
-    const ShowOrigin = (order) => {
-        switch (order.origin) {
-            case 'telegram':
-                return <i className="bi bi-send text-green-800"></i>
-            case 'website':
-                return <i className="bi bi-lightning-fill text-green-800"></i>
-            case 'email':
-                return <i className="bi bi-envelope text-green-800"></i>
-            default:
-                return <i className="bi bi-send text-green-800"></i>
-        }
-    }
-
-    const photo = (order) => {
-        return order.photos.reduce((sum, el) => {
-            if (el.paper === 'lustre') {
-                return sum + el.amount * el.copies + 'шт(' + el.format + ')ЛЮСТР '
-            }
-
-            return sum + el.amount * el.copies + 'шт(' + el.format + ') '
-        }, '')
-    }
-
-    const ShowData = (order) => {
-        const data = `${order.createdAt.split('T')[0].split('-')[2]}.${order.createdAt.split('T')[0].split('-')[1]}`
-        const time = `${order.createdAt.split('T')[1].split(':')[0]}:${order.createdAt.split('T')[1].split(':')[1]}`
-
-        return `${data} (${time})`
-    }
-
-    const ColorBG = [
-        '#97d0d6',
-        '#D8BFD8',
-        '#FDFD96',
-        '#98FF98',
-        'DarkGrey',
-        'white'
-    ]
-
-    const ChangeStatus = (event, order) => {
-        $host.put(`api/order/updateStatus/${order.id}`, { status: event.target.value })
-        dispach(updateOrderStatus(order.id, event.target.value))
-        setOrderModal(prev => ({ ...prev, status: event.target.value }))
-    }
-
-    const Warning = (order) => {
-        let a = []
-
-        if (order.codeOutside) {
-            a.push(<i className="bi bi-qr-code ml-[5px]"></i>)
-        }
-
-        if (order.firstClass === true) {
-            a.push(<i className="bi bi-1-square-fill ml-[5px] pr-1 text-red-600"></i>)
-        }
-
-        if (order.notes) {
-            a.push(<i className="bi bi-exclamation-square-fill ml-[5px] text-orange-500"></i>)
-        }
-
-        if (order.other) {
-            a.push(<i className="bi bi-exclamation-square-fill ml-[5px] text-lime-600"></i>)
-        }
-
-        return a.map((el, index) => <span key={index}>{el} </span>)
-    }
-
-    const handleProcess = (e) => {
-        switch (e) {
-            case '1':
-                return setFilterCheck([0, 1, 2, 3, 4, 7, 8])
-            case '2':
-                return setFilterCheck([5])
-            case '3':
-                return setFilterCheck([6])
-            default:
-                return setFilterCheck([0, 1, 2, 3, 4, 7, 8])
-        }
-    }
-
-    const [activeModal, setActiveModal] = useState(false)
-    const [orderModal, setOrderModal] = useState({})
-
-    const ClickOrderMobile = (order) => {
-        setActiveModal(true)
-        setOrderModal(order)
-    }
-
     const [isOpen, setIsOpen] = useState(false)
     const [listPayEP, setListPayEP] = useState([])
 
@@ -399,12 +277,12 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
 
     const selectClass = 'h-[30px] min-w-0 rounded-md border-[1px] ring-1 ring-inset ring-[#E2E8F0] bg-white px-2 text-xs font-normal text-slate-700 outline-none transition-colors focus:ring-1 focus:ring-[#7890A8] md:h-[32px] md:text-xs'
 
-    const filterButtonClass = 'hidden md:flex h-[32px] min-w-[60px] items-center justify-center rounded-md border-[1px] ring-1 ring-inset ring-[#E2E8F0] px-3 text-xs font-medium cursor-pointer transition-colors hover:ring-[#7890A8]'
+    const filterButtonClass = 'flex h-[32px] min-w-[60px] items-center justify-center rounded-md border-[1px] ring-1 ring-inset ring-[#E2E8F0] px-3 text-xs font-medium cursor-pointer transition-colors hover:ring-[#7890A8]'
 
-    const mainButtonClass = 'hidden md:flex h-[32px] w-[50px] shrink-0 items-center justify-center rounded-md bg-[#274C77] text-white transition-colors hover:bg-[#1E3A5D]'
+    const mainButtonClass = 'flex h-[32px] w-[50px] shrink-0 items-center justify-center rounded-md bg-[#274C77] text-white transition-colors hover:bg-[#1E3A5D]'
 
     return (
-        <div className="font-sans text-base font-medium text-black antialiased">
+        <div className="w-full min-w-0 max-md:px-2 font-sans text-base font-medium text-black antialiased">
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent aria-describedby={undefined}>
                     <DialogHeader>
@@ -426,9 +304,9 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                 </DialogContent>
             </Dialog>
 
-            {!activeModal && (
-                <div className="flex w-full items-center bg-white gap-2 px-3 py-2.5 my-3 rounded-xl shadow-sm" style={{ border: "1px solid #97a8b9", boxSizing: "border-box" }}>
-                    <div className="flex w-full min-w-0 items-center gap-1 md:flex-1 md:gap-2.5">
+            {(
+                <div className="flex w-full min-w-0 items-start bg-white gap-2 max-md:gap-1 max-md:px-2 px-3 py-2.5 my-3 rounded-xl shadow-sm" style={{ border: "1px solid #97a8b9", boxSizing: "border-box" }}>
+                    <div className="flex w-full min-w-0 flex-wrap max-md:flex-nowrap items-center gap-1 md:flex-1 md:gap-2.5">
                         <button
                             className='hidden md:flex h-[32px] w-[50px] shrink-0 items-center justify-center rounded-md bg-white ring-1 ring-inset ring-[#E2E8F0] text-slate-600 transition-colors hover:bg-slate-100 hover:text-[#274C77] md:mr-2'
                             onClick={AddNewOrder}
@@ -437,7 +315,7 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                         </button>
 
                         <select
-                            className={`${selectClass} max-w-[50px] flex-1 md:w-[130px] md:max-w-none md:flex-none`}
+                            className={`${selectClass} min-w-0 max-w-[110px] flex-1 md:w-[130px] md:max-w-none md:flex-none`}
                             value={selectedType}
                             onChange={handleSelectChange}
                         >
@@ -459,7 +337,7 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                         />
 
                         {isAdmin && (
-                            <div className="relative shrink-0 ml-1" ref={datePickerRef}>
+                            <div className="relative hidden md:block shrink-0 ml-1" ref={datePickerRef}>
                                 <button
                                     type="button"
                                     className={`flex h-[32px] items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${dateFrom || dateTo ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'ring-1 ring-inset ring-[#E2E8F0] bg-white text-slate-700 hover:ring-[#7890A8]'}`}
@@ -470,7 +348,7 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                                     <span className="hidden lg:inline">{dateFrom || dateTo ? 'Период выбран' : 'Период'}</span>
                                 </button>
                                 {datePickerOpen && (
-                                    <div className="absolute right-0 top-full z-30 mt-2 w-[260px] rounded-xl ring-1 ring-inset ring-[#E2E8F0] bg-white p-3 shadow-xl">
+                                    <div className="absolute right-0 top-full z-30 mt-2 w-[min(260px,85vw)] rounded-xl ring-1 ring-inset ring-[#E2E8F0] bg-white p-3 shadow-xl">
                                         <div className="mb-3 text-sm font-semibold text-stone-800">Диапазон дат</div>
                                         <label className="mb-2 block text-xs font-medium text-stone-600">
                                             С даты
@@ -489,64 +367,54 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                             </div>
                         )}
                         {isAdmin && (
-                            <button type="button" onClick={() => setSortKey(prev => prev === 'price' ? 'default' : 'price')} title={sortKey === 'price' ? 'Вернуть обычную сортировку' : 'Сортировать по цене (от большей к меньшей)'} className={`flex h-[32px] mr-2 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${sortKey === 'price' ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'ring-1 ring-inset ring-[#E2E8F0] bg-white text-slate-700 hover:ring-[#7890A8]'}`}>
+                            <button type="button" onClick={() => setSortKey(prev => prev === 'price' ? 'default' : 'price')} title={sortKey === 'price' ? 'Вернуть обычную сортировку' : 'Сортировать по цене (от большей к меньшей)'} className={`flex h-[32px] md:mr-2 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors ${sortKey === 'price' ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'ring-1 ring-inset ring-[#E2E8F0] bg-white text-slate-700 hover:ring-[#7890A8]'}`}>
                                 <i className="bi bi-sort-numeric-down-alt" />
                                 <span className="hidden lg:inline">По цене</span>
                             </button>
                         )}
-                        <select
-                            className={`${selectClass} max-w-[100px] flex-1 md:hidden`}
-                            value={filterCheck.length === 1 && filterCheck.includes(5) ? '2' : filterCheck.length === 1 && filterCheck.includes(6) ? '3' : '1'}
-                            onChange={e => handleProcess(e.target.value)}
-                        >
-                            <option value="1">в работе</option>
-                            <option value="2">отправленные</option>
-                            <option value="3">оплаченные</option>
-                        </select>
-
                         <button
-                            className={`${filterButtonClass} md:ml-auto ${onlyGlossy ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            className={`${filterButtonClass} max-md:hidden xl:ml-auto ${onlyGlossy ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
                             onClick={() => toggleProductFilter('glossy')}
                         >
                             glossy
                         </button>
                         <button
-                            className={`${filterButtonClass} ${onlyLustre ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            className={`${filterButtonClass} max-md:hidden ${onlyLustre ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
                             onClick={() => toggleProductFilter('lustre')}
                         >
                             lustre
                         </button>
 
                         <button
-                            className={`${filterButtonClass} ${onlyHolst ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            className={`${filterButtonClass} max-md:hidden ${onlyHolst ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
                             onClick={() => toggleProductFilter('holst')}
                         >
                             holst
                         </button>
 
                         <button
-                            className={`${filterButtonClass} ${onlyMagnit ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            className={`${filterButtonClass} max-md:hidden ${onlyMagnit ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
                             onClick={() => toggleProductFilter('magnit')}
                         >
                             magnit
                         </button>
 
                         <button
-                            className={`${filterButtonClass} ${onlyA4 ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            className={`${filterButtonClass} max-md:hidden ${onlyA4 ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
                             onClick={() => toggleProductFilter('A4')}
                         >
                             A4
                         </button>
 
                         <button
-                            className={`${filterButtonClass} mr-2 ${onlyPoster ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
+                            className={`${filterButtonClass} max-md:hidden mr-2 ${onlyPoster ? 'ring-1 ring-inset ring-[#274C77] bg-[#274C77] text-white' : 'bg-white text-slate-700'}`}
                             onClick={() => toggleProductFilter('poster')}
                         >
                             poster
                         </button>
                         {selectedType === 'E' && (
                             <button
-                                className={mainButtonClass}
+                                className={`${mainButtonClass} max-md:hidden`}
                                 onClick={() => setIsOpen(true)}
                             >
                                 <i className="bi bi-wallet2 text-sm"></i>
@@ -555,11 +423,10 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                     </div>
 
                     <div
-                        className="relative hidden shrink-0 md:block"
-                        onMouseEnter={handleStatusFilterMouseEnter}
-                        onMouseLeave={handleStatusFilterMouseLeave}
+                        className="relative shrink-0"
+                        
                     >
-                        <button className={mainButtonClass}>
+                        <button type="button" className={mainButtonClass} onClick={() => setStatusFilterVisible(prev => !prev)} aria-expanded={statusFilterVisible}>
                             <i className="bi bi-filter-square text-sm"></i>
                         </button>
 
@@ -622,88 +489,10 @@ export const TableFull = ({ selectedOrder, setSelectedOrder, collapsedOrderId, s
                 </div>
             )}
 
-            <div className="md:hidden">
-                <div className="relative flex flex-col">
-                    {activeModal ? (
-                        <ModalOrder
-                            order={orderModal}
-                            activeModal={activeModal}
-                            setActiveModal={setActiveModal}
-                            ChangeStatus={ChangeStatus}
-                        />
-                    ) : (
-                        <div>
-                            {isLoading ? (
-                                <OrdersSkeleton rows={5} mobile={true} />
-                            ) : (
-                                filteredOrders.map(order => (
-                                    <div key={order.id} onClick={event => event.stopPropagation()}>
-                                        <div
-                                            className={`mx-0.5 my-0.5 flex h-[54px] cursor-pointer items-center gap-2.5 border-b border-slate-200 px-1 py-1.5 ${selectedOrder === order.id ? 'bg-slate-200' : 'bg-slate-50'}`}
-                                            onClick={() => ClickOrderMobile(order)}
-                                        >
-                                            <div className="ml-1 flex flex-[1.5] flex-col gap-1 text-[11px] font-normal text-slate-600">
-                                                <div className="whitespace-nowrap rounded-full border border-slate-300 px-1.5 py-0.5 text-center text-[11px] font-medium text-slate-700">
-                                                    {ShowOrigin(order)} &nbsp; {order.typePost + (order.order_number % 1000)}
-                                                </div>
-                                                <div className="text-center text-[10px] text-slate-500">
-                                                    {ShowData(order)}
-                                                </div>
-                                            </div>
-
-                                            <div className="flex max-w-[200px] min-w-0 flex-[4] flex-col gap-1 overflow-hidden">
-                                                <div className="truncate text-xs font-medium text-slate-800">
-                                                    {order?.user?.FIO}
-                                                </div>
-                                                <div className="flex justify-between gap-1 text-[11px] font-normal text-slate-500">
-                                                    <div className="min-w-0 truncate">
-                                                        {photo(order)}
-                                                    </div>
-                                                    <div className="shrink-0">
-                                                        {Warning(order)}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex min-w-0 flex-[2] flex-col gap-1 text-center">
-                                                <div className="whitespace-nowrap text-xs font-medium tabular-nums text-slate-800">
-                                                    {(Number(order.price) + Number(order.price_deliver)).toFixed(2)}р
-                                                </div>
-
-                                                <div onClick={event => event.stopPropagation()}>
-                                                    <select
-                                                        className="w-full rounded-md border border-slate-300 px-1 py-0.5 text-[11px] font-normal text-slate-800 outline-none"
-                                                        style={{ backgroundColor: ColorBG[order.status - 1] }}
-                                                        value={order.status}
-                                                        onChange={e => ChangeStatus(e, order)}
-                                                    >
-                                                        <option value="0">новый</option>
-                                                        <option value="1">принят</option>
-                                                        <option value="2">обработан</option>
-                                                        <option value="3">в печати</option>
-                                                        <option value="4">упакован</option>
-                                                        <option value="5">отправлен</option>
-                                                        <option value="6">оплачен</option>
-                                                        <option value="7">в ожидании</option>
-                                                        <option value="8">ошибка</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-
-                            <TableFooter filteredOrders={filteredOrders} activeFilters={{ glossy: onlyGlossy, lustre: onlyLustre, holst: onlyHolst, magnit: onlyMagnit, A4: onlyA4, poster: onlyPoster }} />
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="hidden md:block">
-                <div className="overflow-x-auto whitespace-nowrap">
+            <div className="w-full min-w-0">
+                <div className="w-full min-w-0">
                     {isLoading ? (
-                        <OrdersSkeleton rows={12} mobile={false} />
+                        <OrdersSkeleton rows={12} />
                     ) : (
                         filteredOrders.map(order => (
                             <div key={order.id}>

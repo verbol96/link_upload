@@ -1,5 +1,30 @@
 const HISTORY = [
     {
+        version: '5.3',
+        date: '26.11.2026',
+        items: [
+            'добавлен бот для загрузки заказов из Telegram',
+            'исправлено и улучшено логирование',
+            'переработана таблица заказов',
+            'исправлено сравнение до/после в редакторе',
+            'добавлено поле области',
+            'автосохранение в таблице',
+            'устранены ошибки редактора (требуется проверка)',
+            'история изменений заказа',
+            'обновлён index HTTP (требуется проверка)',
+            'конструктор фотополосок',
+            'убраны личные данные',
+            'доработан раздел «Мои файлы»',
+            'добавлены контакты',
+            'убран футер',
+            'просмотр загруженных фотографий',
+            'обновлено API Европочты',
+            'просмотр истории и данных отправления Европочты',
+            'печать этикеток Европочты',
+            'адаптированы страницы для телефонов'
+        ],
+    },
+    {
         version: '5.2',
         date: '06.10.2026',
         items: [
@@ -193,55 +218,49 @@ const HISTORY = [
 
 const History = () => {
     return (
-        <div className="w-full max-w-3xl mx-auto">
-            <div className="mb-6 md:mb-8">
-                <h1 className="text-[24px] md:text-[30px] font-bold text-[#2C3531] leading-tight">
-                    История обновлений
-                </h1>
-            </div>
-
+        <div className="w-full min-w-0">
             <div className="relative">
-                <div className="hidden md:block absolute left-[7px] top-2 bottom-2 w-px bg-stone-200"/>
+                <div className="hidden md:block absolute left-[7px] top-2 bottom-2 w-px bg-slate-200"/>
 
                 <div className="flex flex-col gap-4 md:gap-5">
                     {HISTORY.map((v, idx) => (
                         <div key={v.version} className="relative md:pl-8">
-                            <div className="hidden md:flex absolute left-0 top-4 w-[15px] h-[15px] rounded-full bg-white border-2 border-[#0D9488] items-center justify-center">
+                            <div className="hidden md:flex absolute left-0 top-4 w-[15px] h-[15px] rounded-full bg-white border-2 border-[#526B83] items-center justify-center">
                                 {idx === 0 && (
-                                    <span className="w-[5px] h-[5px] rounded-full bg-[#0D9488]"/>
+                                    <span className="w-[5px] h-[5px] rounded-full bg-[#526B83]"/>
                                 )}
                             </div>
 
-                            <div className="bg-white border border-stone-200 rounded-xl overflow-hidden hover:border-stone-300 transition-colors">
-                                <div className={`flex items-center gap-3 px-4 py-3 border-b border-stone-100 ${idx === 0 ? 'bg-[#0D9488]/5' : 'bg-stone-50/50'}`}>
+                            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:border-slate-300 transition-colors">
+                                <div className={`flex items-center gap-2 px-3 md:px-4 py-3 border-b border-slate-100 ${idx === 0 ? 'bg-[#526B83]/5' : 'bg-slate-50/50'}`}>
                                     <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide ${
                                         idx === 0
-                                            ? 'bg-[#0D9488] text-white'
-                                            : 'bg-stone-200 text-stone-600'
+                                            ? 'bg-[#526B83] text-white'
+                                            : 'bg-slate-200 text-slate-600'
                                     }`}>
                                         v{v.version}
                                     </span>
 
-                                    <span className="text-[12.5px] text-stone-500 tabular-nums">
+                                    <span className="text-[12.5px] text-slate-500 tabular-nums">
                                         {v.date}
                                     </span>
 
                                     {idx === 0 && (
-                                        <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#0D9488]/10 text-[#0D9488] text-[10px] font-semibold uppercase tracking-wider">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-[#0D9488] animate-pulse"/>
+                                        <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#526B83]/10 text-[#526B83] text-[10px] font-semibold hidden sm:inline-flex">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#526B83] "/>
                                             Актуальная
                                         </span>
                                     )}
 
-                                    <span className={`${idx === 0 ? '' : 'ml-auto'} text-[11px] text-stone-400`}>
+                                    <span className={`${idx === 0 ? '' : 'ml-auto'} text-[11px] text-slate-400`}>
                                         {v.items.length} {plural(v.items.length)}
                                     </span>
                                 </div>
 
                                 <ul className="px-4 py-3 flex flex-col gap-1.5">
                                     {v.items.map((item, i) => (
-                                        <li key={i} className="flex items-start gap-2.5 text-[13px] text-stone-700 leading-snug">
-                                            <i className="bi bi-check2 text-[#0D9488] text-[13px] mt-0.5 shrink-0"/>
+                                        <li key={i} className="flex items-start gap-2.5 text-[13px] text-slate-700 leading-snug">
+                                            <i className="bi bi-check2 text-[#526B83] text-[13px] mt-0.5 shrink-0"/>
                                             <span>{item}</span>
                                         </li>
                                     ))}

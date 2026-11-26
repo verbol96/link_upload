@@ -378,7 +378,7 @@ export default function AdminDrafts({ onExit, onDraftsChanged }) {
                 <span className="truncate text-[#475569]">{folderName(selectedFolder)}</span>
               </>
             )}
-            {!draft && <span className="ml-2 shrink-0 text-[12px] text-[#94A3B8]">Клиентов: {drafts.length}</span>}
+            {!draft && <span className="ml-2 hidden shrink-0 text-[12px] text-[#94A3B8] md:inline">Клиентов: {drafts.length}</span>}
           </div>
           <div className="flex shrink-0 items-center gap-2 text-[12px] text-[#64748B]" title="Размер открытого раздела">
             <Icon name="bi-hdd" className="text-[16px] text-[#7890A8]" />

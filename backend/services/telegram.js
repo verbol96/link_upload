@@ -64,22 +64,53 @@ const answerCallbackQuery=async(callbackQueryId)=>{
 
 const telegramBatches=new Map();
 const telegramStates=new Map();
+const skippedBatches=new Map();
 
-const isAllowedChat=(chatId)=>{
+const MAX_FILE_SIZE=20*1024*1024;
+
+const isAllowedChat=chatId=>{
     return [
         String(process.env.TELEGRAM_CHAT_ID||''),
         String(process.env.TELEGRAM_WORK_CHAT_ID||'')
     ].includes(String(chatId));
 };
 
-const getTelegramBatch=(chatId)=>{
+const getTelegramBatch=chatId=>{
     if(!telegramBatches.has(chatId)){
         telegramBatches.set(chatId,[]);
     }
+
     return telegramBatches.get(chatId);
 };
 
-const normalizePhone=(phone)=>{
+const getSkipped=chatId=>{
+    if(!skippedBatches.has(chatId)){
+        skippedBatches.set(chatId,[]);
+    }
+
+    return skippedBatches.get(chatId);
+};
+
+const resetBatch=chatId=>{
+    telegramBatches.delete(chatId);
+    skippedBatches.delete(chatId);
+};
+
+const clearOrder=chatId=>{
+    telegramBatches.delete(chatId);
+    telegramStates.delete(chatId);
+};
+
+const escapeHTML=value=>String(value??'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+
+const groupNote=g=>{
+    return `${g.notes} (${g.files.length} файлов${g.skipped.length?` + ${g.skipped.length} вручную`:''})`;
+};
+
+const normalizePhone=phone=>{
     let value=String(phone||'').replace(/\D/g,'');
 
     if(value.length===9){
@@ -150,26 +181,29 @@ const showOwnerButtons=async(chatId)=>{
 
 const showOrderSummary=async(chatId)=>{
     const state=telegramStates.get(chatId);
-    const batch=getTelegramBatch(chatId);
-
-    if(!state)return;
 
     const client=state.clientId
-        ?await User.findOne({where:{id:state.clientId}})
+        ?await User.findOne({
+            where:{id:state.clientId}
+        })
         :null;
 
-    const ownerName=state.ownerType==='nefediev'
-        ?'Нефедьев'
-        :'Клиент';
-
     await sendTelegramMessage(
-        `👤 <b>${client?.FIO||'Новый клиент'}</b>\n`+
+        `👤 <b>${escapeHTML(client?.FIO||'Новый клиент')}</b>\n`+
         `📱 ${state.phone}\n`+
-        `👥 Владелец: <b>${ownerName}</b>\n`+
-        `📎 Файлов: ${batch.length}\n`+
-        `📝 Примечание: <b>${state.notes}</b>`,
+        `👥 Владелец: ${state.ownerType==='nefediev'?'Нефедьев':'Клиент'}\n\n`+
+        state.groups.map((g,i)=>
+            `${i+1}. ${escapeHTML(groupNote(g))}`
+        ).join('\n')+
+        `\n\n📎 Всего: ${state.groups.reduce((n,g)=>n+g.files.length,0)} файлов`,
         {
             inline_keyboard:[
+                [
+                    {
+                        text:'➕ Добавить формат',
+                        callback_data:'add_format'
+                    }
+                ],
                 [
                     {
                         text:'✅ Создать заказ',
@@ -186,135 +220,171 @@ const showOrderSummary=async(chatId)=>{
     );
 };
 
+// Повторная отправка больших файлов без скачивания на сервер
+const copySkipped=async(chatId,groups)=>{
+    for(const [i,g] of groups.entries()){
+        for(const file of g.skipped){
+            await sendTelegramMessage(
+                `⚠️ Формат №${i+1}: ${escapeHTML(g.notes)}\n`+
+                `${escapeHTML(file.fileName)} — скачать вручную`,
+                null,
+                chatId
+            );
+
+            try{
+                const response=await fetch(
+                    `${TELEGRAM_API_BASE}/bot${process.env.TELEGRAM_BOT_TOKEN}/copyMessage`,
+                    {
+                        method:'POST',
+                        headers:{
+                            'Content-Type':'application/json'
+                        },
+                        body:JSON.stringify({
+                            chat_id:chatId,
+                            from_chat_id:chatId,
+                            message_id:file.messageId
+                        })
+                    }
+                );
+
+                const data=await response.json();
+
+                if(!response.ok||!data.ok){
+                    throw new Error('copyMessage failed');
+                }
+            }catch(error){
+                await sendTelegramMessage(
+                    'Не удалось повторно отправить файл. Скачайте исходное сообщение вручную.',
+                    null,
+                    chatId
+                );
+            }
+        }
+    }
+};
+
 const handleTelegramCallback=async(callbackQuery)=>{
     const chatId=String(callbackQuery.message?.chat?.id||'');
 
-    if(!isAllowedChat(chatId)){
-        console.log('Telegram: callback от неизвестного chatId:',chatId);
-        return;
-    }
+    if(!isAllowedChat(chatId))return;
 
     await answerCallbackQuery(callbackQuery.id);
 
     const state=telegramStates.get(chatId);
 
-    if(!state)return;
+    if(!state||state.step==='creating')return;
 
-    if(callbackQuery.data==='owner_client'&&state.step==='owner'){
-        telegramStates.set(chatId,{
-            ...state,
-            step:'note',
-            ownerType:'client'
-        });
+    const action=callbackQuery.data;
 
-        await sendTelegramMessage(
+    // Выбор владельца
+    if(state.step==='owner'&&['owner_client','owner_nefediev'].includes(action)){
+        state.ownerType=action==='owner_client'
+            ?'client'
+            :'nefediev';
+
+        state.step='note';
+
+        return sendTelegramMessage(
             '📝 <b>Введи примечание к заказу:</b>',
             null,
             chatId
         );
-
-        return;
     }
 
-    if(callbackQuery.data==='owner_nefediev'&&state.step==='owner'){
-        telegramStates.set(chatId,{
-            ...state,
-            step:'note',
-            ownerType:'nefediev'
+    // Отмена всего заказа
+    if(action==='cancel_order'){
+        clearOrder(chatId);
+        resetBatch(chatId);
+
+        return sendTelegramMessage(
+            '🗑 <b>Заказ отменён. Все пачки очищены.</b>',
+            null,
+            chatId
+        );
+    }
+
+    if(state.step!=='ready')return;
+
+    // Добавление следующего формата
+    if(action==='add_format'){
+        state.step='collect';
+
+        return sendTelegramMessage(
+            '📎 <b>Перешли фотографии следующего формата.</b>\n'+
+            'Затем нажми /order.',
+            null,
+            chatId
+        );
+    }
+
+    if(action!=='create_order')return;
+
+    // Создание заказа
+    state.step='creating';
+
+    const groups=state.groups;
+
+    const count=groups.reduce(
+        (n,g)=>n+g.files.length,0
+    );
+
+    const skipped=groups.reduce(
+        (n,g)=>n+g.skipped.length,0
+    );
+
+    await sendTelegramMessage(
+        `⏳ <b>Создаю заказ...</b>\n📎 Файлов: ${count}`,
+        null,
+        chatId
+    );
+
+    let result;
+
+    try{
+        result=await createTelegramOrder({
+            clientId:state.clientId,
+            phone:state.phone,
+            ownerType:state.ownerType,
+            notes:groups.map(groupNote).join('\n'),
+            groups,
+            downloadTelegramFile
         });
+    }catch(error){
+        console.error('Telegram: ошибка создания заказа:',error);
+
+        state.step='ready';
 
         await sendTelegramMessage(
-            '📝 <b>Введи примечание к заказу:</b>',
+            `❌ <b>Не удалось создать заказ</b>\n`+
+            escapeHTML(error.message),
             null,
             chatId
         );
 
-        return;
+        return showOrderSummary(chatId);
     }
 
-    if(callbackQuery.data==='cancel_order'){
-        telegramBatches.set(chatId,[]);
-        telegramStates.delete(chatId);
+    clearOrder(chatId);
+    resetBatch(chatId);
 
-        await sendTelegramMessage(
-            '🗑 <b>Заказ отменён. Пачка очищена.</b>',
-            null,
-            chatId
-        );
+    await sendTelegramMessage(
+        `✅ <b>Заказ №${result.order.order_number} создан</b>\n`+
+        `👤 ${escapeHTML(result.client.FIO||'Без имени')}\n`+
+        `📱 ${state.phone}\n`+
+        `📎 Загружено: ${count}\n`+
+        `📁 ${escapeHTML(result.mainDir.name)}\n`+
+        `${escapeHTML(groups.map(groupNote).join('\n'))}\n`+
+        `⚠️ Вручную: ${skipped}`,
+        null,
+        chatId
+    );
 
-        return;
-    }
-
-    if(callbackQuery.data==='create_order'&&state.step==='ready'){
-        const batch=getTelegramBatch(chatId);
-
-        if(batch.length===0){
-            await sendTelegramMessage(
-                '⚠️ <b>Пачка файлов пуста</b>',
-                null,
-                chatId
-            );
-            return;
-        }
-
-        telegramStates.set(chatId,{
-            ...state,
-            step:'creating'
-        });
-
-        await sendTelegramMessage(
-            `⏳ <b>Создаю заказ...</b>\n📎 Файлов: ${batch.length}`,
-            null,
-            chatId
-        );
-
-        try{
-            const result=await createTelegramOrder({
-                clientId:state.clientId,
-                phone:state.phone,
-                ownerType:state.ownerType,
-                notes:state.notes,
-                files:batch,
-                downloadTelegramFile
-            });
-
-            telegramBatches.set(chatId,[]);
-            telegramStates.delete(chatId);
-
-            await sendTelegramMessage(
-                `✅ <b>Заказ №${result.order.order_number} создан</b>\n\n`+
-                `👤 ${result.client.FIO||'Без имени'}\n`+
-                `📱 ${result.client.phone}\n`+
-                `👥 Владелец: ${state.ownerType==='nefediev'?'Нефедьев':'Клиент'}\n`+
-                `📎 Файлов: ${batch.length}\n`+
-                `📝 ${state.notes}\n`+
-                `📁 ${result.mainDir.name}`,
-                null,
-                chatId
-            );
-        }catch(error){
-            console.error('Telegram: ошибка создания заказа:',error);
-
-            telegramStates.set(chatId,{
-                ...state,
-                step:'ready'
-            });
-
-            await sendTelegramMessage(
-                `❌ <b>Не удалось создать заказ</b>\n\n${error.message||'Неизвестная ошибка'}`,
-                null,
-                chatId
-            );
-        }
-
-        return;
-    }
+    await copySkipped(chatId,groups);
 };
 
 const handleTelegramUpdate=async(update)=>{
     if(update.callback_query){
-        await handleTelegramCallback(update.callback_query);
-        return;
+        return handleTelegramCallback(update.callback_query);
     }
 
     const message=update.message;
@@ -323,185 +393,173 @@ const handleTelegramUpdate=async(update)=>{
 
     const chatId=String(message.chat?.id||'');
 
-    if(!isAllowedChat(chatId)){
-        console.log('Telegram: сообщение от неизвестного chatId:',chatId);
-        return;
-    }
-
-    if(message.text==='/count'){
-        const batch=getTelegramBatch(chatId);
-
-        await sendTelegramMessage(
-            `📎 <b>Файлов в текущей пачке: ${batch.length}</b>`,
-            null,
-            chatId
-        );
-
-        return;
-    }
-
-    if(message.text==='/cancel'){
-        telegramBatches.set(chatId,[]);
-        telegramStates.delete(chatId);
-
-        await sendTelegramMessage(
-            '🗑 <b>Текущая пачка очищена</b>',
-            null,
-            chatId
-        );
-
-        return;
-    }
-
-    if(message.text==='/order'){
-        const batch=getTelegramBatch(chatId);
-
-        if(batch.length===0){
-            await sendTelegramMessage(
-                '⚠️ <b>В текущей пачке нет файлов</b>',
-                null,
-                chatId
-            );
-            return;
-        }
-
-        telegramStates.set(chatId,{
-            step:'phone'
-        });
-
-        await sendTelegramMessage(
-            `📎 <b>Файлов: ${batch.length}</b>\n\n📱 Введи номер телефона клиента:`,
-            null,
-            chatId
-        );
-
-        return;
-    }
+    if(!isAllowedChat(chatId))return;
 
     const state=telegramStates.get(chatId);
 
+    if(state?.step==='creating')return;
+
+    const batch=getTelegramBatch(chatId);
+    const skipped=getSkipped(chatId);
+
+    // Отмена
+    if(message.text==='/cancel'){
+        clearOrder(chatId);
+        resetBatch(chatId);
+
+        return sendTelegramMessage(
+            '🗑 <b>Все пачки очищены</b>',
+            null,
+            chatId
+        );
+    }
+
+    // Количество файлов
+    if(message.text==='/count'){
+        return sendTelegramMessage(
+            `📎 Текущая пачка: ${batch.length}\n`+
+            `⚠️ Вручную: ${skipped.length}\n`+
+            `Сохранено групп: ${state?.groups?.length||0}`,
+            null,
+            chatId
+        );
+    }
+
+    // Оформление заказа или следующего формата
+    if(message.text==='/order'){
+        if(state?.step==='ready'){
+            return showOrderSummary(chatId);
+        }
+
+        if(!batch.length&&!skipped.length){
+            return sendTelegramMessage(
+                '⚠️ В текущей пачке нет файлов',
+                null,
+                chatId
+            );
+        }
+
+        if(state?.step==='collect'){
+            state.step='note';
+
+            return sendTelegramMessage(
+                '📝 <b>Введи примечание к новому формату:</b>',
+                null,
+                chatId
+            );
+        }
+
+        if(state)return;
+
+        telegramStates.set(chatId,{
+            step:'phone',
+            groups:[]
+        });
+
+        return sendTelegramMessage(
+            `📎 Файлов: ${batch.length}\n`+
+            '📱 Введи номер телефона клиента:',
+            null,
+            chatId
+        );
+    }
+
+    // Номер телефона
     if(state?.step==='phone'&&message.text){
         const phone=normalizePhone(message.text);
 
         if(!phone){
-            await sendTelegramMessage(
-                '⚠️ <b>Не удалось распознать номер</b>\n\nВведи номер телефона ещё раз:',
+            return sendTelegramMessage(
+                '⚠️ Введи номер телефона ещё раз:',
                 null,
                 chatId
             );
-            return;
         }
 
         const client=await User.findOne({
             where:{phone}
         });
 
-        telegramStates.set(chatId,{
-            ...state,
+        Object.assign(state,{
             step:'owner',
             phone,
             clientId:client?.id||null
         });
 
-        const batch=getTelegramBatch(chatId);
+        await sendTelegramMessage(
+            `👤 <b>${escapeHTML(client?.FIO||(client?'Без имени':'Новый клиент'))}</b>\n`+
+            `📱 ${phone}`,
+            null,
+            chatId
+        );
 
-        if(client){
-            await sendTelegramMessage(
-                `👤 <b>${client.FIO||'Без имени'}</b>\n`+
-                `📱 ${phone}\n`+
-                `📎 Файлов: ${batch.length}\n\n`+
-                `Клиент найден в LINK.`,
-                null,
-                chatId
-            );
-        }else{
-            await sendTelegramMessage(
-                `👤 <b>Новый клиент</b>\n`+
-                `📱 ${phone}\n`+
-                `📎 Файлов: ${batch.length}\n\n`+
-                `Такого клиента в LINK пока нет.`,
-                null,
-                chatId
-            );
-        }
-
-        await showOwnerButtons(chatId);
-        return;
+        return showOwnerButtons(chatId);
     }
 
+    // Сохранение группы фотографий
     if(state?.step==='note'&&message.text){
         const notes=message.text.trim();
 
         if(!notes){
-            await sendTelegramMessage(
-                '⚠️ <b>Введи примечание ещё раз</b>',
+            return sendTelegramMessage(
+                '⚠️ Введи примечание ещё раз',
                 null,
                 chatId
             );
-            return;
         }
 
-        telegramStates.set(chatId,{
-            ...state,
-            step:'ready',
-            notes
+        state.groups.push({
+            notes,
+            files:[...batch],
+            skipped:[...skipped]
         });
 
-        await showOrderSummary(chatId);
-        return;
+        resetBatch(chatId);
+
+        state.step='ready';
+
+        return showOrderSummary(chatId);
     }
 
-    if(message.document){
-        const file=message.document;
-        const batch=getTelegramBatch(chatId);
+    // Получение фотографий и документов
+    if(message.document||message.photo){
+        if(state?.step==='ready'){
+            return sendTelegramMessage(
+                'Сначала нажми «Добавить формат», затем перешли файл повторно.',
+                null,
+                chatId
+            );
+        }
 
-        batch.push({
+        const file=message.document||
+            message.photo[message.photo.length-1];
+
+        const item={
             fileId:file.file_id,
-            fileName:file.file_name,
-            size:file.file_size
-        });
-
-        console.log('Telegram файл добавлен в пачку:',{
-            name:file.file_name,
+            fileName:file.file_name||`telegram_${message.message_id}.jpg`,
             size:file.file_size,
-            count:batch.length,
-            chatId
-        });
+            messageId:message.message_id
+        };
 
-        await sendTelegramMessage(
+        // Файлы больше 20 МБ сохраняем отдельно
+        if(item.size>MAX_FILE_SIZE){
+            skipped.push(item);
+
+            return sendTelegramMessage(
+                `⚠️ ${escapeHTML(item.fileName)} больше 20 МБ. `+
+                'Будет отправлен для ручного скачивания после создания заказа.',
+                null,
+                chatId
+            );
+        }
+
+        batch.push(item);
+
+        return sendTelegramMessage(
             `📎 <b>Получено файлов: ${batch.length}</b>`,
             null,
             chatId
         );
-
-        return;
-    }
-
-    if(message.photo){
-        const photo=message.photo[message.photo.length-1];
-        const batch=getTelegramBatch(chatId);
-        const fileName=`telegram_${message.message_id}.jpg`;
-
-        batch.push({
-            fileId:photo.file_id,
-            fileName,
-            size:photo.file_size
-        });
-
-        console.log('Telegram фото добавлено в пачку:',{
-            name:fileName,
-            size:photo.file_size,
-            count:batch.length,
-            chatId
-        });
-
-        await sendTelegramMessage(
-            `📎 <b>Получено файлов: ${batch.length}</b>`,
-            null,
-            chatId
-        );
-
-        return;
     }
 };
 
@@ -529,17 +587,25 @@ const startTelegramPolling=async()=>{
 
             if(!data.ok){
                 console.error('Telegram polling error:',data);
-                await new Promise(resolve=>setTimeout(resolve,3000));
+
+                await new Promise(
+                    resolve=>setTimeout(resolve,3000)
+                );
+
                 continue;
             }
 
             for(const update of data.result){
                 offset=update.update_id+1;
+
                 await handleTelegramUpdate(update);
             }
         }catch(error){
             console.error('Telegram polling error:',error.message);
-            await new Promise(resolve=>setTimeout(resolve,3000));
+
+            await new Promise(
+                resolve=>setTimeout(resolve,3000)
+            );
         }
     }
 };

@@ -115,12 +115,12 @@ const BeforeAfter=()=>{
                     {renderImage(beforeUrl,beforeCrop,"До")}
                 </div>
                 <div className="absolute top-0 bottom-0 w-[2px] bg-white shadow-[0_0_8px_rgba(0,0,0,0.5)] pointer-events-none" style={{left:`${position}%`}}>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white shadow-lg flex items-center justify-center text-[#19766d]">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white shadow-lg flex items-center justify-center text-[#526B83]">
                         <i className="bi bi-chevron-left text-[12px]"/><i className="bi bi-chevron-right text-[12px]"/>
                     </div>
                 </div>
                 <span className="absolute top-3 left-3 px-3 py-1.5 rounded-full bg-black/55 text-white text-[11px] font-semibold pointer-events-none">ДО</span>
-                <span className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-[#19766d]/90 text-white text-[11px] font-semibold pointer-events-none">ПОСЛЕ</span>
+                <span className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-[#526B83]/90 text-white text-[11px] font-semibold pointer-events-none">ПОСЛЕ</span>
             </div>
         );
     };
@@ -133,18 +133,18 @@ const BeforeAfter=()=>{
             <div className="min-w-0">
                 <div className="mb-2 flex items-center justify-between gap-2">
                     <span className="text-[12px] font-semibold text-slate-700">{label}</span>
-                    <button type="button" onClick={()=>(isBefore?beforeInputRef:afterInputRef).current?.click()} className="text-[11px] font-medium text-[#19766d] hover:underline">{url?"Заменить фото":"Выбрать фото"}</button>
+                    <button type="button" onClick={()=>(isBefore?beforeInputRef:afterInputRef).current?.click()} className="text-[11px] font-medium text-[#526B83] hover:underline">{url?"Заменить фото":"Выбрать фото"}</button>
                 </div>
                 <div ref={isBefore?beforeCropRef:afterCropRef} onPointerDown={url?e=>handleCropDown(e,type):undefined} onPointerMove={url?e=>handleCropMove(e,type):undefined} onPointerUp={handleCropUp} onPointerCancel={handleCropUp} className={`relative w-full overflow-hidden rounded-lg bg-slate-100 select-none ${url?"touch-none cursor-grab active:cursor-grabbing":""}`} style={{aspectRatio:ratio}}>
                     {url?renderImage(url,crop,label):(
-                        <button type="button" onClick={()=>(isBefore?beforeInputRef:afterInputRef).current?.click()} className="absolute inset-0 w-full h-full flex flex-col items-center justify-center text-slate-400 hover:text-[#19766d] transition">
+                        <button type="button" onClick={()=>(isBefore?beforeInputRef:afterInputRef).current?.click()} className="absolute inset-0 w-full h-full flex flex-col items-center justify-center text-slate-400 hover:text-[#526B83] transition">
                             <i className={`bi ${isBefore?"bi-image":"bi-stars"} text-[25px]`}/>
                             <span className="mt-2 text-[12px]">Добавить фото «{label}»</span>
                         </button>
                     )}
                 </div>
                 <div className="mt-2 flex items-center justify-between gap-2 min-h-9">
-                    <span className="text-[10px] text-slate-400">{url?"Перетаскивайте фото для кадрирования":"Масштаб и положение"}</span>
+                    <span className="hidden sm:inline text-[10px] text-slate-400">{url?"Перетаскивайте фото для кадрирования":"Масштаб и положение"}</span>
                     <div className="flex items-center gap-1">
                         <button type="button" disabled={!url||crop.zoom<=1} onClick={()=>changeZoom(type,-0.2)} className="w-8 h-8 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-30" title="Уменьшить"><i className="bi bi-dash-lg"/></button>
                         <span className="w-12 text-center text-[11px] text-slate-500 tabular-nums">{Math.round(crop.zoom*100)}%</span>
@@ -165,25 +165,25 @@ const BeforeAfter=()=>{
     return(
         <div>
             <div className="mb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div><h2 className="text-[17px] font-semibold text-slate-800">До / После</h2><div className="mt-0.5 text-[11.5px] text-slate-400">Настройте кадр каждого фото и сравните результат</div></div>
-                <div className="flex flex-wrap items-center gap-2">
+                
+                <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex h-9 rounded-lg border border-slate-200 bg-white p-1">
-                        <button type="button" onClick={()=>setMode("side")} className={`px-3 rounded-md text-[12px] font-medium transition ${mode==="side"?"bg-[#eaf4f2] text-[#19766d]":"text-slate-500 hover:text-slate-800"}`}>Кадрирование</button>
-                        <button type="button" onClick={()=>setMode("slider")} className={`px-3 rounded-md text-[12px] font-medium transition ${mode==="slider"?"bg-[#eaf4f2] text-[#19766d]":"text-slate-500 hover:text-slate-800"}`}>Слайдер</button>
+                        <button type="button" onClick={()=>setMode("side")} className={`px-3 rounded-md text-[12px] font-medium transition ${mode==="side"?"bg-[#F0F3F6] text-[#526B83]":"text-slate-500 hover:text-slate-800"}`}>Кадрирование</button>
+                        <button type="button" onClick={()=>setMode("slider")} className={`px-3 rounded-md text-[12px] font-medium transition ${mode==="slider"?"bg-[#F0F3F6] text-[#526B83]":"text-slate-500 hover:text-slate-800"}`}>Слайдер</button>
                     </div>
-                    <button type="button" onClick={()=>setClean(true)} disabled={!bothLoaded} className="h-9 px-3 rounded-lg bg-[#19766d] disabled:opacity-40 text-white text-[12px] font-medium hover:bg-[#155f58] transition"><i className="bi bi-arrows-fullscreen mr-2"/>Режим показа</button>
+                    <button type="button" onClick={()=>setClean(true)} disabled={!bothLoaded} className="h-9 px-3 rounded-lg bg-[#526B83] disabled:opacity-40 text-white text-[12px] font-medium hover:bg-[#40566C] transition"><i className="bi bi-arrows-fullscreen mr-2"/>Режим показа</button>
                 </div>
             </div>
             <input ref={beforeInputRef} type="file" accept="image/*" className="hidden" onChange={e=>{loadImage(e.target.files?.[0],"before");e.target.value=""}}/>
             <input ref={afterInputRef} type="file" accept="image/*" className="hidden" onChange={e=>{loadImage(e.target.files?.[0],"after");e.target.value=""}}/>
-            <div className="rounded-xl border border-slate-200/80 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)] p-2 md:p-4">
+            <div className="rounded-lg border border-slate-200/80 bg-white  p-2 md:p-4">
                 {mode==="side"?(
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">{renderEditor("before")}{renderEditor("after")}</div>
                 ):bothLoaded?renderCompare():(
                     <div className="min-h-[45vh] flex flex-col items-center justify-center text-center text-slate-400">
                         <i className="bi bi-images text-[25px]"/>
                         <div className="mt-3 text-[13px] font-medium">Для сравнения нужны оба фото</div>
-                        <button type="button" onClick={()=>setMode("side")} className="mt-3 text-[12px] font-medium text-[#19766d] hover:underline">Перейти к кадрированию</button>
+                        <button type="button" onClick={()=>setMode("side")} className="mt-3 text-[12px] font-medium text-[#526B83] hover:underline">Перейти к кадрированию</button>
                     </div>
                 )}
             </div>

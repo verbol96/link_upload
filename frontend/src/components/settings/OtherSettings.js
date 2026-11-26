@@ -7,8 +7,8 @@ import { $host } from "../../http";
 
 // Единый стиль для всех кнопок в блоке
 const btnCls = "w-full h-10 flex items-center justify-center gap-2 " +
-    "bg-white text-[#2C3531] border border-stone-300 rounded-md " +
-    "hover:bg-stone-50 text-[11.5px] font-medium " +
+    "bg-white text-[#374151] border border-slate-200 rounded-md " +
+    "hover:bg-slate-50 text-[11.5px] font-medium " +
     "transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
 
 export const OtherSettings = () => {
@@ -144,20 +144,20 @@ export const OtherSettings = () => {
 
     return (
         <>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full max-w-5xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 w-full min-w-0">
 
                 {/* === БЭКАП === */}
-                <div className="bg-white border border-stone-200 rounded-lg p-4 flex flex-col">
+                <div className="bg-white border border-slate-200 rounded-xl p-3 md:p-4 flex flex-col">
                     <div className="flex items-center gap-2 mb-3">
-                        <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                            <i className="bi bi-database text-[13px] text-[#0D9488]" />
+                        <span className="w-7 h-7 rounded-md bg-slate-100 flex items-center justify-center shrink-0">
+                            <i className="bi bi-database text-[13px] text-[#7890A8]" />
                         </span>
-                        <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                        <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
                             Бэкап
                         </div>
                     </div>
 
-                    <p className="text-[12.5px] text-stone-500 mb-4 leading-snug">
+                    <p className="text-[12.5px] text-slate-500 mb-4 leading-snug">
                         Скачать снимок всей базы данных в JSON-файл.
                     </p>
 
@@ -173,7 +173,7 @@ export const OtherSettings = () => {
                             </>
                         ) : (
                             <>
-                                <i className="bi bi-database-fill-down text-[14px] text-[#0D9488]" />
+                                <i className="bi bi-database-fill-down text-[14px] text-[#7890A8]" />
                                 Скачать копию
                             </>
                         )}
@@ -181,17 +181,17 @@ export const OtherSettings = () => {
                 </div>
 
                 {/* === ИМПОРТ === */}
-                <div className="bg-white border border-stone-200 rounded-lg p-4 flex flex-col">
+                <div className="bg-white border border-slate-200 rounded-xl p-3 md:p-4 flex flex-col">
                     <div className="flex items-center gap-2 mb-3">
-                        <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                            <i className="bi bi-upload text-[13px] text-[#0D9488]" />
+                        <span className="w-7 h-7 rounded-md bg-slate-100 flex items-center justify-center shrink-0">
+                            <i className="bi bi-upload text-[13px] text-[#7890A8]" />
                         </span>
-                        <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                        <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
                             Импорт БД
                         </div>
                     </div>
 
-                    <p className="text-[12.5px] text-stone-500 mb-4 leading-snug">
+                    <p className="text-[12.5px] text-slate-500 mb-4 leading-snug">
                         Заменить текущие данные данными из JSON-файла.
                     </p>
 
@@ -202,43 +202,43 @@ export const OtherSettings = () => {
                             className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer
                                     border border-dashed rounded-md transition-colors
                                     ${fileBD
-                                        ? 'border-[#0D9488]/50 bg-[#0D9488]/5 hover:bg-[#0D9488]/10'
-                                        : 'border-stone-300 bg-stone-50 hover:bg-stone-100'
+                                        ? 'border-[#7890A8]/50 bg-[#7890A8]/5 hover:bg-[#7890A8]/10'
+                                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
                                     }`}
                         >
                             <span
                                 className={`shrink-0 w-7 h-7 rounded-md flex items-center justify-center
-                                        ${fileBD ? 'bg-[#0D9488]/15' : 'bg-stone-200'}`}
+                                        ${fileBD ? 'bg-[#7890A8]/15' : 'bg-slate-200'}`}
                             >
                                 <i
                                     className={`bi text-[13px]
-                                            ${fileBD ? 'bi-file-earmark-check text-[#0D9488]' : 'bi-file-earmark-arrow-up text-stone-500'}`}
+                                            ${fileBD ? 'bi-file-earmark-check text-[#7890A8]' : 'bi-file-earmark-arrow-up text-slate-500'}`}
                                 />
                             </span>
 
                             <div className="flex-1 min-w-0">
                                 {fileBD ? (
                                     <>
-                                        <div className="text-[12px] font-medium text-stone-800 truncate">
+                                        <div className="text-[12px] font-medium text-slate-800 truncate">
                                             Файл загружен
                                         </div>
-                                        <div className="text-[10.5px] text-stone-500 truncate">
+                                        <div className="text-[10.5px] text-slate-500 truncate">
                                             Нажмите, чтобы заменить
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="text-[11.5px] font-medium text-stone-700">
+                                        <div className="text-[11.5px] font-medium text-slate-700">
                                             Выберите JSON-файл
                                         </div>
-                                        <div className="text-[10.5px] text-stone-400">
-                                            или перетащите
+                                        <div className="text-[10.5px] text-slate-400">
+                                            Нажмите для выбора
                                         </div>
                                     </>
                                 )}
                             </div>
 
-                            <i className="bi bi-chevron-right text-[12px] text-stone-400 shrink-0" />
+                            <i className="bi bi-chevron-right text-[12px] text-slate-400 shrink-0" />
 
                             <input
                                 type="file"
@@ -261,7 +261,7 @@ export const OtherSettings = () => {
                                 </>
                             ) : (
                                 <>
-                                    <i className="bi bi-database-add text-[14px] text-[#0D9488]" />
+                                    <i className="bi bi-database-add text-[14px] text-[#7890A8]" />
                                     Загрузить в БД
                                 </>
                             )}
@@ -270,17 +270,17 @@ export const OtherSettings = () => {
                 </div>
 
                 {/* === ОБНОВЛЕНИЯ === */}
-                <div className="bg-white border border-stone-200 rounded-lg p-4 flex flex-col">
+                <div className="bg-white border border-slate-200 rounded-xl p-3 md:p-4 flex flex-col">
                     <div className="flex items-center gap-2 mb-3">
-                        <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                            <i className="bi bi-tools text-[13px] text-[#0D9488]" />
+                        <span className="w-7 h-7 rounded-md bg-slate-100 flex items-center justify-center shrink-0">
+                            <i className="bi bi-tools text-[13px] text-[#7890A8]" />
                         </span>
-                        <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
+                        <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">
                             Обновления
                         </div>
                     </div>
 
-                    <p className="text-[12.5px] text-stone-500 mb-4 leading-snug">
+                    <p className="text-[12.5px] text-slate-500 mb-4 leading-snug">
                         Массовые операции над данными клиентов.
                     </p>
 
@@ -297,7 +297,7 @@ export const OtherSettings = () => {
                                 </>
                             ) : (
                                 <>
-                                    <i className="bi bi-type text-[14px] text-[#0D9488]" />
+                                    <i className="bi bi-type text-[14px] text-[#7890A8]" />
                                     ФИО в нижний регистр
                                 </>
                             )}
@@ -315,7 +315,7 @@ export const OtherSettings = () => {
                                 </>
                             ) : (
                                 <>
-                                    <i className="bi bi-calculator text-[14px] text-[#0D9488]" />
+                                    <i className="bi bi-calculator text-[14px] text-[#7890A8]" />
                                     Пересчитать статистику
                                 </>
                             )}
@@ -329,12 +329,12 @@ export const OtherSettings = () => {
                 open={confirmState.open}
                 onOpenChange={(open) => !open && closeConfirm()}
             >
-                <DialogContent className="max-w-md">
+                <DialogContent className="w-[calc(100%-2rem)] max-w-md">
                     <DialogHeader>
-                        <DialogTitle className="text-[16px] font-semibold text-stone-900">
+                        <DialogTitle className="text-[16px] font-semibold text-slate-900">
                             {confirmState.title}
                         </DialogTitle>
-                        <DialogDescription className="text-[13px] text-stone-500 leading-snug pt-1">
+                        <DialogDescription className="text-[13px] text-slate-500 leading-snug pt-1">
                             {confirmState.description}
                         </DialogDescription>
                     </DialogHeader>
@@ -343,14 +343,14 @@ export const OtherSettings = () => {
                         <button
                             onClick={closeConfirm}
                             className="px-4 py-2 rounded-md text-[13px] font-medium
-                                    text-stone-700 hover:bg-stone-100 transition-colors"
+                                    text-slate-700 hover:bg-slate-100 transition-colors"
                         >
                             Отмена
                         </button>
                         <button
                             onClick={runConfirm}
                             className="px-4 py-2 rounded-md text-[13px] font-medium
-                                    bg-[#2C3531] text-white hover:bg-[#3A4540] transition-colors"
+                                    bg-[#374151] text-white hover:bg-[#4B5563] transition-colors"
                         >
                             Подтвердить
                         </button>

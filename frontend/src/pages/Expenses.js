@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { NavBar } from '../components/admin/NavBar';
-import Footer from '../components/admin/Footer';
 import { $host } from '../http';
 import { toast } from 'sonner';
 import { EXPENSE_CATEGORIES, CATEGORY_GROUPS } from '../lib/expenseCategories';
@@ -112,7 +111,7 @@ const formatMoney = (num) => {
 
 // ============ СКЕЛЕТОН ============
 const ExpensesSkeleton = () => (
-    <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
+    <div className="bg-white border border-[#E2E5E9] rounded-xl overflow-hidden">
         {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-stone-100 last:border-b-0">
                 <div className="h-3 w-20 rounded bg-stone-200 animate-pulse" />
@@ -163,12 +162,12 @@ const CategoryChart = ({ expenses, compact = false, hideHeader = false }) => {
     );
 
     return (
-        <div className={`bg-white border border-stone-200 rounded-xl w-full flex flex-col
+        <div className={`bg-white border border-[#E2E5E9] rounded-xl w-full flex flex-col
                         ${hideHeader ? 'p-0' : 'p-3 md:p-4'}`}>
             {!hideHeader && (
-                <div className="flex items-center gap-2 mb-3 shrink-0">
-                    <span className="w-7 h-7 rounded-md bg-stone-100 flex items-center justify-center shrink-0">
-                        <i className="bi bi-bar-chart text-[13px] text-[#0D9488]" />
+                <div className="hidden md:flex items-center gap-2 mb-3 shrink-0">
+                    <span className="w-7 h-7 rounded-md bg-[#EEF1F4] flex items-center justify-center shrink-0">
+                        <i className="bi bi-bar-chart text-[13px] text-[#7890A8]" />
                     </span>
                     <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-500">
                         По категориям
@@ -236,8 +235,8 @@ const CategorySelect = ({ value, onChange, disabled }) => {
             onChange={onChange}
             disabled={disabled}
             className="w-full px-3 py-2 text-[16px] md:text-[13px] text-stone-800
-                    bg-stone-50 border border-stone-200 rounded-md
-                    focus:outline-none focus:ring-1 focus:ring-[#0D9488] focus:border-[#0D9488]
+                    bg-[#F7F7F8] border border-[#E2E5E9] rounded-md
+                    focus:outline-none focus:ring-1 focus:ring-[#7890A8] focus:border-[#7890A8]
                     cursor-pointer"
         >
             <optgroup label={CATEGORY_GROUPS.production.name}>
@@ -333,7 +332,7 @@ return (
                         onChange={(e) => setAmount(e.target.value)}
                         disabled={saving}
                         autoFocus
-                        className="h-11 text-[16px] rounded-lg bg-stone-50 border-stone-200 focus:bg-white"
+                        className="h-11 text-[16px] rounded-lg bg-[#F7F7F8] border-[#E2E5E9] focus:bg-white"
                     />
                 </div>
 
@@ -348,7 +347,7 @@ return (
                         onChange={(e) => setTitle(e.target.value)}
                         disabled={saving}
                         maxLength={200}
-                        className="h-11 text-[16px] rounded-lg bg-stone-50 border-stone-200 focus:bg-white"
+                        className="h-11 text-[16px] rounded-lg bg-[#F7F7F8] border-[#E2E5E9] focus:bg-white"
                     />
                 </div>
 
@@ -366,7 +365,7 @@ return (
                     <Button
                         onClick={handleSubmit}
                         disabled={saving || !amount}
-                        className="h-10 px-5 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-[14px]"
+                        className="h-10 px-5 rounded-lg bg-[#7890A8] hover:bg-[#647D97] text-[14px]"
                     >
                         {saving ? 'Сохранение...' : 'Добавить'}
                     </Button>
@@ -456,7 +455,7 @@ return (
                         autoFocus
                         onChange={(e) => setAmount(e.target.value)}
                         disabled={saving}
-                        className="h-11 text-[16px] md:text-[14px] rounded-lg bg-stone-50 border-stone-200 focus:bg-white"
+                        className="h-11 text-[16px] md:text-[14px] rounded-lg bg-[#F7F7F8] border-[#E2E5E9] focus:bg-white"
                     />
                 </div>
 
@@ -471,7 +470,7 @@ return (
                         onChange={(e) => setTitle(e.target.value)}
                         disabled={saving}
                         maxLength={200}
-                        className="h-11 text-[16px] md:text-[14px] rounded-lg bg-stone-50 border-stone-200 focus:bg-white"
+                        className="h-11 text-[16px] md:text-[14px] rounded-lg bg-[#F7F7F8] border-[#E2E5E9] focus:bg-white"
                     />
                 </div>
 
@@ -489,7 +488,7 @@ return (
                     <Button
                         onClick={handleSubmit}
                         disabled={saving || !amount}
-                        className="h-10 px-5 rounded-lg bg-[#0D9488] hover:bg-[#0F766E] text-[14px]"
+                        className="h-10 px-5 rounded-lg bg-[#7890A8] hover:bg-[#647D97] text-[14px]"
                     >
                         {saving ? 'Сохранение...' : 'Сохранить'}
                     </Button>
@@ -520,9 +519,9 @@ const SortDropdown = ({ value, onChange, disabled }) => {
             <button
                 onClick={() => setOpen(v => !v)}
                 disabled={disabled}
-                className="w-10 h-10 rounded-lg bg-white border border-stone-200
+                className="w-10 h-10 rounded-lg bg-white border border-[#E2E5E9]
                         flex items-center justify-center
-                        text-stone-600 hover:bg-stone-50 transition-colors
+                        text-stone-600 hover:bg-[#F7F7F8] transition-colors
                         disabled:opacity-50 disabled:cursor-not-allowed"
                 title={`Сортировка: ${current?.label || ''}`}
             >
@@ -531,7 +530,7 @@ const SortDropdown = ({ value, onChange, disabled }) => {
 
             {open && (
                 <div className="absolute right-0 top-full mt-1 z-30
-                                bg-white border border-stone-200 rounded-lg shadow-lg
+                                bg-white border border-[#E2E5E9] rounded-lg shadow-lg
                                 py-1 min-w-[170px]">
                     {SORT_OPTIONS.map(o => (
                         <button
@@ -540,8 +539,8 @@ const SortDropdown = ({ value, onChange, disabled }) => {
                             className={`w-full text-left px-3 py-2 text-[12.5px]
                                     transition-colors flex items-center gap-2
                                     ${o.value === value
-                                        ? 'bg-[#0D9488]/10 text-[#0D9488] font-medium'
-                                        : 'text-stone-700 hover:bg-stone-50'
+                                        ? 'bg-[#7890A8]/10 text-[#7890A8] font-medium'
+                                        : 'text-stone-700 hover:bg-[#F7F7F8]'
                                     }`}
                         >
                             {o.value === value && <i className="bi bi-check2 text-[13px]" />}
@@ -573,9 +572,9 @@ const ShowMoreButton = ({ onClick, hasMore, total, visible }) => {
             <button
                 onClick={onClick}
                 className="inline-flex items-center gap-2 px-5 py-2.5
-                        bg-white border border-stone-200 rounded-lg
+                        bg-white border border-[#E2E5E9] rounded-lg
                         text-[13px] font-medium text-stone-700
-                        hover:bg-stone-50 hover:border-stone-300
+                        hover:bg-[#F7F7F8] hover:border-stone-300
                         transition-colors"
             >
                 <i className="bi bi-arrow-down-circle" />
@@ -745,18 +744,16 @@ const Expenses = () => {
     }, [groupFilter, categoryFilter, sortBy]);
 
     return (
-        <div className="flex flex-col min-h-screen bg-stone-100">
+        <div className="flex flex-col min-h-screen bg-[#F7F7F8]">
 
             <NavBar />
 
-            <div className="flex-1 w-full max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 pb-24 md:pb-6">
+            <div className="flex-1 w-full min-w-0 mx-auto px-2 py-3 pb-24 md:w-[90%] md:px-0 md:py-4">
 
                 {/* Заголовок */}
-                <div className="mb-4 md:mb-6 flex items-end justify-between gap-3 flex-wrap">
+                <div className="hidden md:flex mb-4 items-center justify-between gap-3 flex-wrap">
                     <div className="flex flex-row items-baseline gap-3 flex-wrap">
-                        <h1 className="text-[22px] md:text-[30px] font-bold text-[#2C3531] leading-tight">
-                            Расходы
-                        </h1>
+
                         {rangeLabel && (
                             <div className="text-[11.5px] md:text-[13px] text-stone-400 tabular-nums">
                                 {rangeLabel}
@@ -767,7 +764,7 @@ const Expenses = () => {
                     <button
                         onClick={() => setAddModalOpen(true)}
                         className="hidden md:inline-flex items-center gap-2 px-4 py-2.5
-                                bg-[#2C3531] hover:bg-[#3A4540] text-white
+                                bg-[#374151] hover:bg-[#4B5563] text-white
                                 text-[13px] font-medium rounded-lg
                                 transition-colors shadow-sm active:scale-95"
                     >
@@ -780,26 +777,26 @@ const Expenses = () => {
                 <div className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4 md:items-stretch mb-3 md:mb-4">
 
                     {/* --- ПАНЕЛЬ ФИЛЬТРОВ --- */}
-                    <div className="bg-white border border-stone-200 rounded-xl p-2.5 md:p-4
+                    <div className="bg-white border border-[#E2E5E9] rounded-xl p-2.5 md:p-4
                                     h-full flex flex-col justify-center">
 
                         {/* Мобилка */}
-                        <div className="md:hidden flex items-center gap-1.5">
+                        <div className="md:hidden grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto_minmax(0,1.2fr)] items-center gap-1.5">
                             <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-400 shrink-0">
                                 С
                             </div>
 
-                            <div className="relative shrink-0">
+                            <div className="relative min-w-0">
                                 <select
                                     value={selectedMonth}
                                     onChange={(e) => setSelectedMonth(e.target.value)}
                                     disabled={loading}
-                                    className="appearance-none
+                                    className="appearance-none w-full min-w-0
                                             pl-2 pr-6 py-1.5
-                                            bg-stone-50 border border-stone-200 rounded-md
+                                            bg-[#F7F7F8] border border-[#E2E5E9] rounded-md
                                             text-[12px] font-medium text-stone-700
                                             cursor-pointer
-                                            focus:outline-none focus:border-[#0D9488]
+                                            focus:outline-none focus:border-[#7890A8]
                                             disabled:opacity-50"
                                 >
                                     {MONTHS.map(m => (
@@ -812,17 +809,17 @@ const Expenses = () => {
                                             pointer-events-none" />
                             </div>
 
-                            <div className="relative shrink-0">
+                            <div className="relative min-w-0">
                                 <select
                                     value={selectedYear}
                                     onChange={(e) => setSelectedYear(e.target.value)}
                                     disabled={loading}
-                                    className="appearance-none
+                                    className="appearance-none w-full min-w-0
                                             pl-2 pr-6 py-1.5
-                                            bg-stone-50 border border-stone-200 rounded-md
+                                            bg-[#F7F7F8] border border-[#E2E5E9] rounded-md
                                             text-[12px] font-medium text-stone-700
                                             cursor-pointer
-                                            focus:outline-none focus:border-[#0D9488]
+                                            focus:outline-none focus:border-[#7890A8]
                                             disabled:opacity-50"
                                 >
                                     {Array.from({ length: 5 }).map((_, i) => {
@@ -850,10 +847,10 @@ const Expenses = () => {
                                     disabled={loading}
                                     className="appearance-none w-full
                                             pl-2 pr-6 py-1.5
-                                            bg-stone-50 border border-stone-200 rounded-md
+                                            bg-[#F7F7F8] border border-[#E2E5E9] rounded-md
                                             text-[12px] font-medium text-stone-700
                                             cursor-pointer
-                                            focus:outline-none focus:border-[#0D9488]
+                                            focus:outline-none focus:border-[#7890A8]
                                             disabled:opacity-50"
                                 >
                                     {PERIODS.map(({ value, short }) => (
@@ -881,10 +878,10 @@ const Expenses = () => {
                                         disabled={loading}
                                         className="appearance-none w-full
                                                 pl-3 pr-7 py-2
-                                                bg-stone-50 border border-stone-200 rounded-lg
+                                                bg-[#F7F7F8] border border-[#E2E5E9] rounded-lg
                                                 text-[13px] font-medium text-stone-700
                                                 cursor-pointer
-                                                focus:outline-none focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20
+                                                focus:outline-none focus:border-[#7890A8] focus:ring-2 focus:ring-[#7890A8]/20
                                                 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {MONTHS.map(m => (
@@ -904,10 +901,10 @@ const Expenses = () => {
                                         disabled={loading}
                                         className="appearance-none w-full
                                                 pl-3 pr-7 py-2
-                                                bg-stone-50 border border-stone-200 rounded-lg
+                                                bg-[#F7F7F8] border border-[#E2E5E9] rounded-lg
                                                 text-[13px] font-medium text-stone-700
                                                 cursor-pointer
-                                                focus:outline-none focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20
+                                                focus:outline-none focus:border-[#7890A8] focus:ring-2 focus:ring-[#7890A8]/20
                                                 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {Array.from({ length: 5 }).map((_, i) => {
@@ -939,8 +936,8 @@ const Expenses = () => {
                                                         whitespace-nowrap transition-colors
                                                         disabled:cursor-not-allowed
                                                         ${active
-                                                            ? 'bg-[#2C3531] text-white'
-                                                            : 'text-stone-600 bg-stone-50 border border-stone-200 hover:bg-stone-100'
+                                                            ? 'bg-[#374151] text-white'
+                                                            : 'text-stone-600 bg-[#F7F7F8] border border-[#E2E5E9] hover:bg-[#EEF1F4]'
                                                         }`}
                                             >
                                                 {p.label}
@@ -954,26 +951,26 @@ const Expenses = () => {
 
                     {/* --- КАРТОЧКА ТОТАЛА --- */}
                     {hasData ? (
-                        <div className="bg-white border border-stone-200 rounded-xl p-3 md:p-4
+                        <div className="bg-white border border-[#E2E5E9] rounded-xl p-3 md:p-4
                                         h-full flex flex-col justify-center">
                             <div className="text-[10px] uppercase tracking-wider font-semibold text-stone-400 mb-1">
                                 Всего за период
                             </div>
-                            <div className="text-[26px] md:text-[32px] font-bold text-[#2C3531]
+                            <div className="text-[22px] md:text-[28px] font-bold text-[#374151]
                                             tabular-nums leading-none mb-2.5 md:mb-3">
-                                {formatMoney(total)} <span className="text-stone-400 text-[18px] md:text-[22px]">₽</span>
+                                {formatMoney(total)} <span className="text-stone-400 text-[18px] md:text-[22px]">р</span>
                             </div>
 
                             <div className="flex items-center gap-3 md:gap-5 flex-wrap">
                                 <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-[#0D9488]" />
+                                    <span className="w-2 h-2 rounded-full bg-[#7890A8]" />
                                     <span className="text-[11px] text-stone-500">Произв.</span>
                                     <span className="text-[12.5px] md:text-[13px] font-semibold text-stone-700 tabular-nums">
                                         {formatMoney(totalProduction)} <span className="text-stone-400 font-normal">({productionPercent}%)</span>
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-[#6366f1]" />
+                                    <span className="w-2 h-2 rounded-full bg-[#A8A29E]" />
                                     <span className="text-[11px] text-stone-500">Админ.</span>
                                     <span className="text-[12.5px] md:text-[13px] font-semibold text-stone-700 tabular-nums">
                                         {formatMoney(totalAdmin)} <span className="text-stone-400 font-normal">({adminPercent}%)</span>
@@ -986,15 +983,15 @@ const Expenses = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="hidden md:block bg-white border border-stone-200 rounded-xl p-4" />
+                        <div className="hidden md:block bg-white border border-[#E2E5E9] rounded-xl p-4" />
                     )}
                 </div>
 
                 {/* ============ МЕНЮ ============ */}
                 {expenses.length > 0 && (
-                    <div className="bg-white border border-stone-200 rounded-xl p-2 md:p-2.5 mb-3 md:mb-4">
+                    <div className="bg-white border border-[#E2E5E9] rounded-xl p-2 md:p-2.5 mb-3 md:mb-4">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <div className="flex gap-1 bg-stone-50 rounded-lg p-1 flex-1 md:flex-none">
+                            <div className="flex gap-1 bg-[#F7F7F8] rounded-lg p-1 flex-1 md:flex-none">
                                 {GROUP_FILTERS.map(({ value, label, icon }) => {
                                     const active = groupFilter === value;
                                     return (
@@ -1009,8 +1006,8 @@ const Expenses = () => {
                                                     px-3 py-1.5 rounded-md text-[12px] font-medium whitespace-nowrap
                                                     transition-colors disabled:cursor-not-allowed
                                                     ${active
-                                                        ? 'bg-[#0D9488] text-white'
-                                                        : 'text-stone-600 hover:bg-stone-100'
+                                                        ? 'bg-[#EEF1F4] text-[#52677D]'
+                                                        : 'text-stone-600 hover:bg-[#EEF1F4]'
                                                     }`}
                                         >
                                             <i className={`bi ${icon} text-[12px]`} />
@@ -1027,9 +1024,9 @@ const Expenses = () => {
                                         onChange={(e) => setCategoryFilter(e.target.value)}
                                         disabled={loading}
                                         className="appearance-none w-full h-9 pl-9 pr-8
-                                                bg-white border border-stone-200 rounded-lg
+                                                bg-white border border-[#E2E5E9] rounded-lg
                                                 text-[12.5px] font-medium text-stone-700 cursor-pointer
-                                                focus:outline-none focus:border-[#0D9488] focus:ring-2 focus:ring-[#0D9488]/20
+                                                focus:outline-none focus:border-[#7890A8] focus:ring-2 focus:ring-[#7890A8]/20
                                                 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <option value="all">Все категории</option>
@@ -1045,9 +1042,9 @@ const Expenses = () => {
                                 {categoryFilter !== 'all' && (
                                     <button
                                         onClick={() => setCategoryFilter('all')}
-                                        className="w-9 h-9 rounded-lg border border-stone-200 bg-white
+                                        className="w-9 h-9 rounded-lg border border-[#E2E5E9] bg-white
                                                 flex items-center justify-center shrink-0
-                                                text-stone-400 hover:text-stone-700 hover:bg-stone-50 transition-colors"
+                                                text-stone-400 hover:text-stone-700 hover:bg-[#F7F7F8] transition-colors"
                                         title="Сбросить категорию"
                                     >
                                         <i className="bi bi-x-lg text-[12px]" />
@@ -1059,12 +1056,12 @@ const Expenses = () => {
                                 <SortDropdown value={sortBy} onChange={setSortBy} disabled={loading} />
                             </div>
 
-                            <div className="md:hidden flex gap-1 bg-stone-100 rounded-lg p-1 w-full">
+                            <div className="md:hidden flex gap-1 bg-[#EEF1F4] rounded-lg p-1 w-full">
                                 <button
                                     onClick={() => setMobileView('list')}
                                     className={`flex-1 h-8 rounded-md flex items-center justify-center gap-2 text-[12px] font-medium transition-colors
                                             ${mobileView === 'list'
-                                                ? 'bg-white text-[#0D9488] shadow-sm'
+                                                ? 'bg-white text-[#7890A8] shadow-sm'
                                                 : 'text-stone-500'
                                             }`}
                                 >
@@ -1075,7 +1072,7 @@ const Expenses = () => {
                                     onClick={() => setMobileView('chart')}
                                     className={`flex-1 h-8 rounded-md flex items-center justify-center gap-2 text-[12px] font-medium transition-colors
                                             ${mobileView === 'chart'
-                                                ? 'bg-white text-[#0D9488] shadow-sm'
+                                                ? 'bg-white text-[#7890A8] shadow-sm'
                                                 : 'text-stone-500'
                                             }`}
                                 >
@@ -1088,14 +1085,14 @@ const Expenses = () => {
                     </div>
                 )}
 
-                <div className="md:grid md:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)] md:gap-4 md:items-start">
+                <div className="md:grid md:grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:gap-4 md:items-start">
                     <div className={mobileView === 'list' ? 'block' : 'hidden md:block'}>
                 {/* ============ СПИСОК РАСХОДОВ ============ */}
                 {loading ? (
                     <ExpensesSkeleton />
                 ) : filteredExpenses.length === 0 ? (
-                    <div className="bg-white border border-stone-200 rounded-xl p-8 md:p-10 text-center">
-                        <div className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 rounded-full bg-stone-100
+                    <div className="bg-white border border-[#E2E5E9] rounded-xl p-8 md:p-10 text-center">
+                        <div className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 rounded-full bg-[#EEF1F4]
                                         flex items-center justify-center">
                             <i className="bi bi-cash-stack text-[22px] md:text-[26px] text-stone-400" />
                         </div>
@@ -1108,7 +1105,7 @@ const Expenses = () => {
                         <button
                             onClick={() => setAddModalOpen(true)}
                             className="inline-flex items-center gap-2 px-4 py-2
-                                    bg-[#2C3531] hover:bg-[#3A4540] text-white
+                                    bg-[#374151] hover:bg-[#4B5563] text-white
                                     text-[13px] font-medium rounded-lg transition-colors"
                         >
                             <i className="bi bi-plus-lg" />
@@ -1124,11 +1121,11 @@ const Expenses = () => {
                                 return (
                                     <div
                                         key={expense.id}
-                                        className="bg-white border border-stone-200 rounded-xl p-3
-                                                flex items-center gap-3"
+                                        className="bg-white border border-[#E2E5E9] rounded-lg px-2 py-2
+                                                flex items-center gap-2"
                                     >
                                         <span
-                                            className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                                            className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
                                             style={{ backgroundColor: `${cat?.color || '#a8a29e'}20` }}
                                         >
                                             <i
@@ -1155,15 +1152,15 @@ const Expenses = () => {
                                         </div>
 
                                         <div className="flex items-center gap-1 shrink-0">
-                                            <div className="text-[14px] font-bold text-[#2C3531]
+                                            <div className="text-[13px] font-semibold text-[#374151]
                                                             tabular-nums whitespace-nowrap mr-1">
-                                                {formatMoney(expense.amount)} <span className="text-stone-400 text-[11px]">₽</span>
+                                                {formatMoney(expense.amount)} <span className="text-stone-400 text-[11px]">р</span>
                                             </div>
                                             <button
                                                 onClick={() => handleEditClick(expense)}
-                                                className="w-8 h-8 rounded-md
+                                                className="w-7 h-8 rounded-md
                                                         flex items-center justify-center
-                                                        text-stone-400 active:text-[#0D9488] active:bg-[#0D9488]/10
+                                                        text-stone-400 active:text-[#7890A8] active:bg-[#7890A8]/10
                                                         transition-colors"
                                                 title="Редактировать"
                                             >
@@ -1171,7 +1168,7 @@ const Expenses = () => {
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(expense)}
-                                                className="w-8 h-8 rounded-md
+                                                className="w-7 h-8 rounded-md
                                                         flex items-center justify-center
                                                         text-stone-400 active:text-red-600 active:bg-red-50
                                                         transition-colors"
@@ -1186,12 +1183,12 @@ const Expenses = () => {
                         </div>
 
                         {/* Десктоп: таблица */}
-                        <div className="hidden md:block bg-white border border-stone-200 rounded-xl overflow-hidden">
+                        <div className="hidden md:block bg-white border border-[#E2E5E9] rounded-xl overflow-hidden">
                             <div className="overflow-x-auto">
                                 <table className="w-full table-fixed text-[13px]" style={{ minWidth: 640 }}>
                                     <thead>
                                         <tr className="text-[10px] uppercase tracking-wider font-semibold text-stone-500
-                                                    border-b border-stone-200 bg-stone-50">
+                                                    border-b border-[#E2E5E9] bg-[#F7F7F8]">
                                             <th className="text-left px-4 py-3 w-[115px] whitespace-nowrap">Дата</th>
                                             <th className="text-left px-4 py-3 w-[190px] whitespace-nowrap">Категория</th>
                                             <th className="text-left px-4 py-3">Заметка</th>
@@ -1204,7 +1201,7 @@ const Expenses = () => {
                                             const cat = EXPENSE_CATEGORIES[expense.category];
 
                                             return (
-                                                <tr key={expense.id} className="hover:bg-stone-50/60 transition-colors">
+                                                <tr key={expense.id} className="hover:bg-[#F7F7F8]/60 transition-colors">
                                                     <td className="px-4 py-3 text-stone-600 tabular-nums whitespace-nowrap">
                                                         {formatDate(expense.createdAt)}
                                                     </td>
@@ -1231,7 +1228,7 @@ const Expenses = () => {
                                                             {expense.title || <span className="text-stone-300">—</span>}
                                                         </div>
                                                     </td>
-                                                    <td className="px-4 py-3 text-right font-semibold text-[#2C3531]
+                                                    <td className="px-4 py-3 text-right font-semibold text-[#374151]
                                                                     tabular-nums whitespace-nowrap">
                                                         {formatMoney(expense.amount)} р
                                                     </td>
@@ -1241,7 +1238,7 @@ const Expenses = () => {
                                                                 onClick={() => handleEditClick(expense)}
                                                                 className="w-7 h-7 rounded-md
                                                                         flex items-center justify-center
-                                                                        text-stone-400 hover:text-[#0D9488] hover:bg-[#0D9488]/10
+                                                                        text-stone-400 hover:text-[#7890A8] hover:bg-[#7890A8]/10
                                                                         transition-colors"
                                                                 title="Редактировать"
                                                             >
@@ -1290,7 +1287,7 @@ const Expenses = () => {
                                 </div>
                             </>
                         ) : !loading ? (
-                            <div className="bg-white border border-stone-200 rounded-xl p-8 text-center text-[13px] text-stone-400">
+                            <div className="bg-white border border-[#E2E5E9] rounded-xl p-8 text-center text-[13px] text-stone-400">
                                 Нет данных для графика
                             </div>
                         ) : null}
@@ -1304,7 +1301,7 @@ const Expenses = () => {
                 onClick={() => setAddModalOpen(true)}
                 className="md:hidden fixed bottom-5 right-5 z-40
                         w-14 h-14 rounded-full
-                        bg-[#2C3531] active:bg-[#3A4540]
+                        bg-[#374151] active:bg-[#4B5563]
                         text-white shadow-lg
                         flex items-center justify-center
                         transition-transform active:scale-95"
@@ -1326,7 +1323,6 @@ const Expenses = () => {
                 onUpdated={handleUpdated}
             />
 
-            <Footer />
         </div>
     );
 };
