@@ -158,6 +158,7 @@ const createTelegramOrder=async({
             },{transaction});
 
             const photos=[];
+            const completedGroups=[];
 
             for(const [i,group] of batches.entries()){
                 const photo=await Photo.create({
@@ -183,11 +184,25 @@ const createTelegramOrder=async({
                     path:mainDir.name
                 },{transaction});
 
+                const completed={
+                    notes:group.notes,
+                    files:[],
+                    skipped:[...(group.skipped||[])]
+                };
+
                 for(const file of group.files){
-                    const telegramFile=await downloadTelegramFile(
-                        file.fileId,
-                        file.fileName
-                    );
+                    let telegramFile;
+
+                    try{
+                        telegramFile=await downloadTelegramFile(
+                            file.fileId,
+                            file.fileName,
+                            file.size
+                        );
+                    }catch(error){
+                        completed.skipped.push(file);
+                        continue;
+                    }
 
                     await saveTelegramFile(
                         telegramFile,
@@ -195,8 +210,22 @@ const createTelegramOrder=async({
                         photo.id,
                         transaction
                     );
+
+                    completed.files.push(file);
                 }
+
+                await photo.update({
+                    amount:completed.files.length
+                },{transaction});
+
+                completedGroups.push(completed);
             }
+
+            await order.update({
+                notes:completedGroups.map(g=>
+                    `${g.notes||''} (${g.files.length} файлов${g.skipped.length?` + ${g.skipped.length} вручную`:''})`
+                ).join('\n')
+            },{transaction});
 
             return {
                 order,
@@ -204,7 +233,8 @@ const createTelegramOrder=async({
                 photos,
                 client,
                 owner,
-                mainDir
+                mainDir,
+                groups:completedGroups
             };
         });
     }catch(error){

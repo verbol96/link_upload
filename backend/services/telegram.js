@@ -7,6 +7,18 @@ const TELEGRAM_API_BASE=process.env.STATUS==='release'
     ?'https://tg.link1.by/telegram-api'
     :'https://api.telegram.org';
 
+const MAIN_KEYBOARD={
+    keyboard:[
+        [
+            {text:'Создать'},
+            {text:'Инфо'},
+            {text:'Очистить'}
+        ]
+    ],
+    resize_keyboard:true,
+    is_persistent:true
+};
+
 const sendTelegramMessage=async(text,replyMarkup=null,targetChatId=null)=>{
     try{
         const token=process.env.TELEGRAM_BOT_TOKEN;
@@ -20,12 +32,9 @@ const sendTelegramMessage=async(text,replyMarkup=null,targetChatId=null)=>{
         const body={
             chat_id:chatId,
             text,
-            parse_mode:'HTML'
+            parse_mode:'HTML',
+            reply_markup:replyMarkup||MAIN_KEYBOARD
         };
-
-        if(replyMarkup){
-            body.reply_markup=replyMarkup;
-        }
 
         const response=await fetch(`${TELEGRAM_API_BASE}/bot${token}/sendMessage`,{
             method:'POST',
@@ -128,11 +137,15 @@ const normalizePhone=phone=>{
     return `+${value}`;
 };
 
-const downloadTelegramFile=async(fileId,fileName)=>{
+// Одна попытка скачивания файла
+const downloadTelegramFileOnce=async(fileId,fileName,expectedSize)=>{
     const token=process.env.TELEGRAM_BOT_TOKEN;
 
     const response=await fetch(
-        `${TELEGRAM_API_BASE}/bot${token}/getFile?file_id=${fileId}`
+        `${TELEGRAM_API_BASE}/bot${token}/getFile?file_id=${encodeURIComponent(fileId)}`,
+        {
+            signal:AbortSignal.timeout(30000)
+        }
     );
 
     const data=await response.json();
@@ -142,7 +155,10 @@ const downloadTelegramFile=async(fileId,fileName)=>{
     }
 
     const fileResponse=await fetch(
-        `${TELEGRAM_API_BASE}/file/bot${token}/${data.result.file_path}`
+        `${TELEGRAM_API_BASE}/file/bot${token}/${data.result.file_path}`,
+        {
+            signal:AbortSignal.timeout(60000)
+        }
     );
 
     if(!fileResponse.ok){
@@ -151,11 +167,36 @@ const downloadTelegramFile=async(fileId,fileName)=>{
 
     const buffer=Buffer.from(await fileResponse.arrayBuffer());
 
+    if(!buffer.length||(expectedSize!=null&&buffer.length!==expectedSize)){
+        throw new Error('Telegram: неполный файл');
+    }
+
     return {
         buffer,
         fileName,
         size:buffer.length
     };
+};
+
+// До трёх попыток скачивания
+const downloadTelegramFile=async(fileId,fileName,size)=>{
+    for(let attempt=1;attempt<=3;attempt++){
+        try{
+            return await downloadTelegramFileOnce(
+                fileId,
+                fileName,
+                size
+            );
+        }catch(error){
+            if(attempt===3){
+                throw error;
+            }
+
+            await new Promise(
+                resolve=>setTimeout(resolve,1000*attempt)
+            );
+        }
+    }
 };
 
 const showOwnerButtons=async(chatId)=>{
@@ -220,7 +261,7 @@ const showOrderSummary=async(chatId)=>{
     );
 };
 
-// Повторная отправка больших файлов без скачивания на сервер
+// Повторная отправка пропущенных файлов
 const copySkipped=async(chatId,groups)=>{
     for(const [i,g] of groups.entries()){
         for(const file of g.skipped){
@@ -272,9 +313,32 @@ const handleTelegramCallback=async(callbackQuery)=>{
 
     const state=telegramStates.get(chatId);
 
-    if(!state||state.step==='creating')return;
+    if(state?.step==='creating')return;
 
     const action=callbackQuery.data;
+
+    // Отказ от очистки
+    if(action==='keep_order'){
+        return sendTelegramMessage(
+            'Продолжаем оформление.',
+            null,
+            chatId
+        );
+    }
+
+    // Подтверждение очистки
+    if(action==='clear_confirm'){
+        clearOrder(chatId);
+        resetBatch(chatId);
+
+        return sendTelegramMessage(
+            'Все пачки очищены.',
+            null,
+            chatId
+        );
+    }
+
+    if(!state)return;
 
     // Выбор владельца
     if(state.step==='owner'&&['owner_client','owner_nefediev'].includes(action)){
@@ -311,7 +375,7 @@ const handleTelegramCallback=async(callbackQuery)=>{
 
         return sendTelegramMessage(
             '📎 <b>Перешли фотографии следующего формата.</b>\n'+
-            'Затем нажми /order.',
+            'Затем нажми «Создать».',
             null,
             chatId
         );
@@ -324,11 +388,11 @@ const handleTelegramCallback=async(callbackQuery)=>{
 
     const groups=state.groups;
 
-    const count=groups.reduce(
+    let count=groups.reduce(
         (n,g)=>n+g.files.length,0
     );
 
-    const skipped=groups.reduce(
+    let skipped=groups.reduce(
         (n,g)=>n+g.skipped.length,0
     );
 
@@ -364,6 +428,17 @@ const handleTelegramCallback=async(callbackQuery)=>{
         return showOrderSummary(chatId);
     }
 
+    // Фактические результаты скачивания
+    const completedGroups=result.groups;
+
+    count=completedGroups.reduce(
+        (n,g)=>n+g.files.length,0
+    );
+
+    skipped=completedGroups.reduce(
+        (n,g)=>n+g.skipped.length,0
+    );
+
     clearOrder(chatId);
     resetBatch(chatId);
 
@@ -373,13 +448,13 @@ const handleTelegramCallback=async(callbackQuery)=>{
         `📱 ${state.phone}\n`+
         `📎 Загружено: ${count}\n`+
         `📁 ${escapeHTML(result.mainDir.name)}\n`+
-        `${escapeHTML(groups.map(groupNote).join('\n'))}\n`+
+        `${escapeHTML(completedGroups.map(groupNote).join('\n'))}\n`+
         `⚠️ Вручную: ${skipped}`,
         null,
         chatId
     );
 
-    await copySkipped(chatId,groups);
+    await copySkipped(chatId,completedGroups);
 };
 
 const handleTelegramUpdate=async(update)=>{
@@ -402,31 +477,92 @@ const handleTelegramUpdate=async(update)=>{
     const batch=getTelegramBatch(chatId);
     const skipped=getSkipped(chatId);
 
-    // Отмена
-    if(message.text==='/cancel'){
-        clearOrder(chatId);
-        resetBatch(chatId);
+    const command=message.text?.trim();
 
+    // Отображение постоянной клавиатуры
+    if(command==='/start'){
         return sendTelegramMessage(
-            '🗑 <b>Все пачки очищены</b>',
+            'Перешли фотографии и нажми «Создать».',
             null,
             chatId
         );
     }
 
-    // Количество файлов
-    if(message.text==='/count'){
+    // Очистка заказа
+    if(command==='/cancel'||command==='Очистить'){
+        if(!state&&!batch.length&&!skipped.length){
+            return sendTelegramMessage(
+                'Пачки пусты.',
+                null,
+                chatId
+            );
+        }
+
         return sendTelegramMessage(
-            `📎 Текущая пачка: ${batch.length}\n`+
-            `⚠️ Вручную: ${skipped.length}\n`+
-            `Сохранено групп: ${state?.groups?.length||0}`,
+            'Очистить весь незавершённый заказ?',
+            {
+                inline_keyboard:[
+                    [
+                        {
+                            text:'Очистить',
+                            callback_data:'clear_confirm'
+                        },
+                        {
+                            text:'Нет',
+                            callback_data:'keep_order'
+                        }
+                    ]
+                ]
+            },
+            chatId
+        );
+    }
+
+    // Информация о текущем заказе
+    if(command==='/count'||command==='Инфо'){
+        const groups=state?.groups||[];
+
+        const client=state?.clientId
+            ?await User.findOne({
+                where:{id:state.clientId}
+            })
+            :null;
+
+        const count=groups.reduce(
+            (n,g)=>n+g.files.length,
+            batch.length
+        );
+
+        const manual=groups.reduce(
+            (n,g)=>n+g.skipped.length,
+            skipped.length
+        );
+
+        return sendTelegramMessage(
+            [
+                state?.phone
+                    ?`Клиент: ${escapeHTML(client?.FIO||'Без имени')} — ${state.phone}`
+                    :'Клиент не выбран',
+
+                state?.ownerType
+                    ?`Владелец: ${state.ownerType==='nefediev'?'Нефедьев':'Клиент'}`
+                    :'',
+
+                ...groups.map((g,i)=>
+                    `${i+1}. ${escapeHTML(groupNote(g))}`
+                ),
+
+                `Текущая пачка: ${batch.length} файлов`,
+                `Всего для загрузки: ${count}`,
+                `Вручную: ${manual}`
+            ].filter(Boolean).join('\n'),
             null,
             chatId
         );
     }
 
     // Оформление заказа или следующего формата
-    if(message.text==='/order'){
+    if(command==='/order'||command==='Создать'){
         if(state?.step==='ready'){
             return showOrderSummary(chatId);
         }
@@ -444,6 +580,26 @@ const handleTelegramUpdate=async(update)=>{
 
             return sendTelegramMessage(
                 '📝 <b>Введи примечание к новому формату:</b>',
+                null,
+                chatId
+            );
+        }
+
+        if(state?.step==='phone'){
+            return sendTelegramMessage(
+                'Введи номер телефона клиента.',
+                null,
+                chatId
+            );
+        }
+
+        if(state?.step==='owner'){
+            return showOwnerButtons(chatId);
+        }
+
+        if(state?.step==='note'){
+            return sendTelegramMessage(
+                'Введи примечание.',
                 null,
                 chatId
             );
@@ -553,13 +709,9 @@ const handleTelegramUpdate=async(update)=>{
             );
         }
 
+        // Обычные файлы принимаем без сообщений
         batch.push(item);
-
-        return sendTelegramMessage(
-            `📎 <b>Получено файлов: ${batch.length}</b>`,
-            null,
-            chatId
-        );
+        return;
     }
 };
 
