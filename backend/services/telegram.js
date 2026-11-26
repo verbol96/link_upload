@@ -1,4 +1,3 @@
-
 const {User}=require('../models/models');
 const {createTelegramOrder}=require('./telegramOrderService');
 
@@ -106,7 +105,7 @@ const escapeHTML=value=>String(value??'')
     .replace(/>/g,'&gt;');
 
 const groupNote=g=>{
-    return `${g.notes} (${g.files.length} файлов${g.skipped.length?` + ${g.skipped.length} вручную`:''})`;
+    return `${g.notes||''} (${g.files.length} файлов${g.skipped.length?` + ${g.skipped.length} вручную`:''})`.trim();
 };
 
 const normalizePhone=phone=>{
@@ -324,7 +323,7 @@ const opened=(id,s)=>{
         id,
         `📂 <b>Открыта папка ${s.active+1}</b>\n`+
         `Файлов: ${count(s.folders[s.active])}\n`+
-        'Присылайте фотографии и примечания.'
+        'Присылайте фотографии и параметры печати.'
     );
 };
 
@@ -344,22 +343,43 @@ const resetFlow=s=>{
     delete s.clientId;
     delete s.clientName;
     delete s.ownerType;
+    delete s.deliveryData;
 
     s.version=++sequence;
 };
 
+// Итоговое подтверждение заказа
 const confirm=(id,s)=>{
     return say(
         id,
         `👤 ${escapeHTML(s.clientName)}\n`+
         `📱 ${s.phone}\n`+
         `Владелец: ${s.ownerType==='nefediev'?'Нефедьев':'Клиент'}\n\n`+
+        `📦 <b>Данные для отправки</b>\n`+
+        `${escapeHTML(s.deliveryData)}\n\n`+
         summary(s),
         [
+            [
+                btn(s,'✏️ Адрес','edit_delivery')
+            ],
             [
                 btn(s,'✅','send'),
                 btn(s,'❌','back')
             ]
+        ]
+    );
+};
+
+// Запрос данных для отправки
+const requestDelivery=(id,s)=>{
+    s.step='delivery';
+
+    return say(
+        id,
+        '📦 <b>Введите данные для отправки:</b>\n\n'+
+        'ФИО, адрес или отделение почты и другую информацию для доставки.',
+        [
+            [btn(s,'❌','back')]
         ]
     );
 };
@@ -399,13 +419,21 @@ const handleTelegramCallback=async(q)=>{
     // Выбор владельца
     if(s.step==='owner'&&['client','nefediev'].includes(action)){
         s.ownerType=action;
-        s.step='confirm';
 
-        return confirm(id,s);
+        return requestDelivery(id,s);
+    }
+
+    // Редактирование данных для отправки
+    if(action==='edit_delivery'&&s.step==='confirm'){
+        return requestDelivery(id,s);
     }
 
     // Создание заказа
     if(action==='send'&&s.step==='confirm'){
+        if(!s.deliveryData?.trim()){
+            return requestDelivery(id,s);
+        }
+
         s.step='creating';
 
         const groups=s.folders.filter(g=>count(g));
@@ -422,7 +450,7 @@ const handleTelegramCallback=async(q)=>{
                 clientId:s.clientId,
                 phone:s.phone,
                 ownerType:s.ownerType,
-                notes:groups.map(groupNote).join('\n'),
+                deliveryData:s.deliveryData,
                 groups,
                 downloadTelegramFile
             });
@@ -457,6 +485,9 @@ const handleTelegramCallback=async(q)=>{
             `👤 ${escapeHTML(result.client.FIO||'Без имени')}\n`+
             `📱 ${s.phone}\n`+
             `📁 ${escapeHTML(result.mainDir.name)}\n\n`+
+            `📦 <b>Данные для отправки</b>\n`+
+            `${escapeHTML(s.deliveryData)}\n\n`+
+            `<b>Параметры печати</b>\n`+
             `${escapeHTML(done.map(groupNote).join('\n'))}\n\n`+
             `Загружено: ${loaded}\n`+
             `Вручную: ${manual}`
@@ -479,7 +510,7 @@ const handleTelegramCallback=async(q)=>{
 
         return say(
             id,
-            `Введите новое примечание для папки ${s.active+1}.\n`+
+            `Введите новые параметры печати для папки ${s.active+1}.\n`+
             'Чтобы удалить примечание, отправьте «-».'
         );
     }
@@ -558,7 +589,7 @@ const handleTelegramUpdate=async(update)=>{
     if(command==='/start'){
         return say(
             id,
-            'Перешлите фотографии и примечания в открытую папку.'
+            'Перешлите фотографии и параметры печати в открытую папку.'
         );
     }
 
@@ -678,6 +709,24 @@ const handleTelegramUpdate=async(update)=>{
                 ]
             ]
         );
+    }
+
+    // Ввод обязательных данных для отправки
+    if(s.step==='delivery'){
+        const deliveryData=m.text?.trim();
+
+        if(!deliveryData||deliveryData==='-'){
+            return say(
+                id,
+                'Введите данные для отправки текстовым сообщением.'
+            );
+        }
+
+        s.deliveryData=deliveryData;
+        s.step='confirm';
+        s.version=++sequence;
+
+        return confirm(id,s);
     }
 
     const g=s.folders[s.active];

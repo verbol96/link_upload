@@ -1,4 +1,3 @@
-
 const fs=require('fs');
 const path=require('path');
 const {Order,Photo,File,User}=require('../models/models');
@@ -62,6 +61,7 @@ const createTelegramOrder=async({
     clientId,
     phone,
     ownerType,
+    deliveryData,
     notes,
     groups,
     files,
@@ -72,6 +72,12 @@ const createTelegramOrder=async({
         files:files||[],
         skipped:[]
     }];
+
+    const delivery=String(deliveryData||'').trim();
+
+    if(!delivery||delivery==='-'){
+        throw new Error('Не указаны данные для отправки');
+    }
 
     if(!batches.length||!batches.some(g=>g.files.length||g.skipped?.length)){
         throw new Error('Нет файлов');
@@ -122,7 +128,7 @@ const createTelegramOrder=async({
                 price:'0',
                 price_deliver:'0',
                 other:'',
-                notes:notes||'',
+                notes:delivery,
                 status:0,
                 typePost,
                 postCode:client.postCode||'',
@@ -222,8 +228,8 @@ const createTelegramOrder=async({
             }
 
             await order.update({
-                notes:completedGroups.map(g=>
-                    `${g.notes||''} (${g.files.length} файлов${g.skipped.length?` + ${g.skipped.length} вручную`:''})`
+                other:completedGroups.map(g=>
+                    `${g.notes||''} (${g.files.length} файлов${g.skipped.length?` + ${g.skipped.length} вручную`:''})`.trim()
                 ).join('\n')
             },{transaction});
 
